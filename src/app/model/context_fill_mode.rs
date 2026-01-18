@@ -1,7 +1,7 @@
-use rep_move::RepMove;
-use manually_init::ManuallyInit;
-
 use crate::core::aiserver::v1::ExplicitContext;
+use byte_str::ByteStr;
+use manually_init::ManuallyInit;
+use rep_move::RepMove;
 
 static CONTEXT_FILL_MODE: ManuallyInit<ContextFillMode> = ManuallyInit::new();
 
@@ -31,7 +31,7 @@ impl ContextFillMode {
 
 /// 根据全局配置和指令创建 ExplicitContext
 #[inline]
-pub fn create_explicit_context(instructions: prost::ByteStr) -> Option<ExplicitContext> {
+pub fn create_explicit_context(instructions: ByteStr) -> Option<ExplicitContext> {
     if instructions.trim().is_empty() {
         return None;
     }
@@ -61,7 +61,7 @@ pub fn create_explicit_context(instructions: prost::ByteStr) -> Option<ExplicitC
             let mut iter = RepMove::new(instructions, Clone::clone, count);
 
             Some(ExplicitContext {
-                context: if mode.context { iter.next().unwrap() } else { prost::ByteStr::new() },
+                context: if mode.context { iter.next().unwrap() } else { ByteStr::new() },
                 repo_context: if mode.repo_context { iter.next() } else { None },
                 mode_specific_context: if mode.mode_specific_context { iter.next() } else { None },
             })

@@ -1,16 +1,14 @@
-use std::fmt;
-
 use crate::header::{Entry, HeaderMap, HeaderValue, OccupiedEntry};
+use std::fmt;
 
 pub fn basic_auth<U, P>(username: U, password: Option<P>) -> HeaderValue
 where
     U: std::fmt::Display,
     P: std::fmt::Display,
 {
-    use std::io::Write;
-
     use base64::prelude::BASE64_STANDARD;
     use base64::write::EncoderWriter;
+    use std::io::Write;
 
     let mut buf = b"Basic ".to_vec();
     {
@@ -94,7 +92,9 @@ pub(crate) struct Escape<'a>(&'a [u8]);
 
 #[cfg(not(target_arch = "wasm32"))]
 impl<'a> Escape<'a> {
-    pub(crate) fn new(bytes: &'a [u8]) -> Self { Escape(bytes) }
+    pub(crate) fn new(bytes: &'a [u8]) -> Self {
+        Escape(bytes)
+    }
 }
 
 impl fmt::Debug for Escape<'_> {

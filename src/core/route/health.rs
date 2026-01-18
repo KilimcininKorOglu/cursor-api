@@ -1,14 +1,14 @@
 use crate::{
     app::{
-        constant::{BUILD_TIMESTAMP, IS_DEBUG, IS_PRERELEASE, PKG_NAME, PKG_VERSION},
+        frontend::metadata,
         lazy::START_TIME,
         model::{AppState, DateTime},
     },
     common::model::{
         ApiStatus,
         health::{
-            BuildInfo, Capabilities, CpuInfo, HealthCheckResponse, MemoryInfo, RequestStats,
-            RuntimeStats, ServiceInfo, SystemStats,
+            Capabilities, CpuInfo, HealthCheckResponse, MemoryInfo, RequestStats, RuntimeStats,
+            SystemStats, service_info,
         },
     },
     core::constant::Models,
@@ -36,18 +36,8 @@ pub async fn handle_health(State(state): State<Arc<AppState>>) -> Json<HealthChe
 
     Json(HealthCheckResponse {
         status: ApiStatus::Success,
-        service: ServiceInfo {
-            name: PKG_NAME,
-            version: PKG_VERSION,
-            is_debug: *crate::app::lazy::log::DEBUG,
-            build: BuildInfo {
-                #[cfg(feature = "__preview")]
-                version: crate::app::constant::BUILD_VERSION,
-                timestamp: BUILD_TIMESTAMP,
-                is_debug: IS_DEBUG,
-                is_prerelease: IS_PRERELEASE,
-            },
-        },
+        service: service_info(),
+        frontend: metadata(),
         runtime: RuntimeStats {
             started_at: *START_TIME,
             uptime_seconds: (DateTime::naive_now() - START_TIME.naive()).num_seconds(),
@@ -59,7 +49,7 @@ pub async fn handle_health(State(state): State<Arc<AppState>>) -> Json<HealthChe
         },
         system,
         capabilities: Capabilities {
-            models: Models::ids(),
+            models: Models::get_ids_cache(),
             endpoints: &ENDPOINTS,
             features: &[
                 #[cfg(feature = "horizon")]

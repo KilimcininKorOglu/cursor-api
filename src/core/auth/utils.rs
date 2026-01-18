@@ -11,9 +11,10 @@ use crate::{
     common::utils::tokeninfo_to_token,
     core::{
         aiserver::v1::EnvironmentInfo,
-        config::{KeyConfig, parse_dynamic_token},
+        config::{KeyConfigBuilder, parse_dynamic_token},
     },
 };
+use byte_str::ByteStr;
 use http::header::AUTHORIZATION;
 
 #[inline]
@@ -36,7 +37,7 @@ pub(super) fn get_environment_info(
     headers: &http::HeaderMap,
     request_time: DateTime,
 ) -> EnvironmentInfo {
-    fn get(headers: &http::HeaderMap, key: http::HeaderName) -> Option<prost::ByteStr> {
+    fn get(headers: &http::HeaderMap, key: http::HeaderName) -> Option<ByteStr> {
         headers.get(key).and_then(|v| {
             let v: &crate::common::model::HeaderValue = unsafe { core::mem::transmute(v) };
             let bytes = v.inner.as_ref();
@@ -46,14 +47,14 @@ pub(super) fn get_environment_info(
                 }
             }
             // crate::debug!("{}", unsafe { str::from_utf8_unchecked(bytes) });
-            Some(unsafe { prost::ByteStr::from_utf8_unchecked(v.inner.clone()) })
+            Some(unsafe { ByteStr::from_utf8_unchecked(v.inner.clone()) })
         })
     }
     EnvironmentInfo {
         exthost_platform: get(headers, STAINLESS_OS).map(|b| match &*b {
-            "MacOS" => prost::ByteStr::from_static("darwin"),
-            "Windows" => prost::ByteStr::from_static("win32"),
-            "Linux" => prost::ByteStr::from_static("linux"),
+            "MacOS" => ByteStr::from_static("darwin"),
+            "Windows" => ByteStr::from_static("win32"),
+            "Linux" => ByteStr::from_static("linux"),
             s => {
                 crate::debug!("hit platform: {s}");
                 b
@@ -73,7 +74,7 @@ pub(super) async fn get_token_bundle(
     auth_token: &str,
     privileged_queue: QueueType,
     normal_queue: QueueType,
-    key_config: Option<&mut KeyConfig>,
+    key_config: Option<&mut KeyConfigBuilder>,
 ) -> TokenBundleResult {
     // 管理员 Token
     if let Some(part) = auth_token.strip_prefix(&**AUTH_TOKEN) {
@@ -108,14 +109,13 @@ pub(super) async fn get_token_bundle(
         }
     } else
     // 动态密钥
-    if AppConfig::get_dynamic_key() {
+    if AppConfig::is_dynamic_key_enabled() {
         if let Some(mut parsed_config) = parse_dynamic_token(auth_token) {
             if let Some(config) = key_config {
-                parsed_config.move_without_auth_token(config);
-                config.with_global();
+                parsed_config.move_to_config_builder(config);
             }
 
-            if let Some(ext_token) = parsed_config.token_info.and_then(tokeninfo_to_token) {
+            if let Some(ext_token) = parsed_config.into_tuple().and_then(tokeninfo_to_token) {
                 return Ok((ext_token, false));
             }
         }

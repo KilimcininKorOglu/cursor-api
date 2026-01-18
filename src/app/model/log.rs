@@ -58,7 +58,7 @@ impl From<RequestLogHelper> for super::RequestLog {
         Self {
             id: log.id,
             timestamp: log.timestamp.into(),
-            model: get_static_id(log.model),
+            model: get_static_id(log.model.as_str()),
             token_info: log.token_info,
             chain: log.chain,
             timing: log.timing,

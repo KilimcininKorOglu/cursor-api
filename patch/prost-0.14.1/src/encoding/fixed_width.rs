@@ -1,8 +1,7 @@
 use ::bytes::{Buf, BufMut};
 
 use super::wire_type::WireType;
-use crate::error::DecodeError;
-use alloc::string::ToString as _;
+use crate::error::{DecodeErrorKind, DecodeError};
 
 macro_rules! fixed {
     ($ty:ty, $proto_ty:ident, $wire_type:ident, $put:ident, $try_get:ident) => {
@@ -17,7 +16,7 @@ macro_rules! fixed {
 
             #[inline(always)]
             pub fn decode_fixed(buf: &mut impl Buf) -> Result<$ty, DecodeError> {
-                buf.$try_get().map_err(|e| DecodeError::new(e.to_string()))
+                buf.$try_get().map_err(|_| DecodeErrorKind::BufferUnderflow.into())
             }
         }
     };

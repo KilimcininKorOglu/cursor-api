@@ -1,6 +1,7 @@
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
+#[repr(u8)]
 pub enum VisionAbility {
     None,
     Base64,
@@ -19,8 +20,9 @@ impl VisionAbility {
     const ALL_ALIAS: &'static str = "base64-http";
 
     #[inline]
-    pub fn from_str(s: &str) -> Self {
-        match s.to_ascii_lowercase().as_str() {
+    fn from_string(mut s: String) -> Self {
+        s.make_ascii_lowercase();
+        match s.as_str() {
             Self::NONE | Self::NONE_ALIAS => Self::None,
             Self::BASE64 | Self::BASE64_ALIAS => Self::Base64,
             Self::ALL | Self::ALL_ALIAS => Self::All,
@@ -29,11 +31,11 @@ impl VisionAbility {
     }
 
     #[inline(always)]
-    pub fn is_none(&self) -> bool { matches!(self, VisionAbility::None) }
+    pub fn is_none(self) -> bool { matches!(self, VisionAbility::None) }
 
     /// 获取枚举的主要字符串表示
     #[inline]
-    const fn as_str(&self) -> &'static str {
+    pub const fn as_str(self) -> &'static str {
         match self {
             Self::None => Self::NONE,
             Self::Base64 => Self::BASE64,
@@ -63,6 +65,6 @@ impl<'de> Deserialize<'de> for VisionAbility {
         D: Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        Ok(Self::from_str(&s))
+        Ok(Self::from_string(s))
     }
 }

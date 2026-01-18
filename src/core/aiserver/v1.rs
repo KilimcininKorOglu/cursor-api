@@ -1,10 +1,8 @@
 use core::num::NonZeroU16;
 
-use crate::common::utils::r#true;
-
 // Include the generated Protobuf code
 // include!(concat!(env!("OUT_DIR"), "/aiserver.v1.rs"));
-include!("v1/aiserver.v1.rs");
+include!("v1/lite.rs");
 
 impl ErrorDetails {
     /// 将错误转换为相应的 HTTP 状态码。
@@ -211,5 +209,25 @@ impl TryFrom<image::DynamicImage> for image_proto::Dimension {
     #[inline]
     fn try_from(img: image::DynamicImage) -> Result<Self, Self::Error> {
         Ok(Self { width: img.width().try_into()?, height: img.height().try_into()? })
+    }
+}
+
+impl AvailableModelsResponse {
+    /// 根据 `AvailableModel` 的关键字段（`name`、`client_display_name`、`server_model_name`）
+    /// 判断两个响应是否相等。
+    ///
+    /// # 参数
+    ///
+    /// * `other` - 要比较的另一个 `AvailableModelsResponse` 实例。
+    pub fn is_subset_equal(&self, other: &Self) -> bool {
+        if self.models.len() != other.models.len() {
+            return false;
+        }
+
+        self.models.iter().zip(other.models.iter()).all(|(a, b)| {
+            a.name == b.name
+                && a.client_display_name == b.client_display_name
+                && a.server_model_name == b.server_model_name
+        })
     }
 }

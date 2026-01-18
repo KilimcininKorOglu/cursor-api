@@ -1,10 +1,29 @@
 //! 压缩数据处理
 
+use crate::MAX_DECOMPRESSED_SIZE_BYTES;
+use flate2::read::GzDecoder;
 use std::io::Read as _;
 
-use flate2::read::GzDecoder;
+/// 压缩数据为gzip格式
+///
+/// 使用固定压缩级别6，预分配容量以减少内存分配
+#[inline]
+pub fn compress_gzip(data: &[u8]) -> Vec<u8> {
+    use ::std::io::Write as _;
+    use flate2::{Compression, write::GzEncoder};
 
-use crate::MAX_DECOMPRESSED_SIZE_BYTES;
+    const LEVEL: Compression = Compression::new(6);
+
+    // 预分配容量：假设压缩率50% + gzip头部约18字节
+    let estimated_size = data.len() / 2 + 18;
+    let mut encoder = GzEncoder::new(Vec::with_capacity(estimated_size), LEVEL);
+
+    // 写入Vec不会失败，可以安全unwrap
+    unsafe {
+        encoder.write_all(data).unwrap_unchecked();
+        encoder.finish().unwrap_unchecked()
+    }
+}
 
 /// 解压 gzip 数据
 ///
@@ -115,10 +134,8 @@ mod tests {
     #[test]
     fn test_valid_gzip() {
         // 使用标准库压缩一些数据
+        use flate2::{Compression, write::GzEncoder};
         use std::io::Write;
-
-        use flate2::write::GzEncoder;
-        use flate2::Compression;
 
         let original = b"Hello, GZIP!";
         let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
@@ -136,10 +153,8 @@ mod tests {
     #[test]
     fn test_empty_gzip() {
         // 压缩空数据（最小有效 gzip）
+        use flate2::{Compression, write::GzEncoder};
         use std::io::Write;
-
-        use flate2::write::GzEncoder;
-        use flate2::Compression;
 
         let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
         encoder.write_all(&[]).unwrap();

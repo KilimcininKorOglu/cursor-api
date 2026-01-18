@@ -8,6 +8,7 @@ use crate::app::{
         us_upload_file_url,
     },
 };
+use url::Url;
 
 #[allow(clippy::upper_case_acronyms)]
 #[derive(Clone, Copy, rkyv::Archive, rkyv::Deserialize, rkyv::Serialize)]
@@ -33,7 +34,7 @@ impl GcppHost {
             CURSOR_GCPP_EU_HOST | EU => Some(Self::EU),
             CURSOR_GCPP_US_HOST | US => Some(Self::US),
             _ => None,
-            // _ => Self::Ext(crate::leak::intern_static(s)),
+            // _ => Self::Ext(crate::leak::intern(s)),
         }
     }
 
@@ -47,7 +48,7 @@ impl GcppHost {
     }
 
     #[inline]
-    pub fn get_url(&self, i: CppService, use_pri: bool) -> &'static str {
+    pub fn get_url(&self, i: CppService, use_pri: bool) -> &'static Url {
         match (self, i) {
             (Self::Asia, CppService::FSUploadFile) => asia_upload_file_url(use_pri),
             (Self::Asia, CppService::FSSyncFile) => asia_sync_file_url(use_pri),

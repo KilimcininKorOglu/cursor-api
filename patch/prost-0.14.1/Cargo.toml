@@ -11,9 +11,9 @@
 
 [package]
 edition = "2021"
-rust-version = "1.71.1"
+rust-version = "1.82"
 name = "prost"
-version = "0.14.1"
+version = "0.14.2"
 authors = [
     "Dan Burkert <dan@danburkert.com>",
     "Lucio Franco <luciofranco14@gmail.com>",
@@ -36,52 +36,27 @@ categories = ["encoding"]
 license = "Apache-2.0"
 repository = "https://github.com/tokio-rs/prost"
 
+[lib]
+name = "prost"
+path = "src/lib.rs"
+# https://bheisler.github.io/criterion.rs/book/faq.html#cargo-bench-gives-unrecognized-option-errors-for-valid-command-line-options
+bench = false
+
 [features]
-default = [
-    "derive",
-    "std",
-]
+default = ["std"]
 derive = ["dep:prost-derive"]
 no-recursion-limit = []
 std = []
 indexmap = ["dep:indexmap"]
 
-[lib]
-name = "prost"
-path = "src/lib.rs"
-bench = false
+[dependencies]
+byte_str = { version = "0.1.0", path = "../../crates/byte_str", default-features = false }
+bytes = { version = "1", default-features = false }
+indexmap = { version = "2.12.1", default-features = false, optional = true }
+prost-derive = { version = "0.14.2", path = "../prost-derive", optional = true }
+proto-value = { version = "0.1.0", path = "../../crates/proto-value", default-features = false }
 
-[dependencies.bytes]
-version = "1"
-default-features = false
-
-[dependencies.prost-derive]
-path = "../prost-derive"
-optional = true
-
-[dependencies.macros]
-path = "../macros"
-
-[dependencies.indexmap]
-version = "2"
-optional = true
-
-[dependencies.cfg-if]
-version = "1.0"
-
-[dependencies.any_all_workaround]
-version = "0.1"
-
-[dependencies.serde]
-version = "1"
-default-features = false
-
-[dev-dependencies.criterion]
-version = "0.7"
-default-features = false
-
-[dev-dependencies.proptest]
-version = "1"
-
-[dev-dependencies.rand]
-version = "0.9"
+[dev-dependencies]
+criterion = { version = "0.7", default-features = false }
+proptest = "1"
+rand = "0.9"

@@ -80,9 +80,8 @@ pub async fn handle_get_logs(
             token_key
         } else {
             parse_dynamic_token(auth_token)
-                .and_then(|key_config| key_config.token_info)
-                .map(|info| info.token)
-                .and_then(|t| t.into_raw())
+                .and_then(|key_config| key_config.into_tuple())
+                .and_then(|t| t.0.token.validate(t.1))
                 .ok_or(StatusCode::UNAUTHORIZED)?
                 .key()
         })
@@ -221,9 +220,8 @@ pub async fn handle_get_logs_tokens(
             token_key
         } else {
             parse_dynamic_token(auth_token)
-                .and_then(|key_config| key_config.token_info)
-                .map(|info| info.token)
-                .and_then(|t| t.into_raw())
+                .and_then(|key_config| key_config.into_tuple())
+                .and_then(|t| t.0.token.validate(t.1))
                 .ok_or(StatusCode::UNAUTHORIZED)?
                 .key()
         };

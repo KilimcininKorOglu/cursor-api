@@ -61,12 +61,10 @@ impl DefaultInstructions {
     pub fn get(&self, now_with_tz: chrono::DateTime<chrono_tz::Tz>) -> String {
         let now_with_tz = now_with_tz.to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
         let (template, indexes, expected_len) = match now_with_tz.len() {
-            24 => (&self.template_z, &self.indexes_z, 24),
-            29 => (&self.template, &self.indexes, 29),
+            24 => (&*self.template_z, &*self.indexes_z, 24),
+            29 => (&*self.template, &*self.indexes, 29),
             _ => unsafe { core::hint::unreachable_unchecked() },
         };
-
-        debug_assert_eq!(now_with_tz.len(), expected_len);
 
         let mut result = template.to_string();
         for &i in indexes.iter() {

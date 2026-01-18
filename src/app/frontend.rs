@@ -29,7 +29,7 @@ pub struct RouteRegistry {
     pub description: Option<String>,
     pub author: Option<String>,
     pub license: Option<String>,
-    #[serde(deserialize_with = "deserialize_routes")]
+    #[serde(skip_serializing, deserialize_with = "deserialize_routes")]
     pub routes: HashMap<String, RouteDef>,
 }
 
@@ -40,7 +40,7 @@ pub enum RouteDefinition {
     Object(RouteDef),
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(serde::Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum RouteDef {
     File { content_type: Option<ContentType>, path: String },
@@ -119,7 +119,7 @@ impl axum::response::IntoResponse for RouteService {
     fn into_response(self) -> axum::response::Response {
         match self {
             Self::File { content_type, content } => {
-                let mut res = content.into_response();
+                let mut res = axum::body::Body::from(content).into_response();
                 res.headers_mut().insert(http::header::CONTENT_TYPE, content_type);
                 res
             }
@@ -464,7 +464,7 @@ impl FrontendLoader {
                 Err(e) => {
                     return Err(FrontendError::InvalidHeader {
                         route: route_path.to_string(),
-                        name: name.clone(),
+                        name,
                         value,
                         reason: format!("invalid header name: {e}"),
                     });
@@ -531,6 +531,10 @@ pub fn paths() -> impl Iterator<Item = &'static str> {
     registry.iter().copied()
 }
 
+static mut METADATA: Option<&'static str> = None;
+
+pub const fn metadata() -> Option<&'static str> { unsafe { METADATA } }
+
 // /// 处理前端请求
 // pub async fn handle_frontend(parts: http::request::Parts) -> RouteService {
 //     let registry = &*ROUTE_REGISTRY;
@@ -540,33 +544,38 @@ pub fn paths() -> impl Iterator<Item = &'static str> {
 // }
 
 fn print_metadata(registry: &RouteRegistry) {
-    println!(
-        "========================================\n\
-            前端资源包信息\n\
-            ========================================"
-    );
+    unsafe {
+        METADATA =
+            Some(Box::leak(serde_json::to_string(registry).unwrap_unchecked().into_boxed_str()))
+    };
 
-    if let Some(name) = &registry.name {
-        println!("名称:       {name}");
-    }
+    // println!(
+    //     "========================================\n\
+    //         前端资源包信息\n\
+    //         ========================================"
+    // );
 
-    if let Some(version) = &registry.version {
-        println!("版本:       {version}");
-    }
+    // if let Some(name) = &registry.name {
+    //     println!("名称:       {name}");
+    // }
 
-    if let Some(description) = &registry.description {
-        println!("描述:       {description}");
-    }
+    // if let Some(version) = &registry.version {
+    //     println!("版本:       {version}");
+    // }
 
-    if let Some(author) = &registry.author {
-        println!("作者:       {author}");
-    }
+    // if let Some(description) = &registry.description {
+    //     println!("描述:       {description}");
+    // }
 
-    if let Some(license) = &registry.license {
-        println!("许可证:     {license}");
-    }
+    // if let Some(author) = &registry.author {
+    //     println!("作者:       {author}");
+    // }
 
-    println!("========================================");
+    // if let Some(license) = &registry.license {
+    //     println!("许可证:     {license}");
+    // }
+
+    // println!("========================================");
 }
 
 // ============================================================================

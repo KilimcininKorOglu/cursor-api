@@ -1,6 +1,6 @@
 #![allow(internal_features, unsafe_op_in_unsafe_fn)]
-#![feature(core_intrinsics, uint_bit_width, portable_simd, pattern, char_internals)]
-#![doc(html_root_url = "https://docs.rs/prost/0.14.1")]
+#![feature(core_intrinsics, uint_bit_width, portable_simd, pattern, char_internals, const_convert, const_trait_impl)]
+#![doc(html_root_url = "https://docs.rs/prost/0.14.2")]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![doc = include_str!("../README.md")]
 
@@ -11,6 +11,9 @@ pub extern crate alloc;
 // Re-export the bytes crate for use within derived code.
 pub use bytes;
 
+// Re-export the bytes crate for use within derived code.
+pub use byte_str;
+
 // Re-export the alloc crate for use within derived code.
 #[cfg(feature = "indexmap")]
 #[doc(hidden)]
@@ -20,7 +23,6 @@ mod error;
 mod message;
 // mod name;
 mod types;
-mod byte_str;
 
 #[doc(hidden)]
 pub mod encoding;
@@ -31,7 +33,6 @@ pub use crate::encoding::length_delimiter::{
 pub use crate::error::{DecodeError, EncodeError, UnknownEnumValue};
 pub use crate::message::Message;
 // pub use crate::name::Name;
-pub use crate::byte_str::ByteStr;
 
 // See `encoding::DecodeContext` for more info.
 // 100 is the default recursion limit in the C++ implementation.
@@ -49,6 +50,3 @@ extern crate prost_derive;
 #[cfg(feature = "derive")]
 #[doc(hidden)]
 pub use prost_derive::*;
-
-#[macro_use]
-extern crate macros;

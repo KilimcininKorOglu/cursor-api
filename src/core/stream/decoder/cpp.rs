@@ -11,6 +11,7 @@ use crate::core::{
     error::{CppError, CursorError},
 };
 use alloc::borrow::Cow;
+use byte_str::ByteStr;
 use grpc_stream::{Buffer, decompress_gzip};
 use prost::Message as _;
 
@@ -26,7 +27,7 @@ pub enum StreamMessage {
         start_line_number: i32,
         end_line_number_inclusive: i32,
         #[serde(skip_serializing_if = "Option::is_none")]
-        binding_id: Option<prost::ByteStr>,
+        binding_id: Option<ByteStr>,
         #[serde(skip_serializing_if = "Option::is_none")]
         should_remove_leading_eol: Option<bool>,
     },
@@ -39,7 +40,7 @@ pub enum StreamMessage {
         expected_content: String,
         should_retrigger_cpp: bool,
         #[serde(skip_serializing_if = "Option::is_none")]
-        binding_id: Option<prost::ByteStr>,
+        binding_id: Option<ByteStr>,
     },
     DoneEdit,
     DoneStream,
@@ -159,7 +160,7 @@ impl StreamDecoder {
             }
         }
 
-        self.buffer.advance(iter.offset());
+        unsafe { self.buffer.advance_unchecked(iter.offset()) };
         Ok(events)
     }
 }

@@ -44,6 +44,9 @@ pub enum Error {
     /// Failed to decode base64 data
     Base64DecodeFailed,
 
+    /// Failed to parse HTTP request URL
+    UrlParseFailed,
+
     /// Failed to send HTTP request (network error, DNS failure, timeout, etc.)
     RequestFailed,
 
@@ -64,30 +67,37 @@ impl Error {
     /// Returns (status_code, error_code, error_message) tuple
     #[inline]
     pub const fn to_parts(self) -> (http::StatusCode, &'static str, &'static str) {
+        crate::define_typed_constants! {
+            &'static str => {
+                PERMISSION_DENIED = "permission_denied",
+                INVALID_ARGUMENT = "invalid_argument",
+                UNAVAILABLE = "unavailable",
+                RESOURCE_EXHAUSTED = "resource_exhausted",
+            }
+        }
         match self {
             Self::VisionDisabled => {
-                (http::StatusCode::FORBIDDEN, "permission_denied", ERR_VISION_DISABLED)
+                (http::StatusCode::FORBIDDEN, PERMISSION_DENIED, ERR_VISION_DISABLED)
             }
-            Self::Base64Only => {
-                (http::StatusCode::BAD_REQUEST, "invalid_argument", ERR_BASE64_ONLY)
-            }
+            Self::Base64Only => (http::StatusCode::BAD_REQUEST, INVALID_ARGUMENT, ERR_BASE64_ONLY),
             Self::Base64DecodeFailed => {
-                (http::StatusCode::BAD_REQUEST, "invalid_argument", ERR_BASE64_DECODE_FAILED)
+                (http::StatusCode::BAD_REQUEST, INVALID_ARGUMENT, ERR_BASE64_DECODE_FAILED)
             }
-            Self::RequestFailed => {
-                (http::StatusCode::BAD_GATEWAY, "unavailable", ERR_REQUEST_FAILED)
+            Self::UrlParseFailed => {
+                (http::StatusCode::BAD_REQUEST, INVALID_ARGUMENT, ERR_BASE64_DECODE_FAILED)
             }
+            Self::RequestFailed => (http::StatusCode::BAD_GATEWAY, UNAVAILABLE, ERR_REQUEST_FAILED),
             Self::ResponseReadFailed => {
-                (http::StatusCode::BAD_GATEWAY, "unavailable", ERR_RESPONSE_READ_FAILED)
+                (http::StatusCode::BAD_GATEWAY, UNAVAILABLE, ERR_RESPONSE_READ_FAILED)
             }
             Self::UnsupportedImageFormat => {
-                (http::StatusCode::BAD_REQUEST, "invalid_argument", ERR_UNSUPPORTED_IMAGE_FORMAT)
+                (http::StatusCode::BAD_REQUEST, INVALID_ARGUMENT, ERR_UNSUPPORTED_IMAGE_FORMAT)
             }
             Self::UnsupportedAnimatedGif => {
-                (http::StatusCode::BAD_REQUEST, "invalid_argument", ERR_UNSUPPORTED_ANIMATED_GIF)
+                (http::StatusCode::BAD_REQUEST, INVALID_ARGUMENT, ERR_UNSUPPORTED_ANIMATED_GIF)
             }
             Self::ExceedSizeLimit => {
-                (http::StatusCode::PAYLOAD_TOO_LARGE, "resource_exhausted", ERR_EXCEED_SIZE_LIMIT)
+                (http::StatusCode::PAYLOAD_TOO_LARGE, RESOURCE_EXHAUSTED, ERR_EXCEED_SIZE_LIMIT)
             }
         }
     }

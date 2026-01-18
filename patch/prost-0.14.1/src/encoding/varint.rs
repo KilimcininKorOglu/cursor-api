@@ -1,9 +1,8 @@
 #![allow(unsafe_op_in_unsafe_fn)]
 
+use crate::{DecodeError, error::DecodeErrorKind};
 use ::bytes::{Buf, BufMut};
 use ::core::intrinsics::{assume, likely, unchecked_shl, unchecked_shr, unlikely};
-
-use crate::error::DecodeError;
 
 /// ZigZag 编码 32 位整数
 #[inline(always)]
@@ -71,7 +70,7 @@ unsafe fn encode_varint64_fast(mut value: u64, len: usize, buf: &mut impl BufMut
     *ptr.add(len - 1) = value as u8;
 
     // Notify the buffer that `len` bytes have been written.
-    buf.advance_mut(len);
+    buf.advance_mut(len)
 }
 
 /// Slow-path encoding for buffers that may not be contiguous.
@@ -86,7 +85,7 @@ fn encode_varint64_slow(mut value: u64, len: usize, buf: &mut impl BufMut) {
     // The `encoded_len_varint` logic guarantees this.
     unsafe { assume(value < 0x80) };
 
-    buf.put_u8(value as u8);
+    buf.put_u8(value as u8)
 }
 
 /// Returns the encoded length of the value in LEB128 variable length format.
@@ -94,11 +93,7 @@ fn encode_varint64_slow(mut value: u64, len: usize, buf: &mut impl BufMut) {
 #[inline]
 pub const fn encoded_len_varint64(value: u64) -> usize {
     unsafe {
-        let value = value
-            .bit_width()
-            .unchecked_mul(9)
-            .unbounded_shr(6)
-            .unchecked_add(1);
+        let value = value.bit_width().unchecked_mul(9).unbounded_shr(6).unchecked_add(1);
         assume(value >= 1 && value <= VARINT64_MAX_LEN as u32);
         value as usize
     }
@@ -133,7 +128,7 @@ pub fn decode_varint64(buf: &mut impl Buf) -> Result<u64, DecodeError> {
         // Fallback for varints that cross chunk boundaries.
         decode_varint64_slow(buf)
     }
-    inner(buf).ok_or(DecodeError::new("invalid varint64"))
+    inner(buf).ok_or_else(|| DecodeErrorKind::InvalidVarint.into())
 }
 
 /// Fast-path decoding of a varint from a contiguous memory slice.
@@ -234,7 +229,7 @@ unsafe fn encode_varint32_fast(mut value: u32, len: usize, buf: &mut impl BufMut
     *ptr.add(len - 1) = value as u8;
 
     // Notify the buffer that `len` bytes have been written.
-    buf.advance_mut(len);
+    buf.advance_mut(len)
 }
 
 /// Slow-path encoding for buffers that may not be contiguous.
@@ -249,7 +244,7 @@ fn encode_varint32_slow(mut value: u32, len: usize, buf: &mut impl BufMut) {
     // The `encoded_len_varint` logic guarantees this.
     unsafe { assume(value < 0x80) };
 
-    buf.put_u8(value as u8);
+    buf.put_u8(value as u8)
 }
 
 /// Returns the encoded length of the value in LEB128 variable length format.
@@ -257,11 +252,7 @@ fn encode_varint32_slow(mut value: u32, len: usize, buf: &mut impl BufMut) {
 #[inline]
 pub const fn encoded_len_varint32(value: u32) -> usize {
     unsafe {
-        let value = value
-            .bit_width()
-            .unchecked_mul(9)
-            .unbounded_shr(6)
-            .unchecked_add(1);
+        let value = value.bit_width().unchecked_mul(9).unbounded_shr(6).unchecked_add(1);
         assume(value >= 1 && value <= VARINT32_MAX_LEN as u32);
         value as usize
     }
@@ -297,7 +288,7 @@ pub fn decode_varint32(buf: &mut impl Buf) -> Result<u32, DecodeError> {
         // Fallback for varints that cross chunk boundaries.
         decode_varint32_slow(buf)
     }
-    inner(buf).ok_or(DecodeError::new("invalid varint32"))
+    inner(buf).ok_or_else(|| DecodeErrorKind::InvalidVarint.into())
 }
 
 /// Fast-path decoding of a varint from a contiguous memory slice.
@@ -359,11 +350,6 @@ fn decode_varint32_slow(buf: &mut impl Buf) -> Option<u32> {
 pub mod usize {
     use super::*;
 
-    #[cfg(target_pointer_width = "32")]
-    pub(super) use super::VARINT32_MAX_LEN as VARINT_MAX_LEN;
-    #[cfg(target_pointer_width = "64")]
-    pub(super) use super::VARINT64_MAX_LEN as VARINT_MAX_LEN;
-
     #[inline(always)]
     pub fn encode_varint(value: usize, buf: &mut impl BufMut) -> usize {
         #[cfg(target_pointer_width = "32")]
@@ -383,9 +369,9 @@ pub mod usize {
     #[inline(always)]
     pub fn decode_varint(buf: &mut impl Buf) -> Result<usize, DecodeError> {
         #[cfg(target_pointer_width = "32")]
-        return transmute_unchecked!(decode_varint32(buf));
+        return unsafe { ::core::intrinsics::transmute_unchecked(decode_varint32(buf)) };
         #[cfg(target_pointer_width = "64")]
-        return transmute_unchecked!(decode_varint64(buf));
+        return unsafe { ::core::intrinsics::transmute_unchecked(decode_varint64(buf)) };
     }
 }
 
@@ -410,37 +396,12 @@ pub mod bool {
             let byte = buf.get_u8();
             if byte <= 1 { Some(byte != 0) } else { None }
         }
-        inner(buf).ok_or(DecodeError::new("invalid bool"))
+        inner(buf).ok_or_else(|| DecodeErrorKind::InvalidVarint.into())
     }
 
     #[inline]
     pub(in super::super) fn encode_packed_fast<B: ReservableBuf>(values: &[bool], buf: &mut B) {
-        let start_ptr = buf.as_mut().as_mut_ptr();
-        buf.reserve(usize::VARINT_MAX_LEN);
-        unsafe {
-            buf.set_len(buf.len() + usize::VARINT_MAX_LEN);
-        }
-
-        let mut length = 0;
-        for &value in values {
-            length += encode_varint(value, buf);
-        }
-        let mut length_slice = unsafe {
-            &mut *(start_ptr as *mut [::core::mem::MaybeUninit<u8>; usize::VARINT_MAX_LEN])
-                as &mut [::core::mem::MaybeUninit<u8>]
-        };
-        let len = usize::encode_varint(length, &mut length_slice);
-
-        unsafe {
-            let dst = start_ptr.add(len);
-            let src = start_ptr.add(usize::VARINT_MAX_LEN);
-            ::core::ptr::copy(src, dst, length);
-            buf.set_len(
-                buf.len()
-                    .unchecked_sub(usize::VARINT_MAX_LEN)
-                    .unchecked_add(len),
-            );
-        }
+        encode_packed_fast_impl(values, buf, encode_varint)
     }
 }
 
@@ -450,44 +411,26 @@ macro_rules! varint {
             use super::*;
 
             #[inline(always)]
-            pub fn encode_varint(value: $ty, buf: &mut impl BufMut) -> usize { encode_varint32(value as u32, buf) }
+            pub fn encode_varint(value: $ty, buf: &mut impl BufMut) -> usize {
+                encode_varint32(value as u32, buf)
+            }
 
             #[inline(always)]
-            pub const fn encoded_len_varint(value: $ty) -> usize { encoded_len_varint32(value as u32) }
+            pub const fn encoded_len_varint(value: $ty) -> usize {
+                encoded_len_varint32(value as u32)
+            }
 
             #[inline(always)]
             pub fn decode_varint(buf: &mut impl Buf) -> Result<$ty, DecodeError> {
-                transmute_unchecked!(decode_varint32(buf))
+                unsafe { ::core::intrinsics::transmute_unchecked(decode_varint32(buf)) }
             }
 
             #[inline]
-            pub(in super::super) fn encode_packed_fast(values: &[$ty], buf: &mut impl ReservableBuf) {
-                let start_ptr = buf.as_mut().as_mut_ptr();
-                buf.reserve(usize::VARINT_MAX_LEN);
-                unsafe {
-                    buf.set_len(buf.len() + usize::VARINT_MAX_LEN);
-                }
-
-                let mut length = 0;
-                for &value in values {
-                    length += encode_varint(value, buf);
-                }
-                let mut length_slice = unsafe {
-                    &mut *(start_ptr as *mut [::core::mem::MaybeUninit<u8>; usize::VARINT_MAX_LEN])
-                        as &mut [::core::mem::MaybeUninit<u8>]
-                };
-                let len = usize::encode_varint(length, &mut length_slice);
-
-                unsafe {
-                    let dst = start_ptr.add(len);
-                    let src = start_ptr.add(usize::VARINT_MAX_LEN);
-                    ::core::ptr::copy(src, dst, length);
-                    buf.set_len(
-                        buf.len()
-                            .unchecked_sub(usize::VARINT_MAX_LEN)
-                            .unchecked_add(len),
-                    );
-                }
+            pub(in super::super) fn encode_packed_fast(
+                values: &[$ty],
+                buf: &mut impl ReservableBuf,
+            ) {
+                encode_packed_fast_impl(values, buf, encode_varint)
             }
         }
     };
@@ -496,44 +439,26 @@ macro_rules! varint {
             use super::*;
 
             #[inline(always)]
-            pub fn encode_varint(value: $ty, buf: &mut impl BufMut) -> usize { encode_varint64(value as u64, buf) }
+            pub fn encode_varint(value: $ty, buf: &mut impl BufMut) -> usize {
+                encode_varint64(value as u64, buf)
+            }
 
             #[inline(always)]
-            pub const fn encoded_len_varint(value: $ty) -> usize { encoded_len_varint64(value as u64) }
+            pub const fn encoded_len_varint(value: $ty) -> usize {
+                encoded_len_varint64(value as u64)
+            }
 
             #[inline(always)]
             pub fn decode_varint(buf: &mut impl Buf) -> Result<$ty, DecodeError> {
-                transmute_unchecked!(decode_varint64(buf))
+                unsafe { ::core::intrinsics::transmute_unchecked(decode_varint64(buf)) }
             }
 
             #[inline]
-            pub(in super::super) fn encode_packed_fast(values: &[$ty], buf: &mut impl ReservableBuf) {
-                let start_ptr = buf.as_mut().as_mut_ptr();
-                buf.reserve(usize::VARINT_MAX_LEN);
-                unsafe {
-                    buf.set_len(buf.len() + usize::VARINT_MAX_LEN);
-                }
-
-                let mut length = 0;
-                for &value in values {
-                    length += encode_varint(value, buf);
-                }
-                let mut length_slice = unsafe {
-                    &mut *(start_ptr as *mut [::core::mem::MaybeUninit<u8>; usize::VARINT_MAX_LEN])
-                        as &mut [::core::mem::MaybeUninit<u8>]
-                };
-                let len = usize::encode_varint(length, &mut length_slice);
-
-                unsafe {
-                    let dst = start_ptr.add(len);
-                    let src = start_ptr.add(usize::VARINT_MAX_LEN);
-                    ::core::ptr::copy(src, dst, length);
-                    buf.set_len(
-                        buf.len()
-                            .unchecked_sub(usize::VARINT_MAX_LEN)
-                            .unchecked_add(len),
-                    );
-                }
+            pub(in super::super) fn encode_packed_fast(
+                values: &[$ty],
+                buf: &mut impl ReservableBuf,
+            ) {
+                encode_packed_fast_impl(values, buf, encode_varint)
             }
         }
     };
@@ -547,7 +472,9 @@ macro_rules! varint {
             }
 
             #[inline(always)]
-            pub const fn encoded_len_varint(value: $ty) -> usize { encoded_len_varint32($encode_fn(value)) }
+            pub const fn encoded_len_varint(value: $ty) -> usize {
+                encoded_len_varint32($encode_fn(value))
+            }
 
             #[inline(always)]
             pub fn decode_varint(buf: &mut impl Buf) -> Result<$ty, DecodeError> {
@@ -555,33 +482,11 @@ macro_rules! varint {
             }
 
             #[inline]
-            pub(in super::super) fn encode_packed_fast(values: &[$ty], buf: &mut impl ReservableBuf) {
-                let start_ptr = buf.as_mut().as_mut_ptr();
-                buf.reserve(usize::VARINT_MAX_LEN);
-                unsafe {
-                    buf.set_len(buf.len() + usize::VARINT_MAX_LEN);
-                }
-
-                let mut length = 0;
-                for &value in values {
-                    length += encode_varint(value, buf);
-                }
-                let mut length_slice = unsafe {
-                    &mut *(start_ptr as *mut [::core::mem::MaybeUninit<u8>; usize::VARINT_MAX_LEN])
-                        as &mut [::core::mem::MaybeUninit<u8>]
-                };
-                let len = usize::encode_varint(length, &mut length_slice);
-
-                unsafe {
-                    let dst = start_ptr.add(len);
-                    let src = start_ptr.add(usize::VARINT_MAX_LEN);
-                    ::core::ptr::copy(src, dst, length);
-                    buf.set_len(
-                        buf.len()
-                            .unchecked_sub(usize::VARINT_MAX_LEN)
-                            .unchecked_add(len),
-                    );
-                }
+            pub(in super::super) fn encode_packed_fast(
+                values: &[$ty],
+                buf: &mut impl ReservableBuf,
+            ) {
+                encode_packed_fast_impl(values, buf, encode_varint)
             }
         }
     };
@@ -595,7 +500,9 @@ macro_rules! varint {
             }
 
             #[inline(always)]
-            pub const fn encoded_len_varint(value: $ty) -> usize { encoded_len_varint64($encode_fn(value)) }
+            pub const fn encoded_len_varint(value: $ty) -> usize {
+                encoded_len_varint64($encode_fn(value))
+            }
 
             #[inline(always)]
             pub fn decode_varint(buf: &mut impl Buf) -> Result<$ty, DecodeError> {
@@ -603,33 +510,11 @@ macro_rules! varint {
             }
 
             #[inline]
-            pub(in super::super) fn encode_packed_fast(values: &[$ty], buf: &mut impl ReservableBuf) {
-                let start_ptr = buf.as_mut().as_mut_ptr();
-                buf.reserve(usize::VARINT_MAX_LEN);
-                unsafe {
-                    buf.set_len(buf.len() + usize::VARINT_MAX_LEN);
-                }
-
-                let mut length = 0;
-                for &value in values {
-                    length += encode_varint(value, buf);
-                }
-                let mut length_slice = unsafe {
-                    &mut *(start_ptr as *mut [::core::mem::MaybeUninit<u8>; usize::VARINT_MAX_LEN])
-                        as &mut [::core::mem::MaybeUninit<u8>]
-                };
-                let len = usize::encode_varint(length, &mut length_slice);
-
-                unsafe {
-                    let dst = start_ptr.add(len);
-                    let src = start_ptr.add(usize::VARINT_MAX_LEN);
-                    ::core::ptr::copy(src, dst, length);
-                    buf.set_len(
-                        buf.len()
-                            .unchecked_sub(usize::VARINT_MAX_LEN)
-                            .unchecked_add(len),
-                    );
-                }
+            pub(in super::super) fn encode_packed_fast(
+                values: &[$ty],
+                buf: &mut impl ReservableBuf,
+            ) {
+                encode_packed_fast_impl(values, buf, encode_varint)
             }
         }
     };
@@ -642,7 +527,36 @@ varint!(u64, uint64, 64);
 varint!(i32, sint32, 32, encode_zigzag32, decode_zigzag32);
 varint!(i64, sint64, 64, encode_zigzag64, decode_zigzag64);
 
-pub(super) trait ReservableBuf: Sized + BufMut + AsMut<[u8]> {
+pub mod r#enum {
+    use super::*;
+    use ::proto_value::Enum;
+
+    #[inline(always)]
+    pub fn encode_varint<T>(value: Enum<T>, buf: &mut impl BufMut) -> usize {
+        encode_varint32(value.get() as u32, buf)
+    }
+
+    #[inline(always)]
+    pub const fn encoded_len_varint<T>(value: Enum<T>) -> usize {
+        encoded_len_varint32(value.get() as u32)
+    }
+
+    #[inline(always)]
+    pub fn decode_varint<T>(buf: &mut impl Buf) -> Result<Enum<T>, DecodeError> {
+        unsafe { ::core::intrinsics::transmute_unchecked(decode_varint32(buf)) }
+    }
+
+    #[inline]
+    pub(in super::super) fn encode_packed_fast<T>(
+        values: &[Enum<T>],
+        buf: &mut impl ReservableBuf,
+    ) {
+        encode_packed_fast_impl(values, buf, encode_varint)
+    }
+}
+
+pub(super) trait ReservableBuf: Sized + BufMut {
+    fn as_mut_ptr(&mut self) -> *mut u8;
     fn reserve(&mut self, additional: usize);
     fn len(&self) -> usize;
     unsafe fn set_len(&mut self, len: usize);
@@ -650,18 +564,82 @@ pub(super) trait ReservableBuf: Sized + BufMut + AsMut<[u8]> {
 
 impl ReservableBuf for ::bytes::BytesMut {
     #[inline(always)]
-    fn reserve(&mut self, additional: usize) { Self::reserve(self, additional); }
+    fn as_mut_ptr(&mut self) -> *mut u8 { self.as_mut().as_mut_ptr() }
     #[inline(always)]
-    fn len(&self) -> usize { Self::len(self) }
+    fn reserve(&mut self, additional: usize) { Self::reserve(self, additional) }
     #[inline(always)]
-    unsafe fn set_len(&mut self, len: usize) { Self::set_len(self, len); }
+    fn len(&self) -> usize {
+        let len = Self::len(self);
+        unsafe { assume(len <= isize::MAX as usize) };
+        len
+    }
+    #[inline(always)]
+    unsafe fn set_len(&mut self, len: usize) { Self::set_len(self, len) }
 }
 
 impl ReservableBuf for ::alloc::vec::Vec<u8> {
     #[inline(always)]
-    fn reserve(&mut self, additional: usize) { Self::reserve(self, additional); }
+    fn as_mut_ptr(&mut self) -> *mut u8 { Self::as_mut_ptr(self) }
+    #[inline(always)]
+    fn reserve(&mut self, additional: usize) { Self::reserve(self, additional) }
     #[inline(always)]
     fn len(&self) -> usize { Self::len(self) }
     #[inline(always)]
-    unsafe fn set_len(&mut self, len: usize) { Self::set_len(self, len); }
+    unsafe fn set_len(&mut self, len: usize) { Self::set_len(self, len) }
+}
+
+#[inline(always)]
+fn encode_packed_fast_impl<T, B, F>(values: &[T], buf: &mut B, encode_varint: F)
+where
+    T: Copy,
+    B: ReservableBuf,
+    F: Fn(T, &mut B) -> usize,
+{
+    #[cfg(target_pointer_width = "32")]
+    const VARINT_MAX_LEN: usize = 5;
+    #[cfg(target_pointer_width = "64")]
+    const VARINT_MAX_LEN: usize = 9;
+
+    #[inline(always)]
+    unsafe fn encode_varint_fast(value: usize, buf: &mut impl BufMut) -> usize {
+        #[cfg(target_pointer_width = "32")]
+        {
+            let value = value as u32;
+            let len = encoded_len_varint32(value);
+            assume(len <= VARINT_MAX_LEN);
+            encode_varint32_fast(value, len, buf);
+            len
+        }
+        #[cfg(target_pointer_width = "64")]
+        {
+            let value = value as u64;
+            let len = encoded_len_varint64(value);
+            assume(len <= VARINT_MAX_LEN);
+            encode_varint64_fast(value, len, buf);
+            len
+        }
+    }
+
+    let start_ptr = buf.as_mut_ptr();
+
+    buf.reserve(VARINT_MAX_LEN);
+    unsafe { buf.set_len(buf.len() + VARINT_MAX_LEN) }
+
+    let mut length = 0;
+    for &value in values {
+        length += encode_varint(value, buf);
+    }
+
+    let mut length_slice = unsafe {
+        &mut *(start_ptr as *mut [::core::mem::MaybeUninit<u8>; VARINT_MAX_LEN])
+            as &mut [::core::mem::MaybeUninit<u8>]
+    };
+    let len = unsafe { encode_varint_fast(length, &mut length_slice) };
+
+    unsafe {
+        let dst = start_ptr.add(len);
+        let src = start_ptr.add(VARINT_MAX_LEN);
+        ::core::ptr::copy(src, dst, length);
+        buf.set_len(buf.len().unchecked_sub(VARINT_MAX_LEN).unchecked_add(len))
+    }
 }

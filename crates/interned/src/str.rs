@@ -870,7 +870,7 @@ impl Hash for Str {
     /// assert_eq!(map.get(&s2), Some(&"value"));  // s2 可以找到 s1 插入的值
     /// ```
     #[inline]
-    fn hash<H: Hasher>(&self, state: &mut H) { state.write_str(self.as_str()) }
+    fn hash<H: Hasher>(&self, state: &mut H) { self.as_str().hash(state) }
 }
 
 // ============================================================================

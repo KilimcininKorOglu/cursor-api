@@ -8,7 +8,6 @@ pub struct BuildKeyRequest {
     pub client_key: super::Hash,
     pub config_version: Option<uuid::Uuid>,
     pub session_id: uuid::Uuid,
-    pub secret: Option<String>,
     pub proxy_name: Option<String>,
     pub timezone: Option<chrono_tz::Tz>,
     pub gcpp_host: Option<super::GcppHost>,

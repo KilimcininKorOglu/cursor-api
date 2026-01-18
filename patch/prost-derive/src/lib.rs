@@ -1,33 +1,29 @@
-#![doc(html_root_url = "https://docs.rs/prost-derive/0.14.1")]
+#![doc(html_root_url = "https://docs.rs/prost-derive/0.14.2")]
 // The `quote!` macro requires deep recursion.
 #![recursion_limit = "4096"]
 
 extern crate alloc;
 extern crate proc_macro;
 
-use anyhow::{bail, Context, Error};
+use anyhow::{Context, Error, bail};
 use itertools::Itertools;
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use syn::{
-    punctuated::Punctuated, Data, DataEnum, DataStruct, DeriveInput, Expr, ExprLit, Fields,
-    FieldsNamed, FieldsUnnamed, Ident, Index, Variant,
+    Attribute, Data, DataEnum, DataStruct, DeriveInput, Expr, ExprLit, Fields, FieldsNamed,
+    FieldsUnnamed, Ident, Index, Lit, Meta, MetaNameValue, Path, Token, Variant,
+    punctuated::Punctuated,
 };
-use syn::{Attribute, Lit, Meta, MetaNameValue, Path, Token};
 
 mod field;
-use crate::field::Field;
-
 use self::field::set_option;
+use crate::field::Field;
 
 fn try_message(input: TokenStream) -> Result<TokenStream, Error> {
     let input: DeriveInput = syn::parse2(input)?;
     let ident = input.ident;
 
-    let Attributes {
-        skip_debug,
-        prost_path,
-    } = Attributes::new(input.attrs)?;
+    let Attributes { skip_debug, prost_path } = Attributes::new(input.attrs)?;
 
     let variant_data = match input.data {
         Data::Struct(variant_data) => variant_data,
@@ -39,21 +35,13 @@ fn try_message(input: TokenStream) -> Result<TokenStream, Error> {
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
     let (is_struct, fields) = match variant_data {
-        DataStruct {
-            fields: Fields::Named(FieldsNamed { named: fields, .. }),
-            ..
-        } => (true, fields.into_iter().collect()),
-        DataStruct {
-            fields:
-                Fields::Unnamed(FieldsUnnamed {
-                    unnamed: fields, ..
-                }),
-            ..
-        } => (false, fields.into_iter().collect()),
-        DataStruct {
-            fields: Fields::Unit,
-            ..
-        } => (false, Vec::new()),
+        DataStruct { fields: Fields::Named(FieldsNamed { named: fields, .. }), .. } => {
+            (true, fields.into_iter().collect())
+        }
+        DataStruct { fields: Fields::Unnamed(FieldsUnnamed { unnamed: fields, .. }), .. } => {
+            (false, fields.into_iter().collect())
+        }
+        DataStruct { fields: Fields::Unit, .. } => (false, Vec::new()),
     };
 
     let mut next_tag: u32 = 1;
@@ -62,10 +50,7 @@ fn try_message(input: TokenStream) -> Result<TokenStream, Error> {
         .enumerate()
         .flat_map(|(i, field)| {
             let field_ident = field.ident.map(|x| quote!(#x)).unwrap_or_else(|| {
-                let index = Index {
-                    index: i as u32,
-                    span: Span::call_site(),
-                };
+                let index = Index { index: i as u32, span: Span::call_site() };
                 quote!(#index)
             });
             match Field::new(field.attrs, Some(next_tag)) {
@@ -74,9 +59,9 @@ fn try_message(input: TokenStream) -> Result<TokenStream, Error> {
                     Some(Ok((field_ident, field)))
                 }
                 Ok(None) => None,
-                Err(err) => Some(Err(
-                    err.context(format!("invalid message field {ident}.{field_ident}"))
-                )),
+                Err(err) => {
+                    Some(Err(err.context(format!("invalid message field {ident}.{field_ident}"))))
+                }
             }
         })
         .collect::<Result<Vec<_>, _>>()?;
@@ -91,17 +76,10 @@ fn try_message(input: TokenStream) -> Result<TokenStream, Error> {
     fields.sort_by_key(|(_, field)| field.tags().into_iter().min().unwrap());
     let fields = fields;
 
-    if let Some(duplicate_tag) = fields
-        .iter()
-        .flat_map(|(_, field)| field.tags())
-        .duplicates()
-        .next()
+    if let Some(duplicate_tag) =
+        fields.iter().flat_map(|(_, field)| field.tags()).duplicates().next()
     {
-        bail!(
-            "message {} has multiple fields with tag {}",
-            ident,
-            duplicate_tag
-        )
+        bail!("message {ident} has multiple fields with tag {duplicate_tag}")
     };
 
     let encoded_len = fields
@@ -136,9 +114,7 @@ fn try_message(input: TokenStream) -> Result<TokenStream, Error> {
         )
     };
 
-    let clear = fields
-        .iter()
-        .map(|(field_ident, field)| field.clear(quote!(self.#field_ident)));
+    let clear = fields.iter().map(|(field_ident, field)| field.clear(quote!(self.#field_ident)));
 
     let default = if is_struct {
         let default = fields.iter().map(|(field_ident, field)| {
@@ -258,7 +234,9 @@ fn try_message(input: TokenStream) -> Result<TokenStream, Error> {
 
 #[proc_macro_derive(Message, attributes(prost))]
 pub fn message(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    try_message(input.into()).unwrap().into()
+    let a: proc_macro::TokenStream = try_message(input.into()).unwrap().into();
+    std::io::Write::write_all(&mut std::fs::OpenOptions::new().write(true).create(true).open(".log").unwrap(), a.to_string().as_bytes()).unwrap();
+    a
 }
 
 fn try_enumeration(input: TokenStream) -> Result<TokenStream, Error> {
@@ -278,14 +256,7 @@ fn try_enumeration(input: TokenStream) -> Result<TokenStream, Error> {
 
     // Map the variants into 'fields'.
     let mut variants: Vec<(Ident, Expr, Option<TokenStream>)> = Vec::new();
-    for Variant {
-        attrs,
-        ident,
-        fields,
-        discriminant,
-        ..
-    } in punctuated_variants
-    {
+    for Variant { attrs, ident, fields, discriminant, .. } in punctuated_variants {
         match fields {
             Fields::Unit => (),
             Fields::Named(_) | Fields::Unnamed(_) => {
@@ -381,10 +352,7 @@ fn try_oneof(input: TokenStream) -> Result<TokenStream, Error> {
 
     let ident = input.ident;
 
-    let Attributes {
-        skip_debug,
-        prost_path,
-    } = Attributes::new(input.attrs)?;
+    let Attributes { skip_debug, prost_path } = Attributes::new(input.attrs)?;
 
     let variants = match input.data {
         Data::Enum(DataEnum { variants, .. }) => variants,
@@ -397,19 +365,11 @@ fn try_oneof(input: TokenStream) -> Result<TokenStream, Error> {
 
     // Map the variants into 'fields'.
     let mut fields: Vec<(Ident, Field, Option<TokenStream>)> = Vec::new();
-    for Variant {
-        attrs,
-        ident: variant_ident,
-        fields: variant_fields,
-        ..
-    } in variants
-    {
+    for Variant { attrs, ident: variant_ident, fields: variant_fields, .. } in variants {
         let variant_fields = match variant_fields {
             Fields::Unit => Punctuated::new(),
             Fields::Named(FieldsNamed { named: fields, .. })
-            | Fields::Unnamed(FieldsUnnamed {
-                unnamed: fields, ..
-            }) => fields,
+            | Fields::Unnamed(FieldsUnnamed { unnamed: fields, .. }) => fields,
         };
         if variant_fields.len() != 1 {
             bail!("Oneof enum variants must have a single field");
@@ -429,17 +389,10 @@ fn try_oneof(input: TokenStream) -> Result<TokenStream, Error> {
     // tags.
     assert!(fields.iter().all(|(_, field, _)| field.tags().len() == 1));
 
-    if let Some(duplicate_tag) = fields
-        .iter()
-        .flat_map(|(_, field, _)| field.tags())
-        .duplicates()
-        .next()
+    if let Some(duplicate_tag) =
+        fields.iter().flat_map(|(_, field, _)| field.tags()).duplicates().next()
     {
-        bail!(
-            "invalid oneof {}: multiple variants have tag {}",
-            ident,
-            duplicate_tag
-        );
+        bail!("invalid oneof {ident}: multiple variants have tag {duplicate_tag}");
     }
 
     let encode = fields.iter().map(|(variant_ident, field, deprecated)| {
@@ -560,10 +513,7 @@ fn get_prost_path(attrs: &[Meta]) -> Result<Path, Error> {
         match attr {
             Meta::NameValue(MetaNameValue {
                 path,
-                value:
-                    Expr::Lit(ExprLit {
-                        lit: Lit::Str(lit), ..
-                    }),
+                value: Expr::Lit(ExprLit { lit: Lit::Str(lit), .. }),
                 ..
             }) if path.is_ident("prost_path") => {
                 let path: Path =
@@ -594,10 +544,7 @@ impl Attributes {
         let attrs = prost_attrs(attrs)?;
         let prost_path = get_prost_path(&attrs)?;
 
-        Ok(Self {
-            skip_debug,
-            prost_path,
-        })
+        Ok(Self { skip_debug, prost_path })
     }
 }
 
@@ -617,9 +564,7 @@ mod test {
             }
         ));
         assert_eq!(
-            output
-                .expect_err("did not reject colliding message fields")
-                .to_string(),
+            output.expect_err("did not reject colliding message fields").to_string(),
             "message Invalid has multiple fields with tag 1"
         );
     }
@@ -637,9 +582,7 @@ mod test {
             }
         ));
         assert_eq!(
-            output
-                .expect_err("did not reject colliding oneof variants")
-                .to_string(),
+            output.expect_err("did not reject colliding oneof variants").to_string(),
             "invalid oneof Invalid: multiple variants have tag 1"
         );
     }
@@ -653,9 +596,7 @@ mod test {
             }
         ));
         assert_eq!(
-            output
-                .expect_err("did not reject multiple tags on oneof variant")
-                .to_string(),
+            output.expect_err("did not reject multiple tags on oneof variant").to_string(),
             "duplicate tag attributes: 1 and 2"
         );
 
@@ -668,9 +609,7 @@ mod test {
         ));
         assert!(output.is_err());
         assert_eq!(
-            output
-                .expect_err("did not reject multiple tags on oneof variant")
-                .to_string(),
+            output.expect_err("did not reject multiple tags on oneof variant").to_string(),
             "duplicate tag attributes: 3 and 4"
         );
 
@@ -682,9 +621,7 @@ mod test {
         ));
         assert!(output.is_err());
         assert_eq!(
-            output
-                .expect_err("did not reject multiple tags on oneof variant")
-                .to_string(),
+            output.expect_err("did not reject multiple tags on oneof variant").to_string(),
             "unknown attribute(s): #[prost(tags = \"5,6\")]"
         );
     }

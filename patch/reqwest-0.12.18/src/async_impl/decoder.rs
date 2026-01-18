@@ -90,7 +90,7 @@ impl Accepts {
 /// A response decompressor over a non-blocking stream of chunks.
 ///
 /// The inner decoder may be constructed asynchronously.
-pub(crate) struct Decoder {
+pub struct Decoder {
     inner: Inner,
 }
 

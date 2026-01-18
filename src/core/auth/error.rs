@@ -4,6 +4,7 @@ use http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
 
+use crate::core::error::ErrorExt;
 use crate::core::model::{anthropic, openai};
 use crate::common::model::{ApiStatus, GenericError};
 
@@ -83,22 +84,24 @@ impl AuthError {
         }
         .wrapped()
     }
+}
 
+impl ErrorExt for AuthError {
     /// Converts to Generic error format
     #[inline]
-    pub fn into_generic_tuple(self) -> (StatusCode, Json<GenericError>) {
+    fn into_generic_tuple(self) -> (StatusCode, Json<GenericError>) {
         (self.status_code(), Json(self.into_generic()))
     }
 
     /// Converts to OpenAI error format
     #[inline]
-    pub fn into_openai_tuple(self) -> (StatusCode, Json<openai::OpenAiError>) {
+    fn into_openai_tuple(self) -> (StatusCode, Json<openai::OpenAiError>) {
         (self.status_code(), Json(self.into_openai()))
     }
 
     /// Converts to Anthropic error format
     #[inline]
-    pub fn into_anthropic_tuple(self) -> (StatusCode, Json<anthropic::AnthropicError>) {
+    fn into_anthropic_tuple(self) -> (StatusCode, Json<anthropic::AnthropicError>) {
         (self.status_code(), Json(self.into_anthropic()))
     }
 }

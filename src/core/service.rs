@@ -1,11 +1,12 @@
+// mod backend;
+// mod context;
 pub mod cpp;
 
 use crate::{
     app::{
         constant::{
             CHATCMPL_PREFIX, ERR_RESPONSE_RECEIVED, ERR_STREAM_RESPONSE, MSG01_PREFIX,
-            OBJECT_CHAT_COMPLETION, OBJECT_CHAT_COMPLETION_CHUNK, THINKING_TAG_CLOSE,
-            THINKING_TAG_OPEN, UPSTREAM_FAILURE,
+            UPSTREAM_FAILURE,
             header::{CHUNKED, EVENT_STREAM, JSON, KEEP_ALIVE, NO_CACHE_REVALIDATE},
         },
         lazy::{AUTH_TOKEN, REAL_USAGE, chat_url, dry_chat_url},
@@ -16,10 +17,10 @@ use crate::{
     },
     common::{
         client::{AiServiceRequest, build_client_request},
-        model::{ApiStatus, GenericError, error::ChatError, tri::TriState},
+        model::{ApiStatus, GenericError, error::ChatError, tri::Tri},
         utils::{
             CollectBytes, TrimNewlines as _, get_available_models, get_token_profile,
-            get_token_usage, new_uuid_v4, string_builder, tokeninfo_to_token,
+            get_token_usage, new_uuid_v4, tokeninfo_to_token,
         },
     },
     core::{
@@ -27,9 +28,9 @@ use crate::{
         auth::{AuthError, TokenBundleResult, auth},
         config::{KeyConfig, parse_dynamic_token},
         constant::Models,
-        error::StreamError,
+        error::{ErrorExt as _, StreamError},
         model::{
-            ExtModel, MessageId, ModelsResponse, RawModelsResponse, Role,
+            ExtModel, MessageId, RawModelsResponse, Role,
             anthropic::{self, AnthropicError},
             openai::{self, OpenAiError},
         },
@@ -40,6 +41,7 @@ use crate::{
     },
 };
 use alloc::{borrow::Cow, sync::Arc};
+use atomic_enum::{Atomic, atomic_enum};
 use axum::{
     Json,
     body::Body,
@@ -49,9 +51,9 @@ use axum::{
 use bytes::Bytes;
 use core::{
     convert::Infallible,
-    sync::atomic::{AtomicBool, AtomicU8, AtomicU32, Ordering},
+    sync::atomic::{AtomicU32, Ordering},
 };
-use futures::StreamExt as _;
+use futures_util::StreamExt as _;
 use http::{
     Extensions, StatusCode,
     header::{CACHE_CONTROL, CONNECTION, CONTENT_LENGTH, CONTENT_TYPE, TRANSFER_ENCODING},
@@ -61,7 +63,7 @@ use tokio::sync::Mutex;
 
 pub async fn handle_raw_models() -> Result<Json<RawModelsResponse>, (StatusCode, Json<GenericError>)>
 {
-    if let Some(available_models) = Models::to_raw_arc() {
+    if let Some(available_models) = Models::get_raw_models_cache() {
         Ok(Json(RawModelsResponse(available_models)))
     } else {
         Err((
@@ -82,9 +84,17 @@ pub async fn handle_models(
     State(state): State<Arc<AppState>>,
     headers: http::HeaderMap,
     Query(request): Query<super::aiserver::v1::AvailableModelsRequest>,
-) -> Result<Json<ModelsResponse>, (StatusCode, Json<GenericError>)> {
+) -> Result<Response, (StatusCode, Json<GenericError>)> {
+    fn get_current() -> Response {
+        use axum::response::IntoResponse as _;
+        let content = Models::get_models_cache().into_bytes();
+        ([(CONTENT_TYPE, JSON)], content).into_response()
+    }
+
     // 如果没有认证头，返回默认可用模型
-    let Some(auth_token) = auth(&headers) else { return Ok(Json(ModelsResponse)) };
+    let Some(auth_token) = auth(&headers) else {
+        return Ok(get_current());
+    };
 
     // 获取token信息
     let (ext_token, use_pri) = (async || {
@@ -124,9 +134,9 @@ pub async fn handle_models(
             }
         } else
         // 动态密钥
-        if AppConfig::get_dynamic_key() {
+        if AppConfig::is_dynamic_key_enabled() {
             if let Some(parsed_config) = parse_dynamic_token(auth_token) {
-                if let Some(ext_token) = parsed_config.token_info.and_then(tokeninfo_to_token) {
+                if let Some(ext_token) = parsed_config.into_tuple().and_then(tokeninfo_to_token) {
                     return Ok((ext_token, false));
                 }
             }
@@ -161,14 +171,43 @@ pub async fn handle_models(
         )
     })?;
 
-    Ok(Json(ModelsResponse))
+    Ok(get_current())
 }
+
+#[repr(u8)]
+#[derive(Clone, Copy, PartialEq)]
+enum StreamState {
+    /// 初始状态，什么都未开始
+    NotStarted,
+    // /// message_start 已完成，等待 content_block_start
+    // MessageStarted,
+    /// content_block_start 已完成，正在接收 content_block_delta
+    ContentBlockActive,
+    // /// content_block_stop 已完成，等待下一个 content_block_start 或 message_delta
+    // BetweenBlocks,
+    // /// message_delta 已完成，等待 message_stop
+    // MessageEnding,
+    /// message_stop 已完成，流结束
+    Completed,
+}
+
+#[repr(u8)]
+#[derive(Clone, Copy, PartialEq)]
+enum LastContentType {
+    None,
+    Thinking,
+    Text,
+    InputJson,
+}
+
+atomic_enum!(StreamState = u8);
+atomic_enum!(LastContentType = u8);
 
 // 聊天处理函数的签名
 pub async fn handle_chat_completions(
     State(state): State<Arc<AppState>>,
     mut extensions: Extensions,
-    Json(request): Json<openai::ChatRequest>,
+    Json(request): Json<openai::ChatCompletionCreateParams>,
 ) -> Result<Response<Body>, (StatusCode, Json<OpenAiError>)> {
     let (ext_token, use_pri) =
         __unwrap!(extensions.remove::<TokenBundleResult>()).map_err(|e| e.into_openai_tuple())?;
@@ -177,15 +216,13 @@ pub async fn handle_chat_completions(
     let model = if let Some(model) = ExtModel::from_str(&request.model) {
         model
     } else {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(ChatError::ModelNotSupported(request.model).to_openai()),
-        ));
+        return Err(ChatError::ModelNotSupported(request.model).into_openai_tuple());
     };
+    let (params, tools, is_stream, stream_options) = request.strip();
 
     // 验证请求
-    if request.messages.is_empty() {
-        return Err((StatusCode::BAD_REQUEST, Json(ChatError::EmptyMessages.to_openai())));
+    if params.is_empty() {
+        return Err(ChatError::EmptyMessages(StatusCode::BAD_REQUEST).into_openai_tuple());
     }
 
     let current_config = __unwrap!(extensions.remove::<KeyConfig>());
@@ -258,7 +295,7 @@ pub async fn handle_chat_completions(
                 },
                 chain: Chain { delays: None, usage: None, think: None },
                 timing: TimingInfo { total: 0.0 },
-                stream: request.stream,
+                stream: is_stream,
                 status: LogStatus::Pending,
                 error: ErrorInfo::Empty,
             },
@@ -267,17 +304,16 @@ pub async fn handle_chat_completions(
         .await;
 
         // 如果需要获取用户使用情况,创建后台任务获取profile
-        if model
-            .is_usage_check(current_config.usage_check_models.as_ref().map(UsageCheck::from_proto))
+        if model.is_usage_check(current_config.usage_check_models.as_ref().map(UsageCheck::from_pb))
         {
             let unext = ext_token.store_unext();
             let state = state.clone();
             let log_id = next_id;
-            let client = ext_token.get_client();
+            let client = ext_token.get_client_lazy();
 
             usage_check = Some(async move {
                 let (usage, stripe, user, ..) =
-                    get_token_profile(client, unext.as_ref(), use_pri, false).await;
+                    get_token_profile(client(), unext.as_ref(), use_pri, false).await;
 
                 // 更新日志中的profile
                 log_manager::update_log(
@@ -329,19 +365,17 @@ pub async fn handle_chat_completions(
         current_id = 0;
     }
 
-    let disable_vision = __unwrap!(current_config.disable_vision);
-    let enable_slow_pool = __unwrap!(current_config.enable_slow_pool);
-
     // 将消息转换为hex格式
     let msg_id = uuid::Uuid::new_v4();
-    let hex_data = match super::adapter::openai::encode_create_params(
-        request.messages,
+    let data = match super::adapter::openai::encode_create_params(
+        params,
+        tools,
         ext_token.now(),
         model,
         msg_id,
         environment_info,
-        disable_vision,
-        enable_slow_pool,
+        current_config.disable_vision,
+        current_config.enable_slow_pool,
     )
     .await
     {
@@ -353,7 +387,7 @@ pub async fn handle_chat_completions(
             return Err(e.into_openai_tuple());
         }
     };
-    let msg_id = MessageId::new(msg_id.as_u128());
+    let msg_id = MessageId::new(msg_id.as_bytes());
 
     // 构建请求客户端
     let req = build_client_request(AiServiceRequest {
@@ -366,8 +400,9 @@ pub async fn handle_chat_completions(
         use_pri,
         cookie: None,
     });
+    // crate::debug!("request: {req:?}");
     // 发送请求
-    let response = req.body(hex_data).send().await;
+    let response = req.body(data).send().await;
 
     // 处理请求结果
     let response = match response {
@@ -376,10 +411,8 @@ pub async fn handle_chat_completions(
             log_manager::update_log(current_id, LogUpdate::Success).await;
             resp
         }
-        Err(mut e) => {
-            if let Some(url) = e.url_mut() {
-                let _ = url.set_host(None);
-            }
+        Err(e) => {
+            let e = e.without_url();
 
             // 根据错误类型返回不同的状态码
             let status_code = if e.is_timeout() {
@@ -387,6 +420,7 @@ pub async fn handle_chat_completions(
             } else {
                 StatusCode::INTERNAL_SERVER_ERROR
             };
+            crate::debug!("request: {e:?}");
             let e = e.to_string();
 
             // 更新请求日志为失败
@@ -395,16 +429,18 @@ pub async fn handle_chat_completions(
             state.decrement_active();
             state.increment_error();
 
-            return Err((status_code, Json(ChatError::RequestFailed(Cow::Owned(e)).to_openai())));
+            return Err(ChatError::RequestFailed(status_code, Cow::Owned(e)).into_openai_tuple());
         }
     };
 
     // 释放活动请求计数
     state.decrement_active();
 
-    let convert_web_ref = __unwrap!(current_config.include_web_references);
+    // crate::debug!("[{}] {:?}", response.status(), response.headers());
 
-    if request.stream {
+    let convert_web_ref = current_config.include_web_references;
+
+    if is_stream {
         let response_id = Arc::new({
             let mut buf = [0; 22];
             let mut s = String::with_capacity(31);
@@ -412,28 +448,29 @@ pub async fn handle_chat_completions(
             s.push_str(msg_id.to_str(&mut buf));
             s
         });
-        let is_start = Arc::new(AtomicBool::new(true));
-        let meet_thinking = Arc::new(AtomicBool::new(false));
+        let index = Arc::new(AtomicU32::new(0));
         let start_time = std::time::Instant::now();
         let decoder = Arc::new(Mutex::new(StreamDecoder::new()));
-        let is_end = Arc::new(AtomicBool::new(false));
-        let is_need = request.stream_options.is_some_and(|opt| opt.include_usage);
+        let stream_state = Arc::new(Atomic::new(StreamState::NotStarted));
+        let last_content_type = Arc::new(Atomic::new(LastContentType::None));
+        let is_need = stream_options.include_usage;
 
         // 定义消息处理器的上下文结构体
         struct MessageProcessContext<'a> {
             response_id: &'a str,
             model: &'static str,
-            is_start: &'a AtomicBool,
-            meet_thinking: &'a AtomicBool,
+            index: &'a AtomicU32,
             start_time: std::time::Instant,
+            stream_state: &'a Atomic<StreamState>,
+            last_content_type: &'a Atomic<LastContentType>,
             current_id: u64,
             created: i64,
-            is_end: &'a AtomicBool,
             is_need: bool,
         }
 
         #[inline]
-        fn extend_from_slice(vector: &mut Vec<u8>, value: &openai::ChatResponse) {
+        fn extend_from_slice<T>(vector: &mut Vec<u8>, value: &T)
+        where T: serde::Serialize {
             vector.extend_from_slice(b"data: ");
             let vector = {
                 let mut ser = serde_json::Serializer::new(vector);
@@ -456,101 +493,110 @@ pub async fn handle_chat_completions(
             for message in messages {
                 match message {
                     StreamMessage::Content(text) => {
-                        let is_first = ctx.is_start.load(Ordering::Acquire);
-                        let meet_thinking = ctx.meet_thinking.load(Ordering::Acquire);
-
-                        if meet_thinking {
-                            ctx.meet_thinking.store(false, Ordering::Release);
-                            let response = openai::ChatResponse {
-                                id: ctx.response_id,
-                                object: OBJECT_CHAT_COMPLETION_CHUNK,
-                                created: ctx.created,
-                                model: None,
-                                choices: Some(openai::Choice {
-                                    index: 0,
-                                    message: None,
-                                    delta: Some(openai::Delta {
-                                        role: None,
-                                        content: Some(Cow::Borrowed(*THINKING_TAG_CLOSE)),
-                                    }),
-                                    finish_reason: false,
-                                }),
-                                usage: TriState::Null(ctx.is_need),
-                            };
-                            extend_from_slice(&mut response_data, &response);
+                        let is_start =
+                            ctx.stream_state.load(Ordering::Acquire) == StreamState::NotStarted;
+                        if is_start {
+                            ctx.stream_state
+                                .store(StreamState::ContentBlockActive, Ordering::Release);
                         }
 
-                        let response = openai::ChatResponse {
+                        let last_type = ctx.last_content_type.load(Ordering::Acquire);
+                        if last_type != LastContentType::Text {
+                            ctx.last_content_type.store(LastContentType::Text, Ordering::Release);
+                        }
+
+                        let chunk = openai::ChatCompletionChunk {
                             id: ctx.response_id,
-                            object: OBJECT_CHAT_COMPLETION_CHUNK,
+                            object: openai::ObjectChatCompletionChunk,
                             created: ctx.created,
-                            model: if is_first { Some(ctx.model) } else { None },
-                            choices: Some(openai::Choice {
-                                index: 0,
-                                message: None,
-                                delta: Some(openai::Delta {
-                                    role: if is_first { Some(Role::Assistant) } else { None },
-                                    content: Some(Cow::Owned(if is_first {
-                                        ctx.is_start.store(false, Ordering::Release);
+                            model: ctx.model,
+                            choices: Some(openai::chat_completion_chunk::Choice {
+                                index: (),
+                                delta: Some(openai::chat_completion_chunk::choice::Delta {
+                                    role: if is_start { Some(Role::Assistant) } else { None },
+                                    content: Some(Cow::Owned(if is_start {
                                         text.trim_leading_newlines()
                                     } else {
                                         text
                                     })),
+                                    tool_calls: None,
                                 }),
-                                finish_reason: false,
+                                logprobs: (),
+                                finish_reason: None,
                             }),
-                            usage: TriState::Null(ctx.is_need),
+                            usage: Tri::Null(ctx.is_need),
                         };
 
-                        extend_from_slice(&mut response_data, &response);
+                        extend_from_slice(&mut response_data, &chunk);
                     }
-                    StreamMessage::Thinking(Thinking::Text(text)) => {
-                        let is_first = ctx.is_start.load(Ordering::Acquire);
-                        let meet_thinking = ctx.meet_thinking.load(Ordering::Acquire);
-
-                        if !meet_thinking {
-                            ctx.meet_thinking.store(true, Ordering::Release);
-                            let response = openai::ChatResponse {
-                                id: ctx.response_id,
-                                object: OBJECT_CHAT_COMPLETION_CHUNK,
-                                created: ctx.created,
-                                model: if is_first { Some(ctx.model) } else { None },
-                                choices: Some(openai::Choice {
-                                    index: 0,
-                                    message: None,
-                                    delta: Some(openai::Delta {
-                                        role: if is_first { Some(Role::Assistant) } else { None },
-                                        content: Some(Cow::Borrowed(*THINKING_TAG_OPEN)),
-                                    }),
-                                    finish_reason: false,
-                                }),
-                                usage: TriState::Null(ctx.is_need),
-                            };
-                            extend_from_slice(&mut response_data, &response);
+                    StreamMessage::ToolCall(tool_call) => {
+                        let is_start =
+                            ctx.stream_state.load(Ordering::Acquire) == StreamState::NotStarted;
+                        if is_start {
+                            ctx.stream_state
+                                .store(StreamState::ContentBlockActive, Ordering::Release);
                         }
 
-                        let response = openai::ChatResponse {
+                        let last_type = ctx.last_content_type.load(Ordering::Acquire);
+                        if last_type != LastContentType::InputJson {
+                            if last_type != LastContentType::None {
+                                ctx.index.fetch_add(1, Ordering::AcqRel);
+                            }
+
+                            let chunk = openai::ChatCompletionChunk {
+                                id: ctx.response_id,
+                                object: openai::ObjectChatCompletionChunk,
+                                created: ctx.created,
+                                model: ctx.model,
+                                choices: Some(openai::chat_completion_chunk::Choice {
+                                    index: (),
+                                    delta: Some(openai::chat_completion_chunk::choice::Delta {
+                                        role: if is_start { Some(Role::Assistant) } else { None },
+                                        content: None,
+                                        tool_calls: Some(Box::new(openai::chat_completion_chunk::choice::delta::ToolCall {
+                                            index: ctx.index.load(Ordering::Acquire),
+                                            id: Some(tool_call.id),
+                                            function: Some(openai::chat_completion_chunk::choice::delta::tool_call::Function::Start {
+                                                name: tool_call.name,
+                                                arguments: openai::EmptyString,
+                                            })
+                                        })),
+                                    }),
+                                    logprobs: (),
+                                    finish_reason: None,
+                                }),
+                                usage: Tri::Null(ctx.is_need),
+                            };
+                            extend_from_slice(&mut response_data, &chunk);
+
+                            ctx.last_content_type
+                                .store(LastContentType::InputJson, Ordering::Release);
+                        }
+
+                        let chunk = openai::ChatCompletionChunk {
                             id: ctx.response_id,
-                            object: OBJECT_CHAT_COMPLETION_CHUNK,
+                            object: openai::ObjectChatCompletionChunk,
                             created: ctx.created,
-                            model: None,
-                            choices: Some(openai::Choice {
-                                index: 0,
-                                message: None,
-                                delta: Some(openai::Delta {
+                            model: ctx.model,
+                            choices: Some(openai::chat_completion_chunk::Choice {
+                                index: (),
+                                delta: Some(openai::chat_completion_chunk::choice::Delta {
                                     role: None,
-                                    content: Some(Cow::Owned(if is_first {
-                                        ctx.is_start.store(false, Ordering::Release);
-                                        text.trim_leading_newlines()
-                                    } else {
-                                        text
+                                    content: None,
+                                    tool_calls: Some(Box::new(openai::chat_completion_chunk::choice::delta::ToolCall {
+                                        index: ctx.index.load(Ordering::Acquire),
+                                        id: None,
+                                        function: Some(openai::chat_completion_chunk::choice::delta::tool_call::Function::Partial {
+                                            arguments: tool_call.input,
+                                        })
                                     })),
                                 }),
-                                finish_reason: false,
+                                logprobs: (),
+                                finish_reason: None,
                             }),
-                            usage: TriState::Null(ctx.is_need),
+                            usage: Tri::Null(ctx.is_need),
                         };
-                        extend_from_slice(&mut response_data, &response);
+                        extend_from_slice(&mut response_data, &chunk);
                     }
                     StreamMessage::StreamEnd => {
                         // 计算总时间和首次片段时间
@@ -559,22 +605,7 @@ pub async fn handle_chat_completions(
                         log_manager::update_log(ctx.current_id, LogUpdate::Timing(total_time))
                             .await;
 
-                        let response = openai::ChatResponse {
-                            id: ctx.response_id,
-                            object: OBJECT_CHAT_COMPLETION_CHUNK,
-                            created: ctx.created,
-                            model: None,
-                            choices: Some(openai::Choice {
-                                index: 0,
-                                message: None,
-                                delta: Some(openai::Delta { role: None, content: None }),
-                                finish_reason: true,
-                            }),
-                            usage: TriState::Null(ctx.is_need),
-                        };
-                        extend_from_slice(&mut response_data, &response);
-
-                        ctx.is_end.store(true, Ordering::Release);
+                        ctx.stream_state.store(StreamState::Completed, Ordering::Release);
                         break;
                     }
                     // StreamMessage::Debug(debug_prompt) => {
@@ -629,15 +660,11 @@ pub async fn handle_chat_completions(
                         }
                     }
                     Some(Err(e)) => {
-                        return Err((
+                        return Err(ChatError::RequestFailed(
                             StatusCode::INTERNAL_SERVER_ERROR,
-                            Json(
-                                ChatError::RequestFailed(Cow::Owned(format!(
-                                    "Failed to read response chunk: {e}"
-                                )))
-                                .to_openai(),
-                            ),
-                        ));
+                            Cow::Owned(format!("Failed to read response chunk: {e}")),
+                        )
+                        .into_openai_tuple());
                     }
                     None => {
                         // 更新请求日志为失败
@@ -649,42 +676,36 @@ pub async fn handle_chat_completions(
                         )
                         .await;
                         state.increment_error();
-                        return Err((
+                        return Err(ChatError::RequestFailed(
                             StatusCode::INTERNAL_SERVER_ERROR,
-                            Json(
-                                ChatError::RequestFailed(Cow::Borrowed(ERR_STREAM_RESPONSE))
-                                    .to_openai(),
-                            ),
-                        ));
+                            Cow::Borrowed(ERR_STREAM_RESPONSE),
+                        )
+                        .into_openai_tuple());
                     }
                 }
             }
         }
 
-        let created = Arc::new(std::sync::OnceLock::new());
-        let created_clone = created.clone();
         let response_id_clone = response_id.clone();
-
         let decoder_clone = decoder.clone();
 
-        fn timestamp() -> i64 { DateTime::utc_now().timestamp() }
+        let created = DateTime::utc_now().timestamp();
 
         // 处理后续的stream
         let stream = stream
             .then(move |chunk| {
                 let decoder = decoder_clone.clone();
                 let response_id = response_id_clone.clone();
-                let is_start = is_start.clone();
-                let meet_thinking = meet_thinking.clone();
-                let created = created_clone.clone();
-                let is_end = is_end.clone();
+                let index = index.clone();
+                let stream_state = stream_state.clone();
+                let last_content_type = last_content_type.clone();
                 let drop_handle = drop_handle.clone();
 
                 async move {
                     let chunk = match chunk {
                         Ok(c) => c,
-                        Err(_) => {
-                            // crate::debug_println!("Find chunk error: {e:?}");
+                        Err(e) => {
+                            crate::debug!("Find chunk error: {e:?}");
                             return Ok::<_, Infallible>(Bytes::new());
                         }
                     };
@@ -692,12 +713,12 @@ pub async fn handle_chat_completions(
                     let ctx = MessageProcessContext {
                         response_id: &response_id,
                         model: model.id,
-                        is_start: &is_start,
-                        meet_thinking: &meet_thinking,
+                        index: &index,
                         start_time,
                         current_id,
-                        created: *created.get_or_init(timestamp),
-                        is_end: &is_end,
+                        created,
+                        stream_state: &stream_state,
+                        last_content_type: &last_content_type,
                         is_need,
                     };
 
@@ -741,8 +762,8 @@ pub async fn handle_chat_completions(
                         current_response
                     };
 
-                    if is_end.load(Ordering::Acquire) {
-                        drop_handle.drop_stream();
+                    if ctx.stream_state.load(Ordering::Acquire) == StreamState::Completed {
+                        drop_handle.drop_stream()
                     }
 
                     // crate::debug!("{:?}", unsafe{str::from_utf8_unchecked(&response_data)});
@@ -750,7 +771,7 @@ pub async fn handle_chat_completions(
                     Ok(Bytes::from(response_data))
                 }
             })
-            .chain(futures::stream::once(async move {
+            .chain(futures_util::stream::once(async move {
                 // 更新delays
                 let mut decoder_guard = decoder.lock().await;
                 let content_delays = decoder_guard.take_content_delays();
@@ -774,14 +795,37 @@ pub async fn handle_chat_completions(
 
                 let mut response_data = Vec::with_capacity(128);
 
+                let response = openai::ChatCompletionChunk {
+                    id: &response_id,
+                    object: openai::ObjectChatCompletionChunk,
+                    created: created,
+                    model: model.id,
+                    choices: Some(openai::chat_completion_chunk::Choice {
+                        index: (),
+                        delta: Some(openai::chat_completion_chunk::choice::Delta {
+                            role: None,
+                            content: None,
+                            tool_calls: None,
+                        }),
+                        logprobs: (),
+                        finish_reason: Some(if decoder_guard.tool_processed() != 0 {
+                            openai::FinishReason::Stop
+                        } else {
+                            openai::FinishReason::ToolCalls
+                        }),
+                    }),
+                    usage: Tri::Null(is_need),
+                };
+                extend_from_slice(&mut response_data, &response);
+
                 if is_need {
-                    let value = openai::ChatResponse {
+                    let value = openai::ChatCompletionChunk {
                         id: &response_id,
-                        object: OBJECT_CHAT_COMPLETION_CHUNK,
-                        created: *created.get_or_init(timestamp),
-                        model: None,
+                        object: openai::ObjectChatCompletionChunk,
+                        created,
+                        model: model.id,
                         choices: None,
-                        usage: TriState::Value(usage.unwrap_or_default()),
+                        usage: Tri::Value(usage.unwrap_or_default()),
                     };
                     extend_from_slice(&mut response_data, &value);
                 }
@@ -809,21 +853,18 @@ pub async fn handle_chat_completions(
         let mut decoder = StreamDecoder::new().no_first_cache();
         let mut thinking_text = String::with_capacity(128);
         let mut full_text = String::with_capacity(128);
+        let mut tool_calls = Vec::new();
         let mut stream = response.bytes_stream();
         // let mut prompt = Prompt::None;
 
         // 逐个处理chunks
         while let Some(chunk) = stream.next().await {
             let chunk = chunk.map_err(|e| {
-                (
+                ChatError::RequestFailed(
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(
-                        ChatError::RequestFailed(Cow::Owned(format!(
-                            "Failed to read response chunk: {e}"
-                        )))
-                        .to_openai(),
-                    ),
+                    Cow::Owned(format!("Failed to read response chunk: {e}")),
                 )
+                .into_openai_tuple()
             })?;
 
             // 立即处理当前chunk
@@ -831,11 +872,18 @@ pub async fn handle_chat_completions(
                 Ok(messages) => {
                     for message in messages {
                         match message {
-                            StreamMessage::Content(text) => {
-                                full_text.push_str(&text);
-                            }
+                            StreamMessage::Content(text) => full_text.push_str(&text),
                             StreamMessage::Thinking(Thinking::Text(text)) => {
-                                thinking_text.push_str(&text);
+                                thinking_text.push_str(&text)
+                            }
+                            StreamMessage::ToolCall(tool_call) => {
+                                tool_calls.push(openai::ChatCompletionMessageToolCall::Function {
+                                    id: tool_call.id,
+                                    function: openai::chat_completion_message_tool_call::Function {
+                                        arguments: tool_call.input,
+                                        name: tool_call.name,
+                                    },
+                                })
                             }
                             // StreamMessage::Debug(debug_prompt) => {
                             //     if prompt.is_none() {
@@ -871,17 +919,7 @@ pub async fn handle_chat_completions(
             }
         }
 
-        full_text = if !thinking_text.is_empty() {
-            thinking_text = thinking_text.trim_leading_newlines();
-            string_builder::StringBuilder::with_capacity(4)
-                .append(*THINKING_TAG_OPEN)
-                .append(&thinking_text)
-                .append(*THINKING_TAG_CLOSE)
-                .append(&full_text)
-                .build()
-        } else {
-            full_text.trim_leading_newlines()
-        };
+        full_text = full_text.trim_leading_newlines();
 
         // 检查响应是否为空
         if full_text.is_empty() {
@@ -892,10 +930,11 @@ pub async fn handle_chat_completions(
             )
             .await;
             state.increment_error();
-            return Err((
+            return Err(ChatError::RequestFailed(
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ChatError::RequestFailed(Cow::Borrowed(ERR_RESPONSE_RECEIVED)).to_openai()),
-            ));
+                Cow::Borrowed(ERR_RESPONSE_RECEIVED),
+            )
+            .into_openai_tuple());
         }
 
         let (chain_usage, openai_usage) = if *REAL_USAGE {
@@ -906,7 +945,7 @@ pub async fn handle_chat_completions(
             (None, None)
         };
 
-        let response_data = openai::ChatResponse {
+        let response_data = openai::ChatCompletion {
             id: &{
                 let mut buf = [0; 22];
                 let mut s = String::with_capacity(31);
@@ -914,19 +953,24 @@ pub async fn handle_chat_completions(
                 s.push_str(msg_id.to_str(&mut buf));
                 s
             },
-            object: OBJECT_CHAT_COMPLETION,
+            object: openai::ObjectChatCompletion,
             created: DateTime::utc_now().timestamp(),
             model: Some(model.id),
-            choices: Some(openai::Choice {
+            choices: Some(openai::chat_completion::Choice {
                 index: 0,
-                message: Some(openai::Message {
-                    role: Role::Assistant,
-                    content: openai::MessageContent::String(full_text),
-                }),
-                delta: None,
-                finish_reason: true,
+                finish_reason: if decoder.tool_processed() != 0 {
+                    openai::FinishReason::Stop
+                } else {
+                    openai::FinishReason::ToolCalls
+                },
+                message: openai::ChatCompletionMessage {
+                    role: openai::Assistant,
+                    content: Some(full_text),
+                    tool_calls,
+                },
+                logprobs: (),
             }),
-            usage: TriState::Value(openai_usage.unwrap_or_default()),
+            usage: openai_usage,
         };
 
         // 更新请求日志时间信息和状态
@@ -962,32 +1006,23 @@ pub async fn handle_chat_completions(
 pub async fn handle_messages(
     State(state): State<Arc<AppState>>,
     mut extensions: Extensions,
-    Json(mut request): Json<anthropic::MessageCreateParams>,
+    Json(request): Json<anthropic::MessageCreateParams>,
 ) -> Result<Response<Body>, (StatusCode, Json<AnthropicError>)> {
     let (ext_token, use_pri) = __unwrap!(extensions.remove::<TokenBundleResult>())
-        .map_err(|e| e.into_anthropic_tuple())?;
+        .map_err(AuthError::into_anthropic_tuple)?;
 
     // 验证模型是否支持并获取模型信息
-    let model = &mut request.model;
-    if matches!(request.thinking, Some(anthropic::ThinkingConfig::Enabled { .. })) {
-        let prefix = model.trim_suffix("-online").trim_suffix("-max");
-        if !prefix.ends_with("-thinking") {
-            model.insert_str(prefix.len(), "-thinking");
-        }
-    }
-    let model = if let Some(model) = ExtModel::from_str(model.as_str()) {
+    let model = if let Some(model) = ExtModel::from_str(request.model.as_str()) {
         model
     } else {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(ChatError::ModelNotSupported(request.model).to_anthropic()),
-        ));
+        return Err(ChatError::ModelNotSupported(request.model).into_anthropic_tuple());
     };
-    let params = request;
+    let is_stream = request.stream;
+    let (params, tools) = request.strip();
 
     // 验证请求
-    if params.messages.is_empty() {
-        return Err((StatusCode::BAD_REQUEST, Json(ChatError::EmptyMessages.to_anthropic())));
+    if params.0.is_empty() {
+        return Err(ChatError::EmptyMessages(StatusCode::BAD_REQUEST).into_anthropic_tuple());
     }
 
     let current_config = __unwrap!(extensions.remove::<KeyConfig>());
@@ -1060,7 +1095,7 @@ pub async fn handle_messages(
                 },
                 chain: Chain { delays: None, usage: None, think: None },
                 timing: TimingInfo { total: 0.0 },
-                stream: params.stream,
+                stream: is_stream,
                 status: LogStatus::Pending,
                 error: ErrorInfo::Empty,
             },
@@ -1069,8 +1104,7 @@ pub async fn handle_messages(
         .await;
 
         // 如果需要获取用户使用情况,创建后台任务获取profile
-        if model
-            .is_usage_check(current_config.usage_check_models.as_ref().map(UsageCheck::from_proto))
+        if model.is_usage_check(current_config.usage_check_models.as_ref().map(UsageCheck::from_pb))
         {
             let unext = ext_token.store_unext();
             let state = state.clone();
@@ -1131,20 +1165,18 @@ pub async fn handle_messages(
         current_id = 0;
     }
 
-    let disable_vision = __unwrap!(current_config.disable_vision);
-    let enable_slow_pool = __unwrap!(current_config.enable_slow_pool);
-
     // 将消息转换为hex格式
-    let stream = params.stream;
+    let stream = is_stream;
     let msg_id = uuid::Uuid::new_v4();
-    let hex_data = match super::adapter::anthropic::encode_create_params(
+    let data = match super::adapter::anthropic::encode_create_params(
         params,
+        tools,
         ext_token.now(),
         model,
         msg_id,
         environment_info,
-        disable_vision,
-        enable_slow_pool,
+        current_config.disable_vision,
+        current_config.enable_slow_pool,
     )
     .await
     {
@@ -1156,7 +1188,7 @@ pub async fn handle_messages(
             return Err(e.into_anthropic_tuple());
         }
     };
-    let msg_id = MessageId::new(msg_id.as_u128());
+    let msg_id = MessageId::new(msg_id.as_bytes());
 
     // 构建请求客户端
     let req = build_client_request(AiServiceRequest {
@@ -1169,8 +1201,9 @@ pub async fn handle_messages(
         use_pri,
         cookie: None,
     });
+    // crate::debug!("request: {req:?}");
     // 发送请求
-    let response = req.body(hex_data).send().await;
+    let response = req.body(data).send().await;
 
     // 处理请求结果
     let response = match response {
@@ -1179,10 +1212,8 @@ pub async fn handle_messages(
             log_manager::update_log(current_id, LogUpdate::Success).await;
             resp
         }
-        Err(mut e) => {
-            if let Some(url) = e.url_mut() {
-                let _ = url.set_host(None);
-            }
+        Err(e) => {
+            let e = e.without_url();
 
             // 根据错误类型返回不同的状态码
             let status_code = if e.is_timeout() {
@@ -1190,6 +1221,7 @@ pub async fn handle_messages(
             } else {
                 StatusCode::INTERNAL_SERVER_ERROR
             };
+            crate::debug!("request: {e:?}");
             let e = e.to_string();
 
             // 更新请求日志为失败
@@ -1198,17 +1230,16 @@ pub async fn handle_messages(
             state.decrement_active();
             state.increment_error();
 
-            return Err((
-                status_code,
-                Json(ChatError::RequestFailed(Cow::Owned(e)).to_anthropic()),
-            ));
+            return Err(ChatError::RequestFailed(status_code, Cow::Owned(e)).into_anthropic_tuple());
         }
     };
 
     // 释放活动请求计数
     state.decrement_active();
 
-    let convert_web_ref = __unwrap!(current_config.include_web_references);
+    // crate::debug!("[{}] {:?}", response.status(), response.headers());
+
+    let convert_web_ref = current_config.include_web_references;
 
     if stream {
         let msg_id = Arc::new({
@@ -1221,34 +1252,8 @@ pub async fn handle_messages(
         let index = Arc::new(AtomicU32::new(0));
         let start_time = std::time::Instant::now();
         let decoder = Arc::new(Mutex::new(StreamDecoder::new()));
-        let stream_state = Arc::new(AtomicU8::new(0));
-        let last_content_type = Arc::new(AtomicU8::new(0));
-
-        #[repr(u8)]
-        #[derive(Clone, Copy, PartialEq)]
-        enum StreamState {
-            /// 初始状态，什么都未开始
-            NotStarted = 0,
-            // /// message_start 已完成，等待 content_block_start
-            // MessageStarted = 1,
-            /// content_block_start 已完成，正在接收 content_block_delta
-            ContentBlockActive = 2,
-            // /// content_block_stop 已完成，等待下一个 content_block_start 或 message_delta
-            // BetweenBlocks = 3,
-            // /// message_delta 已完成，等待 message_stop
-            // MessageEnding = 4,
-            /// message_stop 已完成，流结束
-            Completed = 5,
-        }
-
-        #[repr(u8)]
-        #[derive(Clone, Copy, PartialEq)]
-        enum LastContentType {
-            None = 0,
-            Thinking = 1,
-            Text = 2,
-            InputJson = 3,
-        }
+        let stream_state = Arc::new(Atomic::new(StreamState::NotStarted));
+        let last_content_type = Arc::new(Atomic::new(LastContentType::None));
 
         // 定义消息处理器的上下文结构体
         struct MessageProcessContext<'a> {
@@ -1256,8 +1261,8 @@ pub async fn handle_messages(
             model: &'static str,
             index: &'a AtomicU32,
             start_time: std::time::Instant,
-            stream_state: &'a AtomicU8,
-            last_content_type: &'a AtomicU8,
+            stream_state: &'a Atomic<StreamState>,
+            last_content_type: &'a Atomic<LastContentType>,
             current_id: u64,
         }
 
@@ -1285,8 +1290,8 @@ pub async fn handle_messages(
                 match message {
                     StreamMessage::Thinking(thinking) => {
                         // 检查是否需要开始消息
-                        let current_state = ctx.stream_state.load(Ordering::Acquire);
-                        let is_start = current_state == StreamState::NotStarted as u8;
+                        let is_start =
+                            ctx.stream_state.load(Ordering::Acquire) == StreamState::NotStarted;
                         if is_start {
                             let event = anthropic::RawMessageStreamEvent::MessageStart {
                                 message: anthropic::Message {
@@ -1303,9 +1308,9 @@ pub async fn handle_messages(
                         // 检查是否需要切换或开始内容块
                         let last_type = ctx.last_content_type.load(Ordering::Acquire);
 
-                        if last_type != LastContentType::Thinking as u8 {
+                        if last_type != LastContentType::Thinking {
                             // 如果上次不是思考类型，需要结束上个块(如果有的话)
-                            if last_type != LastContentType::None as u8 {
+                            if last_type != LastContentType::None {
                                 let event = anthropic::RawMessageStreamEvent::ContentBlockStop {
                                     index: ctx.index.load(Ordering::Acquire),
                                 };
@@ -1330,9 +1335,9 @@ pub async fn handle_messages(
                             }
 
                             ctx.last_content_type
-                                .store(LastContentType::Thinking as u8, Ordering::Release);
+                                .store(LastContentType::Thinking, Ordering::Release);
                             ctx.stream_state
-                                .store(StreamState::ContentBlockActive as u8, Ordering::Release);
+                                .store(StreamState::ContentBlockActive, Ordering::Release);
                         }
 
                         match thinking {
@@ -1359,8 +1364,8 @@ pub async fn handle_messages(
                     }
                     StreamMessage::Content(text) => {
                         // 检查是否需要开始消息
-                        let current_state = ctx.stream_state.load(Ordering::Acquire);
-                        let is_start = current_state == StreamState::NotStarted as u8;
+                        let is_start =
+                            ctx.stream_state.load(Ordering::Acquire) == StreamState::NotStarted;
                         if is_start {
                             let event = anthropic::RawMessageStreamEvent::MessageStart {
                                 message: anthropic::Message {
@@ -1377,9 +1382,9 @@ pub async fn handle_messages(
                         // 检查是否需要切换或开始内容块
                         let last_type = ctx.last_content_type.load(Ordering::Acquire);
 
-                        if last_type != LastContentType::Text as u8 {
+                        if last_type != LastContentType::Text {
                             // 如果上次不是文本类型，需要结束上个块(如果有的话)
-                            if last_type != LastContentType::None as u8 {
+                            if last_type != LastContentType::None {
                                 let event = anthropic::RawMessageStreamEvent::ContentBlockStop {
                                     index: ctx.index.load(Ordering::Acquire),
                                 };
@@ -1402,10 +1407,9 @@ pub async fn handle_messages(
                                 extend_from_slice(&mut response_data, &event);
                             }
 
-                            ctx.last_content_type
-                                .store(LastContentType::Text as u8, Ordering::Release);
+                            ctx.last_content_type.store(LastContentType::Text, Ordering::Release);
                             ctx.stream_state
-                                .store(StreamState::ContentBlockActive as u8, Ordering::Release);
+                                .store(StreamState::ContentBlockActive, Ordering::Release);
                         }
 
                         let event = anthropic::RawMessageStreamEvent::ContentBlockDelta {
@@ -1418,9 +1422,9 @@ pub async fn handle_messages(
                         // 检查是否需要切换或开始内容块
                         let last_type = ctx.last_content_type.load(Ordering::Acquire);
 
-                        if last_type != LastContentType::InputJson as u8 {
+                        if last_type != LastContentType::InputJson {
                             // 如果上次不是InputJson类型，需要结束上个块(如果有的话)
-                            if last_type != LastContentType::None as u8 {
+                            if last_type != LastContentType::None {
                                 let event = anthropic::RawMessageStreamEvent::ContentBlockStop {
                                     index: ctx.index.load(Ordering::Acquire),
                                 };
@@ -1450,9 +1454,9 @@ pub async fn handle_messages(
                             extend_from_slice(&mut response_data, &event);
 
                             ctx.last_content_type
-                                .store(LastContentType::Text as u8, Ordering::Release);
+                                .store(LastContentType::InputJson, Ordering::Release);
                             ctx.stream_state
-                                .store(StreamState::ContentBlockActive as u8, Ordering::Release);
+                                .store(StreamState::ContentBlockActive, Ordering::Release);
                         }
 
                         let event = anthropic::RawMessageStreamEvent::ContentBlockDelta {
@@ -1472,14 +1476,14 @@ pub async fn handle_messages(
 
                         // 结束当前内容块(如果有的话)
                         let last_type = ctx.last_content_type.load(Ordering::Acquire);
-                        if last_type != LastContentType::None as u8 {
+                        if last_type != LastContentType::None {
                             let event = anthropic::RawMessageStreamEvent::ContentBlockStop {
                                 index: ctx.index.load(Ordering::Acquire),
                             };
                             extend_from_slice(&mut response_data, &event);
                         }
 
-                        ctx.stream_state.store(StreamState::Completed as u8, Ordering::Release);
+                        ctx.stream_state.store(StreamState::Completed, Ordering::Release);
                         break;
                     }
                     // StreamMessage::Debug(debug_prompt) => {
@@ -1534,15 +1538,11 @@ pub async fn handle_messages(
                         }
                     }
                     Some(Err(e)) => {
-                        return Err((
+                        return Err(ChatError::RequestFailed(
                             StatusCode::INTERNAL_SERVER_ERROR,
-                            Json(
-                                ChatError::RequestFailed(Cow::Owned(format!(
-                                    "Failed to read response chunk: {e}"
-                                )))
-                                .to_anthropic(),
-                            ),
-                        ));
+                            Cow::Owned(format!("Failed to read response chunk: {e}")),
+                        )
+                        .into_anthropic_tuple());
                     }
                     None => {
                         // 更新请求日志为失败
@@ -1554,13 +1554,11 @@ pub async fn handle_messages(
                         )
                         .await;
                         state.increment_error();
-                        return Err((
+                        return Err(ChatError::RequestFailed(
                             StatusCode::INTERNAL_SERVER_ERROR,
-                            Json(
-                                ChatError::RequestFailed(Cow::Borrowed(ERR_STREAM_RESPONSE))
-                                    .to_anthropic(),
-                            ),
-                        ));
+                            Cow::Borrowed(ERR_STREAM_RESPONSE),
+                        )
+                        .into_anthropic_tuple());
                     }
                 }
             }
@@ -1581,8 +1579,8 @@ pub async fn handle_messages(
                 async move {
                     let chunk = match chunk {
                         Ok(c) => c,
-                        Err(_) => {
-                            // crate::debug_println!("Find chunk error: {e:?}");
+                        Err(e) => {
+                            crate::debug!("Find chunk error: {e:?}");
                             return Ok::<_, Infallible>(Bytes::new());
                         }
                     };
@@ -1638,14 +1636,14 @@ pub async fn handle_messages(
                     };
 
                     // 检查是否已完成
-                    if ctx.stream_state.load(Ordering::Acquire) == StreamState::Completed as u8 {
-                        drop_handle.drop_stream();
+                    if ctx.stream_state.load(Ordering::Acquire) == StreamState::Completed {
+                        drop_handle.drop_stream()
                     }
 
                     Ok(Bytes::from(response_data))
                 }
             })
-            .chain(futures::stream::once(async move {
+            .chain(futures_util::stream::once(async move {
                 // 更新delays
                 let mut decoder_guard = decoder.lock().await;
                 let content_delays = decoder_guard.take_content_delays();
@@ -1671,10 +1669,10 @@ pub async fn handle_messages(
 
                 extend_from_slice(&mut response_data, &anthropic::RawMessageStreamEvent::MessageDelta {
                     delta: anthropic::MessageDelta {
-                        stop_reason: if decoder_guard.is_tool_processed() {
-                            anthropic::StopReason::ToolUse
-                        } else {
+                        stop_reason: if decoder_guard.tool_processed() != 0 {
                             anthropic::StopReason::EndTurn
+                        } else {
+                            anthropic::StopReason::ToolUse
                         },
                     },
                     usage: usage.unwrap_or_default(),
@@ -1707,15 +1705,11 @@ pub async fn handle_messages(
         // 逐个处理chunks
         while let Some(chunk) = stream.next().await {
             let chunk = chunk.map_err(|e| {
-                (
+                ChatError::RequestFailed(
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(
-                        ChatError::RequestFailed(Cow::Owned(format!(
-                            "Failed to read response chunk: {e}"
-                        )))
-                        .to_anthropic(),
-                    ),
+                    Cow::Owned(format!("Failed to read response chunk: {e}")),
                 )
+                .into_anthropic_tuple()
             })?;
 
             // 立即处理当前chunk
@@ -1775,7 +1769,7 @@ pub async fn handle_messages(
                             }
                             StreamMessage::ToolCall(tool_call) => {
                                 input_json.push_str(&tool_call.input);
-                                if decoder.is_tool_processed()
+                                if tool_call.is_last
                                     && let Ok(input) = serde_json::from_str(&input_json)
                                 {
                                     content.push(anthropic::ContentBlock::ToolUse {
@@ -1834,10 +1828,10 @@ pub async fn handle_messages(
         };
 
         let response_data = anthropic::Message {
-            stop_reason: Some(if decoder.is_tool_processed() {
-                anthropic::StopReason::ToolUse
-            } else {
+            stop_reason: Some(if decoder.tool_processed() != 0 {
                 anthropic::StopReason::EndTurn
+            } else {
+                anthropic::StopReason::ToolUse
             }),
             content,
             usage: anthropic_usage.unwrap_or_default(),
@@ -1883,51 +1877,39 @@ pub async fn handle_messages(
 
 pub async fn handle_messages_count_tokens(
     mut extensions: Extensions,
-    Json(mut request): Json<anthropic::MessageCreateParams>,
+    Json(request): Json<anthropic::MessageCreateParams>,
 ) -> Result<Response<Body>, (StatusCode, Json<AnthropicError>)> {
     let (ext_token, use_pri) = __unwrap!(extensions.remove::<TokenBundleResult>())
-        .map_err(|e| e.into_anthropic_tuple())?;
+        .map_err(AuthError::into_anthropic_tuple)?;
 
     // 验证模型是否支持并获取模型信息
-    let model = &mut request.model;
-    if matches!(request.thinking, Some(anthropic::ThinkingConfig::Enabled { .. })) {
-        let prefix = model.trim_suffix("-online").trim_suffix("-max");
-        if !prefix.ends_with("-thinking") {
-            model.insert_str(prefix.len(), "-thinking");
-        }
-    }
-    let model = if let Some(model) = ExtModel::from_str(model.as_str()) {
+    let model = if let Some(model) = ExtModel::from_str(request.model.as_str()) {
         model
     } else {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(ChatError::ModelNotSupported(request.model).to_anthropic()),
-        ));
+        return Err(ChatError::ModelNotSupported(request.model).into_anthropic_tuple());
     };
-    let params = request;
+    let (params, tools) = request.strip();
 
     // 验证请求
-    if params.messages.is_empty() {
-        return Err((StatusCode::BAD_REQUEST, Json(ChatError::EmptyMessages.to_anthropic())));
+    if params.0.is_empty() {
+        return Err(ChatError::EmptyMessages(StatusCode::BAD_REQUEST).into_anthropic_tuple());
     }
 
     let current_config = __unwrap!(extensions.remove::<KeyConfig>());
 
     let environment_info = __unwrap!(extensions.remove::<EnvironmentInfo>());
 
-    let disable_vision = __unwrap!(current_config.disable_vision);
-    let enable_slow_pool = __unwrap!(current_config.enable_slow_pool);
-
     // 将消息转换为hex格式
     let msg_id = uuid::Uuid::new_v4();
-    let hex_data = match super::adapter::anthropic::encode_create_params(
+    let (data, compressed) = match super::adapter::anthropic::non_stream::encode_create_params(
         params,
+        tools,
         ext_token.now(),
         model,
         msg_id,
         environment_info,
-        disable_vision,
-        enable_slow_pool,
+        current_config.disable_vision,
+        current_config.enable_slow_pool,
     )
     .await
     {
@@ -1940,37 +1922,34 @@ pub async fn handle_messages_count_tokens(
         ext_token: &ext_token,
         fs_client_key: None,
         url: dry_chat_url(use_pri),
-        stream: true,
-        compressed: true,
+        stream: false,
+        compressed,
         trace_id: new_uuid_v4(),
         use_pri,
         cookie: None,
     });
+    // crate::debug!("request: {req:?}");
     // 请求
-    let response = match CollectBytes(req.body(hex_data)).await {
+    let response = match CollectBytes(req.body(data)).await {
         Ok(resp) => {
             use super::{aiserver::v1::GetPromptDryRunResponse, error::CursorError};
             use prost::Message as _;
             match GetPromptDryRunResponse::decode(resp.clone()) {
                 Ok(resp) => resp,
                 Err(_) => {
-                    if prost::encoding::is_vaild_utf8(&resp)
-                        && let Ok(error) = CursorError::from_slice(resp.as_ref())
-                    {
+                    if let Ok(error) = CursorError::from_slice(resp.as_ref()) {
                         let canonical = error.canonical();
                         return Err((
                             canonical.status_code(),
                             Json(canonical.into_anthropic().wrapped()),
                         ));
                     }
-                    return Err((UPSTREAM_FAILURE, Json(ChatError::EmptyMessages.to_anthropic())));
+                    return Err(ChatError::EmptyMessages(UPSTREAM_FAILURE).into_anthropic_tuple());
                 }
             }
         }
-        Err(mut e) => {
-            if let Some(url) = e.url_mut() {
-                let _ = url.set_host(None);
-            }
+        Err(e) => {
+            let e = e.without_url();
 
             // 根据错误类型返回不同的状态码
             let status_code = if e.is_timeout() {
@@ -1978,12 +1957,10 @@ pub async fn handle_messages_count_tokens(
             } else {
                 StatusCode::INTERNAL_SERVER_ERROR
             };
+            crate::debug!("request: {e:?}");
             let e = e.to_string();
 
-            return Err((
-                status_code,
-                Json(ChatError::RequestFailed(Cow::Owned(e)).to_anthropic()),
-            ));
+            return Err(ChatError::RequestFailed(status_code, Cow::Owned(e)).into_anthropic_tuple());
         }
     };
 

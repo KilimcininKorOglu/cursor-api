@@ -6,17 +6,23 @@
 #![feature(const_destruct)]
 #![feature(const_trait_impl)]
 
-use core::{fmt, iter::FusedIterator, marker::Destruct};
+use core::{
+    fmt,
+    iter::FusedIterator,
+    marker::{Destruct, PhantomData},
+};
 
 /// Replication strategy for `RepMove`.
-pub trait Replicator<T> {
+///
+/// Implementations are distinguished by the argument types `Args`.
+pub const trait Replicator<Args, Src, Dst = Src> {
     /// Creates a replica with mutable access to the remaining count.
-    fn replicate(&mut self, source: &T, remaining: &mut usize) -> T;
+    fn replicate(&mut self, source: &Src, remaining: &mut usize) -> Dst;
 }
 
-// Blanket impl for simple replicators
-impl<T, F> Replicator<T> for F
-where F: FnMut(&T) -> T
+// Blanket impl for simple replicators: FnMut(&T) -> T
+impl<T, F> const Replicator<(&T,), T> for F
+where F: [const] FnMut(&T) -> T
 {
     #[inline]
     fn replicate(&mut self, source: &T, remaining: &mut usize) -> T {
@@ -26,32 +32,24 @@ where F: FnMut(&T) -> T
     }
 }
 
-// Note: Additional blanket impls for FnMut(&T, usize) -> T and FnMut(&T, &mut usize) -> T
-// would conflict with the above. Users needing state awareness should implement Replicator directly
-// or use a wrapper type.
-
-/// State-aware replicator wrapper for read-only access to remaining count.
-pub struct ReadState<F>(pub F);
-
-impl<T, F> Replicator<T> for ReadState<F>
-where F: FnMut(&T, usize) -> T
+// Blanket impl for state-aware replicators: FnMut(&T, usize) -> T
+impl<T, F> const Replicator<(&T, usize), T> for F
+where F: [const] FnMut(&T, usize) -> T
 {
     #[inline]
     fn replicate(&mut self, source: &T, remaining: &mut usize) -> T {
-        let item = (self.0)(source, *remaining);
+        let item = self(source, *remaining);
         *remaining = remaining.saturating_sub(1);
         item
     }
 }
 
-/// State-aware replicator wrapper for mutable access to remaining count.
-pub struct MutState<F>(pub F);
-
-impl<T, F> Replicator<T> for MutState<F>
-where F: FnMut(&T, &mut usize) -> T
+// Blanket impl for advanced state-aware replicators: FnMut(&T, &mut usize) -> T
+impl<T, F> const Replicator<(&T, &mut usize), T> for F
+where F: [const] FnMut(&T, &mut usize) -> T
 {
     #[inline]
-    fn replicate(&mut self, source: &T, remaining: &mut usize) -> T { (self.0)(source, remaining) }
+    fn replicate(&mut self, source: &T, remaining: &mut usize) -> T { self(source, remaining) }
 }
 
 enum State<T, R> {
@@ -61,29 +59,29 @@ enum State<T, R> {
 
 /// Iterator yielding N-1 replicas then the original.
 ///
+/// The behavior is determined by the signature of the `rep_fn` closure.
+///
 /// # Examples
 ///
-/// Simple cloning:
+/// Simple cloning `(&T) -> T`:
 /// ```
-/// # use core::num::NonZeroUsize;
 /// # use rep_move::RepMove;
 /// let v = vec![1, 2, 3];
-/// let mut iter = RepMove::new(v, Vec::clone, NonZeroUsize::new(3).unwrap());
+/// let mut iter = RepMove::new(v, Vec::clone, 3);
 ///
 /// assert_eq!(iter.next(), Some(vec![1, 2, 3]));
 /// assert_eq!(iter.next(), Some(vec![1, 2, 3]));
 /// assert_eq!(iter.next(), Some(vec![1, 2, 3])); // moved
 /// ```
 ///
-/// Read-only state awareness:
+/// Accessing remaining count `(&T, usize) -> T`:
 /// ```
-/// # use core::num::NonZeroUsize;
-/// # use rep_move::{RepMove, ReadState};
+/// # use rep_move::RepMove;
 /// let s = String::from("item");
 /// let mut iter = RepMove::new(
 ///     s,
-///     ReadState(|s: &String, n| format!("{}-{}", s, n)),
-///     NonZeroUsize::new(3).unwrap()
+///     |s: &String, n| format!("{}-{}", s, n),
+///     3
 /// );
 ///
 /// assert_eq!(iter.next(), Some("item-2".to_string()));
@@ -91,30 +89,30 @@ enum State<T, R> {
 /// assert_eq!(iter.next(), Some("item".to_string()));
 /// ```
 ///
-/// Full control over iteration:
+/// Modifying remaining count `(&T, &mut usize) -> T`:
 /// ```
-/// # use core::num::NonZeroUsize;
-/// # use rep_move::{RepMove, MutState};
+/// # use rep_move::RepMove;
 /// let v = vec![1, 2, 3];
 /// let mut iter = RepMove::new(
 ///     v,
-///     MutState(|v: &Vec<i32>, remaining: &mut usize| {
+///     |v: &Vec<i32>, remaining: &mut usize| {
 ///         if v.len() > 10 {
 ///             *remaining = 0; // Stop early for large vectors
 ///         } else {
 ///             *remaining = remaining.saturating_sub(1);
 ///         }
 ///         v.clone()
-///     }),
-///     NonZeroUsize::new(5).unwrap()
+///     },
+///     5
 /// );
 /// // Will yield fewer items due to the custom logic
 /// ```
-pub struct RepMove<T, R: Replicator<T>> {
+pub struct RepMove<Args, T, R: Replicator<Args, T>> {
     state: State<T, R>,
+    _marker: PhantomData<Args>,
 }
 
-impl<T, R: Replicator<T>> RepMove<T, R> {
+impl<Args, T, R: Replicator<Args, T>> RepMove<Args, T, R> {
     /// Creates a new replicating iterator.
     #[inline]
     pub const fn new(source: T, rep_fn: R, count: usize) -> Self
@@ -123,14 +121,17 @@ impl<T, R: Replicator<T>> RepMove<T, R> {
         R: [const] Destruct,
     {
         if count == 0 {
-            Self { state: State::Done }
+            Self { state: State::Done, _marker: PhantomData }
         } else {
-            Self { state: State::Active { source, remaining: count - 1, rep_fn } }
+            Self {
+                state: State::Active { source, remaining: count - 1, rep_fn },
+                _marker: PhantomData,
+            }
         }
     }
 }
 
-impl<T, R: Replicator<T>> Iterator for RepMove<T, R> {
+impl<Args, T, R: Replicator<Args, T>> Iterator for RepMove<Args, T, R> {
     type Item = T;
 
     #[inline]
@@ -158,7 +159,7 @@ impl<T, R: Replicator<T>> Iterator for RepMove<T, R> {
     }
 }
 
-impl<T, R: Replicator<T>> ExactSizeIterator for RepMove<T, R> {
+impl<Args, T, R: Replicator<Args, T>> ExactSizeIterator for RepMove<Args, T, R> {
     #[inline]
     fn len(&self) -> usize {
         match &self.state {
@@ -168,13 +169,13 @@ impl<T, R: Replicator<T>> ExactSizeIterator for RepMove<T, R> {
     }
 }
 
-impl<T, R: Replicator<T>> FusedIterator for RepMove<T, R> {}
+impl<Args, T, R: Replicator<Args, T>> FusedIterator for RepMove<Args, T, R> {}
 
-impl<T: fmt::Debug, R: Replicator<T>> fmt::Debug for RepMove<T, R> {
+impl<Args, T: fmt::Debug, R: Replicator<Args, T>> fmt::Debug for RepMove<Args, T, R> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self.state {
             State::Active { source, remaining, .. } => f
-                .debug_struct("RepMove")
+                .debug_struct("RepMove::Active")
                 .field("source", source)
                 .field("remaining", remaining)
                 .finish_non_exhaustive(),
@@ -214,7 +215,7 @@ mod tests {
     #[test]
     fn test_state_aware() {
         let s = String::from("test");
-        let mut iter = RepMove::new(s, ReadState(|s: &String, n| format!("{}-{}", s, n)), 2);
+        let mut iter = RepMove::new(s, |s: &String, n: usize| format!("{s}-{n}"), 2);
 
         assert_eq!(iter.next(), Some("test-1".to_string()));
         assert_eq!(iter.next(), Some("test".to_string()));
@@ -226,14 +227,14 @@ mod tests {
         let v = vec![1, 2, 3];
         let mut iter = RepMove::new(
             v,
-            MutState(|v: &Vec<i32>, remaining: &mut usize| {
+            |v: &Vec<i32>, remaining: &mut usize| {
                 if *remaining > 1 {
                     *remaining = 1; // Skip ahead
                 } else {
                     *remaining = remaining.saturating_sub(1);
                 }
                 v.clone()
-            }),
+            },
             4,
         );
 

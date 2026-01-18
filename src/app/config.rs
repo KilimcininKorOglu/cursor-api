@@ -66,12 +66,11 @@ pub async fn handle_config_update(
         "get" => Ok(Json(ConfigResponse {
             status: ApiStatus::Success,
             data: Some(ConfigData {
-                // content: AppConfig::get_page_content(&request.path),
                 vision_ability: AppConfig::get_vision_ability(),
                 enable_slow_pool: AppConfig::get_slow_pool(),
                 enable_long_context: AppConfig::get_long_context(),
                 usage_check_models: AppConfig::get_usage_check(),
-                enable_dynamic_key: AppConfig::get_dynamic_key(),
+                dynamic_key_secret: AppConfig::get_dynamic_key_secret(),
                 share_token: AppConfig::get_share_token(),
                 include_web_references: AppConfig::get_web_refs(),
                 fetch_raw_models: AppConfig::get_fetch_models(),
@@ -80,28 +79,12 @@ pub async fn handle_config_update(
         })),
 
         "update" => {
-            // 处理页面内容更新
-            // if !request.path.is_empty()
-            //     && let Some(content) = request.content
-            //     && AppConfig::update_page_content(&request.path, content)
-            // {
-            //     return Err((
-            //         StatusCode::BAD_REQUEST,
-            //         Json(GenericError {
-            //             status: ApiStatus::Error,
-            //             code: unsafe { ::core::intrinsics::transmute(StatusCode::BAD_REQUEST) },
-            //             error: Some(Cow::Borrowed("更新页面内容失败: 无效的路径")),
-            //             message: None,
-            //         }),
-            //     ));
-            // }
-
             handle_updates!(request,
                 vision_ability => AppConfig::update_vision_ability,
                 enable_slow_pool => AppConfig::update_slow_pool,
                 enable_long_context => AppConfig::update_long_context,
                 usage_check_models => AppConfig::update_usage_check,
-                enable_dynamic_key => AppConfig::update_dynamic_key,
+                dynamic_key_secret => AppConfig::update_dynamic_key_secret,
                 share_token => AppConfig::update_share_token,
                 include_web_references => AppConfig::update_web_refs,
                 fetch_raw_models => AppConfig::update_fetch_models,
@@ -115,25 +98,12 @@ pub async fn handle_config_update(
         }
 
         "reset" => {
-            // 重置页面内容
-            // if !request.path.is_empty() && AppConfig::reset_page_content(&request.path) {
-            //     return Err((
-            //         StatusCode::BAD_REQUEST,
-            //         Json(GenericError {
-            //             status: ApiStatus::Error,
-            //             code: unsafe { ::core::intrinsics::transmute(StatusCode::BAD_REQUEST) },
-            //             error: Some(Cow::Borrowed("重置页面内容失败: 无效的路径")),
-            //             message: None,
-            //         }),
-            //     ));
-            // }
-
             handle_resets!(request,
                 vision_ability => AppConfig::reset_vision_ability,
                 enable_slow_pool => AppConfig::reset_slow_pool,
                 enable_long_context => AppConfig::reset_long_context,
                 usage_check_models => AppConfig::reset_usage_check,
-                enable_dynamic_key => AppConfig::reset_dynamic_key,
+                dynamic_key_secret => AppConfig::reset_dynamic_key_secret,
                 share_token => AppConfig::reset_share_token,
                 include_web_references => AppConfig::reset_web_refs,
                 fetch_raw_models => AppConfig::reset_fetch_models,

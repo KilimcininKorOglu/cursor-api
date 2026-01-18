@@ -12,7 +12,7 @@ use super::{AuthError, auth};
 use crate::app::constant::AUTHORIZATION_BEARER_PREFIX;
 use crate::app::lazy::AUTH_TOKEN;
 use crate::app::model::{AppState, DateTime, QueueType};
-use crate::core::config::KeyConfig;
+use crate::core::config::KeyConfigBuilder;
 
 // 管理员认证中间件函数
 pub async fn admin_auth_middleware(request: Request<Body>, next: Next) -> Response {
@@ -38,7 +38,7 @@ pub async fn v1_auth_middleware(
         return AuthError::Unauthorized.into_response();
     };
 
-    let mut current_config = KeyConfig::new();
+    let mut current_config = KeyConfigBuilder::new();
 
     match get_token_bundle(
         &state,
@@ -54,7 +54,7 @@ pub async fn v1_auth_middleware(
             let environment_info = get_environment_info(request.headers(), request_time);
 
             request.extensions_mut().insert(v);
-            request.extensions_mut().insert(current_config);
+            request.extensions_mut().insert(current_config.with_global());
             request.extensions_mut().insert(request_time);
             request.extensions_mut().insert(environment_info);
         }
@@ -86,7 +86,7 @@ pub async fn v1_auth2_middleware(
         return AuthError::Unauthorized.into_response();
     };
 
-    let mut current_config = KeyConfig::new();
+    let mut current_config = KeyConfigBuilder::new();
 
     match get_token_bundle(
         &state,
@@ -101,7 +101,7 @@ pub async fn v1_auth2_middleware(
             let request_time = DateTime::now();
             let environment_info = get_environment_info(request.headers(), request_time);
 
-            request.extensions_mut().insert(current_config);
+            request.extensions_mut().insert(current_config.with_global());
             request.extensions_mut().insert(environment_info);
             request.extensions_mut().insert(v);
         }

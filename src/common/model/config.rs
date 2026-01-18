@@ -10,7 +10,8 @@ pub struct ConfigData {
     pub enable_slow_pool: bool,
     pub enable_long_context: bool,
     pub usage_check_models: UsageCheck,
-    pub enable_dynamic_key: bool,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub dynamic_key_secret: String,
     #[serde(skip_serializing_if = "String::is_empty")]
     pub share_token: String,
     pub include_web_references: bool,
@@ -25,7 +26,7 @@ pub struct ConfigUpdateRequest {
     pub enable_slow_pool: Option<bool>,
     pub enable_long_context: Option<bool>,
     pub usage_check_models: Option<UsageCheck>,
-    pub enable_dynamic_key: Option<bool>,
+    pub dynamic_key_secret: Option<String>,
     pub share_token: Option<String>,
     pub include_web_references: Option<bool>,
     pub fetch_raw_models: Option<FetchMode>,

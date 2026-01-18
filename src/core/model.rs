@@ -5,9 +5,12 @@ mod tool_id_parser;
 
 // use crate::app::constant::TOOLU01_PREFIX;
 use super::constant::Models;
+use crate::common::model::raw_json::RawJson;
 pub(crate) use resolver::{ExtModel, init_resolver};
 use serde::{Serialize, ser::SerializeStruct as _};
 pub(crate) use tool_id_parser::ToolId;
+
+pub(super) type IndexMap<K, V> = indexmap::IndexMap<K, V, ahash::RandomState>;
 
 #[derive(
     ::serde::Serialize,
@@ -31,12 +34,11 @@ pub enum Role {
 }
 
 // 模型定义
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct Model {
     pub server_id: &'static str,
     pub client_id: &'static str,
     pub id: &'static str,
-    pub display_name: &'static str,
     pub owned_by: &'static str,
     pub is_thinking: bool,
     pub is_image: bool,
@@ -66,7 +68,7 @@ impl Serialize for Model {
         let mut state = serializer.serialize_struct(MODEL_OBJECT, 11)?;
 
         state.serialize_field("id", self.id())?;
-        state.serialize_field("display_name", self.display_name)?;
+        state.serialize_field("display_name", self.client_id)?;
         state.serialize_field("created", CREATED)?;
         state.serialize_field("created_at", CREATED_AT)?;
         state.serialize_field("object", MODEL_OBJECT)?;
@@ -89,7 +91,19 @@ impl PartialEq for Model {
     }
 }
 
-pub struct ModelsResponse;
+#[repr(transparent)]
+pub struct ModelsResponse(pub Vec<Model>);
+
+impl core::ops::Deref for ModelsResponse {
+    type Target = Vec<Model>;
+    #[inline(always)]
+    fn deref(&self) -> &Self::Target { &self.0 }
+}
+
+impl core::ops::DerefMut for ModelsResponse {
+    #[inline(always)]
+    fn deref_mut(&mut self) -> &mut Self::Target { &mut self.0 }
+}
 
 impl Serialize for ModelsResponse {
     #[inline]
@@ -98,16 +112,14 @@ impl Serialize for ModelsResponse {
         let mut state = serializer.serialize_struct("ModelsResponse", 2)?;
 
         state.serialize_field("object", "list")?;
-        state.serialize_field("data", &Models::to_arc())?;
+        state.serialize_field("data", &self.0)?;
 
         state.end()
     }
 }
 
 #[repr(transparent)]
-pub struct RawModelsResponse(
-    pub(super) alloc::sync::Arc<crate::core::aiserver::v1::AvailableModelsResponse>,
-);
+pub struct RawModelsResponse(pub(super) RawJson);
 
 impl Serialize for RawModelsResponse {
     #[inline]
@@ -125,15 +137,15 @@ impl Serialize for RawModelsResponse {
 
 #[derive(Clone, Copy)]
 #[repr(transparent)]
-pub struct MessageId(u128);
+pub struct MessageId([u8; 16]);
 
 impl MessageId {
-    pub const fn new(v: u128) -> Self { Self(v) }
+    pub const fn new(v: &[u8; 16]) -> Self { Self(*v) }
 
     #[allow(clippy::wrong_self_convention)]
     #[inline(always)]
     pub fn to_str<'buf>(&self, buf: &'buf mut [u8; 22]) -> &'buf mut str {
-        crate::common::utils::base62::encode_fixed(self.0, buf);
+        crate::common::utils::base62::encode_fixed(u128::from_ne_bytes(self.0), buf);
         unsafe { ::core::str::from_utf8_unchecked_mut(buf) }
     }
 }

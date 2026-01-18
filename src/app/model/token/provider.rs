@@ -25,31 +25,35 @@ static mut PROVIDERS: &'static [&'static str] = DEFAULT_PROVIDERS;
 /// 该标识符会与支持的提供者列表进行验证
 #[derive(Clone, Copy, Hash)]
 #[repr(transparent)]
-pub struct Provider(pub(super) &'static str);
+pub struct Provider(usize);
 
 impl PartialEq for Provider {
     #[inline]
-    fn eq(&self, other: &Self) -> bool { self.0.as_ptr() == other.0.as_ptr() }
+    fn eq(&self, other: &Self) -> bool { self.0 == other.0 }
 }
 
 impl fmt::Display for Provider {
     #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { f.write_str(self.0) }
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { f.write_str(self.as_str()) }
 }
 
 impl Provider {
     #[inline]
+    #[allow(static_mut_refs)]
+    pub fn as_str(self) -> &'static str { unsafe { *PROVIDERS.get_unchecked(self.0) } }
+
+    #[inline]
     pub(super) fn from_str(s: &str) -> Result<Self, super::SubjectError> {
         unsafe { PROVIDERS }
             .iter()
-            .find(|&&provider| s == provider)
-            .map(|&s| Self(s))
+            .position(|&provider| s == provider)
+            .map(Self)
             .ok_or(super::SubjectError::UnsupportedProvider)
     }
 
     #[inline]
     pub(super) fn to_helper(self) -> super::ProviderHelper {
-        match self.0 {
+        match self.as_str() {
             AUTH0 => super::ProviderHelper::Auth0,
             GITHUB => super::ProviderHelper::Github,
             GOOGLE_OAUTH2 => super::ProviderHelper::Google,
@@ -69,7 +73,7 @@ impl ::serde::Serialize for Provider {
     #[inline]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where S: ::serde::Serializer {
-        serializer.serialize_str(self.0)
+        serializer.serialize_str(self.as_str())
     }
 }
 
@@ -128,7 +132,7 @@ pub fn parse_providers() {
                     Box::leak(Box::from(s))
                 }
             })
-            .collect::<Vec<&'static str>>();
+            .collect::<Vec<_>>();
 
         // 如果恰好是3个默认提供者且没有自定义提供者，保持默认值
         if custom_count == 0 && default_flags == ALL_DEFAULT {
@@ -136,16 +140,5 @@ pub fn parse_providers() {
         }
 
         unsafe { PROVIDERS = Box::leak(v.into_boxed_slice()) };
-    }
-}
-
-impl ::rand::distr::Distribution<Provider> for ::rand::distr::StandardUniform {
-    #[inline]
-    fn sample<R: ::rand::Rng + ?Sized>(&self, rng: &mut R) -> Provider {
-        let providers = unsafe { PROVIDERS };
-        debug_assert!(!providers.is_empty(), "providers list should not be empty");
-
-        let index = rng.random_range(0..providers.len());
-        Provider(providers[index])
     }
 }

@@ -41,13 +41,18 @@ pub(crate) trait RequestConfigValue: Copy + Clone + 'static {
 pub(crate) struct RequestConfig<T: RequestConfigValue>(Option<T::Value>);
 
 impl<T: RequestConfigValue> Default for RequestConfig<T> {
-    fn default() -> Self { RequestConfig(None) }
+    fn default() -> Self {
+        RequestConfig(None)
+    }
 }
 
 impl<T> RequestConfig<T>
-where T: RequestConfigValue
+where
+    T: RequestConfigValue,
 {
-    pub(crate) fn new(v: Option<T::Value>) -> Self { RequestConfig(v) }
+    pub(crate) fn new(v: Option<T::Value>) -> Self {
+        RequestConfig(v)
+    }
 
     /// format request config value as struct field.
     ///
@@ -68,7 +73,9 @@ where T: RequestConfigValue
     where
         'client: 'request,
     {
-        ext.get::<RequestConfig<T>>().and_then(|v| v.0.as_ref()).or(self.0.as_ref())
+        ext.get::<RequestConfig<T>>()
+            .and_then(|v| v.0.as_ref())
+            .or(self.0.as_ref())
     }
 
     /// Retrieve the value from the request's Extensions.
@@ -86,7 +93,7 @@ where T: RequestConfigValue
 // ================================
 //
 // The following sections are all configuration types
-// provided by reqwets.
+// provided by reqwest.
 //
 // To add a new config:
 //

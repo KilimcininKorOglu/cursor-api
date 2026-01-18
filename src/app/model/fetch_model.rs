@@ -1,5 +1,5 @@
 /// 模型数据获取模式
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 #[repr(u8)]
 pub enum FetchMode {
     /// 覆盖现有数据
@@ -24,8 +24,9 @@ impl FetchMode {
 
     /// 从字符串解析获取模式
     #[inline]
-    pub fn from_str(s: &str) -> Self {
-        match s.to_ascii_lowercase().as_str() {
+    pub fn from_str(mut s: String) -> Self {
+        s.make_ascii_lowercase();
+        match s.as_str() {
             Self::TRUNCATE => Self::Truncate,
             Self::APPEND_TRUNCATE => Self::AppendTruncate,
             Self::APPEND => Self::Append,
@@ -68,6 +69,6 @@ impl<'de> ::serde::Deserialize<'de> for FetchMode {
         D: ::serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        Ok(Self::from_str(&s))
+        Ok(Self::from_str(s))
     }
 }

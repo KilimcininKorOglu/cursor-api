@@ -5,6 +5,7 @@ mod config;
 mod context_fill_mode;
 mod cpp;
 mod default_instructions;
+pub mod dynamic_key;
 mod exchange_map;
 mod fetch_model;
 mod hash;
@@ -182,7 +183,7 @@ impl ChainUsage {
     pub fn into_anthropic_delta(self) -> crate::core::model::anthropic::MessageDeltaUsage {
         use crate::core::model::anthropic;
         anthropic::MessageDeltaUsage {
-            input_tokens: if self.input == 0 { None } else { Some(self.input) },
+            input_tokens: self.input,
             output_tokens: self.output,
             cache_creation_input_tokens: self.cache_write,
             cache_read_input_tokens: self.cache_read,
@@ -401,26 +402,32 @@ impl ExtToken {
     #[inline]
     pub fn get_client(&self) -> Client { get_client_or_general(self.proxy.as_deref()) }
 
+    #[inline]
+    pub fn get_client_lazy(&self) -> impl FnOnce<(), Output = Client> + Send + 'static {
+        let proxy = self.proxy.clone();
+        move || get_client_or_general(proxy.as_deref())
+    }
+
     /// 获取此 token 关联的时区
     #[inline]
-    fn get_timezone(&self) -> chrono_tz::Tz {
+    fn timezone(&self) -> chrono_tz::Tz {
         if let Some(tz) = self.timezone { tz } else { *super::lazy::GENERAL_TIMEZONE }
     }
 
     #[inline]
-    pub fn get_gcpp_host(&self) -> GcppHost {
+    pub fn gcpp_host(&self) -> GcppHost {
         if let Some(gh) = self.gcpp_host { gh } else { *super::lazy::GENERAL_GCPP_HOST }
     }
 
     /// 返回关联的时区名称
     #[inline]
-    pub fn timezone_name(&self) -> &'static str { self.get_timezone().name() }
+    pub fn timezone_name(&self) -> &'static str { self.timezone().name() }
 
     /// 获取当前时区的当前时间
     #[inline]
     pub fn now(&self) -> chrono::DateTime<chrono_tz::Tz> {
         use chrono::TimeZone as _;
-        self.get_timezone().from_utc_datetime(&DateTime::naive_now())
+        self.timezone().from_utc_datetime(&DateTime::naive_now())
     }
 
     #[inline]
@@ -503,7 +510,7 @@ impl<'a> UnextTokenRef<'a> {
 
         let bytes = result.into_bytes().into_boxed_slice().into();
 
-        crate::common::model::HeaderValue { inner: bytes, is_sensitive: true }.into()
+        unsafe { crate::common::model::HeaderValue { inner: bytes, is_sensitive: true }.into() }
     }
 
     #[inline]
@@ -517,7 +524,7 @@ impl<'a> UnextTokenRef<'a> {
 
         let bytes = result.into_boxed_slice().into();
 
-        crate::common::model::HeaderValue { inner: bytes, is_sensitive: true }.into()
+        unsafe { crate::common::model::HeaderValue { inner: bytes, is_sensitive: true }.into() }
     }
 }
 
@@ -647,6 +654,7 @@ where S: ::serde::Serializer {
 pub struct TokenStatus {
     #[serde(default = "crate::common::utils::r#true")]
     pub enabled: bool,
+    #[serde(default)]
     pub health: TokenHealth,
 }
 
@@ -794,7 +802,8 @@ pub struct CommonResponse {
 #[derive(Deserialize)]
 pub struct TokensStatusSetRequest {
     pub aliases: Vec<String>,
-    pub status: TokenStatus,
+    #[serde(default = "crate::common::utils::r#true")]
+    pub enabled: bool,
 }
 
 pub type TokensAliasSetRequest = HashMap<String, String>;

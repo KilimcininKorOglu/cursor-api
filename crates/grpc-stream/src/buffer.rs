@@ -1,36 +1,48 @@
 //! 内部缓冲区管理
 
-use core::iter::FusedIterator;
-
-use bytes::{Buf as _, BytesMut};
-
 use crate::frame::RawMessage;
+use core::iter::FusedIterator;
 
 /// 消息缓冲区（内部使用）
 pub struct Buffer {
-    inner: BytesMut,
+    inner: Vec<u8>,
+    cursor: usize,
 }
 
 impl Buffer {
     #[inline]
-    pub fn new() -> Self { Self { inner: BytesMut::new() } }
+    pub fn new() -> Self { Self { inner: Vec::new(), cursor: 0 } }
 
     #[inline]
     pub fn with_capacity(capacity: usize) -> Self {
-        Self { inner: BytesMut::with_capacity(capacity) }
+        Self { inner: Vec::with_capacity(capacity), cursor: 0 }
     }
 
     #[inline]
-    pub fn len(&self) -> usize { self.inner.len() }
+    pub fn len(&self) -> usize { unsafe { self.inner.len().unchecked_sub(self.cursor) } }
 
     #[inline]
-    pub fn is_empty(&self) -> bool { self.inner.is_empty() }
+    pub fn is_empty(&self) -> bool { self.len() == 0 }
 
     #[inline]
-    pub fn extend_from_slice(&mut self, data: &[u8]) { self.inner.extend_from_slice(data) }
+    pub fn extend_from_slice(&mut self, data: &[u8]) {
+        self.try_reclaim();
+        self.inner.extend_from_slice(data)
+    }
 
     #[inline]
-    pub fn advance(&mut self, cnt: usize) { self.inner.advance(cnt) }
+    pub unsafe fn advance_unchecked(&mut self, cnt: usize) {
+        self.cursor = unsafe { self.cursor.unchecked_add(cnt) }
+    }
+
+    #[inline]
+    /// reset if empty
+    fn try_reclaim(&mut self) {
+        if self.is_empty() {
+            self.inner.clear();
+            self.cursor = 0
+        }
+    }
 }
 
 impl Default for Buffer {
@@ -40,7 +52,7 @@ impl Default for Buffer {
 
 impl AsRef<[u8]> for Buffer {
     #[inline]
-    fn as_ref(&self) -> &[u8] { self.inner.as_ref() }
+    fn as_ref(&self) -> &[u8] { unsafe { self.inner.get_unchecked(self.cursor..) } }
 }
 
 /// 消息迭代器（内部使用）
@@ -91,6 +103,15 @@ impl<'b> Iterator for MessageIter<'b> {
 
     #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
+        let count = self.len();
+        (count, Some(count)) // 精确值
+    }
+}
+
+// 实现 ExactSizeIterator
+impl<'b> ExactSizeIterator for MessageIter<'b> {
+    #[inline]
+    fn len(&self) -> usize {
         // 精确计算剩余完整消息数量
         let mut count = 0;
         let mut offset = self.offset;
@@ -108,16 +129,7 @@ impl<'b> Iterator for MessageIter<'b> {
             offset += 5 + msg_len;
         }
 
-        (count, Some(count)) // 精确值
-    }
-}
-
-// 实现 ExactSizeIterator
-impl<'b> ExactSizeIterator for MessageIter<'b> {
-    #[inline]
-    fn len(&self) -> usize {
-        // size_hint() 已经返回精确值，直接使用
-        self.size_hint().0
+        count
     }
 }
 
@@ -129,7 +141,7 @@ impl<'b> IntoIterator for &'b Buffer {
     type IntoIter = MessageIter<'b>;
 
     #[inline]
-    fn into_iter(self) -> Self::IntoIter { MessageIter { buffer: self.inner.as_ref(), offset: 0 } }
+    fn into_iter(self) -> Self::IntoIter { MessageIter { buffer: self.as_ref(), offset: 0 } }
 }
 
 #[inline(always)]

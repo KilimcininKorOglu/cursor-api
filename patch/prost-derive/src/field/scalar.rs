@@ -414,7 +414,7 @@ impl StringTy {
     fn rust_type(&self, prost_path: &Path) -> TokenStream {
         match self {
             StringTy::Vec => quote! { #prost_path::alloc::string::String },
-            StringTy::Bytes => quote! { #prost_path::ByteStr },
+            StringTy::Bytes => quote! { #prost_path::byte_str::ByteStr },
         }
     }
 }
@@ -430,7 +430,7 @@ impl BytesTy {
         match s {
             "vec" => Ok(BytesTy::Vec),
             "bytes" => Ok(BytesTy::Bytes),
-            _ => bail!("Invalid bytes type: {}", s),
+            _ => bail!("Invalid bytes type: {s}"),
         }
     }
 
@@ -485,7 +485,7 @@ impl Ty {
 
     pub fn from_str(s: &str) -> Result<Ty, Error> {
         let enumeration_len = "enumeration".len();
-        let error = Err(anyhow!("invalid type: {}", s));
+        let error = Err(anyhow!("invalid type: {s}"));
         let ty = match s.trim() {
             "float" => Ty::Float,
             "double" => Ty::Double,
@@ -640,7 +640,7 @@ impl DefaultValue {
         {
             Ok(Some(lit.clone()))
         } else {
-            bail!("invalid default value attribute: {:?}", attr)
+            bail!("invalid default value attribute: {attr:?}")
         }
     }
 

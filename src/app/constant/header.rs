@@ -35,25 +35,25 @@ macro_rules! def_header_name {
 macro_rules! def_header_value {
     ($(($const_name:ident, $value:expr)),+ $(,)?) => {
         $(
-            pub const $const_name: http::header::HeaderValue = HeaderValue::from_static($value).into();
+            pub const $const_name: http::header::HeaderValue = http::header::HeaderValue::from_static($value);
         )+
     };
 }
 
 #[cfg(windows)]
-pub const UA: http::header::HeaderValue = HeaderValue::from_static(
+pub const UA: http::header::HeaderValue = http::header::HeaderValue::from_static(
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
-).into();
+);
 
 #[cfg(unix)]
-pub const UA: http::header::HeaderValue = HeaderValue::from_static(
+pub const UA: http::header::HeaderValue = http::header::HeaderValue::from_static(
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
-).into();
+);
 
 def_header_value! {
     (NONE, ""),
     (ONE, "1"),
-    (FALSE, "false"),
+    // (FALSE, "false"),
     (TRUE, "true"),
     (ENCODING, "gzip"),
     (ENCODINGS, "gzip, deflate"),
@@ -65,6 +65,7 @@ def_header_value! {
     (NO_CACHE_REVALIDATE, "no-cache, must-revalidate"),
     (SAME_ORIGIN, "same-origin"),
     (KEEP_ALIVE, "keep-alive"),
+    (CLOSE, "close"),
     (TRAILERS, "trailers"),
     (U_EQ_0, "u=0"),
     (CONNECT_ES, "connect-es/1.6.1"),
@@ -85,6 +86,7 @@ def_header_value! {
 
 def_header_name! {
     (PROXY_HOST, "x-co"),
+    (CONFIG_HASH, "x-config-hash"),
     (API_KEY, "x-api-key"),
     (SESSION_ID, "x-session-id"),
     (GHOST_MODE, "x-ghost-mode"),
@@ -152,7 +154,7 @@ macro_rules! def_content_type {
         $(paste::paste! {
             const [<$name:upper>]: &'static str = $value;
             pub const [<HEADER_VALUE_ $name:upper>]: http::header::HeaderValue =
-                HeaderValue::from_static([<$name:upper>]).into();
+                http::header::HeaderValue::from_static([<$name:upper>]);
         })*
     };
 
@@ -308,9 +310,12 @@ pub fn get_content_type_by_extension(extension: &str) -> http::header::HeaderVal
     } else {
         alloc::borrow::Cow::Owned(extension.to_ascii_lowercase())
     };
-    http::header::HeaderValue::from_static(
-        EXTENSION_TO_MIME.get(&*extension).copied().unwrap_or(APPLICATION_OCTET_STREAM),
-    )
+    unsafe {
+        HeaderValue::from_static(
+            EXTENSION_TO_MIME.get(&*extension).copied().unwrap_or(APPLICATION_OCTET_STREAM),
+        )
+        .into()
+    }
 }
 
 #[derive(Clone, Copy, serde::Serialize, serde::Deserialize)]
@@ -419,6 +424,6 @@ impl From<ContentType> for http::HeaderValue {
             ContentType::FontWoff2 => FONT_WOFF2,
             ContentType::ApplicationOctetStream => APPLICATION_OCTET_STREAM,
         };
-        HeaderValue::from_static(s).into()
+        unsafe { HeaderValue::from_static(s).into() }
     }
 }

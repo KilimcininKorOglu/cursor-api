@@ -1,3 +1,4 @@
+mod config;
 mod health;
 mod logs;
 mod page;
@@ -6,9 +7,10 @@ mod token;
 mod tokens;
 mod utils;
 
+pub use config::{handle_get_config, handle_reload_config, handle_set_config};
 pub use health::{handle_health, init_endpoints};
 pub use logs::{handle_get_logs, handle_get_logs_tokens};
-pub use page::{handle_env_example, handle_license, handle_readme};
+pub use page::{handle_config_example, handle_env_example, handle_license, handle_readme};
 pub use proxies::{
     handle_add_proxy, handle_delete_proxies, handle_get_proxies, handle_set_general_proxy,
     handle_set_proxies,

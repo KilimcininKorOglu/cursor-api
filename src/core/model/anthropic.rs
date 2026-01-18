@@ -1,14 +1,16 @@
-use super::Role;
-use crate::app::constant::{ERROR, TYPE};
+use super::{IndexMap, Role};
+use crate::{
+    app::constant::{ERROR, TYPE},
+    common::utils::const_string::const_string,
+};
 use alloc::borrow::Cow;
+use byte_str::ByteStr;
 use core::fmt;
 use serde::{
     Deserialize, Deserializer, Serialize, Serializer,
     de::{self, MapAccess, Visitor},
     ser::SerializeStruct,
 };
-
-type IndexMap<K, V> = indexmap::IndexMap<K, V, ahash::RandomState>;
 
 #[derive(Debug, Deserialize)]
 pub struct MessageCreateParams {
@@ -22,10 +24,17 @@ pub struct MessageCreateParams {
     pub stream: bool,
     #[serde(default)]
     pub system: Option<SystemContent>,
-    #[serde(default)]
-    pub thinking: Option<ThinkingConfig>,
+    // #[serde(default)]
+    // pub thinking: Option<ThinkingConfig>,
     #[serde(default)]
     pub tools: Vec<Tool>,
+}
+
+impl MessageCreateParams {
+    #[inline(always)]
+    pub fn strip(self) -> ((Vec<MessageParam>, Option<SystemContent>), Vec<Tool>) {
+        ((self.messages, self.system), self.tools)
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -63,6 +72,9 @@ pub enum ContentBlockParam {
     Image {
         source: ImageSource,
     },
+    Document {
+        source: DocumentSource,
+    },
     Thinking {
         thinking: String,
         #[serde(default)]
@@ -72,12 +84,12 @@ pub enum ContentBlockParam {
         data: String,
     },
     ToolUse {
-        id: ::prost::ByteStr,
-        name: ::prost::ByteStr,
+        id: ByteStr,
+        name: ByteStr,
         input: IndexMap<String, serde_json::Value>,
     },
     ToolResult {
-        tool_use_id: ::prost::ByteStr,
+        tool_use_id: ByteStr,
         content: Option<ToolResultContent>,
         #[serde(default)]
         is_error: bool,
@@ -101,12 +113,18 @@ pub enum ToolResultContentBlock {
 #[derive(Debug, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ImageSource {
-    Base64 { media_type: MediaType, data: String },
+    Base64(ImageSourceBase64),
     Url { url: String },
 }
 
+#[derive(Debug, Deserialize)]
+pub struct ImageSourceBase64 {
+    pub data: String,
+    pub media_type: MediaType,
+}
+
 #[repr(u8)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum MediaType {
     ImagePng,
     ImageJpeg,
@@ -136,16 +154,16 @@ impl MediaType {
         }
     }
 
-    // pub fn as_mime(&self) -> &'static str {
-    //     match self {
-    //         Self::ImageJpeg => Self::IMAGE_JPEG,
-    //         Self::ImagePng => Self::IMAGE_PNG,
-    //         Self::ImageGif => Self::IMAGE_GIF,
-    //         Self::ImageWebp => Self::IMAGE_WEBP,
-    //         Self::ApplicationPdf => Self::APPLICATION_PDF,
-    //         Self::TextPlain => Self::TEXT_PLAIN,
-    //     }
-    // }
+    pub fn as_mime(self) -> &'static str {
+        match self {
+            Self::ImageJpeg => Self::IMAGE_JPEG,
+            Self::ImagePng => Self::IMAGE_PNG,
+            Self::ImageGif => Self::IMAGE_GIF,
+            Self::ImageWebp => Self::IMAGE_WEBP,
+            // Self::ApplicationPdf => Self::APPLICATION_PDF,
+            // Self::TextPlain => Self::TEXT_PLAIN,
+        }
+    }
 }
 
 impl<'de> Deserialize<'de> for MediaType {
@@ -156,6 +174,21 @@ impl<'de> Deserialize<'de> for MediaType {
             .ok_or_else(|| serde::de::Error::custom(format_args!("Unsupported media type: {mime}")))
     }
 }
+
+#[derive(Debug, Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum DocumentSource {
+    Base64 {
+        data: String,
+        #[allow(dead_code)]
+        media_type: ApplicationPdf,
+    },
+    Url {
+        url: String,
+    },
+}
+
+const_string!(ApplicationPdf = "application/pdf");
 
 // #[derive(Deserialize)]
 // pub struct McpServer {
@@ -249,15 +282,15 @@ impl<'de> Deserialize<'de> for TextBlockParam {
     }
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(tag = "type", rename_all = "lowercase")]
-pub enum ThinkingConfig {
-    Enabled {
-        #[allow(dead_code)]
-        budget_tokens: i64,
-    },
-    Disabled,
-}
+// #[derive(Debug, Deserialize)]
+// #[serde(tag = "type", rename_all = "lowercase")]
+// pub enum ThinkingConfig {
+//     Enabled {
+//         #[allow(dead_code)]
+//         budget_tokens: i64,
+//     },
+//     Disabled,
+// }
 
 // #[derive(Debug, Serialize, Deserialize, Clone)]
 // #[serde(rename_all = "camelCase")]
@@ -306,8 +339,8 @@ pub struct Usage {
 
 #[derive(Serialize, Default)]
 pub struct MessageDeltaUsage {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub input_tokens: Option<i32>,
+    #[serde(skip_serializing_if = "i32_is_zero")]
+    pub input_tokens: i32,
     pub output_tokens: i32,
     #[serde(skip_serializing_if = "i32_is_zero")]
     pub cache_creation_input_tokens: i32,
@@ -382,8 +415,8 @@ pub enum ContentBlock {
         data: String,
     },
     ToolUse {
-        id: ::prost::ByteStr,
-        name: ::prost::ByteStr,
+        id: ByteStr,
+        name: ByteStr,
         input: IndexMap<String, serde_json::Value>,
     },
 }

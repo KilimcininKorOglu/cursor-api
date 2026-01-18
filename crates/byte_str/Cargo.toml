@@ -1,0 +1,19 @@
+[package]
+name = "byte_str"
+version = "0.1.0"
+edition = "2021"
+authors = ["wisdgod <nav@wisdgod.com>"]
+description = "An immutable UTF-8 string type backed by bytes::Bytes."
+license = "MIT"
+
+[dependencies]
+any_all_workaround = { version = "0.1", optional = true }
+bytes = { version = "1", default-features = false }
+cfg-if = "1"
+serde = { version = "1", default-features = false, optional = true }
+
+[features]
+default = ["nightly"]
+std = ["bytes/std"]
+serde = ["dep:serde"]
+nightly = ["dep:any_all_workaround"]

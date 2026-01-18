@@ -6,11 +6,14 @@ members = [
     "crates/rep_move",
     "crates/grpc-stream",
     "crates/interned",
+    "crates/byte_str",
+    "crates/atomic_enum",
+    "crates/proto-value",
 ]
 default-members = ["."]
 
 [workspace.package]
-version = "0.4.0-pre.14"
+version = "0.4.0-pre.17"
 edition = "2024"
 authors = ["wisdgod <nav@wisdgod.com>"]
 description = "A format compatibility layer for the Cursor API"
@@ -22,6 +25,9 @@ manually_init = { path = "crates/manually_init", features = ["sync"] }
 rep_move = { path = "crates/rep_move" }
 grpc-stream = { path = "crates/grpc-stream" }
 interned = { path = "crates/interned" }
+byte_str = { path = "crates/byte_str" }
+atomic_enum = { path = "crates/atomic_enum" }
+proto-value = { path = "crates/proto-value" }
 
 # ===== 开发配置（编译速度优先）=====
 [profile.dev]
@@ -30,21 +36,19 @@ debug = "line-tables-only"
 split-debuginfo = "unpacked"
 incremental = true
 codegen-units = 256
-rustflags = ["-Clink-arg=-fuse-ld=mold"]
+# rustflags = ["-Clink-arg=-fuse-ld=mold"]
 
 # ===== 快速测试构建（平衡配置）=====
 [profile.fast]
 inherits = "dev"
 opt-level = 1
+trim-paths = "all"
 
 # ===== 性能测试配置（接近 release 但编译更快）=====
 [profile.bench]
 inherits = "release"
 lto = "thin"
 codegen-units = 16
-# rustflags = [
-#     "-Ctarget-cpu=native",
-# ]
 
 # ===== 发布配置（性能最大化）=====
 [profile.release]
@@ -57,25 +61,19 @@ debug = false
 overflow-checks = false
 incremental = false
 trim-paths = "all"
-# rustflags = [
-#     "-Clink-arg=-s",
-#     # "-Clink-arg=-fuse-ld=lld",
-#     # "-Ctarget-cpu=native",
-# ]
 
 [patch.crates-io]
 h2 = { path = "patch/h2-0.4.10" }
 reqwest = { path = "patch/reqwest-0.12.18" }
-rustls = { path = "patch/rustls-0.23.28" }
+rustls = { path = "patch/rustls-0.23.35" }
 chrono = { path = "patch/chrono-0.4.42" }
-ulid = { path = "patch/ulid-1.2.1" }
 dotenvy = { path = "patch/dotenvy-0.15.7" }
-# bs58 = { path = "patch/bs58-0.5.1" }
-# base62 = { path = "patch/base62-2.2.1" }
 prost = { path = "patch/prost-0.14.1" }
-prost-derive = { path = "patch/prost-derive" }
-prost-types = { path = "patch/prost-types" }
-rkyv = { path = "patch/rkyv-0.8.12" }
+# prost-derive = { path = "patch/prost-derive" }
+# prost-types = { path = "patch/prost-types" }
+scc = { path = "patch/scc-3.4.8" }
+sha2 = { path = "patch/sha2-0.11.0-rc.3" }
+vsimd = { path = "patch/vsimd-0.8.0" }
 
 # ===========================================
 
@@ -98,7 +96,7 @@ path = "src/main.rs"
 
 [build-dependencies]
 chrono = { version = "0.4", default-features = false, features = ["alloc"] }
-prost-build = { version = "0.14", optional = true }
+# prost-build = { version = "0.14", optional = true }
 sha2 = { version = "0", default-features = false }
 serde_json = "1"
 
@@ -108,6 +106,9 @@ manually_init.workspace = true
 rep_move.workspace = true
 grpc-stream.workspace = true
 interned.workspace = true
+byte_str = { workspace = true, features = ["serde"] }
+atomic_enum.workspace = true
+proto-value = { workspace = true, features = ["serde", "alloc"] }
 
 ahash = { version = "0.8", default-features = false, features = [
     "compile-time-rng",
@@ -120,10 +121,11 @@ axum = { version = "0.8", default-features = false, features = [
     "json",
     "tokio",
     "query",
-    "macros",
+    # "macros",
 ] }
 # base62 = "2.2.1"
-base64 = { version = "0.22", default-features = false, features = ["std"] }
+# base64 = { version = "0.22", default-features = false, features = ["std"] }
+base64-simd = { version = "0.8.0", features = ["unstable"] }
 # bs58 = { version = "0.5.1", default-features = false, features = ["std"] }
 # brotli = { version = "7.0", default-features = false, features = ["std"] }
 bytes = "1"
@@ -133,26 +135,32 @@ chrono = { version = "0.4", default-features = false, features = [
     "rkyv-64",
 ] }
 chrono-tz = { version = "0.10", features = ["serde"] }
+# crossbeam = { version = "0.8.4", features = ["nightly"] }
+# dashmap = { version = "7.0.0-rc2", features = ["inline-more"] }
 dotenvy = "0.15"
-flate2 = { version = "1", default-features = false, features = [
-    "rust_backend",
-] }
-futures = { version = "0.3", default-features = false, features = ["std"] }
-gif = { version = "0.14", default-features = false, features = ["std"] }
+# futures = { version = "0.3", default-features = false, features = ["std"] }
+futures-core = { version = "0.3", default-features = false, features = [] }
+futures-util = { version = "0.3", default-features = false, features = [] }
+gif = { version = "0", default-features = false, features = ["std"] }
 hashbrown = { version = "0.16", default-features = false, features = [
     "serde",
     "raw-entry",
     "inline-more",
 ] }
 hex = { version = "0.4", default-features = false, features = ["std"] }
+hmac = "0.13.0-rc.3"
 http = "1"
+http-body = "1"
 http-body-util = "0.1"
+# hybrid-array = "0.4"
 image = { version = "0.25", default-features = false, features = [
     "jpeg",
     "png",
     "gif",
     "webp",
 ] }
+indexmap = { version = "2", default-features = false, features = ["serde"] }
+itoa = "1.0"
 # lasso = { version = "0.7", features = ["multi-threaded", "ahasher"] }
 memmap2 = "0.9"
 minicbor = { version = "2", features = ["derive", "alloc"] }
@@ -168,15 +176,19 @@ phf = { version = "0.13", features = ["macros"] }
 prost = { version = "0.14", features = ["indexmap"] }
 # prost-types = "0.14"
 rand = { version = "0.9", default-features = false, features = ["thread_rng"] }
-reqwest = { version = "0.12", default-features = false, features = [
+reqwest = { version = "0.13", default-features = false, features = [
     "gzip",
     "brotli",
     "json",
+    # "query",
     "stream",
     "socks",
     "charset",
     "http2",
     "system-proxy",
+    # "hickory-dns",
+    "rustls",
+    "rustls-webpki-roots-ext",
 ] }
 rkyv = { version = "0.8", default-features = false, features = [
     "std",
@@ -184,35 +196,41 @@ rkyv = { version = "0.8", default-features = false, features = [
     "hashbrown-0_16",
     "uuid-1",
 ] }
-# rustls = { version = "0.23.26", default-features = false, features = ["std", "tls12"] }
+# rustls = { version = "0.23.26", default-features = false, features = ["aws-lc-rs"] }
+scc = { version = "3.4.8" }
 serde = { version = "1", default-features = false, features = [
     "std",
     "derive",
     "rc",
 ] }
 # serde_json = { package = "sonic-rs", version = "0" }
-serde_json = { version = "1", features = ["preserve_order"] }
+serde_json = { version = "1", features = ["preserve_order", "raw_value"] }
 sha2 = { version = "0", default-features = false }
 sysinfo = { version = "0.37", default-features = false, features = ["system"] }
 tokio = { version = "1", features = [
-    "rt-multi-thread",
+    "fs",
+    "io-util",
     "macros",
     "net",
+    "parking_lot",
+    "rt-multi-thread",
+    "signal",
     "sync",
     "time",
-    "fs",
-    "signal",
 ] }
-tokio-util = { version = "0.7", features = ["io"] }
+# tokio-util = { version = "0.7", features = [] }
 # tokio-tungstenite = { version = "0.26.2", features = ["rustls-tls-webpki-roots"] }
-# tokio-stream = { version = "0.1", features = ["time"] }
-tower-http = { version = "0.6", features = ["cors", "limit"] }
-tracing = { version = "*", default-features = false, features = [
-    "max_level_off",
-    "release_max_level_off",
+tokio-stream = { version = "0.1", default-features = false, features = [] }
+toml = { version = "0.9.8", default-features = false, features = [
+    "serde",
+    "parse",
 ] }
-ulid = { version = "1.2", default-features = false, features = ["std", "rkyv"] }
-# tracing-subscriber = "0.3"
+tower-http = { version = "0.6", features = ["cors", "limit"] }
+# tracing = { version = "*", default-features = false, features = [
+#     "max_level_off",
+#     "release_max_level_off",
+# ] }
+tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "std", "env-filter"] }
 url = { version = "2.5", default-features = false, features = ["serde"] }
 uuid = { version = "1.14", default-features = false, features = [
     "v4",
@@ -220,24 +238,19 @@ uuid = { version = "1.14", default-features = false, features = [
     "serde",
 ] }
 zip = { version = "7", default-features = false, features = [
-    "deflate",
+    "deflate-flate2-zlib-rs",
     "bzip2",
-    "zstd",
     "deflate64",
     "lzma",
     "xz",
 ] }
-indexmap = { version = "2", default-features = false, features = ["serde"] }
-itoa = "1.0"
 
 [features]
-default = ["webpki-roots", "horizon"]
-webpki-roots = ["reqwest/rustls-tls-webpki-roots"]
-native-roots = ["reqwest/rustls-tls-native-roots"]
+default = ["horizon"]
 use-minified = []
 __preview = []
 __preview_locked = ["__preview"]
-__protoc = ["prost-build"]
+# __protoc = ["prost-build"]
 __compat = []
 horizon = ["nightly"]
-nightly = ["hashbrown/nightly", "parking_lot/nightly"]
+nightly = ["hashbrown/nightly", "parking_lot/nightly", "byte_str/nightly"]

@@ -1,0 +1,33 @@
+[package]
+name = "proto-value"
+version = "0.1.0"
+edition.workspace = true
+authors.workspace = true
+description.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+# base64 = { version = "0.22.1", default-features = false, features = [
+#     "alloc",
+# ], optional = true }
+base64-simd = { version = "0.8.0", features = ["unstable"], optional = true }
+byte_str = { version = "0.1.0", path = "../byte_str", default-features = false, features = [
+    "nightly",
+], optional = true }
+bytes = { version = "1.11.0", default-features = false, optional = true }
+indexmap = { version = "2.12.1", default-features = false, optional = true }
+itoa = { version = "1.0.17", optional = true }
+serde = { version = "1.0.228", default-features = false, optional = true }
+
+[features]
+default = ["bytes", "byte_str"]
+alloc = []
+serde = ["dep:serde", "dep:base64-simd", "dep:itoa"]
+std = ["alloc"]
+indexmap = ["dep:indexmap"]
+bytes = ["dep:bytes"]
+byte_str = ["dep:byte_str"]
+
+[dev-dependencies]
+serde_json = "1.0.148"

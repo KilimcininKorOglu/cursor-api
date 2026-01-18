@@ -47,7 +47,7 @@ impl ModelIdSource {
 impl const Default for ModelIdSource {
     #[inline(always)]
     fn default() -> Self {
-        Self::ClientId
+        Self::ServerId
     }
 }
 

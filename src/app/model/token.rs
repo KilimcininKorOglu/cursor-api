@@ -4,14 +4,15 @@ mod provider;
 use crate::{
     app::constant::HEADER_B64,
     common::{
-        model::{stringify::Stringify, token::TokenPayload},
-        utils::{hex::HEX_CHARS, hex_to_byte},
+        model::token::TokenPayload,
+        utils::{hex::HEX_CHARS, hex_to_byte, ulid},
     },
 };
-use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
+use base64_simd::{Out, URL_SAFE_NO_PAD};
 pub(super) use cache::__init;
 pub use cache::{Token, TokenKey};
-use core::fmt;
+use core::{fmt, mem::MaybeUninit};
+use proto_value::stringify::Stringify;
 pub use provider::{Provider, parse_providers};
 use std::{io, str::FromStr};
 
@@ -189,7 +190,7 @@ impl Subject {
 impl fmt::Display for Subject {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.provider.0)?;
+        f.write_str(self.provider.as_str())?;
         f.write_str("|")?;
         f.write_str(self.id.to_str(&mut [0; 31]))
     }
@@ -245,93 +246,52 @@ impl<'de> ::serde::Deserialize<'de> for Subject {
 /// - 新格式：`user_` + 26字符ULID，充分利用128位空间
 ///
 /// ULID时间戳特性确保新格式高32位非零，实现无歧义格式识别。
-///
-/// # 内部表示
-///
-/// 使用 `(u64, u64)` 降低对齐要求到8字节，字段顺序根据平台字节序自动调整，
-/// 确保与 `u128` 的内存布局完全一致。
-///
-/// # Examples
-///
-/// ```
-/// use crate::app::model::UserId;
-///
-/// // 新格式
-/// let id = UserId::from_u128(ulid::Ulid::new().0);
-/// assert_eq!(id.to_string().len(), 31);
-///
-/// // 旧格式
-/// let legacy = UserId::from_bytes([0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
-/// assert_eq!(legacy.to_string().len(), 24);
-/// assert!(legacy.is_legacy());
-/// ```
 #[derive(
     Clone, Copy, PartialEq, Eq, Hash, ::rkyv::Archive, ::rkyv::Serialize, ::rkyv::Deserialize,
 )]
 #[rkyv(derive(PartialEq, Eq, Hash))]
-#[repr(C)]
-pub struct UserId(u64, u64);
+#[repr(transparent)]
+pub struct UserId([u8; 16]);
 
 impl UserId {
     const PREFIX: &'static str = "user_";
-
-    // ==================== 抽象层：字节序处理 ====================
-
-    /// 获取数值的低64位（bits 0..64）
-    #[inline(always)]
-    const fn low(&self) -> u64 {
-        #[cfg(target_endian = "little")]
-        return self.0;
-
-        #[cfg(target_endian = "big")]
-        return self.1;
-    }
-
-    /// 获取数值的高64位（bits 64..128）
-    #[inline(always)]
-    const fn high(&self) -> u64 {
-        #[cfg(target_endian = "little")]
-        return self.1;
-
-        #[cfg(target_endian = "big")]
-        return self.0;
-    }
-
-    /// 从语义化的 low/high 构造（内部使用）
-    #[inline(always)]
-    const fn from_parts(low: u64, high: u64) -> Self {
-        #[cfg(target_endian = "little")]
-        return Self(low, high);
-
-        #[cfg(target_endian = "big")]
-        return Self(high, low);
-    }
 
     // ==================== 公开API：构造与转换 ====================
 
     /// 从 u128 构造
     #[inline]
-    pub const fn from_u128(value: u128) -> Self {
-        Self::from_parts(value as u64, (value >> 64) as u64)
-    }
+    pub const fn from_u128(value: u128) -> Self { Self(value.to_ne_bytes()) }
 
     /// 转换为 u128
     #[inline]
-    pub const fn as_u128(self) -> u128 { (self.high() as u128) << 64 | self.low() as u128 }
+    pub const fn as_u128(self) -> u128 { u128::from_ne_bytes(self.0) }
 
     /// 从字节数组构造
     #[inline]
-    pub const fn from_bytes(bytes: [u8; 16]) -> Self { unsafe { core::mem::transmute(bytes) } }
+    pub const fn from_bytes(bytes: [u8; 16]) -> Self { Self(bytes) }
 
     /// 转换为字节数组
     #[inline]
-    pub const fn to_bytes(self) -> [u8; 16] { unsafe { core::mem::transmute(self) } }
+    pub const fn to_bytes(self) -> [u8; 16] { self.0 }
 
     // ==================== 格式检测与字符串转换 ====================
 
     /// 检查是否为旧格式ID（高32位为0）
     #[inline]
-    pub const fn is_legacy(&self) -> bool { self.high() >> 32 == 0 }
+    pub const fn is_legacy(&self) -> bool {
+        // Memory layout (little-endian): [低32位][次低32位][次高32位][最高32位]
+        //                     index:         [0]      [1]       [2]       [3]
+        // Memory layout (big-endian):    [最高32位][次高32位][次低32位][低32位]
+        //                     index:         [0]       [1]       [2]      [3]
+        let parts = unsafe { core::mem::transmute::<[u8; 16], [u32; 4]>(self.0) };
+
+        #[cfg(target_endian = "little")]
+        const HIGH_INDEX: usize = 3;
+        #[cfg(target_endian = "big")]
+        const HIGH_INDEX: usize = 0;
+
+        parts[HIGH_INDEX] == 0
+    }
 
     /// 高性能字符串转换，旧格式24字符，新格式31字符
     #[allow(clippy::wrong_self_convention)]
@@ -339,8 +299,7 @@ impl UserId {
     pub fn to_str<'buf>(&self, buf: &'buf mut [u8; 31]) -> &'buf mut str {
         if self.is_legacy() {
             // 旧格式：24字符 hex，从 bytes[4..16] 编码
-            let bytes = self.to_bytes();
-            for (i, &byte) in bytes[4..].iter().enumerate() {
+            for (i, &byte) in self.0[4..].iter().enumerate() {
                 buf[i * 2] = HEX_CHARS[(byte >> 4) as usize];
                 buf[i * 2 + 1] = HEX_CHARS[(byte & 0x0f) as usize];
             }
@@ -351,8 +310,7 @@ impl UserId {
             // 新格式：user_ + 26字符 ULID
             unsafe {
                 core::ptr::copy_nonoverlapping(Self::PREFIX.as_ptr(), buf.as_mut_ptr(), 5);
-                ulid::Ulid(self.as_u128())
-                    .array_to_str(&mut *(buf.as_mut_ptr().add(5) as *mut [u8; 26]));
+                ulid::to_str(self.as_u128(), &mut *(buf.as_mut_ptr().add(5) as *mut [u8; 26]));
                 core::str::from_utf8_unchecked_mut(buf)
             }
         }
@@ -380,11 +338,12 @@ impl core::str::FromStr for UserId {
         match s.len() {
             31 => {
                 let id_str = s.strip_prefix(Self::PREFIX).ok_or(SubjectError::InvalidFormat)?;
-                let id = ulid::Ulid::from_string(id_str).map_err(|_| SubjectError::InvalidUlid)?;
-                Ok(Self::from_u128(id.0))
+                let id_array = unsafe { id_str.as_bytes().as_array().unwrap_unchecked() };
+                let id = ulid::from_bytes(id_array).map_err(|_| SubjectError::InvalidUlid)?;
+                Ok(Self::from_u128(id))
             }
             24 => {
-                let hex_array: &[u8; 24] = unsafe { s.as_bytes().try_into().unwrap_unchecked() };
+                let hex_array: &[u8; 24] = unsafe { s.as_bytes().as_array().unwrap_unchecked() };
                 let hex_pairs = unsafe { hex_array.as_chunks_unchecked::<2>() };
                 let mut result = [0u8; 16];
 
@@ -417,7 +376,7 @@ impl<'de> ::serde::Deserialize<'de> for UserId {
 }
 
 const _: [u8; 16] = [0; core::mem::size_of::<UserId>()];
-const _: () = assert!(core::mem::align_of::<UserId>() == 8);
+const _: () = assert!(core::mem::align_of::<UserId>() == 1);
 
 #[derive(Clone, Copy, PartialEq, Hash, ::rkyv::Archive, ::rkyv::Deserialize, ::rkyv::Serialize)]
 pub struct Duration {
@@ -446,7 +405,7 @@ pub struct Duration {
 pub enum TokenError {
     InvalidHeader,
     InvalidFormat,
-    InvalidBase64(base64::DecodeError),
+    InvalidBase64,
     InvalidJson(io::Error),
     InvalidSubject(SubjectError),
     InvalidRandomness(RandomnessError),
@@ -460,7 +419,7 @@ impl fmt::Display for TokenError {
         match self {
             Self::InvalidHeader => f.write_str("Invalid token header"),
             Self::InvalidFormat => f.write_str("Invalid token format"),
-            Self::InvalidBase64(e) => write!(f, "Invalid base64: {e}"),
+            Self::InvalidBase64 => write!(f, "Invalid base64 data"),
             Self::InvalidJson(e) => write!(f, "Invalid JSON: {e}"),
             Self::InvalidSubject(e) => write!(f, "Invalid subject: {e}"),
             Self::InvalidRandomness(e) => write!(f, "Invalid randomness: {e}"),
@@ -527,7 +486,7 @@ impl fmt::Debug for RawToken {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("RawToken")
-            .field("p", &self.subject.provider.0)
+            .field("p", &self.subject.provider.as_str())
             .field("i", &self.subject.id.as_u128())
             .field("r", &core::ops::Range { start: self.duration.start, end: self.duration.end })
             .field("n", &self.randomness.0)
@@ -543,8 +502,10 @@ impl fmt::Display for RawToken {
         write!(
             f,
             "{HEADER_B64}{}.{}",
-            URL_SAFE_NO_PAD.encode(__unwrap!(serde_json::to_vec(&self.to_token_payload()))),
-            URL_SAFE_NO_PAD.encode(self.signature)
+            URL_SAFE_NO_PAD
+                .encode_to_string(__unwrap!(serde_json::to_vec(&self.to_token_payload()))),
+            URL_SAFE_NO_PAD
+                .encode_as_str(&self.signature, base64_simd::Out::from_slice(&mut [0; 43]))
         )
     }
 }
@@ -559,14 +520,18 @@ impl FromStr for RawToken {
         let (payload_b64, signature_b64) =
             parts.split_once('.').ok_or(TokenError::InvalidFormat)?;
 
-        // 2. 解码payload和signature
-        let payload = URL_SAFE_NO_PAD.decode(payload_b64).map_err(TokenError::InvalidBase64)?;
+        if signature_b64.len() != 43 {
+            return Err(TokenError::InvalidSignatureLength);
+        }
 
-        let signature = URL_SAFE_NO_PAD
-            .decode(signature_b64)
-            .map_err(TokenError::InvalidBase64)?
-            .try_into()
-            .map_err(|_| TokenError::InvalidSignatureLength)?;
+        // 2. 解码payload和signature
+        let payload =
+            URL_SAFE_NO_PAD.decode_to_vec(payload_b64).map_err(|_| TokenError::InvalidBase64)?;
+
+        let mut signature = MaybeUninit::<[u8; 32]>::uninit();
+        URL_SAFE_NO_PAD
+            .decode(signature_b64.as_bytes(), Out::from_uninit_slice(signature.as_bytes_mut()))
+            .map_err(|_| TokenError::InvalidBase64)?;
 
         // 3. 解析payload
         let payload: TokenPayload = serde_json::from_slice(&payload).map_err(|e| {
@@ -586,7 +551,7 @@ impl FromStr for RawToken {
             duration: Duration { start: payload.time.0, end: payload.exp },
             randomness: payload.randomness,
             is_session: payload.is_session,
-            signature,
+            signature: unsafe { signature.assume_init() },
         })
     }
 }

@@ -22,8 +22,8 @@ impl From<ErrorDetails> for CanonicalError {
         Self {
             code: None,
             details: error.details,
-            status_code: ErrorDetails::status_code(error.error),
-            r#type: ErrorDetails::r#type(error.error),
+            status_code: ErrorDetails::status_code(error.error.get()),
+            r#type: ErrorDetails::r#type(error.error.get()),
         }
     }
 }

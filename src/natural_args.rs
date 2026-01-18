@@ -222,7 +222,7 @@ impl<'a> NaturalParser<'a> {
                     i += 3;
                 }
 
-                [Token::Help, Token::String(s), ..] if *s == WORD_ME => {
+                [Token::Help, Token::String(WORD_ME), ..] => {
                     actions.push(Action::Help);
                     i += 2;
                 }
@@ -231,12 +231,12 @@ impl<'a> NaturalParser<'a> {
                     i += 1;
                 }
                 [
-                    Token::String(w1),
-                    Token::String(w2),
-                    Token::String(w3),
-                    Token::String(w4),
+                    Token::String(WORD_WHAT),
+                    Token::String(WORD_CAN),
+                    Token::String(WORD_YOU),
+                    Token::String(WORD_DO),
                     ..,
-                ] if *w1 == WORD_WHAT && *w2 == WORD_CAN && *w3 == WORD_YOU && *w4 == WORD_DO => {
+                ] => {
                     actions.push(Action::Help);
                     i += 4;
                 }

@@ -3,7 +3,7 @@ use core::{
     pin::Pin,
     task::{Context, Poll},
 };
-use futures::stream::Stream;
+use futures_core::stream::Stream;
 use tokio::sync::Notify;
 
 /// 可通过外部信号控制 drop 的 Stream 包装器
@@ -49,7 +49,7 @@ where S: Stream + Unpin
 
         // 检查是否有 drop 通知
         let notified = this.notify.notified();
-        futures::pin_mut!(notified);
+        futures_util::pin_mut!(notified);
 
         if notified.poll(cx).is_ready() {
             this.stream = None;

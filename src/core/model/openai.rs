@@ -1,34 +1,156 @@
+use super::{IndexMap, Role};
+use crate::{
+    app::constant::{ERROR, TYPE},
+    common::{
+        model::tri::Tri,
+        utils::{const_string::const_string, option_as_array},
+    },
+};
 use alloc::borrow::Cow;
+use byte_str::ByteStr;
+use serde::{Deserialize, Serialize, Serializer, ser::SerializeStruct as _};
 
-use serde::{Deserialize, Serialize, Serializer};
-use serde::ser::{SerializeStruct as _, SerializeTuple as _};
+#[derive(Deserialize)]
+pub struct ChatCompletionCreateParams {
+    pub model: String,
+    pub messages: Vec<ChatCompletionMessageParam>,
+    // #[serde(default)]
+    // pub reasoning_effort: ReasoningEffort,
+    #[serde(default)]
+    pub stream: bool,
+    #[serde(default)]
+    pub stream_options: ChatCompletionStreamOptions,
+    #[serde(default)]
+    pub tools: Vec<ChatCompletionTool>,
+}
 
-use crate::app::constant::{ERROR, FINISH_REASON_STOP, TYPE};
-use crate::common::model::tri::TriState;
-use super::Role;
+impl ChatCompletionCreateParams {
+    #[inline(always)]
+    pub fn strip(
+        self,
+    ) -> (Vec<ChatCompletionMessageParam>, Vec<ChatCompletionTool>, bool, ChatCompletionStreamOptions)
+    {
+        (self.messages, self.tools, self.stream, self.stream_options)
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(tag = "role")]
+pub enum ChatCompletionMessageParam {
+    #[serde(rename = "system", alias = "developer")]
+    System { content: ChatCompletionContentText },
+    #[serde(rename = "user")]
+    User { content: ChatCompletionContent },
+    #[serde(rename = "assistant")]
+    Assistant {
+        content: ChatCompletionContentText,
+        #[serde(with = "option_as_array", skip_serializing_if = "Option::is_none")]
+        tool_calls: Option<Box<ChatCompletionMessageToolCall>>,
+    },
+    #[serde(rename = "tool")]
+    Tool { content: ChatCompletionContentText, tool_call_id: ByteStr },
+}
+
+// impl ChatCompletionMessageParam {
+//     #[inline]
+//     pub fn role(&self) -> Role {
+//         match self {
+//             Self::System { .. } => Role::System,
+//             Self::User { .. } | Self::Tool { .. } => Role::User,
+//             Self::Assistant { .. } => Role::Assistant,
+//         }
+//     }
+// }
 
 #[derive(Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum MessageContent {
+pub enum ChatCompletionContent {
     String(String),
-    Array(Vec<MessageContentObject>),
+    Array(Vec<ChatCompletionContentPart>),
 }
 
 #[derive(Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
-pub enum MessageContentObject {
+pub enum ChatCompletionContentPart {
     Text { text: String },
     ImageUrl { image_url: ImageUrl },
 }
 
-impl MessageContentObject {
-    #[inline]
-    pub fn into_text(self) -> Option<String> {
+#[derive(Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ChatCompletionContentText {
+    String(String),
+    Array(Vec<ChatCompletionContentPartText>),
+}
+
+impl ChatCompletionContentText {
+    pub fn text(self) -> String {
         match self {
-            Self::Text { text } => Some(text),
-            Self::ImageUrl { .. } => None,
+            Self::String(string) => string,
+            Self::Array(contents) => contents
+                .into_iter()
+                .map(ChatCompletionContentPartText::text)
+                .collect::<Vec<_>>()
+                .join("\n"),
         }
     }
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum ChatCompletionContentPartText {
+    Text { text: String },
+}
+
+impl ChatCompletionContentPartText {
+    pub fn text(self) -> String {
+        let Self::Text { text } = self;
+        text
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum ChatCompletionMessageToolCall {
+    Function { id: ByteStr, function: chat_completion_message_tool_call::Function },
+}
+
+pub mod chat_completion_message_tool_call {
+    use super::{ByteStr, Deserialize, Serialize};
+    #[derive(Serialize, Deserialize)]
+    pub struct Function {
+        pub arguments: String,
+        pub name: ByteStr,
+    }
+}
+
+// #[derive(Deserialize, Default)]
+// #[serde(rename_all = "lowercase")]
+// pub enum ReasoningEffort {
+//     Minimal,
+//     Low,
+//     #[default]
+//     Medium,
+//     High,
+// }
+
+#[derive(Deserialize, Default)]
+pub struct ChatCompletionStreamOptions {
+    pub include_usage: bool,
+}
+
+#[derive(Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum ChatCompletionTool {
+    Function { function: FunctionDefinition },
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct FunctionDefinition {
+    pub name: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    pub parameters: IndexMap<String, serde_json::Value>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -36,87 +158,110 @@ pub struct ImageUrl {
     pub url: String,
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct Message {
-    pub role: Role,
-    pub content: MessageContent,
+#[derive(Serialize)]
+pub struct ChatCompletionMessage {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub content: Option<String>,
+    pub role: Assistant,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub tool_calls: Vec<ChatCompletionMessageToolCall>,
 }
 
 #[derive(Serialize)]
-pub struct ChatResponse<'a> {
+pub struct ChatCompletion<'a> {
     pub id: &'a str,
-    pub object: &'static str,
+    #[serde(serialize_with = "option_as_array::serialize")]
+    pub choices: Option<chat_completion::Choice>,
     pub created: i64,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub model: Option<&'static str>,
-    #[serde(serialize_with = "serialize_option_choice")]
-    pub choices: Option<Choice>,
-    #[serde(skip_serializing_if = "TriState::is_undefined")]
-    pub usage: TriState<Usage>,
+    pub object: ObjectChatCompletion,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub usage: Option<Usage>,
 }
 
-fn serialize_option_choice<S>(option: &Option<Choice>, serializer: S) -> Result<S::Ok, S::Error>
-where S: Serializer {
-    let mut tup = serializer.serialize_tuple(option.is_some() as usize)?;
-    match option {
-        Some(choice) => {
-            // 序列化为单元素数组 [choice]
-            tup.serialize_element(choice)?;
-        }
-        None => {
-            // 序列化为空数组 []
-        }
-    }
-    tup.end()
-}
-
-pub struct Choice {
-    pub index: i32,
-    pub message: Option<Message>,
-    pub delta: Option<Delta>,
-    pub finish_reason: bool,
-}
-
-impl Serialize for Choice {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where S: Serializer {
-        let mut field_count = 3;
-
-        if self.message.is_some() {
-            field_count += 1;
-        }
-        if self.delta.is_some() {
-            field_count += 1;
-        }
-
-        let mut state = serializer.serialize_struct("choice", field_count)?;
-
-        state.serialize_field("index", &self.index)?;
-
-        if let Some(ref message) = self.message {
-            state.serialize_field("message", message)?;
-        }
-
-        if let Some(ref delta) = self.delta {
-            state.serialize_field("delta", delta)?;
-        }
-
-        state.serialize_field("logprobs", &None::<bool>)?;
-        state.serialize_field(
-            "finish_reason",
-            &if self.finish_reason { Some(FINISH_REASON_STOP) } else { None },
-        )?;
-
-        state.end()
+pub mod chat_completion {
+    use super::{ChatCompletionMessage, FinishReason, Serialize};
+    #[derive(Serialize)]
+    pub struct Choice {
+        pub finish_reason: FinishReason,
+        pub index: i32,
+        pub logprobs: (),
+        pub message: ChatCompletionMessage,
     }
 }
 
 #[derive(Serialize)]
-pub struct Delta {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub role: Option<Role>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub content: Option<Cow<'static, str>>,
+pub struct ChatCompletionChunk<'a> {
+    pub id: &'a str,
+    #[serde(serialize_with = "option_as_array::serialize")]
+    pub choices: Option<chat_completion_chunk::Choice>,
+    pub created: i64,
+    pub model: &'static str,
+    pub object: ObjectChatCompletionChunk,
+    #[serde(skip_serializing_if = "Tri::is_undefined")]
+    pub usage: Tri<Usage>,
+}
+
+pub mod chat_completion_chunk {
+    use super::{FinishReason, Serialize};
+    #[derive(Serialize)]
+    pub struct Choice {
+        #[serde(serialize_with = "serialize_zero")]
+        pub index: (),
+        pub delta: Option<choice::Delta>,
+        pub logprobs: (),
+        pub finish_reason: Option<FinishReason>,
+    }
+    fn serialize_zero<S>(_: &(), serializer: S) -> Result<S::Ok, S::Error>
+    where S: serde::Serializer {
+        serializer.serialize_u32(0)
+    }
+    pub mod choice {
+        use super::{
+            super::{Role, option_as_array},
+            Serialize,
+        };
+        #[derive(Serialize)]
+        pub struct Delta {
+            #[serde(skip_serializing_if = "Option::is_none")]
+            pub content: Option<alloc::borrow::Cow<'static, str>>,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            pub role: Option<Role>,
+            #[serde(with = "option_as_array", skip_serializing_if = "Option::is_none")]
+            pub tool_calls: Option<Box<delta::ToolCall>>,
+        }
+        pub mod delta {
+            use super::{super::super::ByteStr, Serialize};
+            #[derive(Serialize)]
+            pub struct ToolCall {
+                pub index: u32,
+                #[serde(skip_serializing_if = "Option::is_none")]
+                pub id: Option<ByteStr>,
+                #[serde(skip_serializing_if = "Option::is_none")]
+                pub function: Option<tool_call::Function>,
+            }
+            pub mod tool_call {
+                use super::{ByteStr, Serialize};
+                use crate::core::model::openai::EmptyString;
+                #[derive(Serialize)]
+                pub enum Function {
+                    Start { name: ByteStr, arguments: EmptyString },
+                    Partial { arguments: String },
+                }
+            }
+        }
+    }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum FinishReason {
+    Stop,
+    // Length,
+    ToolCalls,
+    // ContentFilter,
+    // FunctionCall,
 }
 
 #[derive(Default)]
@@ -170,33 +315,10 @@ pub struct Usage {
     // pub completion_tokens_details: CompletionTokensDetails,
 }
 
-// 聊天请求
-#[derive(Deserialize)]
-pub struct ChatRequest {
-    pub model: String,
-    pub messages: Vec<Message>,
-    // #[serde(default)]
-    // pub reasoning_effort: ReasoningEffort,
-    #[serde(default)]
-    pub stream: bool,
-    #[serde(default)]
-    pub stream_options: Option<StreamOptions>,
-}
-
-// #[derive(Deserialize, Default)]
-// #[serde(rename_all = "lowercase")]
-// pub enum ReasoningEffort {
-//     Minimal,
-//     Low,
-//     #[default]
-//     Medium,
-//     High,
-// }
-
-#[derive(Deserialize)]
-pub struct StreamOptions {
-    pub include_usage: bool,
-}
+const_string!(Assistant = "assistant");
+const_string!(ObjectChatCompletion = "chat.completion");
+const_string!(ObjectChatCompletionChunk = "chat.completion.chunk");
+const_string!(EmptyString = "");
 
 mod private {
     use super::*;

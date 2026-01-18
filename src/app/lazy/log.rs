@@ -33,6 +33,7 @@ static LOG_FILE: ManuallyInit<Mutex<File>> = ManuallyInit::new();
 #[forbid(unused)]
 pub fn init() {
     DEBUG.init(parse_from_env("DEBUG", true));
+    crate::common::model::health::init_service_info();
 
     // 如果不启用调试，不初始化日志文件
     if !*DEBUG {
@@ -67,7 +68,7 @@ static LOG_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
 /// 获取下一个日志序列号
 #[inline]
-pub fn next_log_seq() -> u64 { LOG_SEQUENCE.fetch_add(1, Ordering::Relaxed) }
+fn next_log_seq() -> u64 { LOG_SEQUENCE.fetch_add(1, Ordering::Relaxed) }
 
 // --- 核心组件 ---
 
@@ -257,7 +258,7 @@ async fn flush_byte_buffer(buffer: &mut Vec<u8>) {
 /// * `seq` - 日志序列号
 /// * `content` - 已格式化的日志内容
 #[inline]
-pub fn submit_debug_log(seq: u64, content: String) {
+fn submit_debug_log(seq: u64, content: String) {
     tokio::spawn(async move {
         let state = ensure_logger_initialized().await;
         let log_msg = LogMessage { seq, content };
@@ -274,16 +275,20 @@ pub fn submit_debug_log(seq: u64, content: String) {
 macro_rules! debug {
     ($($arg:tt)*) => {
         if *$crate::app::lazy::log::DEBUG {
-            // 立即获取序列号和时间戳，确保顺序性
-            let seq = $crate::app::lazy::log::next_log_seq();
-            let msg = format!(
-                "{} | {}",
-                $crate::app::model::DateTime::now().format("%Y-%m-%d %H:%M:%S%.3f"),
-                format_args!($($arg)*)
-            );
-            $crate::app::lazy::log::submit_debug_log(seq, msg);
+            $crate::app::lazy::log::debug_log(format_args!($($arg)*));
         }
     };
+}
+
+pub fn debug_log(args: core::fmt::Arguments<'_>) {
+    // 立即获取序列号和时间戳，确保顺序性
+    let seq = next_log_seq();
+    let msg = format!(
+        "{} | {}",
+        crate::app::model::DateTime::now().format("%Y-%m-%d %H:%M:%S%.3f"),
+        args
+    );
+    submit_debug_log(seq, msg);
 }
 
 /// 程序结束前调用，确保所有缓冲日志写入文件

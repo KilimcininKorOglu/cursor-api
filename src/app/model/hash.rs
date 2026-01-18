@@ -33,7 +33,7 @@ impl fmt::Display for HashError {
 
 impl std::error::Error for HashError {}
 
-#[derive(Clone, Copy, ::rkyv::Archive, ::rkyv::Serialize, ::rkyv::Deserialize)]
+#[derive(Clone, Copy, PartialEq, ::rkyv::Archive, ::rkyv::Serialize, ::rkyv::Deserialize)]
 #[repr(transparent)]
 pub struct Hash(pub(super) [u8; 32]);
 

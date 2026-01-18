@@ -715,7 +715,6 @@ data: [DONE]
   "client_key": string,          // 格式: 长度为64的Hex编码字符串
   "config_version": string,      // 格式: UUID
   "session_id": string,          // 格式: UUID
-  "secret": string,              // 可选，没什么用
   "proxy_name": string,          // 可选，指定代理
   "timezone": string,            // 可选，指定时区
   "gcpp_host": string,           // 可选，代码补全区域
@@ -916,64 +915,29 @@ data: [DONE]
 
 ### 配置管理接口
 
-#### 更新配置
+#### 获取配置
 
-* 接口地址: `/config`
+* 接口地址: `/config/get`
 * 请求方法: POST
 * 认证方式: Bearer Token
-* 请求格式:
+* 请求格式: 无
+* 响应格式: `x-config-hash` + 文本
 
-```json
-{
-  "action": "get" | "update" | "reset",
-  "path": string,
-  "content": {
-    "type": "default" | "not_found" | "redirect" | "plain_text" | "html" | "css" | "js",
-    "value": string  // type=redirect时为URL, type=plain_text/html/css/js时为对应内容
-  },
-  "vision_ability": "none" | "base64" | "all", // "disabled" | "base64-only" | "base64-http"
-  "enable_slow_pool": bool,
-  "enable_long_context": bool,
-  "usage_check_models": {
-    "type": "none" | "default" | "all" | "list",
-    "content": string
-  },
-  "enable_dynamic_key": bool,
-  "share_token": string,
-  "calibrate_token": string,
-  "include_web_references": bool
-}
-```
+#### 更新配置
 
-* 响应格式:
+* 接口地址: `/config/set`
+* 请求方法: POST
+* 认证方式: Bearer Token
+* 请求格式: `x-config-hash` + 文本
+* 响应格式: 204表示已变更，200表示未变更，其余为错误
 
-```json
-{
-  "status": "success",
-  "message": string,
-  "data": {
-    "content": {
-      "type": "default" | "not_found" | "redirect" | "plain_text" | "html" | "css" | "js",
-      "value": string
-    },
-    "vision_ability": "none" | "base64" | "all",
-    "enable_slow_pool": bool,
-    "enable_long_context": bool,
-    "usage_check_models": {
-      "type": "none" | "default" | "all" | "list",
-      "content": string
-    },
-    "enable_dynamic_key": bool,
-    "share_token": string,
-    "calibrate_token": string,
-    "include_web_references": bool
-  }
-}
-```
+#### 更新配置
 
-注意：`usage_check_models` 字段的默认值为非"cursor-small"、"deepseek-v3.1"、"grok-3-mini"的所有模型。
-
-这些模型将默认进行使用量检查。您可以通过配置接口修改此设置。
+* 接口地址: `/config/reload`
+* 请求方法: GET
+* 认证方式: Bearer Token
+* 请求格式: `x-config-hash`
+* 响应格式: 204表示已变更，200表示未变更，其余为错误
 
 ### 日志管理接口
 
@@ -1205,6 +1169,12 @@ data: [DONE]
 #### 环境变量示例
 
 * 接口地址: `/env-example`
+* 请求方法: GET
+* 响应格式: 文本
+
+#### 配置文件示例
+
+* 接口地址: `/config-example`
 * 请求方法: GET
 * 响应格式: 文本
 

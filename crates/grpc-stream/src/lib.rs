@@ -36,7 +36,7 @@ mod decoder;
 // 公开 API
 pub use frame::RawMessage;
 pub use buffer::Buffer;
-pub use compression::decompress_gzip;
+pub use compression::{compress_gzip, decompress_gzip};
 pub use decoder::StreamDecoder;
 
 // 常量

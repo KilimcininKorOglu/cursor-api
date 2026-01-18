@@ -72,7 +72,9 @@ pub(crate) struct Policy {
 /// To provide a scope that isn't a closure, use the more general
 /// [`Builder::scoped()`].
 pub fn for_host<S>(host: S) -> Builder
-where S: for<'a> PartialEq<&'a str> + Send + Sync + 'static {
+where
+    S: for<'a> PartialEq<&'a str> + Send + Sync + 'static,
+{
     scoped(move |req| host == req.uri().host().unwrap_or(""))
 }
 
@@ -80,10 +82,14 @@ where S: for<'a> PartialEq<&'a str> + Send + Sync + 'static {
 ///
 /// This is useful for disabling the `Client`s default behavior of retrying
 /// protocol nacks.
-pub fn never() -> Builder { scoped(|_| false).no_budget() }
+pub fn never() -> Builder {
+    scoped(|_| false).no_budget()
+}
 
 fn scoped<F>(func: F) -> Builder
-where F: Fn(&Req) -> bool + Send + Sync + 'static {
+where
+    F: Fn(&Req) -> bool + Send + Sync + 'static,
+{
     Builder::scoped(scope::ScopeFn(func))
 }
 
@@ -171,7 +177,9 @@ impl Builder {
     /// # }
     /// ```
     pub fn classify_fn<F>(self, func: F) -> Self
-    where F: Fn(classify::ReqRep<'_>) -> classify::Action + Send + Sync + 'static {
+    where
+        F: Fn(classify::ReqRep<'_>) -> classify::Action + Send + Sync + 'static,
+    {
         self.classify(classify::ClassifyFn(func))
     }
 
@@ -192,7 +200,9 @@ impl Builder {
     }
 
     pub(crate) fn into_policy(self) -> Policy {
-        let budget = self.budget.map(|p| Arc::new(Budget::new(Duration::from_secs(10), 10, p)));
+        let budget = self
+            .budget
+            .map(|p| Arc::new(Budget::new(Duration::from_secs(10), 10, p)));
         Policy {
             budget,
             classifier: self.classifier,
@@ -325,9 +335,12 @@ mod scope {
     pub struct ScopeFn<F>(pub(super) F);
 
     impl<F> Scope for ScopeFn<F>
-    where F: Fn(&super::Req) -> bool + Send + Sync + 'static
+    where
+        F: Fn(&super::Req) -> bool + Send + Sync + 'static,
     {
-        fn applies_to(&self, req: &super::Req) -> bool { (self.0)(req) }
+        fn applies_to(&self, req: &super::Req) -> bool {
+            (self.0)(req)
+        }
     }
 
     #[derive(Clone)]
@@ -372,31 +385,48 @@ mod classify {
     pub struct ClassifyFn<F>(pub(super) F);
 
     impl<F> Classify for ClassifyFn<F>
-    where F: Fn(ReqRep<'_>) -> Action + Send + Sync + 'static
+    where
+        F: Fn(ReqRep<'_>) -> Action + Send + Sync + 'static,
     {
-        fn classify(&self, req_rep: ReqRep<'_>) -> Action { (self.0)(req_rep) }
+        fn classify(&self, req_rep: ReqRep<'_>) -> Action {
+            (self.0)(req_rep)
+        }
     }
 
     #[derive(Debug)]
     pub struct ReqRep<'a>(&'a super::Req, Result<http::StatusCode, &'a crate::Error>);
 
     impl ReqRep<'_> {
-        pub fn method(&self) -> &http::Method { self.0.method() }
+        pub fn method(&self) -> &http::Method {
+            self.0.method()
+        }
 
-        pub fn uri(&self) -> &http::Uri { self.0.uri() }
+        pub fn uri(&self) -> &http::Uri {
+            self.0.uri()
+        }
 
-        pub fn status(&self) -> Option<http::StatusCode> { self.1.ok() }
+        pub fn status(&self) -> Option<http::StatusCode> {
+            self.1.ok()
+        }
 
         pub fn error(&self) -> Option<&(dyn std::error::Error + 'static)> {
             self.1.as_ref().err().map(|e| &**e as _)
         }
 
-        pub fn retryable(self) -> Action { Action::Retryable }
+        pub fn retryable(self) -> Action {
+            Action::Retryable
+        }
 
-        pub fn success(self) -> Action { Action::Success }
+        pub fn success(self) -> Action {
+            Action::Success
+        }
 
         fn is_protocol_nack(&self) -> bool {
-            self.1.as_ref().err().map(|&e| super::is_retryable_error(e)).unwrap_or(false)
+            self.1
+                .as_ref()
+                .err()
+                .map(|&e| super::is_retryable_error(e))
+                .unwrap_or(false)
         }
     }
 

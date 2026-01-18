@@ -21,6 +21,10 @@ pub struct TokenHealth {
     pub consecutive_failures: u32,
 }
 
+impl const Default for TokenHealth {
+    fn default() -> Self { Self::new() }
+}
+
 impl TokenHealth {
     pub const fn new() -> Self { Self { backoff_until: 0, consecutive_failures: 0 } }
 
@@ -31,16 +35,16 @@ impl TokenHealth {
     pub fn set_backoff(&mut self, seconds: u64) { self.backoff_until = now_secs() + seconds; }
 
     #[inline]
-    pub fn set_permanent_backoff(&mut self) { self.backoff_until = u64::MAX; }
+    pub const fn set_permanent_backoff(&mut self) { self.backoff_until = u64::MAX; }
 
     #[inline]
-    pub fn clear_backoff(&mut self) {
+    pub const fn clear_backoff(&mut self) {
         self.backoff_until = 0;
         self.consecutive_failures = 0;
     }
 
     #[inline]
-    pub fn inc_failures(&mut self) -> u32 {
+    pub const fn inc_failures(&mut self) -> u32 {
         self.consecutive_failures += 1;
         self.consecutive_failures
     }
@@ -59,17 +63,17 @@ pub struct TokenManagerKey {
 #[cfg(not(feature = "horizon"))]
 impl TokenManagerKey {
     #[inline]
-    pub fn new(token_key: TokenKey, index: usize) -> Self {
+    pub const fn new(token_key: TokenKey, index: usize) -> Self {
         Self { user_id: token_key.user_id, randomness: token_key.randomness, index }
     }
 
     #[inline]
-    pub fn token_key(&self) -> TokenKey {
+    pub const fn token_key(&self) -> TokenKey {
         TokenKey { user_id: self.user_id, randomness: self.randomness }
     }
 
     #[inline]
-    pub fn set_token_key(&mut self, new_key: TokenKey) {
+    pub const fn set_token_key(&mut self, new_key: TokenKey) {
         self.user_id = new_key.user_id;
         self.randomness = new_key.randomness;
     }

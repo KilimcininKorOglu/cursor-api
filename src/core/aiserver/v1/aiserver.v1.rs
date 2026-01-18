@@ -10,9 +10,9 @@ pub struct CursorPosition {
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct EnvironmentInfo {
     #[prost(string = "bytes", optional, tag = "1")]
-    pub exthost_platform: Option<::prost::ByteStr>,
+    pub exthost_platform: Option<::prost::byte_str::ByteStr>,
     #[prost(string = "bytes", optional, tag = "2")]
-    pub exthost_arch: Option<::prost::ByteStr>,
+    pub exthost_arch: Option<::prost::byte_str::ByteStr>,
     #[prost(string, tag = "5")]
     pub local_timestamp: String,
     #[prost(bytes = "bytes", tag = "7")]
@@ -245,7 +245,7 @@ pub struct AzureState {}
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ModelDetails {
     #[prost(string = "bytes", optional, tag = "1")]
-    pub model_name: Option<::prost::ByteStr>,
+    pub model_name: Option<::prost::byte_str::ByteStr>,
     #[prost(message, optional, tag = "4")]
     pub azure_state: Option<AzureState>,
     #[prost(bool, optional, tag = "5")]
@@ -311,11 +311,11 @@ pub struct LinterErrors {
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ExplicitContext {
     #[prost(string = "bytes", tag = "1")]
-    pub context: ::prost::ByteStr,
+    pub context: ::prost::byte_str::ByteStr,
     #[prost(string = "bytes", optional, tag = "2")]
-    pub repo_context: Option<::prost::ByteStr>,
+    pub repo_context: Option<::prost::byte_str::ByteStr>,
     #[prost(string = "bytes", optional, tag = "4")]
-    pub mode_specific_context: Option<::prost::ByteStr>,
+    pub mode_specific_context: Option<::prost::byte_str::ByteStr>,
 }
 /// .aiserver.v1.ErrorDetails
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -739,7 +739,7 @@ pub struct StreamCppResponse {
     pub should_remove_leading_eol: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[prost(string = "bytes", optional, tag = "17")]
-    pub binding_id: Option<::prost::ByteStr>,
+    pub binding_id: Option<::prost::byte_str::ByteStr>,
 }
 /// Nested message and enum types in `StreamCppResponse`.
 pub mod stream_cpp_response {
@@ -1021,7 +1021,7 @@ pub struct ToolResultError {
     // #[prost(string, tag = "1")]
     // pub client_visible_error_message: String,
     #[prost(string = "bytes", tag = "2")]
-    pub model_visible_error_message: ::prost::ByteStr,
+    pub model_visible_error_message: ::prost::byte_str::ByteStr,
     // #[prost(string, optional, tag = "3")]
     // pub actual_error_message_only_send_from_client_to_server_never_the_other_way_around_because_that_may_be_a_security_risk:
     //     Option<String>,
@@ -1056,9 +1056,9 @@ pub struct ClientSideToolV2Call {
     #[prost(enumeration = "ClientSideToolV2", tag = "1")]
     pub tool: i32,
     #[prost(string = "bytes", tag = "3")]
-    pub tool_call_id: ::prost::ByteStr,
+    pub tool_call_id: ::prost::byte_str::ByteStr,
     #[prost(string = "bytes", tag = "9")]
-    pub name: ::prost::ByteStr,
+    pub name: ::prost::byte_str::ByteStr,
     #[prost(bool, tag = "14")]
     pub is_streaming: bool,
     #[prost(bool, tag = "15")]
@@ -1068,7 +1068,7 @@ pub struct ClientSideToolV2Call {
     #[prost(uint32, optional, tag = "48")]
     pub tool_index: Option<u32>,
     #[prost(string = "bytes", optional, tag = "49")]
-    pub model_call_id: Option<::prost::ByteStr>,
+    pub model_call_id: Option<::prost::byte_str::ByteStr>,
     #[prost(oneof = "client_side_tool_v2_call::Params", tags = "27")]
     pub params: Option<client_side_tool_v2_call::Params>,
 }
@@ -1086,11 +1086,11 @@ pub struct ClientSideToolV2Result {
     #[prost(enumeration = "ClientSideToolV2", tag = "1")]
     pub tool: i32,
     #[prost(string = "bytes", tag = "35")]
-    pub tool_call_id: ::prost::ByteStr,
+    pub tool_call_id: ::prost::byte_str::ByteStr,
     #[prost(message, optional, tag = "8")]
     pub error: Option<ToolResultError>,
     #[prost(string = "bytes", optional, tag = "48")]
-    pub model_call_id: Option<::prost::ByteStr>,
+    pub model_call_id: Option<::prost::byte_str::ByteStr>,
     #[prost(uint32, optional, tag = "49")]
     pub tool_index: Option<u32>,
     #[prost(oneof = "client_side_tool_v2_result::Result", tags = "28")]
@@ -1116,11 +1116,11 @@ pub mod mcp_params {
     #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
     pub struct Tool {
         #[prost(string = "bytes", tag = "1")]
-        pub name: ::prost::ByteStr,
+        pub name: ::prost::byte_str::ByteStr,
         #[prost(string, tag = "2")]
         pub description: String,
         #[prost(string = "bytes", tag = "3")]
-        pub parameters: ::prost::ByteStr,
+        pub parameters: ::prost::byte_str::ByteStr,
         #[prost(string, tag = "4")]
         pub server_name: String,
     }
@@ -1129,9 +1129,9 @@ pub mod mcp_params {
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct McpResult {
     #[prost(string = "bytes", tag = "1")]
-    pub selected_tool: ::prost::ByteStr,
+    pub selected_tool: ::prost::byte_str::ByteStr,
     #[prost(string = "bytes", tag = "2")]
-    pub result: ::prost::ByteStr,
+    pub result: ::prost::byte_str::ByteStr,
 }
 /// .aiserver.v1.StreamUnifiedChatRequestWithTools
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1193,7 +1193,7 @@ pub struct StreamUnifiedChatRequest {
     #[prost(message, optional, tag = "5")]
     pub model_details: Option<ModelDetails>,
     #[prost(string = "bytes", optional, tag = "8")]
-    pub use_web: Option<::prost::ByteStr>,
+    pub use_web: Option<::prost::byte_str::ByteStr>,
     #[prost(message, repeated, tag = "9")]
     pub external_links: Vec<ComposerExternalLink>,
     #[prost(bool, optional, tag = "13")]
@@ -1227,7 +1227,7 @@ pub struct StreamUnifiedChatRequest {
     #[prost(bool, optional, tag = "51")]
     pub uses_rules: Option<bool>,
     #[prost(string = "bytes", optional, tag = "54")]
-    pub unified_mode_name: Option<::prost::ByteStr>,
+    pub unified_mode_name: Option<::prost::byte_str::ByteStr>,
 }
 /// Nested message and enum types in `StreamUnifiedChatRequest`.
 pub mod stream_unified_chat_request {
@@ -1265,9 +1265,9 @@ pub struct StreamUnifiedChatResponse {
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ConversationMessageHeader {
     #[prost(string = "bytes", tag = "1")]
-    pub bubble_id: ::prost::ByteStr,
+    pub bubble_id: ::prost::byte_str::ByteStr,
     #[prost(string = "bytes", optional, tag = "2")]
-    pub server_bubble_id: Option<::prost::ByteStr>,
+    pub server_bubble_id: Option<::prost::byte_str::ByteStr>,
     #[prost(enumeration = "conversation_message::MessageType", tag = "3")]
     pub r#type: i32,
 }
@@ -1281,9 +1281,9 @@ pub struct ConversationMessage {
     #[prost(message, repeated, tag = "10")]
     pub images: Vec<ImageProto>,
     #[prost(string = "bytes", tag = "13")]
-    pub bubble_id: ::prost::ByteStr,
+    pub bubble_id: ::prost::byte_str::ByteStr,
     #[prost(string = "bytes", optional, tag = "32")]
-    pub server_bubble_id: Option<::prost::ByteStr>,
+    pub server_bubble_id: Option<::prost::byte_str::ByteStr>,
     #[prost(message, repeated, tag = "18")]
     pub tool_results: Vec<conversation_message::ToolResult>,
     #[prost(bool, tag = "29")]
@@ -1307,15 +1307,15 @@ pub mod conversation_message {
     #[derive(Clone, PartialEq, ::prost::Message)]
     pub struct ToolResult {
         #[prost(string = "bytes", tag = "1")]
-        pub tool_call_id: ::prost::ByteStr,
+        pub tool_call_id: ::prost::byte_str::ByteStr,
         #[prost(string = "bytes", tag = "2")]
-        pub tool_name: ::prost::ByteStr,
+        pub tool_name: ::prost::byte_str::ByteStr,
         #[prost(uint32, tag = "3")]
         pub tool_index: u32,
         #[prost(string = "bytes", optional, tag = "12")]
-        pub model_call_id: Option<::prost::ByteStr>,
+        pub model_call_id: Option<::prost::byte_str::ByteStr>,
         #[prost(string = "bytes", tag = "5")]
-        pub raw_args: ::prost::ByteStr,
+        pub raw_args: ::prost::byte_str::ByteStr,
         #[prost(message, optional, tag = "8")]
         pub result: Option<super::ClientSideToolV2Result>,
         #[prost(message, optional, tag = "9")]
@@ -1382,6 +1382,22 @@ pub struct AvailableModelsRequest {
 pub struct AvailableModelsResponse {
     #[prost(message, repeated, tag = "2")]
     pub models: Vec<available_models_response::AvailableModel>,
+    #[prost(string, repeated, tag = "1")]
+    pub model_names: Vec<String>,
+    #[prost(message, optional, tag = "4")]
+    pub composer_model_config: Option<available_models_response::FeatureModelConfig>,
+    #[prost(message, optional, tag = "5")]
+    pub cmd_k_model_config: Option<available_models_response::FeatureModelConfig>,
+    #[prost(message, optional, tag = "6")]
+    pub background_composer_model_config: Option<available_models_response::FeatureModelConfig>,
+    #[prost(message, optional, tag = "7")]
+    pub plan_execution_model_config: Option<available_models_response::FeatureModelConfig>,
+    #[prost(message, optional, tag = "8")]
+    pub spec_model_config: Option<available_models_response::FeatureModelConfig>,
+    #[prost(message, optional, tag = "9")]
+    pub deep_search_model_config: Option<available_models_response::FeatureModelConfig>,
+    #[prost(message, optional, tag = "10")]
+    pub quick_agent_model_config: Option<available_models_response::FeatureModelConfig>,
 }
 /// Nested message and enum types in `AvailableModelsResponse`.
 pub mod available_models_response {
@@ -1451,6 +1467,28 @@ pub mod available_models_response {
         pub is_recommended_for_background_composer: Option<bool>,
         #[prost(bool, optional, tag = "22")]
         pub supports_plan_mode: Option<bool>,
+        #[prost(bool, optional, tag = "25")]
+        pub supports_sandboxing: Option<bool>,
+        #[prost(bool, optional, tag = "23")]
+        pub is_user_added: Option<bool>,
+        #[prost(string, optional, tag = "24")]
+        pub inputbox_short_model_name: Option<String>,
+        #[prost(bool, optional, tag = "26")]
+        pub supports_cmd_k: Option<bool>,
+        #[prost(bool, optional, tag = "27")]
+        pub only_supports_cmd_k: Option<bool>,
+        #[prost(int32, optional, tag = "28")]
+        pub background_composer_sort_order: Option<i32>,
+    }
+    /// aiserver.v1.AvailableModelsResponse.FeatureModelConfig
+    #[derive(::serde::Serialize, Clone, PartialEq, Eq, Hash, ::prost::Message)]
+    pub struct FeatureModelConfig {
+        #[prost(string, tag = "1")]
+        pub default_model: String,
+        #[prost(string, repeated, tag = "2")]
+        pub fallback_models: Vec<String>,
+        #[prost(string, repeated, tag = "3")]
+        pub best_of_n_default_models: Vec<String>,
     }
     /// .aiserver.v1.AvailableModelsResponse.DegradationStatus
     #[derive(

@@ -19,6 +19,7 @@ use crate::{
             FsSyncFileResponse, FsUploadFileRequest, FsUploadFileResponse, StreamCppRequest,
         },
         auth::TokenBundle,
+        error::ErrorExt as _,
         stream::decoder::{
             cpp::{StreamDecoder, StreamMessage},
             direct,
@@ -34,7 +35,7 @@ use axum::{
 };
 use bytes::Bytes;
 use core::convert::Infallible;
-use futures::StreamExt as _;
+use futures_util::StreamExt as _;
 use http::{
     Extensions, HeaderMap, StatusCode,
     header::{
@@ -75,24 +76,23 @@ pub async fn handle_cpp_config(
                     .header(CONTENT_LENGTH, s.len())
                     .body(Body::from(s))
             )),
-            Err(DecoderError::Internal(e)) => Err((
-                StatusCode::BAD_GATEWAY,
-                Json(ChatError::ProcessingFailed(Cow::Borrowed(e)).to_generic()),
-            )
+            Err(DecoderError::Internal(e)) => Err(ChatError::ProcessingFailed(Cow::Borrowed(e))
+                .into_generic_tuple()
                 .into_response()),
         },
-        Err(mut e) => {
-            e = e.without_url();
+        Err(e) => {
+            let e = e.without_url();
 
-            Err((
+            Err(ChatError::RequestFailed(
                 if e.is_timeout() {
                     StatusCode::GATEWAY_TIMEOUT
                 } else {
                     StatusCode::INTERNAL_SERVER_ERROR
                 },
-                Json(ChatError::RequestFailed(Cow::Owned(e.to_string())).to_generic()),
+                Cow::Owned(e.to_string()),
             )
-                .into_response())
+            .into_generic_tuple()
+            .into_response())
         }
     }
 }
@@ -123,24 +123,23 @@ pub async fn handle_cpp_models(
                     .header(CONTENT_LENGTH, s.len())
                     .body(Body::from(s))
             )),
-            Err(DecoderError::Internal(e)) => Err((
-                StatusCode::BAD_GATEWAY,
-                Json(ChatError::ProcessingFailed(Cow::Borrowed(e)).to_generic()),
-            )
+            Err(DecoderError::Internal(e)) => Err(ChatError::ProcessingFailed(Cow::Borrowed(e))
+                .into_generic_tuple()
                 .into_response()),
         },
-        Err(mut e) => {
-            e = e.without_url();
+        Err(e) => {
+            let e = e.without_url();
 
-            Err((
+            Err(ChatError::RequestFailed(
                 if e.is_timeout() {
                     StatusCode::GATEWAY_TIMEOUT
                 } else {
                     StatusCode::INTERNAL_SERVER_ERROR
                 },
-                Json(ChatError::RequestFailed(Cow::Owned(e.to_string())).to_generic()),
+                Cow::Owned(e.to_string()),
             )
-                .into_response())
+            .into_generic_tuple()
+            .into_response())
         }
     }
 }
@@ -168,7 +167,7 @@ pub async fn handle_upload_file(
     let req = build_client_request(AiServiceRequest {
         ext_token: &ext_token,
         fs_client_key: headers.remove(CLIENT_KEY),
-        url: ext_token.get_gcpp_host().get_url(CppService::FSUploadFile, use_pri),
+        url: ext_token.gcpp_host().get_url(CppService::FSUploadFile, use_pri),
         stream: false,
         compressed,
         trace_id: new_uuid_v4(),
@@ -176,7 +175,7 @@ pub async fn handle_upload_file(
         cookie: headers.remove(COOKIE),
     });
 
-    let mut e = match CollectBytesParts(req.body(data)).await {
+    let e = match CollectBytesParts(req.body(data)).await {
         Ok((mut parts, bytes)) => {
             for key in TO_REMOVE_HEADERS {
                 let _ = parts.headers.remove(key);
@@ -192,23 +191,26 @@ pub async fn handle_upload_file(
                         .header(CONTENT_LENGTH, s.len())
                         .body(Body::from(s))
                 )),
-                Err(DecoderError::Internal(e)) => Err((
-                    StatusCode::BAD_GATEWAY,
-                    Json(ChatError::ProcessingFailed(Cow::Borrowed(e)).to_generic()),
-                )
-                    .into_response()),
+                Err(DecoderError::Internal(e)) => {
+                    Err(ChatError::ProcessingFailed(Cow::Borrowed(e))
+                        .into_generic_tuple()
+                        .into_response())
+                }
             };
         }
         Err(e) => e,
     };
-    e = e.without_url();
-    let status_code = if e.is_timeout() {
-        StatusCode::GATEWAY_TIMEOUT
-    } else {
-        StatusCode::INTERNAL_SERVER_ERROR
-    };
-    Err((status_code, Json(ChatError::RequestFailed(Cow::Owned(e.to_string())).to_generic()))
-        .into_response())
+    let e = e.without_url();
+    Err(ChatError::RequestFailed(
+        if e.is_timeout() {
+            StatusCode::GATEWAY_TIMEOUT
+        } else {
+            StatusCode::INTERNAL_SERVER_ERROR
+        },
+        Cow::Owned(e.to_string()),
+    )
+    .into_generic_tuple()
+    .into_response())
 }
 
 pub async fn handle_sync_file(
@@ -226,7 +228,7 @@ pub async fn handle_sync_file(
     let req = build_client_request(AiServiceRequest {
         ext_token: &ext_token,
         fs_client_key: headers.remove(CLIENT_KEY),
-        url: ext_token.get_gcpp_host().get_url(CppService::FSSyncFile, use_pri),
+        url: ext_token.gcpp_host().get_url(CppService::FSSyncFile, use_pri),
         stream: false,
         compressed,
         trace_id: new_uuid_v4(),
@@ -234,7 +236,7 @@ pub async fn handle_sync_file(
         cookie: headers.remove(COOKIE),
     });
 
-    let mut e = match CollectBytesParts(req.body(data)).await {
+    let e = match CollectBytesParts(req.body(data)).await {
         Ok((mut parts, bytes)) => {
             for key in TO_REMOVE_HEADERS {
                 let _ = parts.headers.remove(key);
@@ -250,23 +252,26 @@ pub async fn handle_sync_file(
                         .header(CONTENT_LENGTH, s.len())
                         .body(Body::from(s))
                 )),
-                Err(DecoderError::Internal(e)) => Err((
-                    StatusCode::BAD_GATEWAY,
-                    Json(ChatError::ProcessingFailed(Cow::Borrowed(e)).to_generic()),
-                )
-                    .into_response()),
+                Err(DecoderError::Internal(e)) => {
+                    Err(ChatError::ProcessingFailed(Cow::Borrowed(e))
+                        .into_generic_tuple()
+                        .into_response())
+                }
             };
         }
         Err(e) => e,
     };
-    e = e.without_url();
-    let status_code = if e.is_timeout() {
-        StatusCode::GATEWAY_TIMEOUT
-    } else {
-        StatusCode::INTERNAL_SERVER_ERROR
-    };
-    Err((status_code, Json(ChatError::RequestFailed(Cow::Owned(e.to_string())).to_generic()))
-        .into_response())
+    let e = e.without_url();
+    Err(ChatError::RequestFailed(
+        if e.is_timeout() {
+            StatusCode::GATEWAY_TIMEOUT
+        } else {
+            StatusCode::INTERNAL_SERVER_ERROR
+        },
+        Cow::Owned(e.to_string()),
+    )
+    .into_generic_tuple()
+    .into_response())
 }
 
 pub async fn handle_stream_cpp(
@@ -284,7 +289,7 @@ pub async fn handle_stream_cpp(
     let req = build_client_request(AiServiceRequest {
         ext_token: &ext_token,
         fs_client_key: headers.remove(CLIENT_KEY),
-        url: ext_token.get_gcpp_host().get_url(CppService::StreamCpp, use_pri),
+        url: ext_token.gcpp_host().get_url(CppService::StreamCpp, use_pri),
         stream: true,
         compressed: true,
         trace_id: new_uuid_v4(),
@@ -294,17 +299,18 @@ pub async fn handle_stream_cpp(
 
     let res = match req.body(data).send().await {
         Ok(r) => r,
-        Err(mut e) => {
-            e = e.without_url();
+        Err(e) => {
+            let e = e.without_url();
 
-            return Err((
+            return Err(ChatError::RequestFailed(
                 if e.is_timeout() {
                     StatusCode::GATEWAY_TIMEOUT
                 } else {
                     StatusCode::INTERNAL_SERVER_ERROR
                 },
-                Json(ChatError::RequestFailed(Cow::Owned(e.to_string())).to_generic()),
-            ));
+                Cow::Owned(e.to_string()),
+            )
+            .into_generic_tuple());
         }
     };
 

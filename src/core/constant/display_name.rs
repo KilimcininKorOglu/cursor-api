@@ -71,7 +71,7 @@ pub fn calculate_display_name(identifier: &'static str) -> &'static str {
     let result = if identifier.is_empty() {
         EMPTY_STRING
     } else {
-        crate::leak::intern_static(calculate_display_name_internal(identifier))
+        crate::leak::intern(calculate_display_name_internal(identifier))
     };
 
     DISPLAY_NAME_CACHE.lock().insert(identifier, result);

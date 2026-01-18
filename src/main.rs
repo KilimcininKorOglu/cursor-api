@@ -5,19 +5,18 @@
     hasher_prefixfree_extras,
     const_trait_impl,
     const_default,
+    const_convert,
     core_intrinsics,
     associated_type_defaults,
     sized_type_properties,
     str_from_raw_parts,
     trim_prefix_suffix,
     unboxed_closures,
-    fn_traits
+    fn_traits,
+    ptr_metadata,
+    maybe_uninit_as_bytes
 )]
-#![allow(
-    clippy::redundant_static_lifetimes,
-    clippy::enum_variant_names,
-    clippy::let_and_return
-)]
+#![allow(clippy::redundant_static_lifetimes, clippy::enum_variant_names, clippy::let_and_return)]
 
 #[macro_use]
 extern crate cursor_api;
@@ -27,19 +26,18 @@ extern crate alloc;
 mod app;
 mod common;
 mod core;
-mod leak;
 mod natural_args;
 
+use alloc::sync::Arc;
 use app::{
     constant::{EMPTY_STRING, ExeName, VERSION},
     model::{AppConfig, AppState},
 };
 use common::utils::parse_from_env;
 use natural_args::{DEFAULT_LISTEN_HOST, ENV_HOST, ENV_PORT};
-use tokio::signal;
+use tokio::{signal, sync::Notify};
 
-#[tokio::main]
-async fn main() {
+fn main() {
     // 设置自定义 panic hook
     #[cfg(not(debug_assertions))]
     ::std::panic::set_hook(Box::new(|info| {
@@ -54,38 +52,33 @@ async fn main() {
         }
     }));
 
+    tracing_subscriber::fmt()
+        .with_writer(std::fs::File::create("tracing.log").expect("创建日志文件失败"))
+        .with_ansi(false)
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .init();
+
     // 处理自然语言参数
     {
         let current_exe = __unwrap_panic!(std::env::current_exe());
-        let file_name = __unwrap_panic!(
-            current_exe
-                .file_name()
-                .and_then(|s| s.to_str())
-                .ok_or("filename")
-        );
-        let current_dir = app::lazy::init_paths(
-            __unwrap_panic!(current_exe.parent().ok_or("parent")).to_path_buf(),
-        );
-        unsafe {
-            app::constant::IS_TERMINAL = std::io::IsTerminal::is_terminal(&std::io::stdout());
-        }
-        let expect = current_dir.join(ExeName::EXE_NAME).is_file();
+        let file_name =
+            __unwrap_panic!(current_exe.file_name().and_then(|s| s.to_str()).ok_or("filename"));
+        let current_dir = __unwrap_panic!(current_exe.parent().ok_or("parent")).to_path_buf();
+        unsafe { app::constant::IS_TERMINAL = std::io::IsTerminal::is_terminal(&std::io::stdout()) }
 
         if file_name != ExeName::EXE_NAME {
-            if expect {
+            if current_dir.join(ExeName::EXE_NAME).is_file() {
                 println!(
                     "Oh, I see you already have a {} sitting there. Multiple versions? How adventurous of you!",
                     ExeName::YELLOW
                 )
             } else {
-                println!(
-                    "{file_name}? Really? {} was literally right there!",
-                    ExeName::BRIGHT_RED
-                );
+                println!("{file_name}? Really? {} was literally right there!", ExeName::BRIGHT_RED);
             };
         }
 
         natural_args::process_args(file_name);
+        app::lazy::init_paths(current_dir);
     }
 
     // tracing_subscriber::fmt::init();
@@ -125,8 +118,12 @@ async fn main() {
     // 初始化全局配置
     AppConfig::init();
 
+    tokio::runtime::Builder::new_multi_thread().enable_all().build().unwrap().block_on(run())
+}
+
+async fn run() {
     // 初始化应用状态
-    let state = alloc::sync::Arc::new(__unwrap_panic!(AppState::load().await));
+    let state = Arc::new(__unwrap_panic!(AppState::load().await));
 
     // 尝试加载保存的配置
     // if let Err(e) = AppConfig::load() {
@@ -135,7 +132,8 @@ async fn main() {
     // }
 
     // 初始化NTP
-    let ntp = tokio::spawn(common::model::ntp::init_sync());
+    let stdout_ready = Arc::new(Notify::new());
+    let ntp = tokio::spawn(common::model::ntp::init_sync(stdout_ready.clone()));
 
     // 创建一个克隆用于后台任务
     let state_for_reload = state.clone();
@@ -172,9 +170,7 @@ async fn main() {
     // 设置关闭信号处理
     let shutdown_signal = async move {
         let ctrl_c = async {
-            signal::ctrl_c()
-                .await
-                .expect("failed to install Ctrl+C handler");
+            signal::ctrl_c().await.expect("failed to install Ctrl+C handler");
         };
 
         #[cfg(unix)]
@@ -242,12 +238,7 @@ async fn main() {
     // 启动服务器
     let listener = {
         use std::net::{IpAddr, Ipv4Addr, SocketAddr};
-        let port = {
-            std::env::var(ENV_PORT)
-                .ok()
-                .and_then(|v| v.trim().parse().ok())
-                .unwrap_or(3000)
-        };
+        let port = std::env::var(ENV_PORT).ok().and_then(|v| v.trim().parse().ok()).unwrap_or(3000);
         let addr = SocketAddr::new(
             IpAddr::parse_ascii(parse_from_env(ENV_HOST, DEFAULT_LISTEN_HOST).as_bytes())
                 .unwrap_or_else(|e| {
@@ -258,16 +249,16 @@ async fn main() {
             port,
         );
         println!("服务器运行在 {addr}");
-        tokio::net::TcpListener::bind(addr)
-            .await
-            .unwrap_or_else(|e| {
-                __cold_path!();
-                eprintln!("无法绑定到地址 {addr}: {e}");
-                std::process::exit(1);
-            })
+        tokio::net::TcpListener::bind(addr).await.unwrap_or_else(|e| {
+            __cold_path!();
+            eprintln!("无法绑定到地址 {addr}: {e}");
+            std::process::exit(1);
+        })
     };
 
     print!("时间同步中...");
+    stdout_ready.notify_one();
+    drop(stdout_ready);
     let _ = std::io::Write::flush(&mut std::io::stdout().lock());
     if let Err(e) = ntp.await {
         eprintln!("{e}");

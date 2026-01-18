@@ -1,16 +1,13 @@
-use core::str::FromStr;
-use core::time::Duration;
+use crate::app::lazy::{PROXIES_FILE_PATH, SERVICE_TIMEOUT, TCP_KEEPALIVE};
 use alloc::sync::Arc;
-
 use arc_swap::{ArcSwap, ArcSwapAny};
+use core::{str::FromStr, time::Duration};
+use manually_init::ManuallyInit;
 use memmap2::{MmapMut, MmapOptions};
 use reqwest::Client;
 use rkyv::{Archive, Deserialize as RkyvDeserialize, Serialize as RkyvSerialize};
 use serde::{Deserialize, Serialize};
 use tokio::fs::OpenOptions;
-use manually_init::ManuallyInit;
-
-use crate::app::lazy::{PROXIES_FILE_PATH, SERVICE_TIMEOUT, TCP_KEEPALIVE};
 mod proxy_url;
 use proxy_url::ProxyUrl;
 
@@ -35,6 +32,9 @@ static PROXIES: ManuallyInit<ArcSwap<HashMap<String, SingleProxy>>> = ManuallyIn
 /// 通用代理名称
 static GENERAL_NAME: ManuallyInit<ArcSwap<String>> = ManuallyInit::new();
 
+// /// 获取图像代理名称
+// static FETCH_IMAGE_NAME: ArcSwapOption<String> = ArcSwapOption::const_empty();
+
 /// 代理配置到客户端实例的映射
 ///
 /// 缓存已创建的客户端，避免重复创建相同配置的客户端
@@ -44,6 +44,13 @@ static CLIENTS: ManuallyInit<ArcSwap<HashMap<SingleProxy, Client>>> = ManuallyIn
 ///
 /// 用于未指定特定代理的请求，指向 GENERAL_NAME 对应的客户端
 static GENERAL_CLIENT: ManuallyInit<ArcSwapAny<Client>> = ManuallyInit::new();
+
+// /// 获取图像客户端
+// ///
+// /// 用于获取HTTP图像的请求，指向 FETCH_IMAGE_NAME 对应的客户端
+// static FETCH_IMAGE_CLIENT: ArcSwapAny<Option<Client>> = unsafe {
+//     core::intrinsics::transmute_unchecked::<ArcSwapOption<()>, _>(ArcSwapOption::const_empty())
+// };
 
 /// 代理配置管理器
 ///
@@ -197,7 +204,8 @@ impl Proxies {
 
         // Safety: 文件内容由我们自己控制，格式保证正确
         unsafe {
-            ::rkyv::from_bytes_unchecked::<Self, ::rkyv::rancor::Error>(&mmap).map_err(Into::into)
+            ::rkyv::from_bytes_unchecked::<Self, ::rkyv::rancor::Error>(&mmap)
+                .map_err(|_| "加载代理失败".into())
         }
     }
 
@@ -226,27 +234,17 @@ impl SingleProxy {
     /// 根据代理配置创建对应的客户端并插入到映射中
     #[inline]
     fn insert_to(&self, clients: &mut HashMap<SingleProxy, Client>) {
+        let builder = Client::builder()
+            .https_only(true)
+            .tcp_keepalive(Duration::from_secs(*TCP_KEEPALIVE))
+            .connect_timeout(Duration::from_secs(*SERVICE_TIMEOUT))
+            .webpki_roots_only();
         let client = match self {
-            SingleProxy::Non => Client::builder()
-                .https_only(true)
-                .tcp_keepalive(Duration::from_secs(*TCP_KEEPALIVE))
-                .connect_timeout(Duration::from_secs(*SERVICE_TIMEOUT))
-                .no_proxy()
-                .build()
-                .expect("创建无代理客户端失败"),
-            SingleProxy::Sys => Client::builder()
-                .https_only(true)
-                .tcp_keepalive(Duration::from_secs(*TCP_KEEPALIVE))
-                .connect_timeout(Duration::from_secs(*SERVICE_TIMEOUT))
-                .build()
-                .expect("创建默认客户端失败"),
-            SingleProxy::Url(url) => Client::builder()
-                .https_only(true)
-                .tcp_keepalive(Duration::from_secs(*TCP_KEEPALIVE))
-                .connect_timeout(Duration::from_secs(*SERVICE_TIMEOUT))
-                .proxy(url.to_proxy())
-                .build()
-                .expect("创建代理客户端失败"),
+            SingleProxy::Non => builder.no_proxy().build().expect("创建无代理客户端失败"),
+            SingleProxy::Sys => builder.build().expect("创建默认客户端失败"),
+            SingleProxy::Url(url) => {
+                builder.proxy(url.to_proxy()).build().expect("创建代理客户端失败")
+            }
         };
 
         clients.insert(self.clone(), client);
@@ -347,6 +345,13 @@ pub fn get_client_or_general(name: Option<&str>) -> Client {
     }
 }
 
+/// 获取请求图像客户端
+#[inline]
+pub fn get_fetch_image_client() -> Client {
+    // fetch_image_client().load_full().unwrap_or_else(get_general_client)
+    get_general_client()
+}
+
 /// 更新通用客户端引用
 ///
 /// 前置条件：general_name 必须存在于 proxies 中，
@@ -369,8 +374,14 @@ pub fn proxies() -> &'static ArcSwap<HashMap<String, SingleProxy>> { PROXIES.get
 #[inline]
 pub fn general_name() -> &'static ArcSwap<String> { GENERAL_NAME.get() }
 
+// #[inline]
+// pub fn fetch_image_name() -> &'static ArcSwapOption<String> { &FETCH_IMAGE_NAME }
+
 #[inline]
 fn clients() -> &'static ArcSwap<HashMap<SingleProxy, Client>> { CLIENTS.get() }
 
 #[inline]
 fn general_client() -> &'static ArcSwapAny<Client> { GENERAL_CLIENT.get() }
+
+// #[inline]
+// fn fetch_image_client() -> &'static ArcSwapAny<Option<Client>> { &FETCH_IMAGE_CLIENT }

@@ -82,9 +82,12 @@
 //! This can be an array of tuples, or a `HashMap`, or a custom type that
 //! implements [`Serialize`][serde].
 //!
+//! The feature `form` is required.
+//!
 //! ```rust
 //! # use reqwest::Error;
 //! #
+//! # #[cfg(feature = "form")]
 //! # async fn run() -> Result<(), Error> {
 //! // This will POST a body of `foo=bar&baz=quux`
 //! let params = [("foo", "bar"), ("baz", "quux")];
@@ -101,7 +104,9 @@
 //!
 //! There is also a `json` method helper on the [`RequestBuilder`][builder] that works in
 //! a similar fashion the `form` method. It can take any value that can be
-//! serialized into JSON. The feature `json` is required.
+//! serialized into JSON.
+//!
+//! The feature `json` is required.
 //!
 //! ```rust
 //! # use reqwest::Error;
@@ -187,17 +192,10 @@
 //! - **http2** *(enabled by default)*: Enables HTTP/2 support.
 //! - **default-tls** *(enabled by default)*: Provides TLS support to connect
 //!   over HTTPS.
+//! - **rustls**: Enables TLS functionality provided by `rustls`.
 //! - **native-tls**: Enables TLS functionality provided by `native-tls`.
 //! - **native-tls-vendored**: Enables the `vendored` feature of `native-tls`.
-//! - **native-tls-alpn**: Enables the `alpn` feature of `native-tls`.
-//! - **rustls-tls**: Enables TLS functionality provided by `rustls`.
-//!   Equivalent to `rustls-tls-webpki-roots`.
-//! - **rustls-tls-manual-roots**: Enables TLS functionality provided by `rustls`,
-//!   without setting any root certificates. Roots have to be specified manually.
-//! - **rustls-tls-webpki-roots**: Enables TLS functionality provided by `rustls`,
-//!   while using root certificates from the `webpki-roots` crate.
-//! - **rustls-tls-native-roots**: Enables TLS functionality provided by `rustls`,
-//!   while using root certificates from the `rustls-native-certs` crate.
+//! - **native-tls-no-alpn**: Enables `native-tls` without its `alpn` feature.
 //! - **blocking**: Provides the [blocking][] client API.
 //! - **charset** *(enabled by default)*: Improved support for decoding text.
 //! - **cookies**: Provides cookie session support.
@@ -205,6 +203,8 @@
 //! - **brotli**: Provides response body brotli decompression.
 //! - **zstd**: Provides response body zstd decompression.
 //! - **deflate**: Provides response body deflate decompression.
+//! - **query**: Provides query parameter serialization.
+//! - **form**: Provides form data serialization.
 //! - **json**: Provides serialization and deserialization for JSON bodies.
 //! - **multipart**: Provides functionality for multipart forms.
 //! - **stream**: Adds support for `futures::Stream`.
@@ -257,7 +257,8 @@ compile_error!(
 
 // Ignore `unused_crate_dependencies` warnings.
 // Used in many features that they're not worth making it optional.
-use {futures_core as _, sync_wrapper as _};
+use futures_core as _;
+use sync_wrapper as _;
 
 macro_rules! if_wasm {
     ($($item:item)*) => {$(
@@ -273,7 +274,9 @@ macro_rules! if_hyper {
     )*}
 }
 
-pub use http::{Method, StatusCode, Version, header};
+pub use http::header;
+pub use http::Method;
+pub use http::{StatusCode, Version};
 pub use url::Url;
 
 // universal mods
@@ -350,8 +353,8 @@ if_hyper! {
     // #[macro_use]
     // extern crate doc_comment;
 
-    // #[cfg(test)]
-    // doctest!("../README.md");
+    #[cfg(test)]
+    doctest!("../README.md");
 
     pub use self::async_impl::{
         Body, Client, ClientBuilder, Request, RequestBuilder, Response, Upgraded,

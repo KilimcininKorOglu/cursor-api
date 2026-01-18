@@ -1,8 +1,5 @@
 pub mod header;
 
-// pub use header::*;
-pub use manually_init::ManuallyInit;
-
 /// 533 Upstream Failure
 /// [A non-standard code. Indicates the server, while acting as a gateway or proxy,
 /// received a response from an upstream service that constituted a failure. Unlike
@@ -60,7 +57,7 @@ pub use crate::common::build::BUILD_VERSION;
 pub use crate::common::build::{BUILD_TIMESTAMP, IS_DEBUG, IS_PRERELEASE, VERSION};
 
 pub const MIN_COMPAT_VERSION: super::model::version::Version =
-    super::model::version::preview(0, 4, 0, 13);
+    super::model::version::preview(0, 4, 0, 14);
 
 pub struct ExeName(bool);
 
@@ -101,7 +98,7 @@ def_pub_const!(
 // Basic string constants
 def_pub_const!(
     EMPTY_STRING = "",
-    COMMA_STRING = ",",
+    // COMMA_STRING = ",",
     UNKNOWN = "unknown",
     TYPE = "type",
     ERROR = "error"
@@ -111,16 +108,19 @@ def_pub_const!(
 def_pub_const!(
     // ROUTE_ROOT_PATH = "/",
     ROUTE_HEALTH_PATH = "/health",
-    ROUTE_GEN_UUID = "/gen-uuid",
-    ROUTE_GEN_HASH = "/gen-hash",
-    ROUTE_GEN_CHECKSUM = "/gen-checksum",
-    ROUTE_GET_CHECKSUM_HEADER = "/get-checksum-header",
+    ROUTE_GEN_UUID_PATH = "/gen-uuid",
+    ROUTE_GEN_HASH_PATH = "/gen-hash",
+    ROUTE_GEN_CHECKSUM_PATH = "/gen-checksum",
+    ROUTE_GET_CHECKSUM_HEADER_PATH = "/get-checksum-header",
     // ROUTE_USER_INFO_PATH = "/userinfo",
     // ROUTE_API_PATH = "/api",
     // ROUTE_LOGS_PATH = "/logs",
     ROUTE_LOGS_GET_PATH = "/logs/get",
     ROUTE_LOGS_TOKENS_GET_PATH = "/logs/tokens/get",
-    ROUTE_CONFIG_PATH = "/config",
+    // ROUTE_CONFIG_PATH = "/config",
+    ROUTE_CONFIG_GET_PATH = "/config/get",
+    ROUTE_CONFIG_SET_PATH = "/config/set",
+    ROUTE_CONFIG_RELOAD_PATH = "/config/reload",
     // ROUTE_TOKENS_PATH = "/tokens",
     ROUTE_TOKENS_GET_PATH = "/tokens/get",
     ROUTE_TOKENS_SET_PATH = "/tokens/set",
@@ -142,6 +142,7 @@ def_pub_const!(
     ROUTE_PROXIES_SET_GENERAL_PATH = "/proxies/set-general",
     ROUTE_NTP_SYNC_ONCE_PATH = "/ntp/sync-once",
     ROUTE_ENV_EXAMPLE_PATH = "/env-example",
+    ROUTE_CONFIG_EXAMPLE_PATH = "/config-example",
     // ROUTE_STATIC_PATH = "/static/{path}",
     // ROUTE_SHARED_STYLES_PATH = "/static/shared-styles.css",
     // ROUTE_SHARED_JS_PATH = "/static/shared.js",
@@ -181,9 +182,6 @@ def_pub_const!(
 
 // Object type constants
 def_pub_const!(
-    OBJECT_CHAT_COMPLETION =
-        unsafe { core::str::from_raw_parts(OBJECT_CHAT_COMPLETION_CHUNK.as_ptr(), 15) },
-    OBJECT_CHAT_COMPLETION_CHUNK = "chat.completion.chunk",
     CHATCMPL_PREFIX = "chatcmpl-",
     MSG01_PREFIX = "msg_01",
     // TOOLU01_PREFIX = "toolu_01",
@@ -194,9 +192,6 @@ def_pub_const!(
 //     CURSOR_API2_STREAM_CHAT = "StreamChat",
 //     CURSOR_API2_GET_USER_INFO = "GetUserInfo"
 // );
-
-// Finish reason constants
-def_pub_const!(FINISH_REASON_STOP = "stop");
 
 // Error message constants
 def_pub_const!(
@@ -226,74 +221,74 @@ def_pub_const!(
 
 def_pub_const!(HTTPS_PREFIX = "https://");
 
-def_pub_const! {
-    DEFAULT_THINKING_TAG = unsafe { core::str::from_raw_parts(DEFAULT_THINKING_TAG_OPEN.as_ptr().add(1), 5) },
-    DEFAULT_THINKING_TAG_OPEN = "<think>",
-    DEFAULT_THINKING_TAG_CLOSE = "</think>"
-}
+// def_pub_const! {
+//     DEFAULT_THINKING_TAG = unsafe { core::str::from_raw_parts(DEFAULT_THINKING_TAG_OPEN.as_ptr().add(1), 5) },
+//     DEFAULT_THINKING_TAG_OPEN = "<think>",
+//     DEFAULT_THINKING_TAG_CLOSE = "</think>"
+// }
 
-pub static THINKING_TAG_OPEN: ManuallyInit<&'static str> =
-    ManuallyInit::new_with(DEFAULT_THINKING_TAG_OPEN);
-pub static THINKING_TAG_CLOSE: ManuallyInit<&'static str> =
-    ManuallyInit::new_with(DEFAULT_THINKING_TAG_CLOSE);
+// pub static THINKING_TAG_OPEN: ManuallyInit<&'static str> =
+//     ManuallyInit::new_with(DEFAULT_THINKING_TAG_OPEN);
+// pub static THINKING_TAG_CLOSE: ManuallyInit<&'static str> =
+//     ManuallyInit::new_with(DEFAULT_THINKING_TAG_CLOSE);
 
-#[deny(unused)]
-pub fn init_thinking_tags() {
-    unsafe {
-        let tag = crate::common::utils::parse_from_env("THINKING_TAG", DEFAULT_THINKING_TAG);
+// #[deny(unused)]
+// pub fn init_thinking_tags() {
+//     unsafe {
+//         let tag = crate::common::utils::parse_from_env("THINKING_TAG", DEFAULT_THINKING_TAG);
 
-        if tag == DEFAULT_THINKING_TAG {
-            return;
-        }
+//         if tag == DEFAULT_THINKING_TAG {
+//             return;
+//         }
 
-        // 检查标签长度限制
-        const MAX_TAG_LEN: usize = 16;
-        let tag_len = tag.len();
-        if tag_len > MAX_TAG_LEN - 3 {
-            __eprintln!("Warning: THINKING_TAG too long, using default");
-            return;
-        }
+//         // 检查标签长度限制
+//         const MAX_TAG_LEN: usize = 16;
+//         let tag_len = tag.len();
+//         if tag_len > MAX_TAG_LEN - 3 {
+//             __eprintln!("Warning: THINKING_TAG too long, using default");
+//             return;
+//         }
 
-        let mut buf = [core::mem::MaybeUninit::<u8>::uninit(); MAX_TAG_LEN];
-        let tag_bytes = tag.as_bytes();
+//         let mut buf = [core::mem::MaybeUninit::<u8>::uninit(); MAX_TAG_LEN];
+//         let tag_bytes = tag.as_bytes();
 
-        // 构建开始标签 <tag>
-        buf[1].write(b'<');
-        ::core::ptr::copy_nonoverlapping(
-            tag_bytes.as_ptr(),
-            buf.as_mut_ptr().add(2).cast(),
-            tag_len,
-        );
-        let open_len = tag_len + 2;
-        *buf.get_unchecked_mut(open_len) = core::mem::MaybeUninit::new(b'>');
+//         // 构建开始标签 <tag>
+//         buf[1].write(b'<');
+//         ::core::ptr::copy_nonoverlapping(
+//             tag_bytes.as_ptr(),
+//             buf.as_mut_ptr().add(2).cast(),
+//             tag_len,
+//         );
+//         let open_len = tag_len + 2;
+//         *buf.get_unchecked_mut(open_len) = core::mem::MaybeUninit::new(b'>');
 
-        // 分配开始标签
-        let open_layout = ::core::alloc::Layout::array::<u8>(open_len).unwrap_unchecked();
-        let open_ptr = alloc::alloc::alloc(open_layout);
-        if open_ptr.is_null() {
-            alloc::alloc::handle_alloc_error(open_layout);
-        }
-        ::core::ptr::copy_nonoverlapping(buf.as_ptr().add(1).cast(), open_ptr, open_len);
-        THINKING_TAG_OPEN.init(::core::str::from_utf8_unchecked(::core::slice::from_raw_parts(
-            open_ptr, open_len,
-        )));
+//         // 分配开始标签
+//         let open_layout = ::core::alloc::Layout::from_size_align_unchecked(open_len, 1);
+//         let open_ptr = alloc::alloc::alloc(open_layout);
+//         if open_ptr.is_null() {
+//             alloc::alloc::handle_alloc_error(open_layout);
+//         }
+//         ::core::ptr::copy_nonoverlapping(buf.as_ptr().add(1).cast(), open_ptr, open_len);
+//         THINKING_TAG_OPEN.init(::core::str::from_utf8_unchecked(::core::slice::from_raw_parts(
+//             open_ptr, open_len,
+//         )));
 
-        // 构建结束标签 </tag>
-        buf[0].write(b'<');
-        buf[1].write(b'/');
-        let close_len = open_len + 1;
+//         // 构建结束标签 </tag>
+//         buf[0].write(b'<');
+//         buf[1].write(b'/');
+//         let close_len = open_len + 1;
 
-        // 分配结束标签
-        let close_layout = ::core::alloc::Layout::array::<u8>(close_len).unwrap_unchecked();
-        let close_ptr = alloc::alloc::alloc(close_layout);
-        if close_ptr.is_null() {
-            alloc::alloc::handle_alloc_error(close_layout);
-        }
-        ::core::ptr::copy_nonoverlapping(buf.as_ptr().cast(), close_ptr, close_len);
-        THINKING_TAG_CLOSE.init(::core::str::from_utf8_unchecked(::core::slice::from_raw_parts(
-            close_ptr, close_len,
-        )));
-    }
-}
+//         // 分配结束标签
+//         let close_layout = ::core::alloc::Layout::from_size_align_unchecked(close_len, 1);
+//         let close_ptr = alloc::alloc::alloc(close_layout);
+//         if close_ptr.is_null() {
+//             alloc::alloc::handle_alloc_error(close_layout);
+//         }
+//         ::core::ptr::copy_nonoverlapping(buf.as_ptr().cast(), close_ptr, close_len);
+//         THINKING_TAG_CLOSE.init(::core::str::from_utf8_unchecked(::core::slice::from_raw_parts(
+//             close_ptr, close_len,
+//         )));
+//     }
+// }
 
 pub static mut IS_TERMINAL: bool = false;

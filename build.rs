@@ -11,7 +11,6 @@ use std::io::Result;
 #[cfg(not(debug_assertions))]
 #[cfg(feature = "__preview")]
 use std::io::{Read, Write};
-#[cfg(not(feature = "use-minified"))]
 use std::path::Path;
 #[cfg(not(feature = "use-minified"))]
 use std::path::PathBuf;
@@ -190,131 +189,131 @@ fn minify_assets() -> Result<()> {
 
 include!("build_info.rs");
 
-#[cfg(feature = "__protoc")]
-macro_rules! proto_attributes {
-    (config: $config:expr, paths: $paths:expr, attributes: [$($attr:expr),* $(,)?]) => {
-        for path in $paths {
-            $(
-                $config.type_attribute(path, $attr);
-            )*
-        }
-    };
-}
+// #[cfg(feature = "__protoc")]
+// macro_rules! proto_attributes {
+//     (config: $config:expr, paths: $paths:expr, attributes: [$($attr:expr),* $(,)?]) => {
+//         for path in $paths {
+//             $(
+//                 $config.type_attribute(path, $attr);
+//             )*
+//         }
+//     };
+// }
 
 fn main() -> Result<()> {
     // 更新版本号 - 只在 release 构建时执行
     #[cfg(all(not(debug_assertions), feature = "__preview"))]
     update_version()?;
 
-    #[cfg(feature = "__protoc")]
-    {
-        // Proto 文件处理
-        println!("cargo:rerun-if-changed=src/core/aiserver/v1/lite.proto");
-        println!("cargo:rerun-if-changed=src/core/config/key.proto");
+    // #[cfg(feature = "__protoc")]
+    // {
+    //     // Proto 文件处理
+    //     println!("cargo:rerun-if-changed=src/core/aiserver/v1/lite.proto");
+    //     println!("cargo:rerun-if-changed=src/core/config/key.proto");
 
-        // 获取环境变量 PROTOC 并创建配置
-        let mut config = prost_build::Config::new();
+    //     // 获取环境变量 PROTOC 并创建配置
+    //     let mut config = prost_build::Config::new();
 
-        // 检查环境变量是否设置
-        match std::env::var_os("PROTOC") {
-            Some(path) => {
-                // 有环境变量时直接配置
-                config.protoc_executable(PathBuf::from(path));
-            }
-            None => {
-                // 无环境变量时输出警告，使用默认 protoc
-                println!(
-                    "cargo:warning=PROTOC environment variable not set, using default protoc."
-                );
-                // 这里不需要额外操作，prost-build 会自动使用默认的 protoc
-            }
-        }
+    //     // 检查环境变量是否设置
+    //     match std::env::var_os("PROTOC") {
+    //         Some(path) => {
+    //             // 有环境变量时直接配置
+    //             config.protoc_executable(PathBuf::from(path));
+    //         }
+    //         None => {
+    //             // 无环境变量时输出警告，使用默认 protoc
+    //             println!(
+    //                 "cargo:warning=PROTOC environment variable not set, using default protoc."
+    //             );
+    //             // 这里不需要额外操作，prost-build 会自动使用默认的 protoc
+    //         }
+    //     }
 
-        // config.type_attribute(".", "#[derive(serde::Serialize, serde::Deserialize)]");
-        // config.enum_attribute(".aiserver.v1", "#[allow(clippy::enum_variant_names)]");
-        for p in [
-            ".aiserver.v1.CppSessionEvent.event.git_context_event",
-            ".aiserver.v1.CppTimelineEvent.v.event",
-            ".aiserver.v1.StreamAiLintBugResponse.response.bug",
-            ".aiserver.v1.StreamChatToolformerResponse.response_type.tool_action",
-            ".aiserver.v1.TaskStreamLogResponse.response.streamed_log_item",
-            ".aiserver.v1.StreamUnifiedChatRequestWithTools.request.stream_unified_chat_request",
-            ".aiserver.v1.StreamUnifiedChatRequestWithTools.request.client_side_tool_v2_result",
-            ".aiserver.v1.StreamUnifiedChatResponseWithTools.response.client_side_tool_v2_call",
-            ".aiserver.v1.StreamUnifiedChatResponseWithTools.response.stream_unified_chat_response",
-        ] {
-            config.boxed(p);
-        }
+    //     // config.type_attribute(".", "#[derive(serde::Serialize, serde::Deserialize)]");
+    //     // config.enum_attribute(".aiserver.v1", "#[allow(clippy::enum_variant_names)]");
+    //     for p in [
+    //         ".aiserver.v1.CppSessionEvent.event.git_context_event",
+    //         ".aiserver.v1.CppTimelineEvent.v.event",
+    //         ".aiserver.v1.StreamAiLintBugResponse.response.bug",
+    //         ".aiserver.v1.StreamChatToolformerResponse.response_type.tool_action",
+    //         ".aiserver.v1.TaskStreamLogResponse.response.streamed_log_item",
+    //         ".aiserver.v1.StreamUnifiedChatRequestWithTools.request.stream_unified_chat_request",
+    //         ".aiserver.v1.StreamUnifiedChatRequestWithTools.request.client_side_tool_v2_result",
+    //         ".aiserver.v1.StreamUnifiedChatResponseWithTools.response.client_side_tool_v2_call",
+    //         ".aiserver.v1.StreamUnifiedChatResponseWithTools.response.stream_unified_chat_response",
+    //     ] {
+    //         config.boxed(p);
+    //     }
 
-        proto_attributes! {
-            config: config,
-            paths: [
-                ".aiserver.v1.CursorPosition",
-                ".aiserver.v1.SimplestRange",
-                ".aiserver.v1.SimpleRange",
-                ".aiserver.v1.LineRange",
-                ".aiserver.v1.CursorRange",
-                ".aiserver.v1.Diagnostic",
-                ".aiserver.v1.BM25Chunk",
-                ".aiserver.v1.CurrentFileInfo",
-                ".aiserver.v1.DataframeInfo",
-                ".aiserver.v1.LinterError",
-                ".aiserver.v1.LinterErrors",
-                ".aiserver.v1.LspSubgraphPosition",
-                ".aiserver.v1.LspSubgraphRange",
-                ".aiserver.v1.LspSubgraphContextItem",
-                ".aiserver.v1.LspSubgraphFullContext",
-                ".aiserver.v1.FSUploadFileRequest",
-                ".aiserver.v1.FilesyncUpdateWithModelVersion",
-                ".aiserver.v1.SingleUpdateRequest",
-                ".aiserver.v1.FSSyncFileRequest",
-                ".aiserver.v1.CppIntentInfo",
-                ".aiserver.v1.LspSuggestion",
-                ".aiserver.v1.LspSuggestedItems",
-                ".aiserver.v1.StreamCppRequest",
-                ".aiserver.v1.CppConfigRequest",
-                ".aiserver.v1.AdditionalFile",
-                ".aiserver.v1.AvailableCppModelsRequest",
-                ".aiserver.v1.CppFileDiffHistory",
-                ".aiserver.v1.CppContextItem",
-                ".aiserver.v1.CppParameterHint",
-                ".aiserver.v1.IRange",
-                ".aiserver.v1.BlockDiffPatch",
-                ".aiserver.v1.AvailableModelsRequest",
-                ".aiserver.v1.GetFilteredUsageEventsResponse",
-                ".aiserver.v1.GetAggregatedUsageEventsResponse",
-            ],
-            attributes: [
-                "#[derive(::serde::Deserialize)]",
-            ]
-        }
+    //     proto_attributes! {
+    //         config: config,
+    //         paths: [
+    //             ".aiserver.v1.CursorPosition",
+    //             ".aiserver.v1.SimplestRange",
+    //             ".aiserver.v1.SimpleRange",
+    //             ".aiserver.v1.LineRange",
+    //             ".aiserver.v1.CursorRange",
+    //             ".aiserver.v1.Diagnostic",
+    //             ".aiserver.v1.BM25Chunk",
+    //             ".aiserver.v1.CurrentFileInfo",
+    //             ".aiserver.v1.DataframeInfo",
+    //             ".aiserver.v1.LinterError",
+    //             ".aiserver.v1.LinterErrors",
+    //             ".aiserver.v1.LspSubgraphPosition",
+    //             ".aiserver.v1.LspSubgraphRange",
+    //             ".aiserver.v1.LspSubgraphContextItem",
+    //             ".aiserver.v1.LspSubgraphFullContext",
+    //             ".aiserver.v1.FSUploadFileRequest",
+    //             ".aiserver.v1.FilesyncUpdateWithModelVersion",
+    //             ".aiserver.v1.SingleUpdateRequest",
+    //             ".aiserver.v1.FSSyncFileRequest",
+    //             ".aiserver.v1.CppIntentInfo",
+    //             ".aiserver.v1.LspSuggestion",
+    //             ".aiserver.v1.LspSuggestedItems",
+    //             ".aiserver.v1.StreamCppRequest",
+    //             ".aiserver.v1.CppConfigRequest",
+    //             ".aiserver.v1.AdditionalFile",
+    //             ".aiserver.v1.AvailableCppModelsRequest",
+    //             ".aiserver.v1.CppFileDiffHistory",
+    //             ".aiserver.v1.CppContextItem",
+    //             ".aiserver.v1.CppParameterHint",
+    //             ".aiserver.v1.IRange",
+    //             ".aiserver.v1.BlockDiffPatch",
+    //             ".aiserver.v1.AvailableModelsRequest",
+    //             ".aiserver.v1.GetFilteredUsageEventsResponse",
+    //             ".aiserver.v1.GetAggregatedUsageEventsResponse",
+    //         ],
+    //         attributes: [
+    //             "#[derive(::serde::Deserialize)]",
+    //         ]
+    //     }
 
-        proto_attributes! {
-            config: config,
-            paths: &[
-                ".aiserver.v1.LineRange",
-                ".aiserver.v1.FSUploadErrorType",
-                ".aiserver.v1.FSSyncErrorType",
-                ".aiserver.v1.FSUploadFileResponse",
-                ".aiserver.v1.FSSyncFileResponse",
-                ".aiserver.v1.StreamCppResponse",
-                ".aiserver.v1.CppConfigResponse",
-                ".aiserver.v1.AvailableCppModelsResponse",
-                ".aiserver.v1.AvailableModelsResponse",
-                ".aiserver.v1.CustomErrorDetails",
-                ".aiserver.v1.GetFilteredUsageEventsRequest",
-                ".aiserver.v1.GetAggregatedUsageEventsRequest",
-            ],
-            attributes: [
-                "#[derive(::serde::Serialize)]",
-            ]
-        }
+    //     proto_attributes! {
+    //         config: config,
+    //         paths: &[
+    //             ".aiserver.v1.LineRange",
+    //             ".aiserver.v1.FSUploadErrorType",
+    //             ".aiserver.v1.FSSyncErrorType",
+    //             ".aiserver.v1.FSUploadFileResponse",
+    //             ".aiserver.v1.FSSyncFileResponse",
+    //             ".aiserver.v1.StreamCppResponse",
+    //             ".aiserver.v1.CppConfigResponse",
+    //             ".aiserver.v1.AvailableCppModelsResponse",
+    //             ".aiserver.v1.AvailableModelsResponse",
+    //             ".aiserver.v1.CustomErrorDetails",
+    //             ".aiserver.v1.GetFilteredUsageEventsRequest",
+    //             ".aiserver.v1.GetAggregatedUsageEventsRequest",
+    //         ],
+    //         attributes: [
+    //             "#[derive(::serde::Serialize)]",
+    //         ]
+    //     }
 
-        config
-            .compile_protos(&["src/core/aiserver/v1/lite.proto"], &["src/core/aiserver/v1/"])
-            .unwrap();
-        // config.compile_protos(&["src/core/config/key.proto"], &["src/core/config/"]).unwrap();
-    }
+    //     config
+    //         .compile_protos(&["src/core/aiserver/v1/lite.proto"], &["src/core/aiserver/v1/"])
+    //         .unwrap();
+    //     // config.compile_protos(&["src/core/config/key.proto"], &["src/core/config/"]).unwrap();
+    // }
 
     // 静态资源文件处理
     println!("cargo:rerun-if-changed=scripts/minify.js");

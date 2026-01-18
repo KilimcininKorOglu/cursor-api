@@ -1,15 +1,14 @@
 mod queue;
 
-use alloc::borrow::Cow;
-use alloc::collections::VecDeque;
-
+use crate::app::{
+    constant::{UNNAMED, UNNAMED_PATTERN},
+    lazy::TOKENS_FILE_PATH,
+    model::{Alias, ExtToken, TokenInfo, TokenInfoHelper, TokenKey},
+};
+use alloc::{borrow::Cow, collections::VecDeque};
 use memmap2::{Mmap, MmapMut};
-use tokio::fs::OpenOptions;
 pub use queue::{QueueType, TokenHealth, TokenQueue};
-
-use crate::app::constant::{UNNAMED, UNNAMED_PATTERN};
-use crate::app::lazy::TOKENS_FILE_PATH;
-use crate::app::model::{Alias, ExtToken, TokenInfo, TokenInfoHelper, TokenKey};
+use tokio::fs::OpenOptions;
 
 type HashMap<K, V> = hashbrown::HashMap<K, V, ahash::RandomState>;
 
@@ -258,7 +257,7 @@ impl TokenManager {
 
         let bytes = ::rkyv::to_bytes::<::rkyv::rancor::Error>(&helpers)?;
         if bytes.len() > usize::MAX >> 1 {
-            return Err("Token数据过大".into());
+            return Err("令牌数据过大".into());
         }
 
         let file = OpenOptions::new()
@@ -288,13 +287,14 @@ impl TokenManager {
         };
 
         if file.metadata().await?.len() > usize::MAX as u64 {
-            return Err("Token文件过大".into());
+            return Err("令牌文件过大".into());
         }
 
         let mmap = unsafe { Mmap::map(&file)? };
         let helpers = unsafe {
             ::rkyv::from_bytes_unchecked::<Vec<TokenInfoHelper>, ::rkyv::rancor::Error>(&mmap)
-        }?;
+        }
+        .map_err(|_| "加载令牌失败")?;
         let mut manager = Self::new(helpers.len());
 
         for helper in helpers {
@@ -365,8 +365,7 @@ impl Drop for TokenWriter<'_> {
             // SAFETY: TokenWriter只能通过into_token_writer创建，那时token必存在
             // self.key是创建时的token key，必在id_map中
             unsafe {
-                use hashbrown::hash_map::EntryRef;
-                let i = if let EntryRef::Occupied(entry) = self.id_map.entry_ref(&self.key) {
+                let i = if let hashbrown::hash_map::EntryRef::Occupied(entry) = self.id_map.entry_ref(&self.key) {
                     entry.remove()
                 } else {
                     unreachable_unchecked()

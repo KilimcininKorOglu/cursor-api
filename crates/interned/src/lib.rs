@@ -3,7 +3,6 @@
 #![feature(const_convert)]
 #![feature(const_cmp)]
 #![feature(const_default)]
-#![feature(hasher_prefixfree_extras)]
 #![feature(const_result_unwrap_unchecked)]
 #![feature(core_intrinsics)]
 #![allow(internal_features)]

@@ -1,12 +1,20 @@
-use serde::Serialize;
-
-use crate::app::model::DateTime;
 use super::ApiStatus;
+use crate::{
+    app::model::DateTime,
+    common::model::raw_json::{RawJson, serialize_as_option_raw_value, serialize_as_raw_value},
+};
+use serde::Serialize;
 
 #[derive(Serialize)]
 pub struct HealthCheckResponse {
     pub status: ApiStatus,
-    pub service: ServiceInfo,
+    #[serde(serialize_with = "serialize_as_raw_value")]
+    pub service: &'static str,
+    #[serde(
+        skip_serializing_if = "Option::is_none",
+        serialize_with = "serialize_as_option_raw_value"
+    )]
+    pub frontend: Option<&'static str>,
     pub runtime: RuntimeStats,
     pub system: Option<SystemStats>,
     pub capabilities: Capabilities,
@@ -65,7 +73,32 @@ pub struct CpuInfo {
 
 #[derive(Serialize)]
 pub struct Capabilities {
-    pub models: alloc::sync::Arc<Vec<&'static str>>,
+    pub models: RawJson,
     pub endpoints: &'static [&'static str],
     pub features: &'static [&'static str],
 }
+
+static mut SERVICE_INFO: &'static str = "";
+
+pub fn init_service_info() {
+    unsafe {
+        SERVICE_INFO = Box::leak(
+            serde_json::to_string(&ServiceInfo {
+                name: crate::app::constant::PKG_NAME,
+                version: crate::app::constant::PKG_VERSION,
+                is_debug: *crate::app::lazy::log::DEBUG,
+                build: BuildInfo {
+                    #[cfg(feature = "__preview")]
+                    version: crate::app::constant::BUILD_VERSION,
+                    timestamp: crate::app::constant::BUILD_TIMESTAMP,
+                    is_debug: crate::app::constant::IS_DEBUG,
+                    is_prerelease: crate::app::constant::IS_PRERELEASE,
+                },
+            })
+            .unwrap_unchecked()
+            .into_boxed_str(),
+        )
+    };
+}
+
+pub const fn service_info() -> &'static str { unsafe { SERVICE_INFO } }

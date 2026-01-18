@@ -1,11 +1,11 @@
 use super::{
-    config::handle_config_update,
     constant::{
-        ROUTE_BUILD_KEY_PATH, ROUTE_CHAT_COMPLETIONS_PATH, ROUTE_CONFIG_PATH,
+        ROUTE_BUILD_KEY_PATH, ROUTE_CHAT_COMPLETIONS_PATH, ROUTE_CONFIG_EXAMPLE_PATH,
+        ROUTE_CONFIG_GET_PATH, ROUTE_CONFIG_RELOAD_PATH, ROUTE_CONFIG_SET_PATH,
         ROUTE_CONFIG_VERSION_GET_PATH, ROUTE_CPP_CONFIG_PATH, ROUTE_CPP_MODELS_PATH,
         ROUTE_CPP_STREAM_PATH, ROUTE_ENV_EXAMPLE_PATH, ROUTE_FILE_SYNC_PATH,
-        ROUTE_FILE_UPLOAD_PATH, ROUTE_GEN_CHECKSUM, ROUTE_GEN_HASH, ROUTE_GEN_UUID,
-        ROUTE_GET_CHECKSUM_HEADER, ROUTE_HEALTH_PATH, ROUTE_LICENSE_PATH, ROUTE_LOGS_GET_PATH,
+        ROUTE_FILE_UPLOAD_PATH, ROUTE_GEN_CHECKSUM_PATH, ROUTE_GEN_HASH_PATH, ROUTE_GEN_UUID_PATH,
+        ROUTE_GET_CHECKSUM_HEADER_PATH, ROUTE_HEALTH_PATH, ROUTE_LICENSE_PATH, ROUTE_LOGS_GET_PATH,
         ROUTE_LOGS_TOKENS_GET_PATH, ROUTE_MESSAGES_COUNT_TOKENS_PATH, ROUTE_MESSAGES_PATH,
         ROUTE_MODELS_PATH, ROUTE_NTP_SYNC_ONCE_PATH, ROUTE_PROXIES_ADD_PATH,
         ROUTE_PROXIES_DELETE_PATH, ROUTE_PROXIES_GET_PATH, ROUTE_PROXIES_SET_GENERAL_PATH,
@@ -25,14 +25,15 @@ use crate::{
             admin_auth_middleware, cpp_auth_middleware, v1_auth_middleware, v1_auth2_middleware,
         },
         route::{
-            handle_add_proxy, handle_add_tokens, handle_build_key, handle_delete_proxies,
-            handle_delete_tokens, handle_env_example, handle_gen_checksum, handle_gen_hash,
-            handle_gen_uuid, handle_get_checksum_header, handle_get_config_version,
-            handle_get_logs, handle_get_logs_tokens, handle_get_proxies, handle_get_token_profile,
-            handle_get_tokens, handle_health, handle_license, handle_merge_tokens,
-            handle_ntp_sync_once, handle_readme, handle_refresh_tokens, handle_set_general_proxy,
-            handle_set_proxies, handle_set_tokens, handle_set_tokens_alias,
-            handle_set_tokens_proxy, handle_set_tokens_status, handle_set_tokens_timezone,
+            handle_add_proxy, handle_add_tokens, handle_build_key, handle_config_example,
+            handle_delete_proxies, handle_delete_tokens, handle_env_example, handle_gen_checksum,
+            handle_gen_hash, handle_gen_uuid, handle_get_checksum_header, handle_get_config,
+            handle_get_config_version, handle_get_logs, handle_get_logs_tokens, handle_get_proxies,
+            handle_get_token_profile, handle_get_tokens, handle_health, handle_license,
+            handle_merge_tokens, handle_ntp_sync_once, handle_readme, handle_refresh_tokens,
+            handle_reload_config, handle_set_config, handle_set_general_proxy, handle_set_proxies,
+            handle_set_tokens, handle_set_tokens_alias, handle_set_tokens_proxy,
+            handle_set_tokens_status, handle_set_tokens_timezone,
             handle_update_tokens_config_version, handle_update_tokens_profile,
         },
         service::{
@@ -70,6 +71,9 @@ pub fn create_router(state: Arc<AppState>) -> Router {
         .merge(
             Router::new()
                 .without_v07_checks()
+                .route(exchange_map.resolve(ROUTE_CONFIG_GET_PATH), post(handle_get_config))
+                .route(exchange_map.resolve(ROUTE_CONFIG_SET_PATH), post(handle_set_config))
+                .route(exchange_map.resolve(ROUTE_CONFIG_RELOAD_PATH), get(handle_reload_config))
                 .route(exchange_map.resolve(ROUTE_TOKENS_GET_PATH), post(handle_get_tokens))
                 .route(exchange_map.resolve(ROUTE_TOKENS_SET_PATH), post(handle_set_tokens))
                 .route(exchange_map.resolve(ROUTE_TOKENS_ADD_PATH), post(handle_add_tokens))
@@ -142,17 +146,21 @@ pub fn create_router(state: Arc<AppState>) -> Router {
         .route(exchange_map.resolve(ROUTE_LOGS_GET_PATH), post(handle_get_logs))
         .route(exchange_map.resolve(ROUTE_LOGS_TOKENS_GET_PATH), post(handle_get_logs_tokens))
         .route(exchange_map.resolve(ROUTE_ENV_EXAMPLE_PATH), get(handle_env_example))
+        .route(exchange_map.resolve(ROUTE_CONFIG_EXAMPLE_PATH), get(handle_config_example))
         // .route(exchange_map.resolve(ROUTE_CONFIG_PATH), get(handle_config_page))
-        .route(exchange_map.resolve(ROUTE_CONFIG_PATH), post(handle_config_update))
+        // .route(exchange_map.resolve(ROUTE_CONFIG_PATH), post(handle_config_update))
         // .route(exchange_map.resolve(ROUTE_STATIC_PATH), get(handle_static))
         // .route(exchange_map.resolve(ROUTE_ABOUT_PATH), get(handle_about))
         .route(exchange_map.resolve(ROUTE_LICENSE_PATH), get(handle_license))
         .route(exchange_map.resolve(ROUTE_README_PATH), get(handle_readme))
         // .route(exchange_map.resolve(ROUTE_API_PATH), get(handle_api_page))
-        .route(exchange_map.resolve(ROUTE_GEN_UUID), get(handle_gen_uuid))
-        .route(exchange_map.resolve(ROUTE_GEN_HASH), get(handle_gen_hash))
-        .route(exchange_map.resolve(ROUTE_GEN_CHECKSUM), get(handle_gen_checksum))
-        .route(exchange_map.resolve(ROUTE_GET_CHECKSUM_HEADER), get(handle_get_checksum_header))
+        .route(exchange_map.resolve(ROUTE_GEN_UUID_PATH), get(handle_gen_uuid))
+        .route(exchange_map.resolve(ROUTE_GEN_HASH_PATH), get(handle_gen_hash))
+        .route(exchange_map.resolve(ROUTE_GEN_CHECKSUM_PATH), get(handle_gen_checksum))
+        .route(
+            exchange_map.resolve(ROUTE_GET_CHECKSUM_HEADER_PATH),
+            get(handle_get_checksum_header),
+        )
         // .route(exchange_map.resolve(ROUTE_BASIC_CALIBRATION_PATH), post(handle_basic_calibration))
         // .route(exchange_map.resolve(ROUTE_USER_INFO_PATH), post(handle_user_info))
         // .route(exchange_map.resolve(ROUTE_BUILD_KEY_PATH), get(handle_build_key_page))

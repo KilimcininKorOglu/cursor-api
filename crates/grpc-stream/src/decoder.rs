@@ -91,7 +91,7 @@ impl StreamDecoder {
             }
         }
 
-        self.buffer.advance(iter.offset());
+        unsafe { self.buffer.advance_unchecked(iter.offset()) };
         messages
     }
 

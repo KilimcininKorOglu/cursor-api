@@ -1,56 +1,50 @@
 #![allow(clippy::too_many_arguments)]
 
-// mod checksum;
-// mod token;
 pub mod base62;
 mod base64;
+pub mod const_string;
 pub mod duration_fmt;
 pub mod hex;
+pub mod option_as_array;
 pub mod proto_encode;
 pub mod string_builder;
+pub mod ulid;
 
 use super::model::userinfo::{Session, StripeProfile, UsageProfile, UserProfile};
-use crate::common::model::userinfo::{
-    // GetAggregatedUsageEventsRequest, GetAggregatedUsageEventsResponse,
-    GetFilteredUsageEventsRequest,
-    GetFilteredUsageEventsResponse,
-    PrivacyModeInfo,
-};
 use crate::{
     app::{
         constant::EMPTY_STRING,
         lazy::{
             chat_models_url, filtered_usage_events_url, get_privacy_mode_url,
-            is_on_new_pricing_url, server_config_url, user_api_url,
+            is_on_new_pricing_url, server_config_url, token_poll_url, user_api_url,
         },
         model::{
             ChainUsage, Checksum, DateTime, ExtToken, GcppHost, Hash, RawToken, Token, TokenWriter,
             UnextTokenRef,
         },
     },
+    common::model::userinfo::{
+        GetFilteredUsageEventsRequest, GetFilteredUsageEventsResponse, PrivacyModeInfo,
+    },
     core::{
         aiserver::v1::{AvailableModelsRequest, AvailableModelsResponse, GetServerConfigResponse},
         config::configured_key,
     },
 };
-use ::base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
 use alloc::borrow::Cow;
 pub use base64::{from_base64, to_base64};
+use base64_simd::{Out, URL_SAFE_NO_PAD};
+use core::{sync::atomic::Ordering, time::Duration};
 pub use hex::hex_to_byte;
 use interned::ArcStr;
 use prost::Message as _;
 pub use proto_encode::{encode_message, encode_message_framed};
+use rep_move::RepMove;
 use reqwest::Client;
+use std::time::{SystemTime, UNIX_EPOCH};
 pub use string_builder::StringBuilder;
 
-mod sealed {
-    pub trait Sealed: Sized + 'static {}
-
-    impl Sealed for bool {}
-    impl Sealed for &'static str {}
-}
-
-pub trait ParseFromEnv: sealed::Sealed {
+pub trait ParseFromEnv: Sized + 'static {
     type Result: Sized + 'static = Self;
     fn parse_from_env(key: &str, default: Self) -> Self::Result;
 }
@@ -61,11 +55,24 @@ impl ParseFromEnv for bool {
         ::std::env::var(key)
             .ok()
             .map(|mut val| {
-                let res = {
-                    val.make_ascii_lowercase();
-                    val.trim()
+                let trimmed = val.trim();
+                let start = trimmed.as_ptr() as usize - val.as_ptr() as usize;
+                let len = trimmed.len();
+
+                // 只对 trim 后的部分转小写
+                unsafe {
+                    val.as_bytes_mut().get_unchecked_mut(start..start + len).make_ascii_lowercase();
+                }
+
+                // SAFETY: trimmed 是从有效 UTF-8 字符串 trim 得到的，
+                // make_ascii_lowercase 保持 UTF-8 有效性
+                let result = unsafe {
+                    ::core::str::from_utf8_unchecked(
+                        val.as_bytes().get_unchecked(start..start + len),
+                    )
                 };
-                match res {
+
+                match result {
                     "true" | "1" => true,
                     "false" | "0" => false,
                     _ => default,
@@ -82,22 +89,32 @@ impl ParseFromEnv for &'static str {
         match ::std::env::var(key) {
             Ok(mut value) => {
                 let trimmed = value.trim();
+                let trimmed_len = trimmed.len();
 
-                if trimmed.is_empty() {
+                if trimmed_len == 0 {
                     // 如果 trim 后为空，使用默认值（不分配）
                     Cow::Borrowed(default)
-                } else if trimmed.len() == value.len() {
+                } else if trimmed_len == value.len() {
                     // 不需要 trim，直接使用
                     Cow::Owned(value)
                 } else {
                     // 需要 trim - 就地修改
-                    let trimmed_len = trimmed.len();
                     let start_offset = trimmed.as_ptr() as usize - value.as_ptr() as usize;
 
                     unsafe {
                         let vec = value.as_mut_vec();
+
+                        // SAFETY:
+                        // - trimmed 是 value.trim() 的结果，保证是 value 的子切片
+                        // - start_offset 和 trimmed_len 来自有效的切片边界
+                        // - 目标位置（索引 0）和长度在 vec 容量内
+                        // - ptr::copy 支持重叠内存区域（memmove 语义）
                         if start_offset > 0 {
-                            vec.copy_within(start_offset..start_offset + trimmed_len, 0);
+                            ::core::ptr::copy(
+                                vec.as_ptr().add(start_offset),
+                                vec.as_mut_ptr(),
+                                trimmed_len,
+                            );
                         }
                         vec.set_len(trimmed_len);
                     }
@@ -113,7 +130,6 @@ impl ParseFromEnv for &'static str {
 macro_rules! impl_parse_num_from_env {
     ($($ty:ty)*) => {
         $(
-            impl sealed::Sealed for $ty {}
             impl ParseFromEnv for $ty {
                 #[inline]
                 fn parse_from_env(key: &str, default: $ty) -> $ty {
@@ -125,9 +141,6 @@ macro_rules! impl_parse_num_from_env {
 }
 
 impl_parse_num_from_env!(i8 u8 i16 u16 i32 u32 i64 u64 i128 u128 isize usize);
-
-impl sealed::Sealed for duration_fmt::DurationFormat {}
-impl sealed::Sealed for duration_fmt::Language {}
 
 impl ParseFromEnv for duration_fmt::DurationFormat {
     fn parse_from_env(key: &str, default: Self) -> Self::Result {
@@ -163,22 +176,20 @@ impl ParseFromEnv for duration_fmt::Language {
 
 #[inline]
 pub fn parse_from_env<T: ParseFromEnv>(key: &str, default: T) -> T::Result {
-    ParseFromEnv::parse_from_env(key, default)
+    T::parse_from_env(key, default)
 }
 
-pub fn now() -> core::time::Duration {
-    now_with_epoch(std::time::UNIX_EPOCH, "system time before Unix epoch")
-}
+pub fn now() -> Duration { now_with_epoch(UNIX_EPOCH, "system time before Unix epoch") }
 
 #[inline]
-pub fn now_with_epoch(earlier: std::time::SystemTime, expect: &'static str) -> std::time::Duration {
-    let now = std::time::SystemTime::now().duration_since(earlier).expect(expect);
-    let delta = super::model::ntp::DELTA.load(core::sync::atomic::Ordering::Relaxed);
+pub fn now_with_epoch(earlier: SystemTime, expect: &'static str) -> Duration {
+    let now = SystemTime::now().duration_since(earlier).expect(expect);
+    let delta = super::model::ntp::DELTA.load(Ordering::Relaxed);
     if delta.is_negative() {
-        now.checked_sub(core::time::Duration::from_nanos(delta.wrapping_neg() as u64))
+        now.checked_sub(Duration::from_nanos(delta.wrapping_neg() as u64))
             .expect("NTP delta underflow: adjustment exceeds current time")
     } else {
-        now.checked_add(core::time::Duration::from_nanos(delta as u64))
+        now.checked_add(Duration::from_nanos(delta as u64))
             .expect("NTP delta overflow: time adjustment too large")
     }
 }
@@ -356,7 +367,7 @@ pub async fn get_token_usage(
     model_id: &'static str,
 ) -> Option<ChainUsage> {
     const POLL_MAX_ATTEMPTS: usize = 5;
-    const POLL_INTERVAL: core::time::Duration = core::time::Duration::from_secs(1);
+    const POLL_INTERVAL: Duration = Duration::from_secs(1);
 
     let mut token_usage = None;
 
@@ -374,7 +385,7 @@ pub async fn get_token_usage(
         req
     })));
 
-    for request in rep_move::RepMove::new(
+    for request in RepMove::new(
         super::client::build_proto_web_request(
             &ext_token.get_client(),
             ext_token.as_unext().format_workos_cursor_session_token(),
@@ -509,7 +520,8 @@ pub fn token_to_tokeninfo(
 
 /// 将 TokenInfo 转换为 JWT token
 #[inline]
-pub fn tokeninfo_to_token(info: configured_key::TokenInfo) -> Option<ExtToken> {
+pub fn tokeninfo_to_token(tuple: (configured_key::TokenInfo, [u8; 32])) -> Option<ExtToken> {
+    let (info, hash) = tuple;
     let checksum = Checksum::from_bytes(info.checksum);
     let client_key = Hash::from_bytes(info.client_key);
     let config_version = info.config_version.and_then(|v| uuid::Uuid::from_slice(&v).ok());
@@ -517,7 +529,7 @@ pub fn tokeninfo_to_token(info: configured_key::TokenInfo) -> Option<ExtToken> {
     let timezone = info.timezone.and_then(|s| core::str::FromStr::from_str(&s).ok());
     let gcpp_host = info.gcpp_host.and_then(GcppHost::from_u8);
     Some(ExtToken {
-        primary_token: Token::new(info.token.into_raw()?, None),
+        primary_token: Token::new(info.token.validate(hash)?, None),
         secondary_token: None,
         checksum,
         client_key,
@@ -530,6 +542,9 @@ pub fn tokeninfo_to_token(info: configured_key::TokenInfo) -> Option<ExtToken> {
 }
 
 /// 生成 PKCE code_verifier 和对应的 code_challenge (S256 method)
+///
+/// # Panics
+/// 如果系统随机数生成器不可用则 panic（极其罕见，通常表示系统级故障）
 #[inline]
 fn generate_pkce_pair() -> ([u8; 43], [u8; 43]) {
     use core::mem::MaybeUninit;
@@ -537,31 +552,32 @@ fn generate_pkce_pair() -> ([u8; 43], [u8; 43]) {
     use sha2::Digest as _;
 
     // 生成 32 字节随机数作为 verifier
-    let mut verifier_bytes = MaybeUninit::<[u8; 32]>::uninit();
+    let mut verifier_bytes = [0u8; 32];
+    rand::rngs::OsRng
+        .try_fill_bytes(&mut verifier_bytes)
+        .expect("System RNG unavailable: cannot generate secure PKCE verifier");
 
-    // 直接填充到未初始化内存
     unsafe {
-        let bytes_ptr = verifier_bytes.as_mut_ptr().cast();
-        let bytes_slice = core::slice::from_raw_parts_mut(bytes_ptr, 32);
-
-        __unwrap!(rand::rngs::OsRng.try_fill_bytes(bytes_slice));
-
-        // 此时 verifier_bytes 已完全初始化
-        let verifier_bytes = verifier_bytes.assume_init();
-
-        // Base64 编码为 code_verifier
+        // Base64 编码为 code_verifier (32 bytes -> 43 chars)
         let mut code_verifier = MaybeUninit::<[u8; 43]>::uninit();
-        let verifier_ptr = code_verifier.as_mut_ptr().cast();
-        let verifier_slice = core::slice::from_raw_parts_mut(verifier_ptr, 43);
-        __unwrap!(URL_SAFE_NO_PAD.encode_slice(verifier_bytes, verifier_slice));
+
+        // SAFETY: 32 字节的 Base64URL 编码（无 padding）= ceil(32 * 8 / 6) = 43 字节
+        // 这是编码算法的数学定义，buffer 大小精确匹配，encode_slice 不会失败
+        let _ = URL_SAFE_NO_PAD
+            .encode(&verifier_bytes, Out::from_uninit_slice(code_verifier.as_bytes_mut()));
+
         let code_verifier = code_verifier.assume_init();
 
-        // SHA-256 哈希后 Base64 编码为 code_challenge
+        // SHA-256 哈希 code_verifier (43 bytes -> 32 bytes)
         let hash_result = sha2::Sha256::digest(code_verifier);
+
+        // Base64 编码为 code_challenge (32 bytes -> 43 chars)
         let mut code_challenge = MaybeUninit::<[u8; 43]>::uninit();
-        let challenge_ptr = code_challenge.as_mut_ptr().cast();
-        let challenge_slice = core::slice::from_raw_parts_mut(challenge_ptr, 43);
-        __unwrap!(URL_SAFE_NO_PAD.encode_slice(hash_result, challenge_slice));
+
+        // SAFETY: 同上，SHA-256 固定输出 32 字节，编码后固定 43 字节
+        let _ = URL_SAFE_NO_PAD
+            .encode(&hash_result, Out::from_uninit_slice(code_challenge.as_bytes_mut()));
+
         let code_challenge = code_challenge.assume_init();
 
         (code_verifier, code_challenge)
@@ -602,7 +618,7 @@ pub async fn get_new_token(mut writer: TokenWriter<'_>, use_pri: bool) -> bool {
 
 async fn upgrade_token(ext_token: &ExtToken, use_pri: bool) -> Option<Token> {
     const POLL_MAX_ATTEMPTS: usize = 5;
-    const POLL_INTERVAL: core::time::Duration = core::time::Duration::from_secs(1);
+    const POLL_INTERVAL: Duration = Duration::from_secs(1);
 
     #[derive(::serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
@@ -638,9 +654,12 @@ async fn upgrade_token(ext_token: &ExtToken, use_pri: bool) -> Option<Token> {
         return None;
     }
 
+    let mut url = token_poll_url(use_pri).clone();
+    url.query_pairs_mut().append_pair("uuid", uuid).append_pair("verifier", verifier);
+
     // 轮询获取token
-    for request in rep_move::RepMove::new(
-        super::client::build_token_poll_request(&ext_token.get_client(), uuid, verifier, use_pri),
+    for request in RepMove::new(
+        super::client::build_token_poll_request(&ext_token.get_client(), url, use_pri),
         RequestBuilderClone,
         POLL_MAX_ATTEMPTS,
     ) {
@@ -962,5 +981,9 @@ pub fn CollectBytes(
 pub fn CollectBytesParts(
     req: reqwest::RequestBuilder,
 ) -> impl Future<Output = Result<(http::response::Parts, bytes::Bytes), reqwest::Error>> {
-    async { req.send().await?.into_bytes_parts().await }
+    use http_body_util::BodyExt as _;
+    async {
+        let (parts, body) = http::Response::<reqwest::Body>::into_parts(req.send().await?.into());
+        body.collect().await.map(|buf| (parts, buf.to_bytes()))
+    }
 }

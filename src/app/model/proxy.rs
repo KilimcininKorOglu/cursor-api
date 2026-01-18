@@ -55,3 +55,9 @@ pub struct ProxiesDeleteResponse {
 pub struct SetGeneralProxyRequest {
     pub name: String,
 }
+
+// 设置获取图像代理请求
+// #[derive(Deserialize)]
+// pub struct SetFetchImageProxyRequest {
+//     pub name: Option<String>,
+// }

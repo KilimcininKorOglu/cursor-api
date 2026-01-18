@@ -1,6 +1,6 @@
 //! Utility functions and types for encoding and decoding Protobuf types.
 //!
-//! This module contains the encoding and decoding primatives for Protobuf as described in
+//! This module contains the encoding and decoding primitives for Protobuf as described in
 //! <https://protobuf.dev/programming-guides/encoding/>.
 //!
 //! This module is `pub`, but is only for prost internal use. The `prost-derive` crate needs access for its `Message` implementations.
@@ -14,8 +14,9 @@ use core::any::{Any, TypeId};
 use core::num::NonZeroU32;
 
 use ::bytes::{Buf, BufMut, Bytes};
+use byte_str::{ByteStr, is_valid_utf8};
 
-use crate::{DecodeError, Message, ByteStr};
+use crate::{error::DecodeErrorKind, DecodeError, Message};
 
 pub mod varint;
 pub use varint::usize::{decode_varint, encode_varint, encoded_len_varint};
@@ -30,35 +31,20 @@ pub use wire_type::{WireType, check_wire_type};
 
 pub mod fixed_width;
 
-pub mod utf8;
-pub use utf8::is_vaild_utf8;
-
-#[macro_export]
-macro_rules! field_ {
-    (0) => {};
-    ($n:expr) => {
-        unsafe { ::core::num::NonZeroU32::new_unchecked($n) }
-    };
-}
-
-define_typed_constants!(
-    #[allow(non_upper_case_globals)]
-    u32 => {
-        WireTypeBits = 3,
-        WireTypeMask = 7,
-    }
-    #[allow(non_upper_case_globals)]
-    pub NonZeroU32 => {
-        MaxFieldNumber = field_!((1 << 29) - 1),
-        FieldNumber1 = field_!(1),
-        FieldNumber2 = field_!(2),
-    }
-    #[allow(non_upper_case_globals)]
-    TypeId => {
-        __bytes__BytesMut = TypeId::of::<::bytes::BytesMut>(),
-        __alloc__vec__Vec_u8_ = TypeId::of::<::alloc::vec::Vec<u8>>(),
-    }
-);
+#[allow(non_upper_case_globals)]
+const WireTypeBits: u32 = 3;
+#[allow(non_upper_case_globals)]
+const WireTypeMask: u32 = 3;
+#[allow(non_upper_case_globals)]
+pub const MaxFieldNumber: NonZeroU32 = unsafe { NonZeroU32::new_unchecked((1 << 29) - 1) };
+#[allow(non_upper_case_globals)]
+pub const FieldNumber1: NonZeroU32 = unsafe { NonZeroU32::new_unchecked(1) };
+#[allow(non_upper_case_globals)]
+pub const FieldNumber2: NonZeroU32 = unsafe { NonZeroU32::new_unchecked(2) };
+#[allow(non_upper_case_globals)]
+pub const __bytes__BytesMut: TypeId = TypeId::of::<::bytes::BytesMut>();
+#[allow(non_upper_case_globals)]
+pub const __alloc__vec__Vec_u8_: TypeId = TypeId::of::<::alloc::vec::Vec<u8>>();
 
 /// Retrieves the `TypeId` of a potentially non-'static type `T`.
 #[inline]
@@ -99,7 +85,7 @@ unsafe fn downcast_mut_prechecked<T: Any, V>(_val: &mut V, _eq: bool) -> Option<
     if _eq {
         // Safety: The caller guarantees via the `_eq` parameter that `V` is the same type as `T`.
         // This makes the pointer type cast valid.
-        unsafe { Some(::core::mem::transmute(_val)) }
+        unsafe { Some(::core::intrinsics::transmute_unchecked(_val)) }
     } else {
         None
     }
@@ -159,7 +145,7 @@ impl DecodeContext {
     #[inline]
     pub(crate) fn limit_reached(&self) -> Result<(), DecodeError> {
         if self.recurse_count == 0 {
-            Err(DecodeError::new("recursion limit reached"))
+            Err(DecodeErrorKind::RecursionLimitReached.into())
         } else {
             Ok(())
         }
@@ -188,7 +174,7 @@ pub fn decode_tag(buf: &mut impl Buf) -> Result<(NonZeroU32, WireType), DecodeEr
     if let Some(number) = NonZeroU32::new(number) {
         Ok((number, wire_type))
     } else {
-        Err(DecodeError::new("invalid field number: 0"))
+        Err(DecodeErrorKind::InvalidFieldNumber.into())
     }
 }
 
@@ -212,7 +198,7 @@ where
     let len = decode_varint(buf)?;
     let remaining = buf.remaining();
     if len > remaining {
-        return Err(DecodeError::new("buffer underflow"));
+        return Err(DecodeErrorKind::BufferUnderflow.into());
     }
 
     let limit = remaining - len;
@@ -221,7 +207,7 @@ where
     }
 
     if buf.remaining() != limit {
-        return Err(DecodeError::new("delimited length exceeded"));
+        return Err(DecodeErrorKind::DelimitedLengthExceeded.into());
     }
     Ok(())
 }
@@ -243,18 +229,18 @@ pub fn skip_field(
             match inner_wire_type {
                 WireType::EndGroup => {
                     if inner_number != number {
-                        return Err(DecodeError::new("unexpected end group tag"));
+                        return Err(DecodeErrorKind::UnexpectedEndGroupTag.into());
                     }
                     break 0;
                 }
                 _ => skip_field(inner_wire_type, inner_number, buf, ctx.enter_recursion())?,
             }
         },
-        WireType::EndGroup => return Err(DecodeError::new("unexpected end group tag")),
+        WireType::EndGroup => return Err(DecodeErrorKind::UnexpectedEndGroupTag.into()),
     };
 
     if len > buf.remaining() {
-        return Err(DecodeError::new("buffer underflow"));
+        return Err(DecodeErrorKind::BufferUnderflow.into());
     }
 
     buf.advance(len);
@@ -437,6 +423,123 @@ varint!(u32, uint32);
 varint!(u64, uint64);
 varint!(i32, sint32);
 varint!(i64, sint64);
+
+pub mod r#enum {
+    use core::num::NonZeroU32;
+
+    #[cfg(not(feature = "std"))]
+    use ::alloc::vec::Vec;
+    use ::bytes::{Buf, BufMut};
+    use ::proto_value::Enum;
+
+    use crate::encoding::varint::usize;
+    use crate::encoding::varint::r#enum::*;
+    use crate::encoding::wire_type::{WireType, check_wire_type};
+    use crate::encoding::{
+        __alloc__vec__Vec_u8_, __bytes__BytesMut, DecodeContext, downcast_mut_prechecked,
+        encode_tag, merge_loop, tag_len, type_id_of,
+    };
+    use crate::error::DecodeError;
+
+    pub fn encode<T>(number: NonZeroU32, value: &Enum<T>, buf: &mut impl BufMut) {
+        encode_tag(number, WireType::Varint, buf);
+        encode_varint(*value, buf);
+    }
+
+    pub fn merge<T>(
+        wire_type: WireType,
+        value: &mut Enum<T>,
+        buf: &mut impl Buf,
+        _ctx: DecodeContext,
+    ) -> Result<(), DecodeError> {
+        check_wire_type(WireType::Varint, wire_type)?;
+        merge_unchecked(value, buf)
+    }
+
+    #[inline(always)]
+    fn merge_unchecked<T>(value: &mut Enum<T>, buf: &mut impl Buf) -> Result<(), DecodeError> {
+        *value = decode_varint(buf)?;
+        Ok(())
+    }
+
+    pub fn encode_repeated<T>(tag: NonZeroU32, values: &[Enum<T>], buf: &mut impl BufMut) {
+        for value in values {
+            encode(tag, value, buf);
+        }
+    }
+
+    pub fn encode_packed<T, B: BufMut>(number: NonZeroU32, values: &[Enum<T>], buf: &mut B) {
+        if values.is_empty() {
+            return;
+        }
+
+        encode_tag(number, WireType::LengthDelimited, buf);
+
+        let _id = type_id_of::<B>();
+
+        if let Some(buf) = unsafe {
+            downcast_mut_prechecked::<::bytes::BytesMut, B>(buf, _id == __bytes__BytesMut)
+        } {
+            encode_packed_fast(values, buf);
+        } else if let Some(buf) =
+            unsafe { downcast_mut_prechecked::<Vec<u8>, B>(buf, _id == __alloc__vec__Vec_u8_) }
+        {
+            encode_packed_fast(values, buf);
+        } else {
+            let len = values.iter().map(|&value| encoded_len_varint(value)).sum::<usize>();
+            usize::encode_varint(len, buf);
+
+            for &value in values {
+                encode_varint(value, buf);
+            }
+        }
+    }
+
+    pub fn merge_repeated<T: Into<i32> + Default>(
+        wire_type: WireType,
+        values: &mut Vec<Enum<T>>,
+        buf: &mut impl Buf,
+        ctx: DecodeContext,
+    ) -> Result<(), DecodeError> {
+        if wire_type == WireType::LengthDelimited {
+            // Packed.
+            merge_loop(values, buf, ctx, |values, buf, _ctx| {
+                let mut value = Default::default();
+                merge_unchecked(&mut value, buf)?;
+                values.push(value);
+                Ok(())
+            })
+        } else {
+            // Unpacked.
+            check_wire_type(WireType::Varint, wire_type)?;
+            let mut value = Default::default();
+            merge_unchecked(&mut value, buf)?;
+            values.push(value);
+            Ok(())
+        }
+    }
+
+    #[inline]
+    pub fn encoded_len<T>(number: NonZeroU32, value: &Enum<T>) -> usize {
+        tag_len(number) + encoded_len_varint(*value)
+    }
+
+    #[inline]
+    pub fn encoded_len_repeated<T>(number: NonZeroU32, values: &[Enum<T>]) -> usize {
+        tag_len(number) * values.len()
+            + values.iter().map(|&value| encoded_len_varint(value)).sum::<usize>()
+    }
+
+    #[inline]
+    pub fn encoded_len_packed<T>(number: NonZeroU32, values: &[Enum<T>]) -> usize {
+        if values.is_empty() {
+            0
+        } else {
+            let len = values.iter().map(|&value| encoded_len_varint(value)).sum::<usize>();
+            tag_len(number) + usize::encoded_len_varint(len) + len
+        }
+    }
+}
 
 /// Macro which emits a module containing a set of encoding functions for a
 /// fixed width numeric type.
@@ -648,14 +751,12 @@ pub mod string {
         let drop_guard = unsafe { DropGuard::<S>(value.as_mut()) };
         super::bytes::merge(wire_type, drop_guard.0, buf, ctx)?;
         let s = drop_guard.0.as_ref();
-        if super::utf8::utf8_valid_up_to(s) == s.len() {
+        if is_valid_utf8(s) {
             // Success; do not clear the bytes.
             ::core::mem::forget(drop_guard);
             Ok(())
         } else {
-            Err(DecodeError::new(
-                "invalid string value: data is not UTF-8 encoded",
-            ))
+            Err(DecodeErrorKind::InvalidString.into())
         }
     }
 
@@ -695,7 +796,7 @@ impl sealed::BytesAdapter for Bytes {
     fn len(&self) -> usize { ::bytes::Bytes::len(self) }
 
     #[inline]
-    fn replace_with(&mut self, mut buf: impl Buf) { *self = buf.copy_to_bytes(buf.remaining()); }
+    fn replace_with(&mut self, mut buf: impl Buf) { *self = buf.copy_to_bytes(buf.remaining()) }
 
     #[inline]
     fn append_to(&self, buf: &mut impl BufMut) { buf.put(self.clone()) }
@@ -703,7 +804,7 @@ impl sealed::BytesAdapter for Bytes {
     #[inline]
     fn merge_from_buf(&mut self, buf: &mut impl Buf, len: usize) {
         // Strategy for Bytes: use `copy_to_bytes` for potential zero-copy.
-        *self = buf.copy_to_bytes(len);
+        *self = buf.copy_to_bytes(len)
     }
 
     #[inline]
@@ -719,7 +820,7 @@ impl sealed::BytesAdapter for Vec<u8> {
     #[inline]
     fn replace_with(&mut self, buf: impl Buf) {
         self.clear();
-        self.put(buf);
+        self.put(buf)
     }
 
     #[inline]
@@ -729,11 +830,30 @@ impl sealed::BytesAdapter for Vec<u8> {
     fn merge_from_buf(&mut self, buf: &mut impl Buf, len: usize) {
         // Strategy for Vec<u8>: use `take` to ensure single-copy.
         self.clear();
-        self.put(buf.take(len));
+        self.put(buf.take(len))
     }
 
     #[inline]
-    fn clear(&mut self) { self.clear(); }
+    fn clear(&mut self) { self.clear() }
+}
+
+impl<B: BytesAdapter> BytesAdapter for proto_value::Bytes<B> {}
+
+impl<B: sealed::BytesAdapter> sealed::BytesAdapter for proto_value::Bytes<B> {
+    #[inline]
+    fn len(&self) -> usize { self.0.len() }
+
+    #[inline]
+    fn replace_with(&mut self, buf: impl Buf) { self.0.replace_with(buf) }
+
+    #[inline]
+    fn append_to(&self, buf: &mut impl BufMut) { self.0.append_to(buf) }
+
+    #[inline]
+    fn merge_from_buf(&mut self, buf: &mut impl Buf, len: usize) { self.0.merge_from_buf(buf, len) }
+
+    #[inline]
+    fn clear(&mut self) { self.0.clear() }
 }
 
 pub mod bytes {
@@ -754,9 +874,7 @@ pub mod bytes {
         check_wire_type(WireType::LengthDelimited, wire_type)?;
         let len = decode_varint(buf)?;
         if len > buf.remaining() {
-            return Err(DecodeError::new(
-                "insufficient bytes for length-delimited field",
-            ));
+            return Err(DecodeErrorKind::BufferUnderflow.into());
         }
 
         // Clear the existing value. This follows from the following rule in the encoding guide[1]:
@@ -930,7 +1048,7 @@ pub mod group {
             let (field_number, field_wire_type) = decode_tag(buf)?;
             if field_wire_type == WireType::EndGroup {
                 if field_number != number {
-                    return Err(DecodeError::new("unexpected end group tag"));
+                    return Err(DecodeErrorKind::UnexpectedEndGroupTag.into());
                 }
                 return Ok(());
             }

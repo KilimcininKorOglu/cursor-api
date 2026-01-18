@@ -63,7 +63,8 @@ impl LogManager {
         let mmap = unsafe { memmap2::MmapOptions::new().map(&file)? };
         let manager = unsafe {
             ::rkyv::from_bytes_unchecked::<super::LogManagerHelper, rkyv::rancor::Error>(&mmap)
-        }?;
+        }
+        .map_err(|_| "加载日志失败")?;
 
         Ok(manager.into())
     }

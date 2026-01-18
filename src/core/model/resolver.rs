@@ -1,6 +1,9 @@
 use super::Models;
-use crate::app::model::{AppConfig, UsageCheck};
-use crate::core::constant::{FREE_MODELS, get_static_id};
+use crate::{
+    app::model::{AppConfig, UsageCheck},
+    core::constant::get_static_id,
+};
+use byte_str::ByteStr;
 
 static mut BYPASS_MODEL_VALIDATION: bool = false;
 
@@ -82,16 +85,9 @@ impl ExtModel {
     }
 
     pub fn is_usage_check(&self, usage_check: Option<UsageCheck>) -> bool {
-        match usage_check.unwrap_or(AppConfig::get_usage_check()) {
-            UsageCheck::None => false,
-            UsageCheck::Default => !FREE_MODELS.contains(&self.id),
-            UsageCheck::All => true,
-            UsageCheck::Custom(models) => models.contains(&self.id),
-        }
+        usage_check.unwrap_or(AppConfig::model_usage_checks()).check(&self.id)
     }
 
     #[inline(always)]
-    pub const fn id(&self) -> ::prost::ByteStr {
-        ::prost::ByteStr::from_static(self.id)
-    }
+    pub const fn id(&self) -> ByteStr { ByteStr::from_static(self.id) }
 }

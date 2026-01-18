@@ -2,17 +2,19 @@
 
 use super::{Randomness, RawToken, UserId};
 use crate::common::utils::{from_base64, to_base64};
+use alloc::alloc::{alloc, dealloc, handle_alloc_error};
 use core::{
     alloc::Layout,
     hash::Hasher,
     marker::PhantomData,
     mem::SizedTypeProperties as _,
-    ptr::NonNull,
+    ptr::{NonNull, copy_nonoverlapping},
+    slice::from_raw_parts,
+    str::from_utf8_unchecked,
     sync::atomic::{AtomicUsize, Ordering},
 };
-use hashbrown::HashMap;
 use manually_init::ManuallyInit;
-use parking_lot::RwLock;
+use scc::HashMap;
 
 /// Token 的唯一标识键
 ///
@@ -37,16 +39,8 @@ impl TokenKey {
     pub fn to_string(self) -> String {
         let mut bytes = [0u8; 24];
         unsafe {
-            core::ptr::copy_nonoverlapping(
-                self.user_id.to_bytes().as_ptr(),
-                bytes.as_mut_ptr(),
-                16,
-            );
-            core::ptr::copy_nonoverlapping(
-                self.randomness.to_bytes().as_ptr(),
-                bytes.as_mut_ptr().add(16),
-                8,
-            );
+            copy_nonoverlapping(self.user_id.to_bytes().as_ptr(), bytes.as_mut_ptr(), 16);
+            copy_nonoverlapping(self.randomness.to_bytes().as_ptr(), bytes.as_mut_ptr().add(16), 8);
         }
         to_base64(&bytes)
     }
@@ -85,27 +79,35 @@ impl TokenKey {
         }
 
         // 分隔符格式
-        let mut sep_pos = None;
+        let mut iter = bytes.iter().enumerate();
+        let mut first_num_end = None;
+        let mut second_num_start = None;
 
-        for (i, b) in bytes.iter().enumerate() {
+        // 第一次循环：找到第一个非数字字符
+        for (i, b) in iter.by_ref() {
             if !b.is_ascii_digit() {
-                if sep_pos.is_none() {
-                    sep_pos = Some(i);
-                } else {
-                    __cold_path!();
-                    return None;
-                }
+                first_num_end = Some(i);
+                break;
             }
         }
 
-        let sep_pos = sep_pos?;
+        let first_num_end = first_num_end?;
 
-        let first_part = unsafe { core::str::from_utf8_unchecked(bytes.get_unchecked(..sep_pos)) };
-        let second_part =
-            unsafe { core::str::from_utf8_unchecked(bytes.get_unchecked(sep_pos + 1..)) };
+        // 第二次循环：从上次停止的地方继续，找到下一个数字字符
+        for (i, b) in iter {
+            if b.is_ascii_digit() {
+                second_num_start = Some(i);
+                break;
+            }
+        }
 
-        let user_id_val = first_part.parse::<u128>().ok()?;
-        let randomness_val = second_part.parse::<u64>().ok()?;
+        let second_num_start = second_num_start?;
+
+        let first_part = unsafe { from_utf8_unchecked(bytes.get_unchecked(..first_num_end)) };
+        let second_part = unsafe { from_utf8_unchecked(bytes.get_unchecked(second_num_start..)) };
+
+        let user_id_val = first_part.parse().ok()?;
+        let randomness_val = second_part.parse().ok()?;
 
         Some(Self {
             user_id: UserId::from_u128(user_id_val),
@@ -149,8 +151,8 @@ impl TokenInner {
     #[inline(always)]
     const unsafe fn as_str(&self) -> &str {
         let ptr = self.string_ptr();
-        let slice = core::slice::from_raw_parts(ptr, self.string_len);
-        core::str::from_utf8_unchecked(slice)
+        let slice = from_raw_parts(ptr, self.string_len);
+        from_utf8_unchecked(slice)
     }
 
     /// 计算存储指定长度字符串所需的内存布局
@@ -161,7 +163,7 @@ impl TokenInner {
         }
         unsafe {
             Layout::new::<Self>()
-                .extend(Layout::array::<u8>(string_len).unwrap_unchecked())
+                .extend(Layout::from_size_align_unchecked(string_len, 1))
                 .unwrap_unchecked()
                 .0
                 .pad_to_align()
@@ -179,7 +181,7 @@ impl TokenInner {
 
         // 复制字符串数据
         let string_ptr = (*inner).string_ptr() as *mut u8;
-        core::ptr::copy_nonoverlapping(string.as_ptr(), string_ptr, string.len());
+        copy_nonoverlapping(string.as_ptr(), string_ptr, string.len());
     }
 }
 
@@ -221,13 +223,11 @@ unsafe impl Send for ThreadSafePtr {}
 unsafe impl Sync for ThreadSafePtr {}
 
 /// 全局 Token 缓存池
-static TOKEN_MAP: ManuallyInit<RwLock<HashMap<TokenKey, ThreadSafePtr, ahash::RandomState>>> =
+static TOKEN_MAP: ManuallyInit<HashMap<TokenKey, ThreadSafePtr, ahash::RandomState>> =
     ManuallyInit::new();
 
 #[inline(always)]
-pub fn __init() {
-    TOKEN_MAP.init(RwLock::new(HashMap::with_capacity_and_hasher(64, ahash::RandomState::new())))
-}
+pub fn __init() { TOKEN_MAP.init(HashMap::with_capacity_and_hasher(64, ahash::RandomState::new())) }
 
 impl Token {
     /// 创建或复用 Token 实例
@@ -240,12 +240,18 @@ impl Token {
     /// - 快速路径（read lock）：尝试复用已有实例
     /// - 慢速路径（write lock）：双重检查后创建新实例，防止竞态条件
     pub fn new(raw: RawToken, string: Option<String>) -> Self {
+        use scc::hash_map::RawEntry;
+
         let key = raw.key();
+        let hash;
 
         // 快速路径：尝试从缓存中查找并增加引用计数
         {
-            let cache = TOKEN_MAP.read();
-            if let Some(&ThreadSafePtr(ptr)) = cache.get(&key) {
+            let cache = TOKEN_MAP.get();
+            let builder = cache.raw_entry();
+            hash = builder.hash(&key);
+            if let RawEntry::Occupied(entry) = builder.from_key_hashed_nocheck_sync(hash, &key) {
+                let &ThreadSafePtr(ptr) = entry.get();
                 unsafe {
                     let inner = ptr.as_ref();
                     // 验证 RawToken 是否完全匹配（key 相同不代表 raw 相同）
@@ -266,46 +272,52 @@ impl Token {
         }
 
         // 慢速路径：创建新实例（需要独占访问缓存）
-        let mut cache = TOKEN_MAP.write();
+        let cache = TOKEN_MAP.get();
 
-        // 双重检查：防止在获取 write lock 前，其他线程已经创建了相同的 Token
-        if let Some(&ThreadSafePtr(ptr)) = cache.get(&key) {
-            unsafe {
-                let inner = ptr.as_ref();
-                if inner.raw == raw {
-                    let count = inner.count.fetch_add(1, Ordering::Relaxed);
-                    if count > isize::MAX as usize {
+        match cache.raw_entry().from_key_hashed_nocheck_sync(hash, &key) {
+            RawEntry::Occupied(entry) => {
+                // 双重检查：防止在获取 write lock 前，其他线程已经创建了相同的 Token
+                let &ThreadSafePtr(ptr) = entry.get();
+                unsafe {
+                    let inner = ptr.as_ref();
+                    if inner.raw == raw {
+                        let count = inner.count.fetch_add(1, Ordering::Relaxed);
+                        if count > isize::MAX as usize {
+                            __cold_path!();
+                            std::process::abort();
+                        }
+                        return Self { ptr, _pd: PhantomData };
+                    } else {
                         __cold_path!();
-                        std::process::abort();
+                        crate::debug!("{} != {}", inner.raw, raw);
                     }
-                    return Self { ptr, _pd: PhantomData };
-                } else {
-                    __cold_path!();
-                    crate::debug!("{} != {}", inner.raw, raw);
                 }
+
+                Self { ptr, _pd: PhantomData }
+            }
+            RawEntry::Vacant(entry) => {
+                // 分配并初始化新实例（使用自定义 DST 布局）
+                let ptr = unsafe {
+                    // 准备字符串表示（在堆上分配之前）
+                    let string = string.unwrap_or_else(|| raw.to_string());
+                    let layout = TokenInner::layout_for_string(string.len());
+
+                    let alloc = alloc(layout) as *mut TokenInner;
+                    if alloc.is_null() {
+                        handle_alloc_error(layout);
+                    }
+                    let ptr = NonNull::new_unchecked(alloc);
+                    TokenInner::write_with_string(ptr, raw, &string);
+
+                    ptr
+                };
+
+                // 将新实例插入缓存（持有 write lock，保证线程安全）
+                entry.insert(key, ThreadSafePtr(ptr));
+
+                Self { ptr, _pd: PhantomData }
             }
         }
-
-        // 准备字符串表示（在堆上分配之前）
-        let string = string.unwrap_or_else(|| raw.to_string());
-        let layout = TokenInner::layout_for_string(string.len());
-
-        // 分配并初始化新实例（使用自定义 DST 布局）
-        let ptr = unsafe {
-            let alloc = alloc::alloc::alloc(layout) as *mut TokenInner;
-            if alloc.is_null() {
-                __cold_path!();
-                alloc::alloc::handle_alloc_error(layout);
-            }
-            let ptr = NonNull::new_unchecked(alloc);
-            TokenInner::write_with_string(ptr, raw, &string);
-            ptr
-        };
-
-        // 将新实例插入缓存（持有 write lock，保证线程安全）
-        cache.insert(key, ThreadSafePtr(ptr));
-
-        Self { ptr, _pd: PhantomData }
     }
 
     /// 获取原始 token 数据
@@ -342,27 +354,29 @@ impl Drop for Token {
 
             // 最后一个引用：需要清理资源
             // 获取 write lock 以保护缓存操作，同时防止并发的 new() 操作干扰
-            let mut cache = TOKEN_MAP.write();
+            let cache = TOKEN_MAP.get();
 
-            // 双重检查引用计数：防止在等待 write lock 期间，其他线程通过 new() 增加了引用
-            // 例如：
-            //   Thread A: fetch_sub 返回 1
-            //   Thread B: 在 new() 中找到此 token，fetch_add 增加计数
-            //   Thread A: 获取 write lock
-            // 此时必须重新检查，否则会错误地释放正在使用的内存
-            if inner.count.load(Ordering::Relaxed) != 0 {
-                // 有新的引用产生，取消释放操作
-                return;
-            }
-
-            // 确认是最后一个引用，执行清理：
-            // 1. 从缓存中移除（防止后续 new() 找到已释放的指针）
             let key = inner.raw.key();
-            cache.remove(&key);
+            if let scc::hash_map::RawEntry::Occupied(e) = cache.raw_entry().from_key_sync(&key) {
+                // 双重检查引用计数：防止在等待 write lock 期间，其他线程通过 new() 增加了引用
+                // 例如：
+                //   Thread A: fetch_sub 返回 1
+                //   Thread B: 在 new() 中找到此 token，fetch_add 增加计数
+                //   Thread A: 获取 write lock
+                // 此时必须重新检查，否则会错误地释放正在使用的内存
+                if inner.count.load(Ordering::Relaxed) != 0 {
+                    // 有新的引用产生，取消释放操作
+                    return;
+                }
 
-            // 2. 释放堆内存（包括 TokenInner 和内联的字符串数据）
-            let layout = TokenInner::layout_for_string(inner.string_len);
-            alloc::alloc::dealloc(self.ptr.cast().as_ptr(), layout);
+                // 确认是最后一个引用，执行清理：
+                // 1. 从缓存中移除（防止后续 new() 找到已释放的指针）
+                e.remove();
+
+                // 2. 释放堆内存（包括 TokenInner 和内联的字符串数据）
+                let layout = TokenInner::layout_for_string(inner.string_len);
+                dealloc(self.ptr.cast().as_ptr(), layout);
+            }
         }
     }
 }

@@ -86,7 +86,7 @@ impl Field {
                             None => bail!("invalid map attribute: must have key and value types"),
                         };
                         if items.next().is_some() {
-                            bail!("invalid map attribute: {:?}", attr);
+                            bail!("invalid map attribute: {attr:?}");
                         }
                         (k, v)
                     }
@@ -372,7 +372,7 @@ fn key_ty_from_str(s: &str) -> Result<scalar::Ty, Error> {
         | scalar::Ty::Sfixed64
         | scalar::Ty::Bool
         | scalar::Ty::String(..) => Ok(ty),
-        _ => bail!("invalid map key type: {}", s),
+        _ => bail!("invalid map key type: {s}"),
     }
 }
 
@@ -390,7 +390,7 @@ impl ValueTy {
         } else if s.trim() == "message" {
             Ok(ValueTy::Message)
         } else {
-            bail!("invalid map value type: {}", s);
+            bail!("invalid map value type: {s}");
         }
     }
 

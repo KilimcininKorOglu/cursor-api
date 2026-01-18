@@ -13,8 +13,8 @@
 //! │  ArcStr::new() │ as_str() │ clone() │ Drop │ PartialEq...       │
 //! ├─────────────────────────────────────────────────────────────────┤
 //! │                      全局字符串池                                 │
-//! │     RwLock<HashMap<ThreadSafePtr, ()>>                          │
-//! │     双重检查锁定 + 原子引用计数                                     │
+//! │               HashMap<ThreadSafePtr, ()>                        │
+//! │               双重检查锁定 + 原子引用计数                           │
 //! ├─────────────────────────────────────────────────────────────────┤
 //! │                    底层内存布局                                   │
 //! │  [hash:u64][count:AtomicUsize][len:usize][string_data...]       │
@@ -46,9 +46,8 @@ use core::{
         Ordering::{Relaxed, Release},
     },
 };
-use hashbrown::{Equivalent, HashMap};
 use manually_init::ManuallyInit;
-use parking_lot::RwLock;
+use scc::{Equivalent, HashMap};
 
 // ═══════════════════════════════════════════════════════════════════════════
 //                          第一层：公共API与核心接口
@@ -140,8 +139,8 @@ impl ArcStr {
         // ===== 阶段 1：读锁快速路径 =====
         // 大部分情况下字符串已经在池中，这个路径是最常见的
         {
-            let pool = ARC_STR_POOL.read();
-            if let Some(existing) = Self::try_find_existing(&pool, hash, string) {
+            let pool = ARC_STR_POOL.get();
+            if let Some(existing) = Self::try_find_existing(pool, hash, string) {
                 return existing;
             }
             // 读锁自动释放
@@ -149,35 +148,45 @@ impl ArcStr {
 
         // ===== 阶段 2：写锁创建路径 =====
         // 进入这里说明需要创建新的字符串实例
-        let mut pool = ARC_STR_POOL.write();
+        let pool = ARC_STR_POOL.get();
 
-        // 双重检查：在获取写锁的过程中，其他线程可能已经创建了相同的字符串
-        if let Some(existing) = Self::try_find_existing(&pool, hash, string) {
-            return existing;
-        }
+        use scc::hash_map::RawEntry;
+        match pool.raw_entry().from_key_hashed_nocheck_sync(hash, string) {
+            RawEntry::Occupied(entry) => {
+                // 双重检查：在获取写锁的过程中，其他线程可能已经创建了相同的字符串
+                let ptr = entry.key().0;
 
-        // 确认需要创建新实例：分配内存并初始化
-        let layout = ArcStrInner::layout_for_string(string.len());
+                // 找到匹配的字符串，增加其引用计数
+                // SAFETY: 池中的指针始终有效，且引用计数操作是原子的
+                unsafe { ptr.as_ref().inc_strong() };
 
-        // SAFETY: layout_for_string 确保布局有效且大小合理
-        let ptr = unsafe {
-            let alloc = alloc::alloc::alloc(layout) as *mut ArcStrInner;
-
-            if alloc.is_null() {
-                hint::cold_path();
-                alloc::alloc::handle_alloc_error(layout);
+                Self { ptr, _marker: PhantomData }
             }
+            RawEntry::Vacant(entry) => {
+                // 确认需要创建新实例：分配内存并初始化
+                let layout = ArcStrInner::layout_for_string(string.len());
 
-            let ptr = NonNull::new_unchecked(alloc);
-            ArcStrInner::write_with_string(ptr, string, hash);
-            ptr
-        };
+                // SAFETY: layout_for_string 确保布局有效且大小合理
+                let ptr = unsafe {
+                    let alloc = alloc::alloc::alloc(layout) as *mut ArcStrInner;
 
-        // 将新创建的字符串加入全局池
-        // 使用 from_key_hashed_nocheck 避免重复计算哈希
-        pool.raw_entry_mut().from_key_hashed_nocheck(hash, string).insert(ThreadSafePtr(ptr), ());
+                    if alloc.is_null() {
+                        hint::cold_path();
+                        alloc::alloc::handle_alloc_error(layout);
+                    }
 
-        Self { ptr, _marker: PhantomData }
+                    let ptr = NonNull::new_unchecked(alloc);
+                    ArcStrInner::write_with_string(ptr, string, hash);
+                    ptr
+                };
+
+                // 将新创建的字符串加入全局池
+                // 使用 from_key_hashed_nocheck 避免重复计算哈希
+                entry.insert(ThreadSafePtr(ptr), ());
+
+                Self { ptr, _marker: PhantomData }
+            }
+        }
     }
 
     /// 获取字符串切片（零成本操作）
@@ -252,8 +261,12 @@ impl ArcStr {
     fn try_find_existing(pool: &PtrMap, hash: u64, string: &str) -> Option<Self> {
         // 使用 hashbrown 的 from_key_hashed_nocheck API
         // 这利用了 Equivalent trait 来进行高效比较
-        let (ptr_ref, _) = pool.raw_entry().from_key_hashed_nocheck(hash, string)?;
-        let ptr = ptr_ref.0;
+        use scc::hash_map::RawEntry;
+        let RawEntry::Occupied(entry) = pool.raw_entry().from_key_hashed_nocheck_sync(hash, string)
+        else {
+            return None;
+        };
+        let ThreadSafePtr(ptr) = *entry.key();
 
         // 找到匹配的字符串，增加其引用计数
         // SAFETY: 池中的指针始终有效，且引用计数操作是原子的
@@ -309,28 +322,25 @@ impl Drop for ArcStr {
             }
 
             // 这是最后一个引用，需要清理资源
-            let mut pool = ARC_STR_POOL.write();
+            let pool = ARC_STR_POOL.get();
+            // 使用指针相等比较，这是绝对的 O(1) 操作
+            let entry =
+                pool.raw_entry().from_key_hashed_nocheck_sync(inner.hash, &ThreadSafePtr(self.ptr));
 
-            // 双重检查引用计数
-            // 在获取写锁期间，其他线程可能clone了这个字符串
-            if inner.strong_count() != 0 {
-                return;
-            }
+            if let scc::hash_map::RawEntry::Occupied(e) = entry {
+                // 双重检查引用计数
+                // 在获取写锁期间，其他线程可能clone了这个字符串
+                if inner.strong_count() != 0 {
+                    return;
+                }
 
-            // 确认是最后一个引用，执行清理
-            let hash = inner.hash;
-            let entry = pool.raw_entry_mut().from_hash(hash, |k| {
-                // 使用指针相等比较，这是绝对的 O(1) 操作
-                k.0 == self.ptr
-            });
-
-            if let hashbrown::hash_map::RawEntryMut::Occupied(e) = entry {
+                // 确认是最后一个引用，执行清理
                 e.remove();
-            }
 
-            // 释放底层内存
-            let layout = ArcStrInner::layout_for_string_unchecked(inner.string_len);
-            alloc::alloc::dealloc(self.ptr.cast().as_ptr(), layout);
+                // 释放底层内存
+                let layout = ArcStrInner::layout_for_string_unchecked(inner.string_len);
+                alloc::alloc::dealloc(self.ptr.cast().as_ptr(), layout);
+            }
         }
     }
 }
@@ -379,7 +389,7 @@ impl Hash for ArcStr {
     /// 虽然内部存储了预计算的哈希值，但这里重新计算以确保
     /// 与 `&str` 和 `String` 的哈希值保持一致。
     #[inline]
-    fn hash<H: Hasher>(&self, state: &mut H) { state.write_str(self.as_str()) }
+    fn hash<H: Hasher>(&self, state: &mut H) { self.as_str().hash(state) }
 }
 
 impl fmt::Display for ArcStr {
@@ -881,7 +891,7 @@ struct IdentityHasher(u64);
 
 impl Hasher for IdentityHasher {
     fn write(&mut self, _: &[u8]) {
-        unreachable!("IdentityHasher 只应该用于 write_u64");
+        unreachable!("IdentityHasher usage error");
     }
 
     #[inline(always)]
@@ -909,7 +919,7 @@ static CONTENT_HASHER: ManuallyInit<ahash::RandomState> = ManuallyInit::new();
 
 /// 全局字符串池
 ///
-/// 使用 `RwLock<HashMap>` 实现高并发的字符串池：
+/// 使用 `HashMap` 实现高并发的字符串池：
 /// - **读锁**：多个线程可以同时查找现有字符串
 /// - **写锁**：创建新字符串时需要独占访问
 /// - **容量预分配**：避免初期的频繁扩容
@@ -925,7 +935,7 @@ static CONTENT_HASHER: ManuallyInit<ahash::RandomState> = ManuallyInit::new();
 /// 并发写入（偶尔发生）:
 /// Thread D: write_lock() -> 查找 "new" -> 未找到 -> 创建 -> 插入 -> 返回
 /// ```
-static ARC_STR_POOL: ManuallyInit<RwLock<PtrMap>> = ManuallyInit::new();
+static ARC_STR_POOL: ManuallyInit<PtrMap> = ManuallyInit::new();
 
 /// 初始化全局字符串池
 ///
@@ -941,7 +951,7 @@ static ARC_STR_POOL: ManuallyInit<RwLock<PtrMap>> = ManuallyInit::new();
 #[inline(always)]
 pub(crate) fn __init() {
     CONTENT_HASHER.init(ahash::RandomState::new());
-    ARC_STR_POOL.init(RwLock::new(PtrMap::with_capacity_and_hasher(128, PoolHasher::default())));
+    ARC_STR_POOL.init(PtrMap::with_capacity_and_hasher(128, PoolHasher::default()));
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -988,7 +998,7 @@ pub(crate) fn __init() {
 
 #[cfg(test)]
 pub(crate) fn pool_stats() -> (usize, usize) {
-    let pool = ARC_STR_POOL.read();
+    let pool = ARC_STR_POOL.get();
     (pool.len(), pool.capacity())
 }
 
@@ -997,7 +1007,7 @@ pub(crate) fn clear_pool_for_test() {
     use std::{thread, time::Duration};
     // 短暂等待确保其他线程完成操作
     thread::sleep(Duration::from_millis(10));
-    ARC_STR_POOL.write().clear();
+    ARC_STR_POOL.get().clear_sync();
 }
 
 #[cfg(test)]

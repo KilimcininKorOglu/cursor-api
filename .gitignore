@@ -38,3 +38,5 @@ Cargo.lock
 /tests/data/stream_data.txt
 /frontend.zip
 /config.toml
+/xtask
+/dist*

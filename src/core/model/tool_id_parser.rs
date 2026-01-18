@@ -1,6 +1,5 @@
+use byte_str::ByteStr;
 use core::fmt;
-
-use prost::ByteStr;
 
 const DELIMITER: &str = "\nmc_";
 

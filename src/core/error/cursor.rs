@@ -45,10 +45,9 @@ impl Detail {
         deserializer: D,
     ) -> Result<aiserver::v1::ErrorDetails, D::Error>
     where D: ::serde::Deserializer<'de> {
-        use base64::{Engine as _, engine::general_purpose::STANDARD_NO_PAD};
         use prost::Message as _;
         let s = <String as ::serde::Deserialize>::deserialize(deserializer)?;
-        match STANDARD_NO_PAD.decode(s) {
+        match base64_simd::STANDARD_NO_PAD.decode_to_vec(s) {
             Ok(buf) => aiserver::v1::ErrorDetails::decode(&buf[..]).map_err(|e| {
                 serde::de::Error::custom(format_args!(
                     "failed to decode from Base64-decoded bytes: {e}"
@@ -62,6 +61,10 @@ impl Detail {
 impl CursorError {
     #[inline(always)]
     pub(super) fn code(&self) -> &str { &self.error.code }
+
+    pub fn error(&self) -> Option<crate::core::aiserver::v1::error_details::Error> {
+        self.error.details.get(0)?.value.error.get().try_into().ok()
+    }
 
     #[inline]
     pub fn canonical(self) -> CanonicalError {

@@ -2,9 +2,15 @@ mod canonical;
 mod cpp;
 mod cursor;
 
+use crate::{
+    common::model::GenericError,
+    core::model::{anthropic::AnthropicError, openai::OpenAiError},
+};
+use axum::Json;
 pub use canonical::CanonicalError;
 pub use cpp::CppError;
 pub use cursor::CursorError;
+use http::StatusCode;
 
 // use alloc::borrow::Cow;
 
@@ -239,4 +245,10 @@ impl ::core::fmt::Display for StreamError {
             Self::EmptyStream => f.write_str("empty stream"),
         }
     }
+}
+
+pub trait ErrorExt: Sized {
+    fn into_generic_tuple(self) -> (StatusCode, Json<GenericError>);
+    fn into_openai_tuple(self) -> (StatusCode, Json<OpenAiError>);
+    fn into_anthropic_tuple(self) -> (StatusCode, Json<AnthropicError>);
 }

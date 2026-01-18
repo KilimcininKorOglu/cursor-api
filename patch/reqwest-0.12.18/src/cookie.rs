@@ -1,13 +1,11 @@
 //! HTTP Cookies
 
+use crate::header::{HeaderValue, SET_COOKIE};
+use bytes::Bytes;
 use std::convert::TryInto;
 use std::fmt;
 use std::sync::RwLock;
 use std::time::SystemTime;
-
-use bytes::Bytes;
-
-use crate::header::{HeaderValue, SET_COOKIE};
 
 /// Actions for a persistent cookie store providing session support.
 pub trait CookieStore: Send + Sync {
@@ -44,19 +42,29 @@ impl<'a> Cookie<'a> {
     }
 
     /// The name of the cookie.
-    pub fn name(&self) -> &str { self.0.name() }
+    pub fn name(&self) -> &str {
+        self.0.name()
+    }
 
     /// The value of the cookie.
-    pub fn value(&self) -> &str { self.0.value() }
+    pub fn value(&self) -> &str {
+        self.0.value()
+    }
 
     /// Returns true if the 'HttpOnly' directive is enabled.
-    pub fn http_only(&self) -> bool { self.0.http_only().unwrap_or(false) }
+    pub fn http_only(&self) -> bool {
+        self.0.http_only().unwrap_or(false)
+    }
 
     /// Returns true if the 'Secure' directive is enabled.
-    pub fn secure(&self) -> bool { self.0.secure().unwrap_or(false) }
+    pub fn secure(&self) -> bool {
+        self.0.secure().unwrap_or(false)
+    }
 
     /// Returns true if  'SameSite' directive is 'Lax'.
-    pub fn same_site_lax(&self) -> bool { self.0.same_site() == Some(cookie_crate::SameSite::Lax) }
+    pub fn same_site_lax(&self) -> bool {
+        self.0.same_site() == Some(cookie_crate::SameSite::Lax)
+    }
 
     /// Returns true if  'SameSite' directive is 'Strict'.
     pub fn same_site_strict(&self) -> bool {
@@ -64,14 +72,21 @@ impl<'a> Cookie<'a> {
     }
 
     /// Returns the path directive of the cookie, if set.
-    pub fn path(&self) -> Option<&str> { self.0.path() }
+    pub fn path(&self) -> Option<&str> {
+        self.0.path()
+    }
 
     /// Returns the domain directive of the cookie, if set.
-    pub fn domain(&self) -> Option<&str> { self.0.domain() }
+    pub fn domain(&self) -> Option<&str> {
+        self.0.domain()
+    }
 
     /// Get the Max-Age information.
     pub fn max_age(&self) -> Option<std::time::Duration> {
-        self.0.max_age().map(|d| d.try_into().expect("time::Duration into std::time::Duration"))
+        self.0.max_age().map(|d| {
+            d.try_into()
+                .expect("time::Duration into std::time::Duration")
+        })
     }
 
     /// The cookie expiration time.
@@ -84,7 +99,9 @@ impl<'a> Cookie<'a> {
 }
 
 impl<'a> fmt::Debug for Cookie<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.0.fmt(f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.0.fmt(f)
+    }
 }
 
 pub(crate) fn extract_response_cookie_headers<'a>(
@@ -96,18 +113,25 @@ pub(crate) fn extract_response_cookie_headers<'a>(
 pub(crate) fn extract_response_cookies<'a>(
     headers: &'a hyper::HeaderMap,
 ) -> impl Iterator<Item = Result<Cookie<'a>, CookieParseError>> + 'a {
-    headers.get_all(SET_COOKIE).iter().map(|value| Cookie::parse(value))
+    headers
+        .get_all(SET_COOKIE)
+        .iter()
+        .map(|value| Cookie::parse(value))
 }
 
 /// Error representing a parse failure of a 'Set-Cookie' header.
 pub(crate) struct CookieParseError(cookie_crate::ParseError);
 
 impl<'a> fmt::Debug for CookieParseError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.0.fmt(f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.0.fmt(f)
+    }
 }
 
 impl<'a> fmt::Display for CookieParseError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.0.fmt(f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.0.fmt(f)
+    }
 }
 
 impl std::error::Error for CookieParseError {}
@@ -131,7 +155,10 @@ impl Jar {
     /// // and now add to a `ClientBuilder`?
     /// ```
     pub fn add_cookie_str(&self, cookie: &str, url: &url::Url) {
-        let cookies = cookie_crate::Cookie::parse(cookie).ok().map(|c| c.into_owned()).into_iter();
+        let cookies = cookie_crate::Cookie::parse(cookie)
+            .ok()
+            .map(|c| c.into_owned())
+            .into_iter();
         self.0.write().unwrap().store_response_cookies(cookies, url);
     }
 }
@@ -163,18 +190,18 @@ impl CookieStore for Jar {
 }
 
 pub(crate) mod service {
-    use std::future::Future;
-    use std::pin::Pin;
-    use std::sync::Arc;
-    use std::task::{Context, Poll, ready};
-
+    use crate::cookie;
     use http::{Request, Response};
     use http_body::Body;
     use pin_project_lite::pin_project;
+    use std::future::Future;
+    use std::pin::Pin;
+    use std::sync::Arc;
+    use std::task::ready;
+    use std::task::Context;
+    use std::task::Poll;
     use tower::Service;
     use url::Url;
-
-    use crate::cookie;
 
     /// A [`Service`] that adds cookie support to a lower-level [`Service`].
     #[derive(Clone)]
@@ -186,7 +213,10 @@ pub(crate) mod service {
     impl<S> CookieService<S> {
         /// Create a new [`CookieService`].
         pub fn new(inner: S, cookie_store: Option<Arc<dyn cookie::CookieStore>>) -> Self {
-            Self { inner, cookie_store }
+            Self {
+                inner,
+                cookie_store,
+            }
         }
     }
 
@@ -216,7 +246,11 @@ pub(crate) mod service {
             }
 
             let cookie_store = self.cookie_store.clone();
-            ResponseFuture { future: inner.call(req), cookie_store, url }
+            ResponseFuture {
+                future: inner.call(req),
+                cookie_store,
+                url,
+            }
         }
     }
 

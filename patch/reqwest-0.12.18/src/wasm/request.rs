@@ -3,8 +3,8 @@ use std::fmt;
 use std::time::Duration;
 
 use bytes::Bytes;
-use http::{Method, Request as HttpRequest};
-use http::request::Parts;
+use http::{request::Parts, Method, Request as HttpRequest};
+#[cfg(any(feature = "query", feature = "form", feature = "json"))]
 use serde::Serialize;
 #[cfg(feature = "json")]
 use serde_json;
@@ -12,7 +12,9 @@ use url::Url;
 use web_sys::{RequestCache, RequestCredentials};
 
 use super::{Body, Client, Response};
-use crate::header::{CONTENT_TYPE, HeaderMap, HeaderName, HeaderValue};
+#[cfg(any(feature = "form", feature = "json"))]
+use crate::header::CONTENT_TYPE;
+use crate::header::{HeaderMap, HeaderName, HeaderValue};
 
 /// A request which can be executed with `Client::execute()`.
 pub struct Request {
@@ -137,7 +139,10 @@ impl RequestBuilder {
 
     /// Assemble a builder starting from an existing `Client` and a `Request`.
     pub fn from_parts(client: crate::Client, request: crate::Request) -> crate::RequestBuilder {
-        crate::RequestBuilder { client, request: crate::Result::Ok(request) }
+        crate::RequestBuilder {
+            client,
+            request: crate::Result::Ok(request),
+        }
     }
 
     /// Modify the query string of the URL.
@@ -155,9 +160,15 @@ impl RequestBuilder {
     /// as `.query(&[("key", "val")])`. It's also possible to serialize structs
     /// and maps into a key-value pair.
     ///
+    /// # Optional
+    ///
+    /// This requires the optional `query` feature to be enabled.
+    ///
     /// # Errors
     /// This method will fail if the object you provide cannot be serialized
     /// into a query string.
+    #[cfg(feature = "query")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "query")))]
     pub fn query<T: Serialize + ?Sized>(mut self, query: &T) -> RequestBuilder {
         let mut error = None;
         if let Ok(ref mut req) = self.request {
@@ -186,10 +197,16 @@ impl RequestBuilder {
     /// and also sets the `Content-Type: application/x-www-form-urlencoded`
     /// header.
     ///
+    /// # Optional
+    ///
+    /// This requires the optional `form` feature to be enabled.
+    ///
     /// # Errors
     ///
     /// This method fails if the passed value cannot be serialized into
     /// url encoded format
+    #[cfg(feature = "form")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "form")))]
     pub fn form<T: Serialize + ?Sized>(mut self, form: &T) -> RequestBuilder {
         let mut error = None;
         if let Ok(ref mut req) = self.request {
@@ -535,7 +552,10 @@ impl RequestBuilder {
             .as_ref()
             .ok()
             .and_then(|req| req.try_clone())
-            .map(|req| RequestBuilder { client: self.client.clone(), request: Ok(req) })
+            .map(|req| RequestBuilder {
+                client: self.client.clone(),
+                request: Ok(req),
+            })
     }
 }
 
@@ -559,7 +579,9 @@ fn fmt_request_fields<'a, 'b>(
     f: &'a mut fmt::DebugStruct<'a, 'b>,
     req: &Request,
 ) -> &'a mut fmt::DebugStruct<'a, 'b> {
-    f.field("method", &req.method).field("url", &req.url).field("headers", &req.headers)
+    f.field("method", &req.method)
+        .field("url", &req.url)
+        .field("headers", &req.headers)
 }
 
 impl<T> TryFrom<HttpRequest<T>> for Request
@@ -570,7 +592,12 @@ where
 
     fn try_from(req: HttpRequest<T>) -> crate::Result<Self> {
         let (parts, body) = req.into_parts();
-        let Parts { method, uri, headers, .. } = parts;
+        let Parts {
+            method,
+            uri,
+            headers,
+            ..
+        } = parts;
         let url = Url::parse(&uri.to_string()).map_err(crate::error::builder)?;
         Ok(Request {
             method,
@@ -589,7 +616,13 @@ impl TryFrom<Request> for HttpRequest<Body> {
     type Error = crate::Error;
 
     fn try_from(req: Request) -> crate::Result<Self> {
-        let Request { method, url, headers, body, .. } = req;
+        let Request {
+            method,
+            url,
+            headers,
+            body,
+            ..
+        } = req;
 
         let mut req = HttpRequest::builder()
             .method(method)

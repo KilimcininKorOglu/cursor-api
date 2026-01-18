@@ -5,17 +5,14 @@ use crate::{
         model::{
             AppConfig, BuildKeyRequest, BuildKeyResponse, ExtToken, GetConfigVersionRequest,
             GetConfigVersionResponse, Token, UnextTokenRef, UsageCheckModelType,
-            proxy_pool::get_client_or_general,
+            dynamic_key::get_hash, proxy_pool::get_client_or_general,
         },
     },
     common::{
         model::userinfo::{Session, StripeProfile, UsageProfile, UserProfile},
         utils::{to_base64, token_to_tokeninfo},
     },
-    core::{
-        config::{ConfiguredKey, configured_key},
-        constant::ERR_NODATA,
-    },
+    core::config::{ConfiguredKey, configured_key},
 };
 use axum::{
     Json,
@@ -30,23 +27,25 @@ const ERROR_INVALID_SESSION_TOKEN: &str =
 const ERROR_INVALID_WEB_TOKEN: &str =
     "Invalid parameter: web_token must be a web token, not a session token";
 
+// 验证认证令牌
+fn verify_auth_token(headers: &HeaderMap) -> bool {
+    headers
+        .get(AUTHORIZATION)
+        .and_then(|h| h.to_str().ok())
+        .and_then(|h| h.strip_prefix(AUTHORIZATION_BEARER_PREFIX))
+        .is_none_or(|h| !AppConfig::share_token_eq(h) && h != *AUTH_TOKEN)
+}
+
 pub async fn handle_build_key(
     headers: HeaderMap,
     Json(request): Json<BuildKeyRequest>,
 ) -> (StatusCode, Json<BuildKeyResponse>) {
-    // 验证认证令牌
-    if AppConfig::is_share() {
-        let auth_header = headers
-            .get(AUTHORIZATION)
-            .and_then(|h| h.to_str().ok())
-            .and_then(|h| h.strip_prefix(AUTHORIZATION_BEARER_PREFIX));
-
-        if auth_header.is_none_or(|h| !AppConfig::share_token_eq(h) && h != *AUTH_TOKEN) {
-            return (StatusCode::UNAUTHORIZED, Json(BuildKeyResponse::Error(ERROR_UNAUTHORIZED)));
-        }
+    if verify_auth_token(&headers) {
+        return (StatusCode::UNAUTHORIZED, Json(BuildKeyResponse::Error(ERROR_UNAUTHORIZED)));
     }
 
     let token_key = request.token.key();
+    let secret = get_hash(&request.token);
     let token_info = token_to_tokeninfo(
         request.token,
         request.checksum,
@@ -61,10 +60,7 @@ pub async fn handle_build_key(
     // 构建 proto 消息
     let key_config = ConfiguredKey {
         token_info: Some(token_info),
-        secret: request.secret.map(|s| {
-            use sha2::Digest as _;
-            sha2::Sha256::new().chain_update(s.as_bytes()).finalize().into()
-        }),
+        secret: Some(secret),
         disable_vision: request.disable_vision,
         enable_slow_pool: request.enable_slow_pool,
         include_web_references: request.include_web_references,
@@ -102,19 +98,11 @@ pub async fn handle_get_config_version(
     headers: HeaderMap,
     Json(request): Json<GetConfigVersionRequest>,
 ) -> (StatusCode, Json<GetConfigVersionResponse>) {
-    // 验证认证令牌
-    if AppConfig::is_share() {
-        let auth_header = headers
-            .get(AUTHORIZATION)
-            .and_then(|h| h.to_str().ok())
-            .and_then(|h| h.strip_prefix(AUTHORIZATION_BEARER_PREFIX));
-
-        if auth_header.is_none_or(|h| !AppConfig::share_token_eq(h) && h != *AUTH_TOKEN) {
-            return (
-                StatusCode::UNAUTHORIZED,
-                Json(GetConfigVersionResponse::Error(ERROR_UNAUTHORIZED)),
-            );
-        }
+    if verify_auth_token(&headers) {
+        return (
+            StatusCode::UNAUTHORIZED,
+            Json(GetConfigVersionResponse::Error(ERROR_UNAUTHORIZED)),
+        );
     }
 
     let token = ExtToken {
@@ -134,7 +122,7 @@ pub async fn handle_get_config_version(
 
     match crate::common::utils::get_server_config(token, false).await {
         Some(cv) => (StatusCode::OK, Json(GetConfigVersionResponse::ConfigVersion(cv))),
-        None => (StatusCode::FORBIDDEN, Json(GetConfigVersionResponse::Error(ERR_NODATA))),
+        None => (StatusCode::FORBIDDEN, Json(GetConfigVersionResponse::Error("No data"))),
     }
 }
 
@@ -159,19 +147,11 @@ pub async fn handle_get_token_profile(
     headers: HeaderMap,
     Json(request): Json<GetTokenProfileRequest>,
 ) -> (StatusCode, Json<GetTokenProfileResponse>) {
-    // 验证认证令牌
-    if AppConfig::is_share() {
-        let auth_header = headers
-            .get(AUTHORIZATION)
-            .and_then(|h| h.to_str().ok())
-            .and_then(|h| h.strip_prefix(AUTHORIZATION_BEARER_PREFIX));
-
-        if auth_header.is_none_or(|h| !AppConfig::share_token_eq(h) && h != *AUTH_TOKEN) {
-            return (
-                StatusCode::UNAUTHORIZED,
-                Json(GetTokenProfileResponse::Error(ERROR_UNAUTHORIZED)),
-            );
-        }
+    if verify_auth_token(&headers) {
+        return (
+            StatusCode::UNAUTHORIZED,
+            Json(GetTokenProfileResponse::Error(ERROR_UNAUTHORIZED)),
+        );
     }
 
     if request.session_token.is_web() {

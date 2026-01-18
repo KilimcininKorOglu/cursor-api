@@ -1,13 +1,11 @@
-use std::convert::TryInto;
-use std::fmt;
-use std::future::Future;
-use std::sync::Arc;
-
 use http::header::USER_AGENT;
 use http::{HeaderMap, HeaderValue, Method};
-use js_sys::{JSON, Promise};
+use js_sys::Promise;
+use std::convert::TryInto;
+use std::{fmt, future::Future, sync::Arc};
 use url::Url;
-use wasm_bindgen::prelude::{UnwrapThrowExt as _, wasm_bindgen};
+use wasm_bindgen::prelude::{wasm_bindgen, UnwrapThrowExt as _};
+use wasm_bindgen::JsCast;
 
 use super::{AbortGuard, Request, RequestBuilder, Response};
 use crate::IntoUrl;
@@ -24,31 +22,39 @@ fn js_fetch(req: &web_sys::Request) -> Promise {
 
     if let Ok(true) = js_sys::Reflect::has(&global, &JsValue::from_str("ServiceWorkerGlobalScope"))
     {
-        global.unchecked_into::<web_sys::ServiceWorkerGlobalScope>().fetch_with_request(req)
+        global
+            .unchecked_into::<web_sys::ServiceWorkerGlobalScope>()
+            .fetch_with_request(req)
     } else {
         // browser
         fetch_with_request(req)
     }
 }
 
-/// dox
+/// An HTTP Client for WebAssembly.
+///
+/// Uses the browser's Fetch API to make requests. The `Client` holds
+/// configuration that applies to all requests. To configure a `Client`,
+/// use `Client::builder()`.
 #[derive(Clone)]
 pub struct Client {
     config: Arc<Config>,
 }
 
-/// dox
+/// A `ClientBuilder` can be used to create a `Client` with custom configuration.
 pub struct ClientBuilder {
     config: Config,
 }
 
 impl Client {
-    /// dox
+    /// Constructs a new `Client`.
     pub fn new() -> Self {
         Client::builder().build().unwrap_throw()
     }
 
-    /// dox
+    /// Creates a `ClientBuilder` to configure a `Client`.
+    ///
+    /// This is the same as `ClientBuilder::new()`.
     pub fn builder() -> ClientBuilder {
         ClientBuilder::new()
     }
@@ -193,12 +199,16 @@ async fn fetch(req: Request) -> crate::Result<Response> {
     init.method(req.method().as_str());
 
     // convert HeaderMap to Headers
-    let js_headers =
-        web_sys::Headers::new().map_err(crate::error::wasm).map_err(crate::error::builder)?;
+    let js_headers = web_sys::Headers::new()
+        .map_err(crate::error::wasm)
+        .map_err(crate::error::builder)?;
 
     for (name, value) in req.headers() {
         js_headers
-            .append(name.as_str(), value.to_str().map_err(crate::error::builder)?)
+            .append(
+                name.as_str(),
+                value.to_str().map_err(crate::error::builder)?,
+            )
             .map_err(crate::error::wasm)
             .map_err(crate::error::builder)?;
     }
@@ -252,28 +262,38 @@ async fn fetch(req: Request) -> crate::Result<Response> {
     let url = Url::parse(&js_resp.url()).expect_throw("url parse");
 
     let js_headers = js_resp.headers();
-    let js_iter = js_sys::try_iter(&js_headers)
-        .expect_throw("headers try_iter")
-        .expect_throw("headers have an iterator");
-
-    for item in js_iter {
+    for item in js_headers.entries() {
         let item = item.expect_throw("headers iterator doesn't throw");
-        let serialized_headers: String =
-            JSON::stringify(&item).expect_throw("serialized headers").into();
-        let [name, value]: [String; 2] = serde_json::from_str(&serialized_headers)
-            .expect_throw("deserializable serialized headers");
+        let item: js_sys::Array = item.dyn_into().expect_throw("header item is an array");
+
+        let name = item
+            .get(0)
+            .as_string()
+            .expect_throw("header name is a string");
+
+        let value = item
+            .get(1)
+            .as_string()
+            .expect_throw("header value is a string");
+
         resp = resp.header(&name, &value);
     }
 
-    resp.body(js_resp).map(|resp| Response::new(resp, url, abort)).map_err(crate::error::request)
+    resp.body(js_resp)
+        .map(|resp| Response::new(resp, url, abort))
+        .map_err(crate::error::request)
 }
 
 // ===== impl ClientBuilder =====
 
 impl ClientBuilder {
-    /// dox
+    /// Constructs a new `ClientBuilder`.
+    ///
+    /// This is the same as `Client::builder()`.
     pub fn new() -> Self {
-        ClientBuilder { config: Config::default() }
+        ClientBuilder {
+            config: Config::default(),
+        }
     }
 
     /// Returns a 'Client' that uses this ClientBuilder configuration
@@ -283,7 +303,9 @@ impl ClientBuilder {
         }
 
         let config = std::mem::take(&mut self.config);
-        Ok(Client { config: Arc::new(config) })
+        Ok(Client {
+            config: Arc::new(config),
+        })
     }
 
     /// Sets the `User-Agent` header to be used by this client.
@@ -326,7 +348,10 @@ struct Config {
 
 impl Default for Config {
     fn default() -> Config {
-        Config { headers: HeaderMap::new(), error: None }
+        Config {
+            headers: HeaderMap::new(),
+            error: None,
+        }
     }
 }
 
@@ -344,13 +369,19 @@ mod tests {
 
     #[wasm_bindgen_test]
     async fn default_headers() {
-        use crate::header::{CONTENT_TYPE, HeaderMap, HeaderValue};
+        use crate::header::{HeaderMap, HeaderValue, CONTENT_TYPE};
 
         let mut headers = HeaderMap::new();
         headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
         headers.insert("x-custom", HeaderValue::from_static("flibbertigibbet"));
-        let client = crate::Client::builder().default_headers(headers).build().expect("client");
-        let mut req = client.get("https://www.example.com").build().expect("request");
+        let client = crate::Client::builder()
+            .default_headers(headers)
+            .build()
+            .expect("client");
+        let mut req = client
+            .get("https://www.example.com")
+            .build()
+            .expect("request");
         // merge headers as if client were about to issue fetch
         client.merge_headers(&mut req);
 
@@ -362,12 +393,15 @@ mod tests {
 
     #[wasm_bindgen_test]
     async fn default_headers_clone() {
-        use crate::header::{CONTENT_TYPE, HeaderMap, HeaderValue};
+        use crate::header::{HeaderMap, HeaderValue, CONTENT_TYPE};
 
         let mut headers = HeaderMap::new();
         headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
         headers.insert("x-custom", HeaderValue::from_static("flibbertigibbet"));
-        let client = crate::Client::builder().default_headers(headers).build().expect("client");
+        let client = crate::Client::builder()
+            .default_headers(headers)
+            .build()
+            .expect("client");
 
         let mut req = client
             .get("https://www.example.com")
@@ -385,7 +419,10 @@ mod tests {
         );
 
         // confirm that request headers don't change client defaults
-        let mut req2 = client.get("https://www.example.com/x").build().expect("req 2");
+        let mut req2 = client
+            .get("https://www.example.com/x")
+            .build()
+            .expect("req 2");
         client.merge_headers(&mut req2);
         let headers2 = req2.headers();
         assert_eq!(
@@ -399,9 +436,15 @@ mod tests {
     fn user_agent_header() {
         use crate::header::USER_AGENT;
 
-        let client = crate::Client::builder().user_agent("FooBar/1.2.3").build().expect("client");
+        let client = crate::Client::builder()
+            .user_agent("FooBar/1.2.3")
+            .build()
+            .expect("client");
 
-        let mut req = client.get("https://www.example.com").build().expect("request");
+        let mut req = client
+            .get("https://www.example.com")
+            .build()
+            .expect("request");
 
         // Merge the client headers with the request's one.
         client.merge_headers(&mut req);

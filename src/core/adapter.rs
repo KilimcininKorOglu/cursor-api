@@ -2,11 +2,14 @@ use super::aiserver::v1::{
     ComposerExternalLink, ConversationMessage, ConversationMessageHeader, WebReference,
     image_proto::Dimension,
 };
+use crate::app::model::proxy_pool::get_fetch_image_client;
 
 pub mod anthropic;
 pub mod openai;
 
 mod error;
+mod traits;
+mod utils;
 pub use error::Error as AdapterError;
 
 crate::define_typed_constants! {
@@ -84,8 +87,7 @@ fn parse_web_references(text: &str) -> Vec<WebReference> {
 
 // 解析消息中的外部链接
 #[inline]
-fn extract_external_links(text: &str, base_uuid: &mut BaseUuid) -> Vec<ComposerExternalLink> {
-    let mut external_links = Vec::new();
+fn extract_external_links(text: &str, external_links: &mut Vec<ComposerExternalLink>, base_uuid: &mut BaseUuid) {
     let mut chars = text.chars().peekable();
 
     while let Some(c) = chars.next() {
@@ -105,13 +107,14 @@ fn extract_external_links(text: &str, base_uuid: &mut BaseUuid) -> Vec<ComposerE
                     scheme == b"http" || scheme == b"https"
                 }
             {
-                external_links
-                    .push(ComposerExternalLink { url, uuid: base_uuid.add_and_to_string() });
+                external_links.push(ComposerExternalLink {
+                    url,
+                    uuid: base_uuid.add_and_to_string(),
+                    ..Default::default()
+                });
             }
         }
     }
-
-    external_links
 }
 
 // 检测并分离 WebReferences
@@ -151,37 +154,28 @@ impl BaseUuid {
     }
 }
 
-trait ToOpt: Copy {
-    fn to_opt(self) -> Option<Self>;
-}
+// #[inline]
+// fn sanitize_tool_name(input: &str) -> String {
+//     let mut result = String::with_capacity(input.len());
 
-impl ToOpt for bool {
-    #[inline(always)]
-    fn to_opt(self) -> Option<Self> { if self { Some(true) } else { None } }
-}
+//     for c in input.chars() {
+//         match c {
+//             '.' => result.push('_'),
+//             c if c.is_whitespace() => result.push('_'),
+//             c if c.is_ascii_alphanumeric() || c == '_' || c == '-' => result.push(c),
+//             _ => {} // 忽略其他字符
+//         }
+//     }
 
-#[inline]
-fn sanitize_tool_name(input: &str) -> String {
-    let mut result = String::with_capacity(input.len());
-
-    for c in input.chars() {
-        match c {
-            '.' => result.push('_'),
-            c if c.is_whitespace() => result.push('_'),
-            c if c.is_ascii_alphanumeric() || c == '_' || c == '-' => result.push(c),
-            _ => {} // 忽略其他字符
-        }
-    }
-
-    result
-}
+//     result
+// }
 
 // 处理 HTTP 图片 URL
 async fn process_http_image(
-    url: &str,
-    client: reqwest::Client,
+    url: url::Url,
 ) -> Result<(bytes::Bytes, Option<Dimension>), AdapterError> {
-    let response = client.get(url).send().await.map_err(|_| AdapterError::RequestFailed)?;
+    let response =
+        get_fetch_image_client().get(url).send().await.map_err(|_| AdapterError::RequestFailed)?;
     let image_data = response.bytes().await.map_err(|_| AdapterError::ResponseReadFailed)?;
 
     // 检查图片格式
@@ -191,17 +185,13 @@ async fn process_http_image(
             // 这些格式都支持
         }
         Ok(image::ImageFormat::Gif) => {
-            let mut options = gif::DecodeOptions::new();
-            options.skip_frame_decoding(true);
-            if let Ok(frames) = options.read_info(std::io::Cursor::new(image_data.as_ref()))
-                && frames.into_iter().nth(1).is_some()
-            {
+            if is_animated_gif(&image_data) {
                 return Err(AdapterError::UnsupportedAnimatedGif);
             }
         }
         _ => return Err(AdapterError::UnsupportedImageFormat),
     }
-    let format = __unwrap!(format);
+    let format = unsafe { format.unwrap_unchecked() };
 
     // 获取图片尺寸
     let dimensions = image::load_from_memory_with_format(&image_data, format)
@@ -209,6 +199,52 @@ async fn process_http_image(
         .and_then(|img| img.try_into().ok());
 
     Ok((image_data, dimensions))
+}
+
+fn is_animated_gif(data: &[u8]) -> bool {
+    let mut options = gif::DecodeOptions::new();
+    options.skip_frame_decoding(true);
+    if let Ok(frames) = options.read_info(std::io::Cursor::new(data))
+        && frames.into_iter().nth(1).is_some()
+    {
+        true
+    } else {
+        false
+    }
+}
+
+async fn process_http_to_base64_image(
+    url: url::Url,
+) -> Result<(String, &'static str), AdapterError> {
+    let response =
+        get_fetch_image_client().get(url).send().await.map_err(|_| AdapterError::RequestFailed)?;
+    let image_data = response.bytes().await.map_err(|_| AdapterError::ResponseReadFailed)?;
+
+    // 检查图片格式
+    let format = image::guess_format(&image_data);
+    match format {
+        Ok(image::ImageFormat::Png | image::ImageFormat::Jpeg | image::ImageFormat::WebP) => {
+            // 这些格式都支持
+        }
+        Ok(image::ImageFormat::Gif) => {
+            if is_animated_gif(&image_data) {
+                return Err(AdapterError::UnsupportedAnimatedGif);
+            }
+        }
+        _ => return Err(AdapterError::UnsupportedImageFormat),
+    }
+    let format = unsafe { format.unwrap_unchecked() };
+
+    Ok((
+        base64_simd::STANDARD.encode_to_string(&image_data[..]),
+        match format {
+            image::ImageFormat::Png => "image/png",
+            image::ImageFormat::Jpeg => "image/jpeg",
+            image::ImageFormat::Gif => "image/gif",
+            image::ImageFormat::WebP => "image/webp",
+            _ => __unreachable!(),
+        },
+    ))
 }
 
 struct Messages {
@@ -236,8 +272,6 @@ impl Messages {
         v.push(message);
         v
     }
-    #[inline]
-    fn last(&self) -> Option<&ConversationMessage> { self.inner.last() }
     #[inline]
     fn last_mut(&mut self) -> Option<&mut ConversationMessage> { self.inner.last_mut() }
 }

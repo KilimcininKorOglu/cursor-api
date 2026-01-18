@@ -1,6 +1,4 @@
-use alloc::format;
-
-use crate::DecodeError;
+use crate::{error::DecodeErrorKind, DecodeError};
 
 /// Represent the wire type for protobuf encoding.
 ///
@@ -35,24 +33,7 @@ impl WireType {
         let value = (tag & super::WireTypeMask) as u8;
         match Self::try_from(value) {
             Some(wire_type) => Ok((wire_type, tag >> super::WireTypeBits)),
-            None => Err(DecodeError::new(format!("invalid wire type value: {value}"))),
-        }
-    }
-}
-
-impl TryFrom<u32> for WireType {
-    type Error = DecodeError;
-
-    #[inline]
-    fn try_from(value: u32) -> Result<Self, Self::Error> {
-        match value {
-            0 => Ok(WireType::Varint),
-            1 => Ok(WireType::SixtyFourBit),
-            2 => Ok(WireType::LengthDelimited),
-            3 => Ok(WireType::StartGroup),
-            4 => Ok(WireType::EndGroup),
-            5 => Ok(WireType::ThirtyTwoBit),
-            _ => Err(DecodeError::new(format!("invalid wire type value: {value}"))),
+            None => Err(DecodeErrorKind::InvalidWireType { value: tag }.into()),
         }
     }
 }
@@ -62,9 +43,7 @@ impl TryFrom<u32> for WireType {
 #[inline]
 pub fn check_wire_type(expected: WireType, actual: WireType) -> Result<(), DecodeError> {
     if expected != actual {
-        return Err(DecodeError::new(format!(
-            "invalid wire type: {actual:?} (expected {expected:?})",
-        )));
+        return Err(DecodeErrorKind::UnexpectedWireType { actual, expected }.into());
     }
     Ok(())
 }

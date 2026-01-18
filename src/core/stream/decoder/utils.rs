@@ -3,7 +3,7 @@ use alloc::borrow::Cow;
 #[allow(private_bounds)]
 #[inline]
 pub fn string_from_utf8<V: StringFrom>(v: V) -> Option<String> {
-    if ::prost::encoding::is_vaild_utf8(v.as_bytes()) {
+    if byte_str::is_valid_utf8(v.as_bytes()) {
         Some(unsafe { String::from_utf8_unchecked(v.into_vec()) })
     } else {
         None

@@ -15,8 +15,9 @@ use crate::{
     },
 };
 use alloc::{borrow::Cow, sync::Arc};
-use axum::{Json, extract::State, http::StatusCode};
+use axum::{Json, extract::State};
 use core::str::FromStr as _;
+use http::StatusCode;
 use interned::ArcStr;
 
 type HashSet<K> = hashbrown::HashSet<K, ahash::RandomState>;
@@ -46,7 +47,7 @@ crate::define_typed_constants! {
 }
 
 pub async fn handle_get_tokens(State(state): State<Arc<AppState>>) -> Json<TokensGetResponse> {
-    let tokens: Vec<_> = state.token_manager_read().await.list();
+    let tokens = state.token_manager_read().await.list();
 
     Json(TokensGetResponse { tokens })
 }
@@ -235,8 +236,8 @@ pub async fn handle_update_tokens_profile(
     let mut token_manager = state.token_manager_write().await;
 
     // 批量设置tokens的profile
-    let mut updated_count: u32 = 0;
-    let mut failed_count: u32 = 0;
+    let mut updated_count = 0u32;
+    let mut failed_count = 0u32;
 
     let mut alias_updaters: Vec<(usize, String)> = Vec::with_capacity(aliases.len());
 
@@ -336,9 +337,9 @@ pub async fn handle_update_tokens_config_version(
 
     let mut token_manager = state.token_manager_write().await;
 
-    let mut updated_count: u32 = 0;
-    let mut failed_count: u32 = 0;
-    let mut short_token_count: u32 = 0;
+    let mut updated_count = 0u32;
+    let mut failed_count = 0u32;
+    let mut short_token_count = 0u32;
 
     for alias in aliases {
         if let Some(info) = token_manager
@@ -421,8 +422,8 @@ pub async fn handle_refresh_tokens(
 
     let mut token_manager = state.token_manager_write().await;
 
-    let mut updated_count: u32 = 0;
-    let mut failed_count: u32 = 0;
+    let mut updated_count = 0u32;
+    let mut failed_count = 0u32;
 
     for alias in aliases {
         if let Some(writer) = token_manager
@@ -486,8 +487,8 @@ pub async fn handle_set_tokens_status(
     let mut token_manager = state.token_manager_write().await;
 
     // 批量设置tokens的profile
-    let mut updated_count: u32 = 0;
-    let mut failed_count: u32 = 0;
+    let mut updated_count = 0u32;
+    let mut failed_count = 0u32;
 
     for alias in request.aliases {
         // 验证token是否在token_manager中存在
@@ -497,7 +498,7 @@ pub async fn handle_set_tokens_status(
             .copied()
             .map(|id| unsafe { token_manager.tokens_mut().get_unchecked_mut(id) })
         {
-            info.status = request.status;
+            info.status.enabled = request.enabled;
             updated_count += 1;
         } else {
             failed_count += 1;
@@ -549,8 +550,8 @@ pub async fn handle_set_tokens_alias(
     }
 
     let mut token_manager = state.token_manager_write().await;
-    let mut updated_count: u32 = 0;
-    let mut failed_count: u32 = 0;
+    let mut updated_count = 0u32;
+    let mut failed_count = 0u32;
 
     for (old_alias, new_alias) in request {
         // 通过旧别名查找token ID
@@ -626,8 +627,8 @@ pub async fn handle_set_tokens_proxy(
     let mut token_manager = state.token_manager_write().await;
 
     // 批量设置tokens的proxy
-    let mut updated_count: u32 = 0;
-    let mut failed_count: u32 = 0;
+    let mut updated_count = 0u32;
+    let mut failed_count = 0u32;
 
     for alias in request.aliases {
         // 验证token是否在token_manager中存在
@@ -692,8 +693,8 @@ pub async fn handle_set_tokens_timezone(
     let mut token_manager = state.token_manager_write().await;
 
     // 批量设置tokens的timezone
-    let mut updated_count: u32 = 0;
-    let mut failed_count: u32 = 0;
+    let mut updated_count = 0u32;
+    let mut failed_count = 0u32;
 
     for alias in request.aliases {
         // 验证token是否在token_manager中存在
@@ -758,8 +759,8 @@ pub async fn handle_merge_tokens(
     let mut token_manager = state.token_manager_write().await;
 
     // 应用merge
-    let mut updated_count: u32 = 0;
-    let mut failed_count: u32 = 0;
+    let mut updated_count = 0u32;
+    let mut failed_count = 0u32;
 
     for (alias, token_info) in request {
         // 验证token是否在token_manager中存在

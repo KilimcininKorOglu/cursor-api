@@ -2,10 +2,10 @@ use crate::app::{
     constant::{
         CURSOR_API2_HOST, CURSOR_HOST,
         header::{
-            AMZN_TRACE_ID, CLIENT_KEY, CONNECT_ACCEPT_ENCODING, CONNECT_CONTENT_ENCODING,
+            AMZN_TRACE_ID, CLIENT_KEY, CLOSE, CONNECT_ACCEPT_ENCODING, CONNECT_CONTENT_ENCODING,
             CONNECT_ES, CONNECT_PROTO, CONNECT_PROTOCOL_VERSION, CORS, CURSOR_CHECKSUM,
             CURSOR_CLIENT_VERSION, CURSOR_CONFIG_VERSION, CURSOR_ORIGIN, CURSOR_REFERER_URL,
-            CURSOR_STREAMING, CURSOR_TIMEZONE, EMPTY, ENCODING, ENCODINGS, FALSE, FS_CLIENT_KEY,
+            CURSOR_STREAMING, CURSOR_TIMEZONE, EMPTY, ENCODING, ENCODINGS, FS_CLIENT_KEY,
             GHOST_MODE, HEADER_VALUE_ACCEPT, JSON, KEEP_ALIVE, LANGUAGE, NEW_ONBOARDING_COMPLETED,
             NO_CACHE, NONE, ONE, PRIORITY, PROTO, PROXY_HOST, REQUEST_ID, SAME_ORIGIN,
             SEC_FETCH_DEST, SEC_FETCH_MODE, SEC_FETCH_SITE, SEC_GPC, SESSION_ID, TRAILERS, TRUE,
@@ -14,8 +14,8 @@ use crate::app::{
     },
     lazy::{
         PRI_REVERSE_PROXY_HOST, PUB_REVERSE_PROXY_HOST, USE_PRI_REVERSE_PROXY,
-        USE_PUB_REVERSE_PROXY, sessions_url, stripe_url, token_poll_url, token_refresh_url,
-        token_upgrade_url, usage_api_url,
+        USE_PUB_REVERSE_PROXY, sessions_url, stripe_url, token_refresh_url, token_upgrade_url,
+        usage_api_url,
     },
     model::ExtToken,
 };
@@ -28,6 +28,7 @@ use http::{
     method::Method,
 };
 use reqwest::{Client, RequestBuilder};
+use url::Url;
 
 trait RequestBuilderExt: Sized {
     fn opt_header<K, V>(self, key: K, value: Option<V>) -> Self
@@ -109,44 +110,45 @@ impl RequestBuilderExt for RequestBuilder {
 fn get_client_and_host<'a>(
     client: &Client,
     method: Method,
-    url: &'a str,
+    url: Url,
     use_pri: bool,
     real_host: &'a str,
-) -> (RequestBuilder, &'a str) {
-    if use_pri && *USE_PRI_REVERSE_PROXY {
-        (client.request(method, url).header(PROXY_HOST, real_host), &PRI_REVERSE_PROXY_HOST)
-    } else if !use_pri && *USE_PUB_REVERSE_PROXY {
-        (client.request(method, url).header(PROXY_HOST, real_host), &PUB_REVERSE_PROXY_HOST)
+) -> RequestBuilder {
+    if use_pri && unsafe { USE_PRI_REVERSE_PROXY } {
+        client.request(method, url).header(PROXY_HOST, real_host)
+    } else if !use_pri && unsafe { USE_PUB_REVERSE_PROXY } {
+        client.request(method, url).header(PROXY_HOST, real_host)
     } else {
-        (client.request(method, url), real_host)
+        client.request(method, url)
     }
 }
 
 pub(crate) struct AiServiceRequest<'a> {
-    pub(crate) ext_token: &'a ExtToken,
-    pub(crate) fs_client_key: Option<http::HeaderValue>,
-    pub(crate) url: &'static str,
-    pub(crate) stream: bool,
-    pub(crate) compressed: bool,
-    pub(crate) trace_id: [u8; 36],
-    pub(crate) use_pri: bool,
-    pub(crate) cookie: Option<http::HeaderValue>,
+    pub ext_token: &'a ExtToken,
+    pub fs_client_key: Option<http::HeaderValue>,
+    pub url: &'static Url,
+    pub stream: bool,
+    pub compressed: bool,
+    pub trace_id: [u8; 36],
+    pub use_pri: bool,
+    pub cookie: Option<http::HeaderValue>,
 }
 
 pub fn build_client_request(req: AiServiceRequest) -> RequestBuilder {
-    let (builder, host) = get_client_and_host(
+    let builder = get_client_and_host(
         &req.ext_token.get_client(),
         Method::POST,
-        req.url,
+        req.url.clone(),
         req.use_pri,
         CURSOR_API2_HOST,
     );
 
+    use super::model::HeaderValue;
     let mut buf = [0u8; 137];
 
     builder
-        .version(http::Version::HTTP_2)
-        .header(HOST, host)
+        // .version(http::Version::HTTP_2)
+        // .header(HOST, host)
         .header_if(ACCEPT_ENCODING, ENCODING, !req.stream)
         .header_if(CONTENT_ENCODING, ENCODING, !req.stream && req.compressed)
         .header(AUTHORIZATION, req.ext_token.as_unext().format_bearer_token())
@@ -161,40 +163,34 @@ pub fn build_client_request(req: AiServiceRequest) -> RequestBuilder {
             unsafe {
                 core::ptr::copy_nonoverlapping(PREFIX.as_ptr(), buf.as_mut_ptr(), 5);
                 core::ptr::copy_nonoverlapping(v.as_ptr(), buf.as_mut_ptr().add(5), 36);
-                http::HeaderValue::from_bytes(buf.get_unchecked(..41)).unwrap_unchecked()
+                HeaderValue::from_bytes(buf.get_unchecked(..41)).into()
             }
         })
         .header(CLIENT_KEY, unsafe {
-            http::HeaderValue::from_bytes({
-                req.ext_token.client_key.to_str(&mut *(buf.as_mut_ptr() as *mut [u8; 64]));
-                buf.get_unchecked(..64)
-            })
-            .unwrap_unchecked()
+            req.ext_token.client_key.to_str(&mut *(buf.as_mut_ptr() as *mut [u8; 64]));
+            HeaderValue::from_bytes(buf.get_unchecked(..64)).into()
         })
-        .header(
-            CURSOR_CHECKSUM,
-            __unwrap!(http::HeaderValue::from_bytes({
-                req.ext_token.checksum.to_str(&mut buf);
-                &buf
-            })),
-        )
+        .header(CURSOR_CHECKSUM, unsafe {
+            req.ext_token.checksum.to_str(&mut buf);
+            HeaderValue::from_bytes(&buf).into()
+        })
         .header(CURSOR_CLIENT_VERSION, cursor_client_version())
         .opt_header_map(CURSOR_CONFIG_VERSION, req.ext_token.config_version, |v| {
             v.hyphenated().encode_lower(unsafe { &mut *(buf.as_mut_ptr() as *mut [u8; 36]) });
-            unsafe { http::HeaderValue::from_bytes(buf.get_unchecked(..36)).unwrap_unchecked() }
+            unsafe { HeaderValue::from_bytes(buf.get_unchecked(..36)).into() }
         })
         .header(CURSOR_STREAMING, TRUE)
         .header(CURSOR_TIMEZONE, req.ext_token.timezone_name())
         .opt_header(FS_CLIENT_KEY, req.fs_client_key)
         .header(GHOST_MODE, TRUE)
-        .header(NEW_ONBOARDING_COMPLETED, FALSE)
-        .header_map(REQUEST_ID, req.trace_id, |v| __unwrap!(http::HeaderValue::from_bytes(&v)))
+        .header(NEW_ONBOARDING_COMPLETED, TRUE)
+        .header_map(REQUEST_ID, req.trace_id, |v| unsafe { HeaderValue::from_bytes(&v).into() })
         .header(SESSION_ID, {
             req.ext_token
                 .session_id
                 .hyphenated()
                 .encode_lower(unsafe { &mut *(buf.as_mut_ptr() as *mut [u8; 36]) });
-            unsafe { http::HeaderValue::from_bytes(buf.get_unchecked(..36)).unwrap_unchecked() }
+            unsafe { HeaderValue::from_bytes(buf.get_unchecked(..36)).into() }
         })
 }
 
@@ -203,17 +199,22 @@ pub fn build_stripe_request(
     bearer_token: http::HeaderValue,
     use_pri: bool,
 ) -> RequestBuilder {
-    let (builder, host) =
-        get_client_and_host(client, Method::GET, stripe_url(use_pri), use_pri, CURSOR_API2_HOST);
+    let builder = get_client_and_host(
+        client,
+        Method::GET,
+        stripe_url(use_pri).clone(),
+        use_pri,
+        CURSOR_API2_HOST,
+    );
 
     builder
-        .version(http::Version::HTTP_2)
-        .header(HOST, host)
+        // .version(http::Version::HTTP_2)
+        // .header(HOST, host)
         .header(ACCEPT_LANGUAGE, LANGUAGE)
         .header(ACCEPT_ENCODING, ENCODINGS)
         .header(AUTHORIZATION, bearer_token)
         .header(GHOST_MODE, TRUE)
-        .header(NEW_ONBOARDING_COMPLETED, FALSE)
+        .header(NEW_ONBOARDING_COMPLETED, TRUE)
         .header(USER_AGENT, header_value_ua_cursor_latest())
         .header(ACCEPT, HEADER_VALUE_ACCEPT)
         .header(ORIGIN, VSCODE_ORIGIN)
@@ -236,11 +237,17 @@ pub fn build_usage_request(
     cookie: http::HeaderValue,
     use_pri: bool,
 ) -> RequestBuilder {
-    let (builder, host) =
-        get_client_and_host(client, Method::GET, usage_api_url(use_pri), use_pri, CURSOR_HOST);
+    let builder = get_client_and_host(
+        client,
+        Method::GET,
+        usage_api_url(use_pri).clone(),
+        use_pri,
+        CURSOR_HOST,
+    );
 
     builder
-        .header(HOST, host)
+        // .version(http::Version::HTTP_2)
+        // .header(HOST, host)
         .header(USER_AGENT, UA)
         .header(ACCEPT, HEADER_VALUE_ACCEPT)
         .header(ACCEPT_LANGUAGE, LANGUAGE)
@@ -298,8 +305,13 @@ pub fn build_token_upgrade_request(
     cookie: http::HeaderValue,
     use_pri: bool,
 ) -> RequestBuilder {
-    let (builder, host) =
-        get_client_and_host(client, Method::POST, token_upgrade_url(use_pri), use_pri, CURSOR_HOST);
+    let builder = get_client_and_host(
+        client,
+        Method::POST,
+        token_upgrade_url(use_pri).clone(),
+        use_pri,
+        CURSOR_HOST,
+    );
 
     crate::define_typed_constants! {
         &'static str => {
@@ -337,7 +349,8 @@ pub fn build_token_upgrade_request(
     referer.push_str(REFERER_SUFFIX);
 
     builder
-        .header(HOST, host)
+        // .version(http::Version::HTTP_2)
+        // .header(HOST, host)
         .header(USER_AGENT, UA)
         .header(ACCEPT, HEADER_VALUE_ACCEPT)
         .header(ACCEPT_LANGUAGE, LANGUAGE)
@@ -359,30 +372,19 @@ pub fn build_token_upgrade_request(
         .body(body)
 }
 
-pub fn build_token_poll_request(
-    client: &Client,
-    uuid: &str,
-    verifier: &str,
-    use_pri: bool,
-) -> RequestBuilder {
-    let (builder, host) = get_client_and_host(
-        client,
-        Method::GET,
-        token_poll_url(use_pri),
-        use_pri,
-        CURSOR_API2_HOST,
-    );
+pub fn build_token_poll_request(client: &Client, url: Url, use_pri: bool) -> RequestBuilder {
+    let builder = get_client_and_host(client, Method::GET, url, use_pri, CURSOR_API2_HOST);
 
     builder
-        .version(http::Version::HTTP_11)
-        .header(HOST, host)
+        // .version(http::Version::HTTP_11)
+        // .header(HOST, host)
         .header(ACCEPT_ENCODING, ENCODINGS)
         .header(ACCEPT_LANGUAGE, LANGUAGE)
         .header(USER_AGENT, header_value_ua_cursor_latest())
         .header(ORIGIN, VSCODE_ORIGIN)
         .header(GHOST_MODE, TRUE)
         .header(ACCEPT, HEADER_VALUE_ACCEPT)
-        .query(&[("uuid", uuid), ("verifier", verifier)])
+        .header(CONNECTION, CLOSE)
 }
 
 pub fn build_token_refresh_request(
@@ -390,16 +392,17 @@ pub fn build_token_refresh_request(
     use_pri: bool,
     body: Vec<u8>,
 ) -> RequestBuilder {
-    let (builder, host) = get_client_and_host(
+    let builder = get_client_and_host(
         client,
         Method::POST,
-        token_refresh_url(use_pri),
+        token_refresh_url(use_pri).clone(),
         use_pri,
         CURSOR_API2_HOST,
     );
 
     builder
-        .header(HOST, host)
+        // .version(http::Version::HTTP_2)
+        // .header(HOST, host)
         .header(ACCEPT_ENCODING, ENCODINGS)
         .header(ACCEPT_LANGUAGE, LANGUAGE)
         .header(CONTENT_TYPE, JSON)
@@ -414,14 +417,15 @@ pub fn build_token_refresh_request(
 pub fn build_proto_web_request(
     client: &Client,
     cookie: http::HeaderValue,
-    url: &'static str,
+    url: &'static Url,
     use_pri: bool,
     body: bytes::Bytes,
 ) -> RequestBuilder {
-    let (builder, host) = get_client_and_host(client, Method::POST, url, use_pri, CURSOR_HOST);
+    let builder = get_client_and_host(client, Method::POST, url.clone(), use_pri, CURSOR_HOST);
 
     builder
-        .header(HOST, host)
+        // .version(http::Version::HTTP_2)
+        // .header(HOST, host)
         .header(USER_AGENT, UA)
         .header(ACCEPT, HEADER_VALUE_ACCEPT)
         .header(ACCEPT_LANGUAGE, LANGUAGE)
@@ -449,11 +453,17 @@ pub fn build_sessions_request(
     cookie: http::HeaderValue,
     use_pri: bool,
 ) -> RequestBuilder {
-    let (builder, host) =
-        get_client_and_host(client, Method::GET, sessions_url(use_pri), use_pri, CURSOR_HOST);
+    let builder = get_client_and_host(
+        client,
+        Method::GET,
+        sessions_url(use_pri).clone(),
+        use_pri,
+        CURSOR_HOST,
+    );
 
     builder
-        .header(HOST, host)
+        // .version(http::Version::HTTP_2)
+        // .header(HOST, host)
         .header(USER_AGENT, UA)
         .header(ACCEPT, HEADER_VALUE_ACCEPT)
         .header(ACCEPT_LANGUAGE, LANGUAGE)

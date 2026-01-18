@@ -77,7 +77,7 @@ impl Servers {
     pub fn init() {
         let env = crate::common::utils::parse_from_env("NTP_SERVERS", EMPTY_STRING);
         let servers: Vec<String> =
-            env.split(',').map(|s| s.trim()).filter(|s| !s.is_empty()).map(String::from).collect();
+            env.split(',').map(str::trim).filter(|s| !s.is_empty()).map(String::from).collect();
 
         SERVERS.init(Self { inner: servers.into_boxed_slice() });
     }
@@ -265,7 +265,8 @@ async fn measure_once() -> Result<(i64, i64), NtpError> {
 /// 1. 根据配置多次调用 `measure_once()`（默认 8 次，间隔 50ms）
 /// 2. 收集成功的样本
 /// 3. 按 RTT 排序，过滤掉最大的几个
-/// 4. 对剩余样本按 1/RTT 加权平均
+/// 4. 清洗数据：跳过 RTT <= 0 的异常样本
+/// 5. 对剩余样本按 1/RTT 加权平均
 ///
 /// 返回：加权平均后的时钟偏移量（纳秒）
 pub async fn sync_once() -> Result<i64, NtpError> {
@@ -300,27 +301,43 @@ pub async fn sync_once() -> Result<i64, NtpError> {
     // 3. 按 RTT 排序（从小到大）
     samples.sort_by_key(|(_, rtt)| *rtt);
 
-    // 4. 动态过滤：根据样本数决定过滤多少个 RTT 最大的样本
-    let filter_count = match success_count {
-        8.. => 3,            // ≥8 个：过滤 3 个
-        5..=7 => 2,          // 5-7 个：过滤 2 个
-        3..=4 => 0,          // 3-4 个：不过滤
-        _ => unreachable!(), // 已在上面检查
-    };
+    // 4. 动态过滤：基于比例策略
+    // 保留 RTT 最小的 70% 样本，去除长尾噪声（网络延迟服从长尾分布）
+    // 至少保留 4 个样本以保证统计可靠性，但不超过实际样本数
+    const KEEP_RATIO: f64 = 0.70;
+    const MIN_KEEP: usize = 4;
 
-    let valid_samples = &samples[..success_count - filter_count];
+    let keep_count =
+        ((success_count as f64 * KEEP_RATIO).ceil() as usize).max(MIN_KEEP).min(success_count);
+
+    let valid_samples = &samples[..keep_count];
+    let filter_count = success_count - keep_count;
 
     crate::debug!(
-        "NTP过滤: 保留 {} 个样本，过滤 {} 个高RTT样本",
-        valid_samples.len(),
+        "NTP过滤: 采样={}, 保留={}({:.0}%), 过滤={}",
+        success_count,
+        keep_count,
+        (keep_count as f64 / success_count as f64) * 100.0,
         filter_count
     );
 
-    // 5. 加权平均：权重 = 1 / RTT
+    // 5. 数据清洗：跳过 RTT <= 0 的异常样本（已排序，连续在前）
+    let first_valid_idx = valid_samples
+        .iter()
+        .position(|(_, rtt)| *rtt > 0)
+        .ok_or(NtpError::Protocol("所有样本的 RTT 异常(<=0)"))?;
+
+    if first_valid_idx > 0 {
+        crate::debug!("跳过 {} 个 RTT<=0 的异常样本", first_valid_idx);
+    }
+
+    let clean_samples = &valid_samples[first_valid_idx..];
+
+    // 6. 加权平均：权重 = 1 / RTT
     let mut weighted_sum = 0.0f64;
     let mut weight_sum = 0.0f64;
 
-    for (delta, rtt) in valid_samples {
+    for (delta, rtt) in clean_samples {
         let weight = 1.0 / (*rtt as f64);
         weighted_sum += *delta as f64 * weight;
         weight_sum += weight;
@@ -328,9 +345,17 @@ pub async fn sync_once() -> Result<i64, NtpError> {
 
     let final_delta = (weighted_sum / weight_sum) as i64;
 
-    // 6. 统计信息
-    let min_rtt = valid_samples.first().map(|(_, rtt)| rtt / 1_000_000).unwrap_or(0);
-    let max_rtt = valid_samples.last().map(|(_, rtt)| rtt / 1_000_000).unwrap_or(0);
+    // 7. 业务合理性检查：拒绝超过 ±1 天的偏移
+    const MAX_REASONABLE_DELTA: i64 = 86400 * 1_000_000_000;
+
+    if final_delta.abs() > MAX_REASONABLE_DELTA {
+        crate::debug!("NTP偏移超出合理范围: δ={}s", final_delta / 1_000_000_000);
+        return Err(NtpError::Protocol("时间偏移超出合理范围(±1天)"));
+    }
+
+    // 8. 统计信息
+    let min_rtt = clean_samples.first().map(|(_, rtt)| rtt / 1_000_000).unwrap_or(0);
+    let max_rtt = clean_samples.last().map(|(_, rtt)| rtt / 1_000_000).unwrap_or(0);
 
     crate::debug!(
         "NTP同步完成: δ = {}ms, RTT范围 = [{}, {}]ms",
@@ -366,11 +391,11 @@ fn parse_sample_config() -> (usize, u64) {
 /// - 无服务器配置：静默返回，DELTA 保持为 0
 /// - 同步失败：打印错误到标准输出，DELTA 保持为 0
 /// - 同步成功：更新 DELTA，记录日志，**自动启动周期性同步任务**
-pub async fn init_sync() {
+pub async fn init_sync(stdout_ready: alloc::sync::Arc<tokio::sync::Notify>) {
     let servers = SERVERS.get();
 
     if servers.inner.is_empty() {
-        tokio::time::sleep(Duration::from_millis(100)).await;
+        stdout_ready.notified().await;
         __println!("\r\x1B[2K无NTP服务器配置, 若系统时间不准确可能导致UB");
         return;
     }
@@ -381,12 +406,14 @@ pub async fn init_sync() {
         Ok(delta_nanos) => {
             DELTA.store(delta_nanos, Ordering::Relaxed);
             let d = crate::common::utils::format_time_ms(instant.elapsed().as_secs_f64());
+            stdout_ready.notified().await;
             println!("\r\x1B[2KNTP初始化完成: δ = {}ms, 耗时: {}s", delta_nanos / 1_000_000, d);
 
             // 初始化成功后自动启动周期性同步任务
             spawn_periodic_sync();
         }
         Err(e) => {
+            stdout_ready.notified().await;
             println!("\r\x1B[2KNTP同步失败: {e}");
         }
     }

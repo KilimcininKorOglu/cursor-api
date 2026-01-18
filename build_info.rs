@@ -184,8 +184,9 @@ fn generate_build_info() -> Result<()> {
     //     return Ok(());
     // }
 
-    let build_timestamp =
-        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
+    // let build_timestamp =
+    //     std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
+    let build_timestamp = 1768665600i64;
 
     let build_timestamp_str = chrono::DateTime::from_timestamp(build_timestamp as i64, 0)
         .unwrap()

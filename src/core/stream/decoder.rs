@@ -10,6 +10,7 @@ use crate::core::{
     model::ToolId,
 };
 use alloc::borrow::Cow;
+use byte_str::ByteStr;
 use grpc_stream::{Buffer, RawMessage, decompress_gzip};
 use prost::Message as _;
 use std::time::Instant;
@@ -39,9 +40,10 @@ pub enum Thinking {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct ToolCall {
-    pub id: ::prost::ByteStr,
-    pub name: ::prost::ByteStr,
+    pub id: ByteStr,
+    pub name: ByteStr,
     pub input: String,
+    pub is_last: bool,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -102,12 +104,23 @@ impl StreamMessage {
             other => other,
         }
     }
+    #[inline]
+    fn any_content(&self) -> bool {
+        if let StreamMessage::Content(s)
+        | StreamMessage::Thinking(Thinking::Text(s) | Thinking::Signature(s))
+        | StreamMessage::ToolCall(ToolCall { input: s, .. }) = self
+        {
+            !s.is_empty()
+        } else {
+            false
+        }
+    }
 }
 
 #[derive(Default)]
 struct Context {
     raw_args_len: usize,
-    processed: bool,
+    processed: u32,
     // 调试使用
     // counter: u32,
 }
@@ -139,7 +152,7 @@ impl StreamDecoder {
             thinking_content: None,
             context: Context {
                 raw_args_len: 0,
-                processed: false,
+                processed: 0,
                 // counter: COUNTER.fetch_add(1, Ordering::SeqCst),
             },
             empty_stream_count: 0,
@@ -179,7 +192,7 @@ impl StreamDecoder {
     pub fn is_first_result_ready(&self) -> bool { self.first_result_ready }
 
     #[inline]
-    pub fn is_tool_processed(&self) -> bool { self.context.processed }
+    pub fn tool_processed(&self) -> u32 { self.context.processed }
 
     #[inline]
     pub fn take_content_delays(&mut self) -> Option<(String, Vec<(u32, f32)>)> {
@@ -228,7 +241,7 @@ impl StreamDecoder {
             self.content_delays = Some((String::with_capacity(64), Vec::with_capacity(count)));
         }
 
-        let mut messages = Vec::with_capacity(count + 1);
+        let mut messages = Vec::with_capacity(count);
 
         while let Some(raw_msg) = iter.next() {
             if raw_msg.data.is_empty() {
@@ -237,14 +250,34 @@ impl StreamDecoder {
                 continue;
             }
 
-            if self.context.processed {
-                crate::debug!("remaining: {} bytes", self.buffer.len() - iter.offset());
-                continue;
-            }
+            // if self.context.processed {
+            //     let remaining = self.buffer.len() - iter.offset();
+            //     crate::debug!("remaining: {remaining} bytes");
+            //     if remaining != 0 {
+            //         crate::debug!("type: {}, data: {}", raw_msg.r#type, hex::encode(raw_msg.data));
+            //     }
+            //     continue;
+            // }
 
-            if let Some(msg) = Self::process_message(raw_msg, &mut self.context)? {
-                if let StreamMessage::Content(ref content) = msg {
+            let result = match Self::process_message(raw_msg, &mut self.context) {
+                Ok(x) => x,
+                Err(e) => {
+                    if e.error()
+                        == Some(crate::core::aiserver::v1::error_details::Error::UserAbortedRequest)
+                    {
+                        messages.push(StreamMessage::StreamEnd);
+                        continue;
+                    } else {
+                        return Err(StreamError::Upstream(e));
+                    }
+                }
+            };
+
+            if let Some(msg) = result {
+                if !self.has_seen_content && msg.any_content() {
                     self.has_seen_content = true;
+                }
+                if let StreamMessage::Content(ref content) = msg {
                     let delay = self.last_content_time.duration_as_secs_f32();
                     let content_delays = __unwrap!(self.content_delays.as_mut());
                     content_delays.0.push_str(content);
@@ -258,13 +291,10 @@ impl StreamDecoder {
                 }
                 let msg = if convert_web_ref { msg.convert_web_ref_to_content() } else { msg };
                 messages.push(msg);
-                if self.context.processed {
-                    messages.push(StreamMessage::StreamEnd);
-                }
             }
         }
 
-        self.buffer.advance(iter.offset());
+        unsafe { self.buffer.advance_unchecked(iter.offset()) };
 
         if !self.first_result_taken && !messages.is_empty() {
             if self.first_result.is_none() {
@@ -286,7 +316,7 @@ impl StreamDecoder {
     fn process_message(
         raw_msg: RawMessage<'_>,
         ctx: &mut Context,
-    ) -> Result<Option<StreamMessage>, StreamError> {
+    ) -> Result<Option<StreamMessage>, CursorError> {
         let is_compressed = raw_msg.r#type & 1 != 0;
         let t = raw_msg.r#type >> 1;
         let msg_data = if is_compressed {
@@ -317,6 +347,7 @@ impl StreamDecoder {
             // crate::debug!("StreamUnifiedChatResponseWithTools [hex: {}]: {:#?}", hex::encode(msg_data), response);
             // crate::debug!("{count}: {response:?}");
             if let Some(response) = wrapper.response {
+                // crate::debug!("received: {response:#?}");
                 use super::super::aiserver::v1::{
                     client_side_tool_v2_call::Params,
                     stream_unified_chat_response_with_tools::Response,
@@ -324,6 +355,11 @@ impl StreamDecoder {
                 match response {
                     Response::ClientSideToolV2Call(response) => {
                         let mut result = None;
+                        let mut finish = false;
+
+                        // if !response.raw_args.is_empty() {
+                        //     crate::debug!("detected: {:?}", response.raw_args);
+                        // }
 
                         if response.is_streaming {
                             use core::cmp::Ordering;
@@ -394,11 +430,16 @@ impl StreamDecoder {
                             }
 
                             if response.is_last_message {
-                                ctx.processed = true;
+                                finish = true;
                             }
                         } else {
                             result = Some(response.raw_args);
-                            ctx.processed = true;
+                            finish = true;
+                        }
+
+                        if finish {
+                            ctx.processed += 1;
+                            ctx.raw_args_len = 0;
                         }
 
                         let id = ToolId::format(response.tool_call_id, response.model_call_id);
@@ -411,8 +452,9 @@ impl StreamDecoder {
                             .map(|tool| tool.name)
                             .unwrap_or_default();
 
-                        return result
-                            .map(|input| StreamMessage::ToolCall(ToolCall { id, name, input }));
+                        return result.map(|input| {
+                            StreamMessage::ToolCall(ToolCall { id, name, input, is_last: finish })
+                        });
                     }
                     Response::StreamUnifiedChatResponse(response) => {
                         if !response.text.is_empty() {
@@ -434,7 +476,7 @@ impl StreamDecoder {
         None
     }
 
-    fn handle_json_message(msg_data: &[u8]) -> Result<Option<StreamMessage>, StreamError> {
+    fn handle_json_message(msg_data: &[u8]) -> Result<Option<StreamMessage>, CursorError> {
         if msg_data.len() == 2 {
             return Ok(Some(StreamMessage::StreamEnd));
         }
@@ -443,7 +485,9 @@ impl StreamDecoder {
         // crate::debug!("JSON消息 [hex: {}]: {}", hex::encode(msg_data), text);
         // crate::debug!("{count}: {text:?}");
         if let Ok(error) = CursorError::from_slice(msg_data) {
-            return Err(StreamError::Upstream(error));
+            return Err(error);
+        } else {
+            crate::debug!("[JSON error] {}", hex::encode(msg_data));
         }
         // }
         // crate::debug!("{count}: {}", hex::encode(msg_data));

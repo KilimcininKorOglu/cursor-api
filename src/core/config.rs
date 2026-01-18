@@ -2,7 +2,7 @@ use crate::{
     AppConfig,
     app::{
         lazy::KEY_PREFIX,
-        model::{Randomness, RawToken, Subject, TokenDuration, UserId},
+        model::{Randomness, RawToken, Subject, TokenDuration, UserId, dynamic_key},
     },
     common::utils::from_base64,
 };
@@ -11,7 +11,7 @@ use crate::{
 include!("config/key.rs");
 
 impl ConfiguredKey {
-    pub fn move_without_auth_token(&mut self, config: &mut KeyConfig) {
+    pub fn move_to_config_builder(&mut self, config: &mut KeyConfigBuilder) {
         if self.usage_check_models.is_some() {
             config.usage_check_models = self.usage_check_models.take();
         }
@@ -24,6 +24,10 @@ impl ConfiguredKey {
         if self.include_web_references.is_some() {
             config.include_web_references = self.include_web_references.take();
         }
+    }
+
+    pub fn into_tuple(self) -> Option<(configured_key::TokenInfo, [u8; 32])> {
+        self.token_info.zip(self.secret)
     }
 }
 
@@ -42,8 +46,8 @@ impl configured_key::token_info::Token {
     }
 
     #[inline]
-    pub fn into_raw(self) -> Option<RawToken> {
-        Some(RawToken {
+    pub fn validate(self, hash: [u8; 32]) -> Option<RawToken> {
+        let raw = RawToken {
             subject: Subject {
                 provider: self.provider.parse().ok()?,
                 id: UserId::from_bytes(self.sub_id),
@@ -52,7 +56,11 @@ impl configured_key::token_info::Token {
             signature: self.signature,
             duration: TokenDuration { start: self.start, end: self.end },
             is_session: self.is_session,
-        })
+        };
+        if dynamic_key::get_hash(&raw) != hash {
+            return None;
+        }
+        Some(raw)
     }
 }
 
@@ -66,12 +74,20 @@ pub fn parse_dynamic_token(auth_token: &str) -> Option<ConfiguredKey> {
 #[derive(Clone)]
 pub struct KeyConfig {
     pub usage_check_models: Option<configured_key::UsageCheckModel>,
+    pub disable_vision: bool,
+    pub enable_slow_pool: bool,
+    pub include_web_references: bool,
+}
+
+#[derive(Clone)]
+pub struct KeyConfigBuilder {
+    pub usage_check_models: Option<configured_key::UsageCheckModel>,
     pub disable_vision: Option<bool>,
     pub enable_slow_pool: Option<bool>,
     pub include_web_references: Option<bool>,
 }
 
-impl KeyConfig {
+impl KeyConfigBuilder {
     pub const fn new() -> Self {
         Self {
             usage_check_models: None,
@@ -81,15 +97,15 @@ impl KeyConfig {
         }
     }
 
-    pub fn with_global(&mut self) {
-        if self.disable_vision.is_some() {
-            self.disable_vision = Some(AppConfig::get_vision_ability().is_none());
-        }
-        if self.enable_slow_pool.is_some() {
-            self.enable_slow_pool = Some(AppConfig::get_slow_pool());
-        }
-        if self.include_web_references.is_some() {
-            self.include_web_references = Some(AppConfig::get_web_refs());
+    pub fn with_global(self) -> KeyConfig {
+        let Self { usage_check_models, disable_vision, enable_slow_pool, include_web_references } =
+            self;
+        KeyConfig {
+            usage_check_models,
+            disable_vision: disable_vision
+                .unwrap_or_else(|| AppConfig::vision_ability().is_none()),
+            enable_slow_pool: enable_slow_pool.unwrap_or_else(AppConfig::is_slow_pool_enabled),
+            include_web_references: include_web_references.unwrap_or_else(AppConfig::is_web_references_included),
         }
     }
 }

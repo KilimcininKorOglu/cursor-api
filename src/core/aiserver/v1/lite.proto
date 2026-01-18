@@ -1,5 +1,5 @@
 syntax = "proto3";
-// @version: 1.6.35
+// @version: 2.3.21
 // @author: wisdgod <nav@wisdgod.com>
 // @license: MIT OR Apache-2.0
 package aiserver.v1;
@@ -8,6 +8,10 @@ message CursorPosition { // .aiserver.v1.CursorPosition
 	int32 column = 2;
 }
 message EnvironmentInfo { // .aiserver.v1.EnvironmentInfo
+	optional string exthost_platform = 1;
+	optional string exthost_arch = 2;
+	string local_timestamp = 5;
+	bytes cursor_version = 7;
 }
 message SimplestRange { // .aiserver.v1.SimplestRange
 	int32 start_line = 1;
@@ -123,6 +127,7 @@ message LinterError { // .aiserver.v1.LinterError
 	optional string source = 3;
 	repeated Diagnostic.RelatedInformation related_information = 4;
 	optional Diagnostic.DiagnosticSeverity severity = 5;
+	optional bool is_stale = 6;
 }
 message LinterErrors { // .aiserver.v1.LinterErrors
 	string relative_workspace_path = 1;
@@ -212,6 +217,9 @@ message ImageProto { // .aiserver.v1.ImageProto
 message ComposerExternalLink { // .aiserver.v1.ComposerExternalLink
 	string url = 1;
 	string uuid = 2;
+	string pdf_content = 3;
+	bool is_pdf = 4;
+	string filename = 5;
 }
 message LspSubgraphPosition { // .aiserver.v1.LspSubgraphPosition
 	int32 line = 1;
@@ -503,21 +511,16 @@ enum ClientSideToolV2 { // .aiserver.v1.ClientSideToolV2
 	CLIENT_SIDE_TOOL_V2_CREATE_PLAN = 43;
 	CLIENT_SIDE_TOOL_V2_LIST_MCP_RESOURCES = 44;
 	CLIENT_SIDE_TOOL_V2_READ_MCP_RESOURCE = 45;
-}
-message ToolResultError { // .aiserver.v1.ToolResultError
-	message EditFileError { // .aiserver.v1.ToolResultError.EditFileError
-		int32 num_lines_in_file_before_edit = 1;
-	}
-	message SearchReplaceError { // .aiserver.v1.ToolResultError.SearchReplaceError
-		int32 num_lines_in_file_before_edit = 1;
-	}
-	string client_visible_error_message = 1;
-	string model_visible_error_message = 2;
-	optional string actual_error_message_only_send_from_client_to_server_never_the_other_way_around_because_that_may_be_a_security_risk = 3;
-	oneof error_details {
-		EditFileError edit_file_error_details = 5;
-		SearchReplaceError search_replace_error_details = 6;
-	}
+	CLIENT_SIDE_TOOL_V2_READ_PROJECT = 46;
+	CLIENT_SIDE_TOOL_V2_UPDATE_PROJECT = 47;
+	CLIENT_SIDE_TOOL_V2_TASK_V2 = 48;
+	CLIENT_SIDE_TOOL_V2_CALL_MCP_TOOL = 49;
+	CLIENT_SIDE_TOOL_V2_APPLY_AGENT_DIFF = 50;
+	CLIENT_SIDE_TOOL_V2_ASK_QUESTION = 51;
+	CLIENT_SIDE_TOOL_V2_SWITCH_MODE = 52;
+	CLIENT_SIDE_TOOL_V2_GENERATE_IMAGE = 53;
+	CLIENT_SIDE_TOOL_V2_COMPUTER_USE = 54;
+	CLIENT_SIDE_TOOL_V2_WRITE_SHELL_STDIN = 55;
 }
 message ClientSideToolV2Call { // .aiserver.v1.ClientSideToolV2Call
 	ClientSideToolV2 tool = 1;
@@ -538,7 +541,6 @@ message ClientSideToolV2Result { // .aiserver.v1.ClientSideToolV2Result
 		MCPResult mcp_result = 28;
 	}
 	string tool_call_id = 35;
-	optional ToolResultError error = 8;
 	optional string model_call_id = 48;
 	optional uint32 tool_index = 49;
 }
@@ -583,6 +585,7 @@ message StreamUnifiedChatRequest { // .aiserver.v1.StreamUnifiedChatRequest
 		UNIFIED_MODE_EDIT = 3;
 		UNIFIED_MODE_CUSTOM = 4;
 		UNIFIED_MODE_PLAN = 5;
+		UNIFIED_MODE_DEBUG = 6;
 	}
 	enum ThinkingLevel { // .aiserver.v1.StreamUnifiedChatRequest.ThinkingLevel
 		THINKING_LEVEL_UNSPECIFIED = 0;
@@ -632,10 +635,9 @@ message ConversationMessage { // .aiserver.v1.ConversationMessage
 		string tool_call_id = 1;
 		string tool_name = 2;
 		uint32 tool_index = 3;
+		optional string model_call_id = 12;
 		string raw_args = 5;
 		ClientSideToolV2Result result = 8;
-		optional ToolResultError error = 9;
-		repeated ImageProto images = 10;
 		optional ClientSideToolV2Call tool_call = 11;
 	}
 	message Thinking { // .aiserver.v1.ConversationMessage.Thinking
@@ -647,6 +649,7 @@ message ConversationMessage { // .aiserver.v1.ConversationMessage
 	MessageType type = 2;
 	repeated ImageProto images = 10;
 	string bubble_id = 13;
+	optional string server_bubble_id = 32;
 	repeated ToolResult tool_results = 18;
 	bool is_agentic = 29;
 	repeated WebReference web_references = 36;
@@ -707,6 +710,12 @@ message AvailableModelsResponse { // .aiserver.v1.AvailableModelsResponse
 		optional string server_model_name = 18;
 		optional bool is_recommended_for_background_composer = 21;
 		optional bool supports_plan_mode = 22;
+		optional bool supports_sandboxing = 25;
+		optional bool is_user_added = 23;
+		optional string inputbox_short_model_name = 24;
+		optional bool supports_cmd_k = 26;
+		optional bool only_supports_cmd_k = 27;
+		optional int32 background_composer_sort_order = 28;
 	}
 	repeated AvailableModel models = 2;
 }

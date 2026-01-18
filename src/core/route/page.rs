@@ -11,6 +11,14 @@ pub async fn handle_env_example() -> Response {
     )
 }
 
+pub async fn handle_config_example() -> Response {
+    __unwrap!(
+        Response::builder()
+            .header(CONTENT_TYPE, HEADER_VALUE_TEXT_PLAIN_UTF8)
+            .body(Body::from(include_str!("../../../config.example.toml")))
+    )
+}
+
 // // 配置页面处理函数
 // pub async fn handle_config_page() -> Response {
 //     AppConfig::get_page_content(ROUTE_CONFIG_PATH).unwrap_or_default().into_response(|| {

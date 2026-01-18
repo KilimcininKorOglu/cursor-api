@@ -66,15 +66,15 @@ static HEADER_VALUE_UA_CURSOR_LATEST: ManuallyInit<http::header::HeaderValue> = 
 ///
 /// 调用者必须确保 `initialize_cursor_version` 已经被调用。
 #[inline(always)]
-pub fn cursor_client_version() -> http::header::HeaderValue {
-    CLIENT_VERSION.get().clone()
-}
+pub fn cursor_client_version() -> http::header::HeaderValue { CLIENT_VERSION.get().clone() }
 
 #[inline(always)]
 pub fn cursor_version() -> bytes::Bytes {
     use crate::common::model::HeaderValue;
     #[allow(clippy::missing_transmute_annotations)]
-    unsafe { core::mem::transmute::<_, &HeaderValue>(CLIENT_VERSION.get()) }.inner.clone()
+    unsafe {
+        core::mem::transmute::<_, &HeaderValue>(CLIENT_VERSION.get()).inner.clone()
+    }
 }
 
 /// 获取 Cursor 用户代理的 HeaderValue

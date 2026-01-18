@@ -1,3 +1,6 @@
+use hyper_util::client::legacy::connect::dns::Name as HyperName;
+use tower_service::Service;
+
 use std::collections::HashMap;
 use std::future::Future;
 use std::net::SocketAddr;
@@ -5,9 +8,6 @@ use std::pin::Pin;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::task::{Context, Poll};
-
-use hyper_util::client::legacy::connect::dns::Name as HyperName;
-use tower_service::Service;
 
 use crate::error::BoxError;
 
@@ -56,7 +56,9 @@ impl FromStr for Name {
     type Err = sealed::InvalidNameError;
 
     fn from_str(host: &str) -> Result<Self, Self::Err> {
-        HyperName::from_str(host).map(Name).map_err(|_| sealed::InvalidNameError { _ext: () })
+        HyperName::from_str(host)
+            .map(Name)
+            .map_err(|_| sealed::InvalidNameError { _ext: () })
     }
 }
 
@@ -85,11 +87,13 @@ impl DynResolver {
         target: &http::Uri,
     ) -> Result<impl Iterator<Item = std::net::SocketAddr>, BoxError> {
         let host = target.host().ok_or("missing host")?;
-        let port = target.port_u16().unwrap_or_else(|| match target.scheme_str() {
-            Some("https") => 443,
-            Some("socks4") | Some("socks4a") | Some("socks5") | Some("socks5h") => 1080,
-            _ => 80,
-        });
+        let port = target
+            .port_u16()
+            .unwrap_or_else(|| match target.scheme_str() {
+                Some("https") => 443,
+                Some("socks4") | Some("socks4a") | Some("socks5") | Some("socks5h") => 1080,
+                _ => 80,
+            });
 
         let explicit_port = target.port().is_some();
 
@@ -128,7 +132,10 @@ impl DnsResolverWithOverrides {
         dns_resolver: Arc<dyn Resolve>,
         overrides: HashMap<String, Vec<SocketAddr>>,
     ) -> Self {
-        DnsResolverWithOverrides { dns_resolver, overrides: Arc::new(overrides) }
+        DnsResolverWithOverrides {
+            dns_resolver,
+            overrides: Arc::new(overrides),
+        }
     }
 }
 

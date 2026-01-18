@@ -4,21 +4,19 @@ pub(crate) mod connect;
 pub(crate) mod dns;
 mod pool;
 
+use crate::async_impl::body::ResponseBody;
+use crate::async_impl::h3_client::pool::{Key, Pool, PoolClient};
+use crate::error::{BoxError, Error, Kind};
+use crate::{error, Body};
+use connect::H3Connector;
+use http::{Request, Response};
+use log::trace;
 use std::future::{self, Future};
 use std::pin::Pin;
 use std::task::{Context, Poll};
 use std::time::Duration;
-
-use connect::H3Connector;
-use http::{Request, Response};
-use log::trace;
 use sync_wrapper::SyncWrapper;
 use tower::Service;
-
-use crate::async_impl::body::ResponseBody;
-use crate::async_impl::h3_client::pool::{Key, Pool, PoolClient};
-use crate::error::{BoxError, Error, Kind};
-use crate::{Body, error};
 
 #[derive(Clone)]
 pub(crate) struct H3Client {
@@ -28,7 +26,10 @@ pub(crate) struct H3Client {
 
 impl H3Client {
     pub fn new(connector: H3Connector, pool_timeout: Option<Duration>) -> Self {
-        H3Client { pool: Pool::new(pool_timeout), connector }
+        H3Client {
+            pool: Pool::new(pool_timeout),
+            connector,
+        }
     }
 
     async fn get_pooled_client(&mut self, key: Key) -> Result<PoolClient, BoxError> {
@@ -67,7 +68,10 @@ impl H3Client {
             Ok(client) => client,
             Err(e) => return Err(error::request(e)),
         };
-        pooled.send_request(req).await.map_err(|e| Error::new(Kind::Request, Some(e)))
+        pooled
+            .send_request(req)
+            .await
+            .map_err(|e| Error::new(Kind::Request, Some(e)))
     }
 
     pub fn request(&self, mut req: Request<Body>) -> H3ResponseFuture {
@@ -76,7 +80,7 @@ impl H3Client {
             Err(e) => {
                 return H3ResponseFuture {
                     inner: SyncWrapper::new(Box::pin(future::ready(Err(e)))),
-                };
+                }
             }
         };
         H3ResponseFuture {
@@ -94,7 +98,9 @@ impl Service<Request<Body>> for H3Client {
         Poll::Ready(Ok(()))
     }
 
-    fn call(&mut self, req: Request<Body>) -> Self::Future { self.request(req) }
+    fn call(&mut self, req: Request<Body>) -> Self::Future {
+        self.request(req)
+    }
 }
 
 pub(crate) struct H3ResponseFuture {

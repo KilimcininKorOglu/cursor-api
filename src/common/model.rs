@@ -1,17 +1,14 @@
-pub mod config;
 pub mod error;
 pub mod health;
+pub mod ntp;
+pub mod raw_json;
 pub mod token;
 pub mod tri;
 pub mod userinfo;
-pub mod stringify;
-pub mod ntp;
 
 use alloc::borrow::Cow;
-
-use serde::{Serialize, Serializer};
-use serde::ser::SerializeStruct;
 use http::StatusCode;
+use serde::{Serialize, Serializer, ser::SerializeStruct};
 
 #[derive(Serialize)]
 #[serde(rename_all = "lowercase")]
@@ -64,10 +61,14 @@ pub struct HeaderValue {
 
 impl HeaderValue {
     #[inline(always)]
-    pub const fn into(self) -> http::HeaderValue { unsafe { core::mem::transmute(self) } }
+    pub const unsafe fn into(self) -> http::HeaderValue { unsafe { core::mem::transmute(self) } }
     #[inline]
     pub const fn from_static(src: &'static str) -> HeaderValue {
         HeaderValue { inner: bytes::Bytes::from_static(src.as_bytes()), is_sensitive: false }
+    }
+    #[inline]
+    pub fn from_bytes(src: &[u8]) -> HeaderValue {
+        HeaderValue { inner: bytes::Bytes::copy_from_slice(src), is_sensitive: false }
     }
 }
 

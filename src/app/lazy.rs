@@ -11,22 +11,35 @@ use super::{
 use crate::common::utils::parse_from_env;
 use alloc::borrow::Cow;
 use manually_init::ManuallyInit;
-pub use path::{DATA_DIR, LOGS_FILE_PATH, PROXIES_FILE_PATH, TOKENS_FILE_PATH, init as init_paths};
+pub use path::{
+    CONFIG_FILE_PATH, DATA_DIR, LOGS_FILE_PATH, PROXIES_FILE_PATH, TOKENS_FILE_PATH,
+    init as init_paths,
+};
 use std::sync::LazyLock;
-
-macro_rules! def_pub_static {
-    ($name:ident,env: $env_key:expr,default: $default:expr) => {
-        pub static $name: LazyLock<Cow<'static, str>> =
-            LazyLock::new(|| parse_from_env($env_key, $default));
-    };
-}
+use url::Url;
 
 pub static AUTH_TOKEN: ManuallyInit<Cow<'static, str>> = ManuallyInit::new();
 
 pub static START_TIME: ManuallyInit<DateTime> = ManuallyInit::new();
 
 #[inline]
-pub fn init_start_time() { START_TIME.init(DateTime::now()); }
+pub fn init_start_time() { START_TIME.init(DateTime::now()) }
+
+#[inline]
+pub fn init() {
+    PRI_REVERSE_PROXY_HOST.init(parse_from_env("PRI_REVERSE_PROXY_HOST", EMPTY_STRING));
+    PUB_REVERSE_PROXY_HOST.init(parse_from_env("PUB_REVERSE_PROXY_HOST", EMPTY_STRING));
+    KEY_PREFIX.init(parse_from_env("KEY_PREFIX", DEFAULT_KEY_PREFIX));
+    unsafe {
+        USE_PRI_REVERSE_PROXY = !PRI_REVERSE_PROXY_HOST.is_empty();
+        USE_PUB_REVERSE_PROXY = !PUB_REVERSE_PROXY_HOST.is_empty();
+    }
+    TCP_KEEPALIVE
+        .init(parse_from_env("TCP_KEEPALIVE", DEFAULT_TCP_KEEPALIVE).min(MAX_TCP_KEEPALIVE));
+    SERVICE_TIMEOUT
+        .init(parse_from_env("SERVICE_TIMEOUT", DEFAULT_SERVICE_TIMEOUT).min(MAX_SERVICE_TIMEOUT));
+    REAL_USAGE.init(parse_from_env("REAL_USAGE", true));
+}
 
 pub static GENERAL_TIMEZONE: LazyLock<chrono_tz::Tz> = LazyLock::new(|| {
     use std::str::FromStr as _;
@@ -35,71 +48,44 @@ pub static GENERAL_TIMEZONE: LazyLock<chrono_tz::Tz> = LazyLock::new(|| {
         __eprintln!(
             "未配置时区，请在环境变量GENERAL_TIMEZONE中设置，格式如'Asia/Shanghai'\n将使用默认时区: Asia/Shanghai"
         );
-        return chrono_tz::Tz::Asia__Shanghai;
-    }
-    match chrono_tz::Tz::from_str(&tz) {
-        Ok(tz) => tz,
-        Err(e) => {
-            eprintln!("无法解析时区 '{tz}': {e}\n将使用默认时区: Asia/Shanghai");
-            chrono_tz::Tz::Asia__Shanghai
+        chrono_tz::Tz::Asia__Shanghai
+    } else {
+        match chrono_tz::Tz::from_str(&tz) {
+            Ok(tz) => tz,
+            Err(e) => {
+                eprintln!("无法解析时区 '{tz}': {e}\n将使用默认时区: Asia/Shanghai");
+                chrono_tz::Tz::Asia__Shanghai
+            }
         }
     }
 });
 
 pub static GENERAL_GCPP_HOST: LazyLock<GcppHost> = LazyLock::new(|| {
     let gcpp_host = parse_from_env("GENERAL_GCPP_HOST", EMPTY_STRING);
-    let gcpp_host = gcpp_host.trim();
     if gcpp_host.is_empty() {
         __eprintln!(
             "未配置默认代码补全区域，请在环境变量GENERAL_GCPP_HOST中设置，格式如'Asia'\n将使用默认区域: Asia"
         );
-        return GcppHost::Asia;
-    }
-    match GcppHost::from_str(gcpp_host) {
-        Some(gcpp_host) => gcpp_host,
-        None => {
-            eprintln!("无法解析区域 '{gcpp_host}'\n将使用默认区域: Asia");
-            GcppHost::Asia
+        GcppHost::Asia
+    } else {
+        match GcppHost::from_str(&gcpp_host) {
+            Some(gcpp_host) => gcpp_host,
+            None => {
+                eprintln!("无法解析区域 '{gcpp_host}'\n将使用默认区域: Asia");
+                GcppHost::Asia
+            }
         }
     }
 });
 
-def_pub_static!(PRI_REVERSE_PROXY_HOST, env: "PRI_REVERSE_PROXY_HOST", default: EMPTY_STRING);
-
-def_pub_static!(PUB_REVERSE_PROXY_HOST, env: "PUB_REVERSE_PROXY_HOST", default: EMPTY_STRING);
+pub static PRI_REVERSE_PROXY_HOST: ManuallyInit<Cow<'static, str>> = ManuallyInit::new();
+pub static PUB_REVERSE_PROXY_HOST: ManuallyInit<Cow<'static, str>> = ManuallyInit::new();
 
 const DEFAULT_KEY_PREFIX: &str = "sk-";
+pub static KEY_PREFIX: ManuallyInit<Cow<'static, str>> = ManuallyInit::new();
 
-def_pub_static!(KEY_PREFIX, env: "KEY_PREFIX", default: DEFAULT_KEY_PREFIX);
-
-// pub static TOKEN_DELIMITER: LazyLock<char> = LazyLock::new(|| {
-//     let delimiter = parse_ascii_char_from_env("TOKEN_DELIMITER", COMMA);
-//     if delimiter.is_ascii_alphabetic()
-//         || delimiter.is_ascii_digit()
-//         || delimiter == '/'
-//         || delimiter == '-'
-//         || delimiter == '_'
-//     {
-//         COMMA
-//     } else {
-//         delimiter
-//     }
-// });
-
-// pub static USE_COMMA_DELIMITER: LazyLock<bool> = LazyLock::new(|| {
-//     let enable = parse_bool_from_env("USE_COMMA_DELIMITER", true);
-//     if enable && *TOKEN_DELIMITER == COMMA {
-//         false
-//     } else {
-//         enable
-//     }
-// });
-
-pub static USE_PRI_REVERSE_PROXY: LazyLock<bool> =
-    LazyLock::new(|| !PRI_REVERSE_PROXY_HOST.is_empty());
-
-pub static USE_PUB_REVERSE_PROXY: LazyLock<bool> =
-    LazyLock::new(|| !PUB_REVERSE_PROXY_HOST.is_empty());
+pub static mut USE_PRI_REVERSE_PROXY: bool = false;
+pub static mut USE_PUB_REVERSE_PROXY: bool = false;
 
 macro_rules! def_cursor_api_url {
     (
@@ -117,16 +103,16 @@ macro_rules! def_cursor_api_url {
         $(
             $(
                 paste::paste! {
-                    static [<URL_PRI_ $name:upper>]: ManuallyInit<String> = ManuallyInit::new();
-                    static [<URL_PUB_ $name:upper>]: ManuallyInit<String> = ManuallyInit::new();
+                    static [<PRI_ $name:upper>]: ManuallyInit<Url> = ManuallyInit::new();
+                    static [<PUB_ $name:upper>]: ManuallyInit<Url> = ManuallyInit::new();
 
                     #[inline(always)]
                     #[doc = $path]
-                    pub fn $name(use_pri: bool) -> &'static str {
+                    pub fn $name(use_pri: bool) -> &'static Url {
                         if use_pri {
-                            [<URL_PRI_ $name:upper>].get()
+                            [<PRI_ $name:upper>].get()
                         } else {
-                            [<URL_PUB_ $name:upper>].get()
+                            [<PUB_ $name:upper>].get()
                         }
                     }
                 }
@@ -140,7 +126,7 @@ macro_rules! def_cursor_api_url {
                     paste::paste! {
                         // 初始化私有URL
                         {
-                            let host = if *USE_PRI_REVERSE_PROXY {
+                            let host = if unsafe { USE_PRI_REVERSE_PROXY } {
                                 &PRI_REVERSE_PROXY_HOST
                             } else {
                                 $api_host
@@ -149,12 +135,12 @@ macro_rules! def_cursor_api_url {
                             url.push_str(HTTPS_PREFIX);
                             url.push_str(host);
                             url.push_str($path);
-                            [<URL_PRI_ $name:upper>].init(url);
+                            [<PRI_ $name:upper>].init(unsafe { Url::parse(&url).unwrap_unchecked() });
                         }
 
                         // 初始化公共URL
                         {
-                            let host = if *USE_PUB_REVERSE_PROXY {
+                            let host = if unsafe { USE_PUB_REVERSE_PROXY } {
                                 &PUB_REVERSE_PROXY_HOST
                             } else {
                                 $api_host
@@ -163,7 +149,7 @@ macro_rules! def_cursor_api_url {
                             url.push_str(HTTPS_PREFIX);
                             url.push_str(host);
                             url.push_str($path);
-                            [<URL_PUB_ $name:upper>].init(url);
+                            [<PUB_ $name:upper>].init(unsafe { Url::parse(&url).unwrap_unchecked() });
                         }
                     }
                 )+
@@ -257,29 +243,17 @@ def_cursor_api_url! {
 }
 
 // TCP 和超时相关常量
-const DEFAULT_TCP_KEEPALIVE: usize = 90;
+const DEFAULT_TCP_KEEPALIVE: u64 = 90;
 const MAX_TCP_KEEPALIVE: u64 = 600;
+pub static TCP_KEEPALIVE: ManuallyInit<u64> = ManuallyInit::new();
 
-pub static TCP_KEEPALIVE: LazyLock<u64> = LazyLock::new(|| {
-    let keepalive = parse_from_env("TCP_KEEPALIVE", DEFAULT_TCP_KEEPALIVE);
-    u64::try_from(keepalive)
-        .map(|t| t.min(MAX_TCP_KEEPALIVE))
-        .unwrap_or(DEFAULT_TCP_KEEPALIVE as u64)
-});
-
-const DEFAULT_SERVICE_TIMEOUT: usize = 30;
+const DEFAULT_SERVICE_TIMEOUT: u64 = 30;
 const MAX_SERVICE_TIMEOUT: u64 = 600;
+pub static SERVICE_TIMEOUT: ManuallyInit<u64> = ManuallyInit::new();
 
-pub static SERVICE_TIMEOUT: LazyLock<u64> = LazyLock::new(|| {
-    let timeout = parse_from_env("SERVICE_TIMEOUT", DEFAULT_SERVICE_TIMEOUT);
-    u64::try_from(timeout)
-        .map(|t| t.min(MAX_SERVICE_TIMEOUT))
-        .unwrap_or(DEFAULT_SERVICE_TIMEOUT as u64)
-});
+pub static REAL_USAGE: ManuallyInit<bool> = ManuallyInit::new();
 
-pub static REAL_USAGE: LazyLock<bool> = LazyLock::new(|| parse_from_env("REAL_USAGE", true));
-
-// pub static TOKEN_VALIDITY_RANGE: LazyLock<TokenValidityRange> = LazyLock::new(|| {
+// pub static TOKEN_VALIDITY_RANGE: ManuallyInit<TokenValidityRange> = ManuallyInit::new(|| {
 //     let short = if let Ok(Ok(validity)) = std::env::var("TOKEN_SHORT_VALIDITY")
 //         .as_deref()
 //         .map(ValidityRange::from_str)

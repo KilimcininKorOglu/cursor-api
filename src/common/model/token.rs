@@ -2,7 +2,7 @@ use crate::app::{
     constant::{AUDIENCE, ISSUER, SCOPE, TYPE_SESSION, TYPE_WEB},
     model::{Randomness, Subject},
 };
-use super::stringify::Stringify;
+use proto_value::stringify::Stringify;
 
 pub struct TokenPayload {
     pub sub: Subject,
@@ -55,9 +55,7 @@ crate::define_typed_constants! {
 
 impl ::serde::Serialize for TokenPayload {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: ::serde::Serializer,
-    {
+    where S: ::serde::Serializer {
         use ::serde::ser::SerializeStruct as _;
 
         let mut state = serializer.serialize_struct(STRUCT_NAME, FIELD_COUNT)?;
@@ -68,23 +66,14 @@ impl ::serde::Serialize for TokenPayload {
         state.serialize_field(FIELD_ISS, ISSUER)?;
         state.serialize_field(FIELD_SCOPE, SCOPE)?;
         state.serialize_field(FIELD_AUD, AUDIENCE)?;
-        state.serialize_field(
-            FIELD_TYPE,
-            if self.is_session {
-                TYPE_SESSION
-            } else {
-                TYPE_WEB
-            },
-        )?;
+        state.serialize_field(FIELD_TYPE, if self.is_session { TYPE_SESSION } else { TYPE_WEB })?;
         state.end()
     }
 }
 
 impl<'de> ::serde::Deserialize<'de> for TokenPayload {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: ::serde::Deserializer<'de>,
-    {
+    where D: ::serde::Deserializer<'de> {
         use ::serde::de::{self, MapAccess, Visitor};
 
         #[derive(Clone, Copy)]
@@ -101,9 +90,7 @@ impl<'de> ::serde::Deserialize<'de> for TokenPayload {
 
         impl<'de> ::serde::Deserialize<'de> for Field {
             fn deserialize<D>(deserializer: D) -> Result<Field, D::Error>
-            where
-                D: ::serde::Deserializer<'de>,
-            {
+            where D: ::serde::Deserializer<'de> {
                 struct FieldVisitor;
 
                 impl<'de> Visitor<'de> for FieldVisitor {
@@ -117,9 +104,7 @@ impl<'de> ::serde::Deserialize<'de> for TokenPayload {
                     }
 
                     fn visit_str<E>(self, value: &str) -> Result<Field, E>
-                    where
-                        E: de::Error,
-                    {
+                    where E: de::Error {
                         match value {
                             FIELD_SUB => Ok(Field::Sub),
                             FIELD_TIME => Ok(Field::Time),
@@ -148,9 +133,7 @@ impl<'de> ::serde::Deserialize<'de> for TokenPayload {
             }
 
             fn visit_map<V>(self, mut map: V) -> Result<TokenPayload, V::Error>
-            where
-                V: MapAccess<'de>,
-            {
+            where V: MapAccess<'de> {
                 let mut sub = None;
                 let mut time = None;
                 let mut randomness = None;
@@ -259,13 +242,7 @@ impl<'de> ::serde::Deserialize<'de> for TokenPayload {
                     return Err(de::Error::missing_field(FIELD_AUD));
                 }
 
-                Ok(TokenPayload {
-                    sub,
-                    time,
-                    randomness,
-                    exp,
-                    is_session,
-                })
+                Ok(TokenPayload { sub, time, randomness, exp, is_session })
             }
         }
 

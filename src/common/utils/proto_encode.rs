@@ -43,26 +43,6 @@ impl axum::response::IntoResponse for ExceedSizeLimit {
     }
 }
 
-/// 压缩数据为gzip格式
-///
-/// 使用固定压缩级别6，预分配容量以减少内存分配
-#[inline]
-fn compress_gzip(data: &[u8]) -> Vec<u8> {
-    use ::std::io::Write as _;
-    use flate2::Compression;
-    use flate2::write::GzEncoder;
-
-    const LEVEL: Compression = Compression::new(6);
-
-    // 预分配容量：假设压缩率50% + gzip头部约18字节
-    let estimated_size = data.len() / 2 + 18;
-    let mut encoder = GzEncoder::new(Vec::with_capacity(estimated_size), LEVEL);
-
-    // 写入Vec不会失败，可以安全unwrap
-    __unwrap!(encoder.write_all(data));
-    __unwrap!(encoder.finish())
-}
-
 /// 尝试压缩数据，仅当压缩后体积更小时返回压缩结果
 ///
 /// 压缩决策逻辑：
@@ -78,7 +58,7 @@ fn try_compress_if_beneficial(data: &[u8]) -> Option<Vec<u8>> {
         return None;
     }
 
-    let compressed = compress_gzip(data);
+    let compressed = grpc_stream::compress_gzip(data);
 
     // 仅当压缩有效时返回
     if compressed.len() < data.len() { Some(compressed) } else { None }
