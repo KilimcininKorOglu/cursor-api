@@ -3,6 +3,10 @@
 
 ## Version 3
 
+3.5.4
+
+* Optimize the `Hash*` resizing strategy.
+
 3.5.3
 
 * Implement `Clone` for `HashIndex::Iter` and `TreeIndex::{Iter, Range}`.

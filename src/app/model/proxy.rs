@@ -1,10 +1,10 @@
-use std::{borrow::Cow, sync::Arc};
-
 use super::{
     ApiStatus, DeleteResponseExpectation,
     proxy_pool::{Proxies, SingleProxy},
 };
+use interned::Str;
 use serde::{Deserialize, Serialize};
+use std::{borrow::Cow, sync::Arc};
 
 type HashMap<K, V> = hashbrown::HashMap<K, V, ahash::RandomState>;
 type HashSet<K> = hashbrown::HashSet<K, ahash::RandomState>;
@@ -14,10 +14,10 @@ type HashSet<K> = hashbrown::HashSet<K, ahash::RandomState>;
 pub struct ProxyInfoResponse {
     pub status: ApiStatus,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub proxies: Option<Arc<HashMap<String, SingleProxy>>>,
+    pub proxies: Option<Arc<HashMap<Str, SingleProxy>>>,
     pub proxies_count: usize,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub general_proxy: Option<Arc<String>>,
+    pub general_proxy: Option<Arc<Str>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub message: Option<Cow<'static, str>>,
 }
@@ -45,7 +45,7 @@ pub struct ProxiesDeleteRequest {
 pub struct ProxiesDeleteResponse {
     pub status: ApiStatus,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub updated_proxies: Option<Arc<HashMap<String, SingleProxy>>>,
+    pub updated_proxies: Option<Arc<HashMap<Str, SingleProxy>>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub failed_names: Option<Vec<String>>,
 }

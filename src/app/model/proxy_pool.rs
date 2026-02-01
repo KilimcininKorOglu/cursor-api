@@ -1,6 +1,7 @@
 use crate::app::lazy::{PROXIES_FILE_PATH, SERVICE_TIMEOUT, TCP_KEEPALIVE, TCP_KEEPALIVE_INTERVAL, TCP_KEEPALIVE_RETRIES};
 use alloc::sync::Arc;
 use arc_swap::{ArcSwap, ArcSwapAny};
+use interned::Str;
 use core::{str::FromStr, time::Duration};
 use manually_init::ManuallyInit;
 use memmap2::{MmapMut, MmapOptions};
@@ -22,15 +23,15 @@ const SYS_PROXY: &str = "sys";
 ///
 /// 包含一个系统代理配置
 #[inline]
-pub fn default_proxies() -> HashMap<String, SingleProxy> {
-    HashMap::from_iter([(SYS_PROXY.to_string(), SingleProxy::Sys)])
+pub fn default_proxies() -> HashMap<Str, SingleProxy> {
+    HashMap::from_iter([(SYS_PROXY.into(), SingleProxy::Sys)])
 }
 
 /// 名称到代理配置的映射
-static PROXIES: ManuallyInit<ArcSwap<HashMap<String, SingleProxy>>> = ManuallyInit::new();
+static PROXIES: ManuallyInit<ArcSwap<HashMap<Str, SingleProxy>>> = ManuallyInit::new();
 
 /// 通用代理名称
-static GENERAL_NAME: ManuallyInit<ArcSwap<String>> = ManuallyInit::new();
+static GENERAL_NAME: ManuallyInit<ArcSwap<Str>> = ManuallyInit::new();
 
 // /// 获取图像代理名称
 // static FETCH_IMAGE_NAME: ArcSwapOption<String> = ArcSwapOption::const_empty();
@@ -58,13 +59,13 @@ static GENERAL_CLIENT: ManuallyInit<ArcSwapAny<Client>> = ManuallyInit::new();
 #[derive(Clone, Deserialize, Serialize, Archive, RkyvDeserialize, RkyvSerialize)]
 pub struct Proxies {
     /// 名称到代理配置的映射
-    proxies: HashMap<String, SingleProxy>,
+    proxies: HashMap<Str, SingleProxy>,
     /// 默认使用的代理名称
-    general: String,
+    general: Str,
 }
 
 impl Default for Proxies {
-    fn default() -> Self { Self { proxies: default_proxies(), general: SYS_PROXY.to_string() } }
+    fn default() -> Self { Self { proxies: default_proxies(), general: SYS_PROXY.into() } }
 }
 
 impl Proxies {
@@ -77,7 +78,7 @@ impl Proxies {
         if self.proxies.is_empty() {
             self.proxies = default_proxies();
             if self.general.as_str() != SYS_PROXY {
-                self.general = SYS_PROXY.to_string();
+                self.general = SYS_PROXY.into();
             }
         } else if !self.proxies.contains_key(&self.general) {
             // 通用代理名称无效，使用第一个可用的代理
@@ -127,7 +128,7 @@ impl Proxies {
         if proxies.is_empty() {
             self::proxies().store(Arc::new(default_proxies()));
             if general_name.as_str() != SYS_PROXY {
-                general_name = Arc::new(SYS_PROXY.to_string());
+                general_name = Arc::new(SYS_PROXY.into());
             }
         } else if !proxies.contains_key(&*general_name) {
             // 通用代理名称无效，选择第一个可用的
@@ -371,10 +372,10 @@ fn set_general() {
 
 // 访问器函数
 #[inline]
-pub fn proxies() -> &'static ArcSwap<HashMap<String, SingleProxy>> { PROXIES.get() }
+pub fn proxies() -> &'static ArcSwap<HashMap<Str, SingleProxy>> { PROXIES.get() }
 
 #[inline]
-pub fn general_name() -> &'static ArcSwap<String> { GENERAL_NAME.get() }
+pub fn general_name() -> &'static ArcSwap<Str> { GENERAL_NAME.get() }
 
 // #[inline]
 // pub fn fetch_image_name() -> &'static ArcSwapOption<String> { &FETCH_IMAGE_NAME }

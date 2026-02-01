@@ -9,12 +9,12 @@ members = [
     "crates/byte_str",
     "crates/atomic_enum",
     "crates/proto-value",
-    "__build",
+    "crates/__build",
 ]
 default-members = ["."]
 
 [workspace.package]
-version = "0.4.0-pre.21"
+version = "0.4.0-pre.22"
 edition = "2024"
 authors = ["wisdgod <nav@wisdgod.com>"]
 description = "A format compatibility layer for the Cursor API"
@@ -90,7 +90,7 @@ path = "src/main.rs"
 # path = "tools/rkyv_adapter/src/main.rs"
 
 [build-dependencies]
-__build = { package = "cursor-api-build", path = "__build" }
+__build = { package = "cursor-api-build", path = "crates/__build" }
 
 # chrono = { version = "0.4", default-features = false, features = ["alloc"] }
 # prost-build = { version = "0.14", optional = true }
@@ -102,7 +102,7 @@ serde_json = "1"
 manually_init.workspace = true
 rep_move.workspace = true
 grpc-stream.workspace = true
-interned.workspace = true
+interned = { workspace = true, features = ["nightly", "serde", "rkyv"] }
 byte_str = { workspace = true, features = ["serde"] }
 atomic_enum.workspace = true
 proto-value = { workspace = true, features = ["serde", "alloc"] }
@@ -140,6 +140,7 @@ futures-core = { version = "0.3", default-features = false, features = [] }
 futures-util = { version = "0.3", default-features = false, features = [] }
 gif = { version = "0", default-features = false, features = ["std"] }
 hashbrown = { version = "0.16", default-features = false, features = [
+    "equivalent",
     "serde",
     "raw-entry",
     "inline-more",

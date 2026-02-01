@@ -108,7 +108,7 @@ where
                     let guard = Guard::new();
                     if let Some(current_array) = self.bucket_array(&guard) {
                         if !current_array.has_linked_array() {
-                            self.try_resize(current_array, 0, &guard);
+                            self.try_resize(current_array, &guard);
                         }
                     }
                     return additional_capacity;
@@ -173,7 +173,7 @@ where
                 num_entries = num_entries.saturating_add(current_array.bucket(i).len());
             }
             if num_entries == 0 && self.minimum_capacity() == 0 {
-                self.try_resize(current_array, 0, guard);
+                self.try_resize(current_array, guard);
             }
         }
         num_entries
@@ -196,7 +196,7 @@ where
                 }
             }
             if self.minimum_capacity() == 0 {
-                self.try_resize(current_array, 0, guard);
+                self.try_resize(current_array, guard);
             }
         }
         false
@@ -204,19 +204,12 @@ where
 
     /// Estimates the number of entries by sampling buckets.
     #[inline]
-    fn sample(current_array: &BucketArray<K, V, L, TYPE>, sampling_index: usize) -> usize {
-        let sample_size = current_array.sample_size();
-        let sample_1 = sampling_index & (!(sample_size - 1));
-        let sample_2 = if sample_1 == 0 {
-            current_array.len() - sample_size
-        } else {
-            0
-        };
+    fn sample(current_array: &BucketArray<K, V, L, TYPE>, sample_size: usize) -> usize {
         let mut num_entries = 0;
-        for i in (sample_1..sample_1 + sample_size).chain(sample_2..(sample_2 + sample_size)) {
+        for i in 0..sample_size {
             num_entries += current_array.bucket(i).len();
         }
-        num_entries * (current_array.len() / (sample_size * 2))
+        num_entries * (current_array.len() / sample_size)
     }
 
     /// Peeks an entry from the [`HashTable`].
@@ -360,12 +353,7 @@ where
                 && bucket.len() >= BUCKET_LEN - 1
                 && current_array.initiate_sampling(hash)
             {
-                self.try_enlarge(
-                    current_array,
-                    bucket_index,
-                    bucket.len(),
-                    async_guard.guard(),
-                );
+                self.try_enlarge(current_array, bucket_index, async_guard.guard());
             }
             if let Some(writer) = Writer::lock_async(bucket, &async_guard).await {
                 return LockedBucket {
@@ -397,7 +385,7 @@ where
                 && bucket.len() >= BUCKET_LEN - 1
                 && current_array.initiate_sampling(hash)
             {
-                self.try_enlarge(current_array, bucket_index, bucket.len(), &guard);
+                self.try_enlarge(current_array, bucket_index, &guard);
             }
 
             if let Some(writer) = Writer::lock_sync(bucket) {
@@ -778,7 +766,7 @@ where
                 && bucket.len() >= BUCKET_LEN - 1
                 && current_array.initiate_sampling(hash)
             {
-                self.try_enlarge(current_array, bucket_index, bucket.len(), guard);
+                self.try_enlarge(current_array, bucket_index, guard);
                 bucket = current_array.bucket(bucket_index);
             }
 
@@ -1255,61 +1243,43 @@ where
         }
     }
 
-    /// Tries to enlarge [`HashTable`] if the estimated load factor is greater than `3/4`.
-    fn try_enlarge(
-        &self,
-        current_array: &BucketArray<K, V, L, TYPE>,
-        index: usize,
-        mut num_entries: usize,
-        guard: &Guard,
-    ) {
+    /// Tries to enlarge [`HashTable`].
+    fn try_enlarge(&self, current_array: &BucketArray<K, V, L, TYPE>, index: usize, guard: &Guard) {
         if !current_array.has_linked_array() {
-            // Try to grow if the estimated load factor is greater than `3/4`.
-            let threshold = current_array.sample_size() * (BUCKET_LEN / 4) * 3;
-            if num_entries > threshold
-                || (1..current_array.sample_size()).any(|i| {
-                    num_entries += current_array
-                        .bucket((index + i) % current_array.len())
-                        .len();
-                    num_entries > threshold
-                })
-            {
-                self.try_resize(current_array, index, guard);
+            let sample_size = current_array.small_sample_size();
+            let sample_capacity = sample_size * BUCKET_LEN;
+            let mut num_entries = 0;
+            for i in 0..sample_size {
+                let bucket = current_array.bucket((index + i) % current_array.len());
+                num_entries += bucket.len();
+                if BucketArray::<K, V, L, TYPE>::need_enlarge(sample_capacity, num_entries) {
+                    self.try_resize(current_array, guard);
+                    break;
+                }
             }
         }
     }
 
-    /// Tries to shrink the [`HashTable`] to fit the estimated number of entries it to optimize the
-    /// storage.
+    /// Tries to shrink the [`HashTable`] to fit.
     fn try_shrink(&self, current_array: &BucketArray<K, V, L, TYPE>, index: usize, guard: &Guard) {
-        if !current_array.has_linked_array() {
-            let minimum_capacity = self.minimum_capacity();
-            if current_array.num_slots() > minimum_capacity {
-                // Try to shrink if the estimated load factor is less than `1/8`.
-                let shrink_threshold = current_array.sample_size() * BUCKET_LEN / 8;
-                let mut num_entries = 0;
-                for i in 0..current_array.sample_size() {
-                    let bucket = current_array.bucket((index + i) % current_array.len());
-                    num_entries += bucket.len();
-                    if num_entries >= shrink_threshold {
-                        // Early exit.
-                        return;
-                    }
-                }
-                if num_entries <= shrink_threshold {
-                    self.try_resize(current_array, index, guard);
+        if !current_array.has_linked_array() && current_array.num_slots() > self.minimum_capacity()
+        {
+            let sample_size = current_array.small_sample_size();
+            let sample_capacity = sample_size * BUCKET_LEN;
+            let mut num_entries = 0;
+            for i in 0..sample_size {
+                let bucket = current_array.bucket((index + i) % current_array.len());
+                num_entries += bucket.len();
+                if !BucketArray::<K, V, L, TYPE>::need_shrink(sample_capacity, num_entries) {
+                    return;
                 }
             }
+            self.try_resize(current_array, guard);
         }
     }
 
     /// Tries to resize the array.
-    fn try_resize(
-        &self,
-        sampled_array: &BucketArray<K, V, L, TYPE>,
-        sampling_index: usize,
-        guard: &Guard,
-    ) {
+    fn try_resize(&self, sampled_array: &BucketArray<K, V, L, TYPE>, guard: &Guard) {
         let current_array_ptr = self.bucket_array_var().load(Acquire, guard);
         let Some(current_array) = (unsafe { current_array_ptr.as_ref_unchecked() }) else {
             // The hash table is empty.
@@ -1327,39 +1297,13 @@ where
         }
 
         let minimum_capacity = self.minimum_capacity();
+        let maximum_capacity = self.maximum_capacity();
+        let estimation = Self::sample(current_array, current_array.large_sample_size());
         let capacity = current_array.num_slots();
-        let estimated_num_entries = Self::sample(current_array, sampling_index);
 
-        let new_capacity =
-            if capacity < minimum_capacity || estimated_num_entries >= (capacity / 4) * 3 {
-                // Double the capacity if the estimated load factor is equal to or greater than
-                // `3/4`; `~5%` of buckets are expected to have overflow buckets.
-                if capacity == self.maximum_capacity() {
-                    // Do not resize if the capacity cannot be increased.
-                    capacity
-                } else {
-                    // Double `new_capacity` until the expected load factor becomes `~0.4`.
-                    let mut new_capacity = minimum_capacity.next_power_of_two().max(capacity);
-                    while new_capacity / 2 < estimated_num_entries {
-                        if new_capacity >= self.maximum_capacity() {
-                            break;
-                        }
-                        new_capacity *= 2;
-                    }
-                    new_capacity
-                }
-            } else if estimated_num_entries <= capacity / 8 {
-                // Shrink to fit if the estimated load factor is equal to or less than `1/8`.
-                (estimated_num_entries * 2)
-                    .max(minimum_capacity)
-                    .max(BucketArray::<K, V, L, TYPE>::minimum_capacity())
-                    .next_power_of_two()
-            } else {
-                capacity
-            };
-
-        let try_resize = new_capacity != capacity;
-        let try_drop_table = estimated_num_entries == 0 && minimum_capacity == 0;
+        let try_resize = BucketArray::<K, V, L, TYPE>::need_enlarge(capacity, estimation)
+            || BucketArray::<K, V, L, TYPE>::need_shrink(capacity, estimation);
+        let try_drop_table = estimation == 0 && minimum_capacity == 0;
         if !try_resize && !try_drop_table {
             // Nothing to do.
             return;
@@ -1420,14 +1364,24 @@ where
                 }
             }
         } else if try_resize {
-            let new_bucket_array = unsafe {
-                Shared::new_unchecked(BucketArray::<K, V, L, TYPE>::new(
-                    new_capacity,
-                    (*self.bucket_array_var()).clone(Relaxed, guard),
-                ))
-            };
-            self.bucket_array_var()
-                .swap((Some(new_bucket_array), Tag::None), Release);
+            // Recheck the sampling result before allocating a new bucket array.
+            let estimation = Self::sample(current_array, current_array.full_sample_size());
+            let new_capacity = BucketArray::<K, V, L, TYPE>::optimal_capacity(
+                capacity,
+                estimation,
+                minimum_capacity,
+                maximum_capacity,
+            );
+            if new_capacity != capacity {
+                let new_bucket_array = unsafe {
+                    Shared::new_unchecked(BucketArray::<K, V, L, TYPE>::new(
+                        new_capacity,
+                        (*self.bucket_array_var()).clone(Relaxed, guard),
+                    ))
+                };
+                self.bucket_array_var()
+                    .swap((Some(new_bucket_array), Tag::None), Release);
+            }
         }
     }
 
@@ -1542,7 +1496,7 @@ impl<K: Eq + Hash, V, L: LruList, const TYPE: char> LockedBucket<K, V, L, TYPE> 
     /// Sets that there can be a garbage entry in the bucket so the epoch should be advanced.
     #[inline]
     pub(crate) const fn set_has_garbage(&self, guard: &Guard) {
-        let sample_size = self.bucket_array().sample_size();
+        let sample_size = self.bucket_array().large_sample_size();
         if self.bucket_index % (sample_size * sample_size) == 0 {
             guard.set_has_garbage();
         }

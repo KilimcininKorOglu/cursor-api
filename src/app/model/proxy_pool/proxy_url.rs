@@ -1,6 +1,5 @@
-use core::fmt;
-use core::str::FromStr;
-
+use core::{fmt, str::FromStr};
+use interned::Str;
 use reqwest::Proxy;
 use rkyv::{Archive, Deserialize, Serialize};
 
@@ -11,7 +10,7 @@ use rkyv::{Archive, Deserialize, Serialize};
 #[derive(Clone, Archive, Deserialize, Serialize)]
 #[rkyv(compare(PartialEq))]
 #[repr(transparent)]
-pub struct ProxyUrl(String);
+pub struct ProxyUrl(Str);
 
 impl ProxyUrl {
     /// 将 ProxyUrl 转换为 reqwest::Proxy
@@ -22,30 +21,22 @@ impl ProxyUrl {
     /// - `from_str` 中已经通过 `Proxy::all(s)?` 验证了URL的有效性
     /// - 一旦构造成功，内部的URL字符串就是不可变的
     #[inline]
-    pub fn to_proxy(&self) -> Proxy {
-        unsafe { Proxy::all(self.0.as_str()).unwrap_unchecked() }
-    }
+    pub fn to_proxy(&self) -> Proxy { unsafe { Proxy::all(self.0.as_str()).unwrap_unchecked() } }
 }
 
 impl From<ProxyUrl> for Proxy {
-    fn from(url: ProxyUrl) -> Self {
-        url.to_proxy()
-    }
+    fn from(url: ProxyUrl) -> Self { url.to_proxy() }
 }
 
 impl fmt::Display for ProxyUrl {
     #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&self.0)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { f.write_str(&self.0) }
 }
 
 impl core::ops::Deref for ProxyUrl {
     type Target = str;
     #[inline]
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
+    fn deref(&self) -> &Self::Target { &self.0 }
 }
 
 impl FromStr for ProxyUrl {
@@ -59,22 +50,18 @@ impl FromStr for ProxyUrl {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         // 验证URL的有效性
         Proxy::all(s)?;
-        Ok(Self(s.to_owned()))
+        Ok(Self(Str::new(s)))
     }
 }
 
 impl PartialEq for ProxyUrl {
     #[inline]
-    fn eq(&self, other: &Self) -> bool {
-        self.0 == other.0
-    }
+    fn eq(&self, other: &Self) -> bool { self.0 == other.0 }
 }
 
 impl Eq for ProxyUrl {}
 
 impl core::hash::Hash for ProxyUrl {
     #[inline]
-    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
-        self.0.hash(state);
-    }
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) { self.0.hash(state); }
 }

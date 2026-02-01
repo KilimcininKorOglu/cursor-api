@@ -38,9 +38,7 @@ impl<K, V, L: LruList, const TYPE: char> BucketArray<K, V, L, TYPE> {
         let log2_array_len = u8::try_from(array_len.trailing_zeros()).unwrap_or(0);
         assert_eq!(1_usize << log2_array_len, array_len);
 
-        // `2 -> 1`, `4 -> 2`, `8 -> 4`, `1024 -> 16`, and `2^58 -> 64`.
         let sample_size = log2_array_len.next_power_of_two();
-
         let alignment = align_of::<Bucket<K, V, L, TYPE>>();
         let layout = Self::bucket_array_layout(array_len);
 
@@ -123,6 +121,50 @@ impl<K, V, L: LruList, const TYPE: char> BucketArray<K, V, L, TYPE> {
         BUCKET_LEN << 1
     }
 
+    /// Returns `true` if the bucket array needs to be enlarged.
+    pub(crate) const fn need_enlarge(capacity: usize, num_entries: usize) -> bool {
+        // When the load factor is greater than `13/16`; `~10%` of buckets are expected to have
+        // overflow buckets.
+        num_entries > (capacity / 16) * 13
+    }
+
+    /// Returns `true` if the bucket array needs to be shrunk.
+    pub(crate) const fn need_shrink(capacity: usize, num_entries: usize) -> bool {
+        // When the load factor is less than `1/8`.
+        num_entries < capacity / 8
+    }
+
+    /// Returns the optimal capacity.
+    #[inline]
+    pub(crate) fn optimal_capacity(
+        capacity: usize,
+        num_entries: usize,
+        minimum_capacity: usize,
+        maximum_capacity: usize,
+    ) -> usize {
+        if capacity < minimum_capacity || Self::need_enlarge(capacity, num_entries) {
+            if capacity == maximum_capacity {
+                capacity
+            } else {
+                let mut new_capacity = minimum_capacity.next_power_of_two().max(capacity);
+                while new_capacity / 2 < num_entries {
+                    if new_capacity >= maximum_capacity {
+                        break;
+                    }
+                    new_capacity *= 2;
+                }
+                new_capacity
+            }
+        } else if Self::need_shrink(capacity, num_entries) {
+            (num_entries * 2)
+                .max(minimum_capacity)
+                .max(Self::minimum_capacity())
+                .next_power_of_two()
+        } else {
+            capacity
+        }
+    }
+
     /// Returns a reference to its rehashing metadata.
     #[inline]
     pub(crate) const fn rehashing_metadata(&self) -> &AtomicUsize {
@@ -136,12 +178,31 @@ impl<K, V, L: LruList, const TYPE: char> BucketArray<K, V, L, TYPE> {
         (hash as u8 & (self.sample_size - 1)) == 0
     }
 
-    /// Returns the recommended sampling size.
+    /// Returns the recommended sampling size for preliminary estimation.
     #[inline]
-    pub(crate) const fn sample_size(&self) -> usize {
+    pub(crate) const fn small_sample_size(&self) -> usize {
+        // Expected error of size estimation is `~5%`.
+        //
+        // `2 -> 1 -> 1`, `4 -> 2 -> 2`, `8 -> 4 -> 4`, `1024 -> 16 -> 8`, `1048576 -> 32 -> 8`, and
+        // `2^58 -> 64 -> 8`.
+        (1 + self.sample_size.trailing_zeros()).next_power_of_two() as usize
+    }
+
+    /// Returns the recommended sampling size for more accurate estimation.
+    #[inline]
+    pub(crate) const fn large_sample_size(&self) -> usize {
         // `Log2(array_len)`: if `array_len` is sufficiently large, expected error of size
         // estimation is `~3%`.
+        //
+        // `2 -> 1`, `4 -> 2`, `8 -> 4`, `1024 -> 16`, `1048576 -> 32`, and `2^58 -> 64`.
         self.sample_size as usize
+    }
+
+    /// Returns the recommended sampling size for full estimation.
+    #[inline]
+    pub(crate) fn full_sample_size(&self) -> usize {
+        // Expected error of size estimation is `~1%`.
+        self.len().min(256)
     }
 
     /// Returns a reference to a [`Bucket`] at the given position.

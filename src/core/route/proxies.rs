@@ -8,6 +8,7 @@ use crate::{
 };
 use alloc::{borrow::Cow, sync::Arc};
 use axum::{Json, http::StatusCode};
+use interned::Str;
 
 type HashMap<K, V> = hashbrown::HashMap<K, V, ahash::RandomState>;
 
@@ -87,7 +88,7 @@ pub async fn handle_add_proxy(
     let proxies = request
         .proxies
         .into_iter()
-        .filter(|(name, _)| !current.contains_key(name))
+        .filter(|(name, _)| !current.contains_key(name.as_str()))
         .collect::<HashMap<_, _>>();
 
     if proxies.is_empty() {
@@ -110,7 +111,7 @@ pub async fn handle_add_proxy(
 
     for (name, proxy) in proxies {
         // 直接添加新的代理
-        current.insert(name, proxy);
+        current.insert(name.into(), proxy);
         added_count += 1;
     }
 
@@ -157,7 +158,7 @@ pub async fn handle_delete_proxies(
     let mut processing_names: Vec<String> = Vec::with_capacity(capacity);
     let mut failed_names: Vec<String> = Vec::with_capacity(capacity);
     for name in names {
-        if current.contains_key(&name) {
+        if current.contains_key(name.as_str()) {
             processing_names.push(name);
         } else {
             failed_names.push(name);
@@ -169,7 +170,7 @@ pub async fn handle_delete_proxies(
         let mut map = current
             .iter()
             .filter_map(|(name, value)| {
-                if !processing_names.contains(name) {
+                if !processing_names.iter().any(|s| *s == *name) {
                     Some((name.clone(), value.clone()))
                 } else {
                     None
@@ -218,7 +219,7 @@ pub async fn handle_set_general_proxy(
     Json(request): Json<SetGeneralProxyRequest>,
 ) -> Result<Json<CommonResponse>, (StatusCode, Json<GenericError>)> {
     // 检查代理名称是否存在
-    if !proxy_pool::proxies().load().contains_key(&request.name) {
+    if !proxy_pool::proxies().load().contains_key(request.name.as_str()) {
         return Err((
             StatusCode::BAD_REQUEST,
             Json(GenericError {
@@ -231,7 +232,7 @@ pub async fn handle_set_general_proxy(
     }
 
     // 设置通用代理
-    proxy_pool::general_name().store(Arc::new(request.name));
+    proxy_pool::general_name().store(Arc::new(Str::from(request.name)));
 
     // 更新全局代理池并保存配置
     if let Err(e) = Proxies::update_and_save().await {
