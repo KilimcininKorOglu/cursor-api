@@ -2533,7 +2533,7 @@ mod treeindex {
         let num_threads = 3;
         let num_iter = if cfg!(miri) { 1 } else { 16 };
         let workload_size = if cfg!(miri) { 32 } else { 1024 };
-        let tree: Arc<TreeIndex<usize, R>> = Arc::new(TreeIndex::default());
+        let tree: Arc<TreeIndex<String, R>> = Arc::new(TreeIndex::default());
         let mut threads = Vec::with_capacity(num_threads);
         let barrier = Arc::new(Barrier::new(num_threads));
         for task_id in 0..num_threads {
@@ -2545,12 +2545,14 @@ mod treeindex {
                     match task_id {
                         0 => {
                             for k in 0..workload_size {
-                                assert!(tree.insert_sync(k, R::new(&INST_CNT)).is_ok());
+                                assert!(
+                                    tree.insert_sync(format!("{k}"), R::new(&INST_CNT)).is_ok()
+                                );
                             }
                         }
                         1 => {
                             for k in 0..workload_size / 8 {
-                                tree.remove_sync(&(k * 4));
+                                tree.remove_sync(format!("{}", k * 4).as_str());
                             }
                         }
                         _ => {

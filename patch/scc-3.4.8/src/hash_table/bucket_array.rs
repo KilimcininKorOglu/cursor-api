@@ -146,7 +146,10 @@ impl<K, V, L: LruList, const TYPE: char> BucketArray<K, V, L, TYPE> {
             if capacity == maximum_capacity {
                 capacity
             } else {
-                let mut new_capacity = minimum_capacity.next_power_of_two().max(capacity);
+                let mut new_capacity = minimum_capacity
+                    .next_power_of_two()
+                    .max(capacity)
+                    .min(maximum_capacity);
                 while new_capacity / 2 < num_entries {
                     if new_capacity >= maximum_capacity {
                         break;
@@ -181,18 +184,16 @@ impl<K, V, L: LruList, const TYPE: char> BucketArray<K, V, L, TYPE> {
     /// Returns the recommended sampling size for preliminary estimation.
     #[inline]
     pub(crate) const fn small_sample_size(&self) -> usize {
-        // Expected error of size estimation is `~5%`.
+        // `Log2(Log2(len))` Expected error of size estimation is `~5%`.
         //
-        // `2 -> 1 -> 1`, `4 -> 2 -> 2`, `8 -> 4 -> 4`, `1024 -> 16 -> 8`, `1048576 -> 32 -> 8`, and
-        // `2^58 -> 64 -> 8`.
+        // `2 -> 1`, `4-> 2`, `8 -> 4`, `1024 -> 8`, `1048576 -> 8`, and `2^58 -> 8`.
         (1 + self.sample_size.trailing_zeros()).next_power_of_two() as usize
     }
 
     /// Returns the recommended sampling size for more accurate estimation.
     #[inline]
     pub(crate) const fn large_sample_size(&self) -> usize {
-        // `Log2(array_len)`: if `array_len` is sufficiently large, expected error of size
-        // estimation is `~3%`.
+        // `Log2(len)`: if `len` is sufficiently large, expected error of size estimation is `~3%`.
         //
         // `2 -> 1`, `4 -> 2`, `8 -> 4`, `1024 -> 16`, `1048576 -> 32`, and `2^58 -> 64`.
         self.sample_size as usize
@@ -201,8 +202,8 @@ impl<K, V, L: LruList, const TYPE: char> BucketArray<K, V, L, TYPE> {
     /// Returns the recommended sampling size for full estimation.
     #[inline]
     pub(crate) fn full_sample_size(&self) -> usize {
-        // Expected error of size estimation is `~1%`.
-        self.len().min(256)
+        // `Max(len, 128)`: expected error of size estimation is `~1%`.
+        self.len().min(128)
     }
 
     /// Returns a reference to a [`Bucket`] at the given position.

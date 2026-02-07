@@ -491,6 +491,7 @@ impl StreamDecoder {
         // crate::debug!("JSON消息 [hex: {}]: {}", hex::encode(msg_data), text);
         // crate::debug!("{count}: {text:?}");
         if let Ok(error) = CursorError::from_slice(msg_data) {
+            // crate::debug!("received: {error:#?}");
             return Err(error);
         } else {
             crate::debug!("[JSON error] {}", hex::encode(msg_data));

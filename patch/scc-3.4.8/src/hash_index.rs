@@ -178,10 +178,9 @@ where
             (AtomicShared::null(), AtomicUsize::new(0))
         } else {
             let array = unsafe {
-                Shared::new_unchecked(BucketArray::<K, V, (), INDEX>::new(
-                    capacity,
-                    AtomicShared::null(),
-                ))
+                Shared::new_with_unchecked(|| {
+                    BucketArray::<K, V, (), INDEX>::new(capacity, AtomicShared::null())
+                })
             };
             let minimum_capacity = array.num_slots();
             (

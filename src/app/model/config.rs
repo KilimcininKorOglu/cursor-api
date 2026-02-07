@@ -23,19 +23,19 @@ pub struct AppConfig {
     pub cursor_client_version: Version,
 }
 
-pub struct AppConfigManager {
+pub struct AppConfigWrapper {
     pub hash: Hash,
     pub inner: AppConfig,
     pub content: ByteStr,
 }
 
-impl core::ops::Deref for AppConfigManager {
+impl core::ops::Deref for AppConfigWrapper {
     type Target = AppConfig;
     fn deref(&self) -> &Self::Target { &self.inner }
 }
 
 // 全局配置实例
-static APP_CONFIG: ManuallyInit<ArcSwap<AppConfigManager>> = ManuallyInit::new();
+static APP_CONFIG: ManuallyInit<ArcSwap<AppConfigWrapper>> = ManuallyInit::new();
 
 macro_rules! config_methods {
     // 递归终止
@@ -102,7 +102,7 @@ impl AppConfig {
             use super::dynamic_key::{Secret, init};
             init(Secret::parse_str(&config.dynamic_key_secret).0.unwrap_or([0; 64]));
         }
-        APP_CONFIG.init(ArcSwap::from_pointee(AppConfigManager {
+        APP_CONFIG.init(ArcSwap::from_pointee(AppConfigWrapper {
             hash: hash(&config),
             inner: config,
             content,
@@ -125,7 +125,7 @@ impl AppConfig {
                 use super::dynamic_key::{Secret, update};
                 update(Secret::parse_str(&config.dynamic_key_secret).0.unwrap_or([0; 64]));
             }
-            APP_CONFIG.store(alloc::sync::Arc::new(AppConfigManager {
+            APP_CONFIG.store(alloc::sync::Arc::new(AppConfigWrapper {
                 hash,
                 inner: config,
                 content,

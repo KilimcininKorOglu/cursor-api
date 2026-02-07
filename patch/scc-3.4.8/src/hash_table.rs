@@ -134,7 +134,8 @@ where
     fn allocate_bucket_array<'g>(&self, guard: &'g Guard) -> &'g BucketArray<K, V, L, TYPE> {
         unsafe {
             let capacity = self.minimum_capacity();
-            let allocated = Shared::new_unchecked(BucketArray::new(capacity, AtomicShared::null()));
+            let allocated =
+                Shared::new_with_unchecked(|| BucketArray::new(capacity, AtomicShared::null()));
             match self.bucket_array_var().compare_exchange(
                 Ptr::null(),
                 (Some(allocated), Tag::None),
@@ -202,11 +203,15 @@ where
         false
     }
 
-    /// Estimates the number of entries by sampling buckets.
+    /// Estimates the number of entries by sampling buckets at the end of the bucket array.
     #[inline]
-    fn sample(current_array: &BucketArray<K, V, L, TYPE>, sample_size: usize) -> usize {
+    fn sample(
+        current_array: &BucketArray<K, V, L, TYPE>,
+        start_index: usize,
+        sample_size: usize,
+    ) -> usize {
         let mut num_entries = 0;
-        for i in 0..sample_size {
+        for i in start_index..start_index + sample_size {
             num_entries += current_array.bucket(i).len();
         }
         num_entries * (current_array.len() / sample_size)
@@ -1249,9 +1254,9 @@ where
             let sample_size = current_array.small_sample_size();
             let sample_capacity = sample_size * BUCKET_LEN;
             let mut num_entries = 0;
-            for i in 0..sample_size {
-                let bucket = current_array.bucket((index + i) % current_array.len());
-                num_entries += bucket.len();
+            let start_index = index & (sample_size - 1);
+            for i in start_index..start_index + sample_size {
+                num_entries += current_array.bucket(i).len();
                 if BucketArray::<K, V, L, TYPE>::need_enlarge(sample_capacity, num_entries) {
                     self.try_resize(current_array, guard);
                     break;
@@ -1267,9 +1272,9 @@ where
             let sample_size = current_array.small_sample_size();
             let sample_capacity = sample_size * BUCKET_LEN;
             let mut num_entries = 0;
-            for i in 0..sample_size {
-                let bucket = current_array.bucket((index + i) % current_array.len());
-                num_entries += bucket.len();
+            let start_index = index & (sample_size - 1);
+            for i in start_index..start_index + sample_size {
+                num_entries += current_array.bucket(i).len();
                 if !BucketArray::<K, V, L, TYPE>::need_shrink(sample_capacity, num_entries) {
                     return;
                 }
@@ -1279,6 +1284,12 @@ where
     }
 
     /// Tries to resize the array.
+    ///
+    /// The table is resized after three times of sampling and all three samples indicate that the
+    /// array should be resized. First sampling is done with a very small sample size in
+    /// `try_enlarge` and `try_shrink`. Second sampling is done with a large sample size in the
+    /// first half of this method, before acquiring the resize lock. The last sampling is done after
+    /// acquiring the resize lock with a very large sample size.
     fn try_resize(&self, sampled_array: &BucketArray<K, V, L, TYPE>, guard: &Guard) {
         let current_array_ptr = self.bucket_array_var().load(Acquire, guard);
         let Some(current_array) = (unsafe { current_array_ptr.as_ref_unchecked() }) else {
@@ -1298,7 +1309,7 @@ where
 
         let minimum_capacity = self.minimum_capacity();
         let maximum_capacity = self.maximum_capacity();
-        let estimation = Self::sample(current_array, current_array.large_sample_size());
+        let estimation = Self::sample(current_array, 0, current_array.large_sample_size());
         let capacity = current_array.num_slots();
 
         let try_resize = BucketArray::<K, V, L, TYPE>::need_enlarge(capacity, estimation)
@@ -1365,7 +1376,15 @@ where
             }
         } else if try_resize {
             // Recheck the sampling result before allocating a new bucket array.
-            let estimation = Self::sample(current_array, current_array.full_sample_size());
+            //
+            // By sampling buckets at the end of the bucket array, the effect of mutable iterators
+            // on sampling is minimized.
+            let sample_size = current_array.full_sample_size();
+            let estimation = Self::sample(
+                current_array,
+                current_array.len() - sample_size,
+                sample_size,
+            );
             let new_capacity = BucketArray::<K, V, L, TYPE>::optimal_capacity(
                 capacity,
                 estimation,
@@ -1374,10 +1393,12 @@ where
             );
             if new_capacity != capacity {
                 let new_bucket_array = unsafe {
-                    Shared::new_unchecked(BucketArray::<K, V, L, TYPE>::new(
-                        new_capacity,
-                        (*self.bucket_array_var()).clone(Relaxed, guard),
-                    ))
+                    Shared::new_with_unchecked(|| {
+                        BucketArray::<K, V, L, TYPE>::new(
+                            new_capacity,
+                            (*self.bucket_array_var()).clone(Relaxed, guard),
+                        )
+                    })
                 };
                 self.bucket_array_var()
                     .swap((Some(new_bucket_array), Tag::None), Release);

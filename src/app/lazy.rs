@@ -46,11 +46,17 @@ pub fn init() {
         USE_PUB_REVERSE_PROXY = !PUB_REVERSE_PROXY_HOST.is_empty();
     }
     TCP_KEEPALIVE
-        .init(parse_from_env("TCP_KEEPALIVE", ToDuration(Some(DEFAULT_TCP_KEEPALIVE))));
+        .init(ToDuration::parse_from_env("TCP_KEEPALIVE"));
     TCP_KEEPALIVE_INTERVAL
-        .init(parse_from_env("TCP_KEEPALIVE_INTERVAL", ToDuration(Some(DEFAULT_TCP_KEEPALIVE_INTERVAL))));
+        .init(ToDuration::parse_from_env("TCP_KEEPALIVE_INTERVAL"));
     TCP_KEEPALIVE_RETRIES
-        .init(parse_from_env("TCP_KEEPALIVE_RETRIES", ToCount(Some(DEFAULT_TCP_KEEPALIVE_RETRIES))));
+        .init(ToCount::parse_from_env("TCP_KEEPALIVE_RETRIES"));
+    HTTP2_ADAPTIVE_WINDOW.init(parse_from_env("HTTP2_ADAPTIVE_WINDOW", true));
+    HTTP2_KEEP_ALIVE_INTERVAL
+        .init(ToDuration::parse_from_env("HTTP2_KEEP_ALIVE_INTERVAL"));
+    HTTP2_KEEP_ALIVE_TIMEOUT
+        .init(ToDuration::parse_from_env("HTTP2_KEEP_ALIVE_TIMEOUT"));
+    HTTP2_KEEP_ALIVE_WHILE_IDLE.init(parse_from_env("HTTP2_KEEP_ALIVE_WHILE_IDLE", true));
     SERVICE_TIMEOUT
         .init(parse_from_env("SERVICE_TIMEOUT", DEFAULT_SERVICE_TIMEOUT).min(MAX_SERVICE_TIMEOUT));
     REAL_USAGE.init(parse_from_env("REAL_USAGE", true));
@@ -265,28 +271,51 @@ def_cursor_api_url! {
 }
 
 // TCP 和超时相关常量
-const DEFAULT_TCP_KEEPALIVE: NonNegativeI16 = NonNegativeI16::new(15).unwrap();
+const DEFAULT_TCP_KEEPALIVE: NonNegativeI16 = NonNegativeI16::new(60).unwrap();
 const MAX_TCP_KEEPALIVE: NonNegativeI16 = NonNegativeI16::new(600).unwrap();
-pub static TCP_KEEPALIVE: ManuallyInit<ToDuration<MAX_TCP_KEEPALIVE>> = ManuallyInit::new();
+pub static TCP_KEEPALIVE: ManuallyInit<ToDuration<DEFAULT_TCP_KEEPALIVE, MAX_TCP_KEEPALIVE>> =
+    ManuallyInit::new();
 
 const DEFAULT_TCP_KEEPALIVE_INTERVAL: NonNegativeI16 = NonNegativeI16::new(15).unwrap();
 const MAX_TCP_KEEPALIVE_INTERVAL: NonNegativeI16 = NonNegativeI16::new(600).unwrap();
-pub static TCP_KEEPALIVE_INTERVAL: ManuallyInit<ToDuration<MAX_TCP_KEEPALIVE_INTERVAL>> =
-    ManuallyInit::new();
+pub static TCP_KEEPALIVE_INTERVAL: ManuallyInit<
+    ToDuration<DEFAULT_TCP_KEEPALIVE_INTERVAL, MAX_TCP_KEEPALIVE_INTERVAL>,
+> = ManuallyInit::new();
 
-const DEFAULT_TCP_KEEPALIVE_RETRIES: NonNegativeI8 = NonNegativeI8::new(3).unwrap();
+const DEFAULT_TCP_KEEPALIVE_RETRIES: NonNegativeI8 = NonNegativeI8::new(5).unwrap();
 const MAX_TCP_KEEPALIVE_RETRIES: NonNegativeI8 = NonNegativeI8::new(20).unwrap();
-pub static TCP_KEEPALIVE_RETRIES: ManuallyInit<ToCount<MAX_TCP_KEEPALIVE_RETRIES>> =
-    ManuallyInit::new();
+pub static TCP_KEEPALIVE_RETRIES: ManuallyInit<
+    ToCount<DEFAULT_TCP_KEEPALIVE_RETRIES, MAX_TCP_KEEPALIVE_RETRIES>,
+> = ManuallyInit::new();
+
+pub static HTTP2_ADAPTIVE_WINDOW: ManuallyInit<bool> = ManuallyInit::new();
+
+const DEFAULT_HTTP2_KEEP_ALIVE_INTERVAL: NonNegativeI16 = NonNegativeI16::new(30).unwrap();
+const MAX_HTTP2_KEEP_ALIVE_INTERVAL: NonNegativeI16 = NonNegativeI16::new(600).unwrap();
+pub static HTTP2_KEEP_ALIVE_INTERVAL: ManuallyInit<
+    ToDuration<DEFAULT_HTTP2_KEEP_ALIVE_INTERVAL, MAX_HTTP2_KEEP_ALIVE_INTERVAL>,
+> = ManuallyInit::new();
+
+const DEFAULT_HTTP2_KEEP_ALIVE_TIMEOUT: NonNegativeI16 = NonNegativeI16::new(20).unwrap();
+const MAX_HTTP2_KEEP_ALIVE_TIMEOUT: NonNegativeI16 = NonNegativeI16::new(600).unwrap();
+pub static HTTP2_KEEP_ALIVE_TIMEOUT: ManuallyInit<
+    ToDuration<DEFAULT_HTTP2_KEEP_ALIVE_TIMEOUT, MAX_HTTP2_KEEP_ALIVE_TIMEOUT>,
+> = ManuallyInit::new();
+
+pub static HTTP2_KEEP_ALIVE_WHILE_IDLE: ManuallyInit<bool> = ManuallyInit::new();
 
 const DEFAULT_SERVICE_TIMEOUT: u16 = 30;
 const MAX_SERVICE_TIMEOUT: u16 = 600;
 pub static SERVICE_TIMEOUT: ManuallyInit<u16> = ManuallyInit::new();
 
 #[derive(Debug, Clone, Copy)]
-pub struct ToDuration<const MAX: NonNegativeI16>(Option<NonNegativeI16>);
+pub struct ToDuration<const DEFAULT: NonNegativeI16, const MAX: NonNegativeI16>(
+    Option<NonNegativeI16>,
+);
 
-impl<const MAX: NonNegativeI16> ParseFromEnv for ToDuration<MAX> {
+impl<const DEFAULT: NonNegativeI16, const MAX: NonNegativeI16> ParseFromEnv
+    for ToDuration<DEFAULT, MAX>
+{
     fn parse_from_env(key: &str) -> Option<Self::Result> {
         let v = i32::parse_from_env(key)?;
         Some(if v < 0 {
@@ -297,16 +326,25 @@ impl<const MAX: NonNegativeI16> ParseFromEnv for ToDuration<MAX> {
     }
 }
 
-impl<const MAX: NonNegativeI16> ToDuration<MAX> {
+impl<const DEFAULT: NonNegativeI16, const MAX: NonNegativeI16> ToDuration<DEFAULT, MAX> {
     pub fn to_duration(self) -> Option<core::time::Duration> {
         self.0.map(|v| core::time::Duration::from_secs(v.as_inner() as _))
+    }
+    pub fn to_duration_or_default(self) -> core::time::Duration {
+        self.to_duration()
+            .unwrap_or(const { core::time::Duration::from_secs(DEFAULT.as_inner() as _) })
+    }
+    pub fn parse_from_env(key: &'static str) -> Self {
+        <Self as ParseFromEnv>::parse_from_env(key).unwrap_or(Self(Some(DEFAULT)))
     }
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct ToCount<const MAX: NonNegativeI8>(Option<NonNegativeI8>);
+pub struct ToCount<const DEFAULT: NonNegativeI8, const MAX: NonNegativeI8>(Option<NonNegativeI8>);
 
-impl<const MAX: NonNegativeI8> ParseFromEnv for ToCount<MAX> {
+impl<const DEFAULT: NonNegativeI8, const MAX: NonNegativeI8> ParseFromEnv
+    for ToCount<DEFAULT, MAX>
+{
     fn parse_from_env(key: &str) -> Option<Self::Result> {
         let v = i16::parse_from_env(key)?;
         Some(if v < 0 {
@@ -317,8 +355,14 @@ impl<const MAX: NonNegativeI8> ParseFromEnv for ToCount<MAX> {
     }
 }
 
-impl<const MAX: NonNegativeI8> ToCount<MAX> {
+impl<const DEFAULT: NonNegativeI8, const MAX: NonNegativeI8> ToCount<DEFAULT, MAX> {
     pub fn to_count(self) -> Option<u32> { self.0.map(|v| v.as_inner() as _) }
+    pub fn to_count_or_default(self) -> u32 {
+        self.to_count().unwrap_or(const { DEFAULT.as_inner() as _ })
+    }
+    pub fn parse_from_env(key: &'static str) -> Self {
+        <Self as ParseFromEnv>::parse_from_env(key).unwrap_or(Self(Some(DEFAULT)))
+    }
 }
 
 pub static REAL_USAGE: ManuallyInit<bool> = ManuallyInit::new();

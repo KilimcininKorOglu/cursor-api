@@ -508,8 +508,8 @@ impl Models {
 #[inline]
 fn push_ids(ids: &mut Vec<&'static str>, id: &str) {
     let id = leak_ids::add(id);
-    ids.push(id.0);
     ids.push(id.1);
+    ids.push(id.0);
 }
 
 create_models! {

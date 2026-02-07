@@ -103,7 +103,6 @@ struct Metadata<K, V, const LEN: usize> {
 const LINKED_BUCKET_LEN: usize = BUCKET_LEN / 4;
 
 /// [`LinkedBucket`] is a smaller [`Bucket`] that is attached to a [`Bucket`] as a linked list.
-#[repr(align(128))]
 struct LinkedBucket<K, V> {
     /// [`LinkedBucket`] metadata.
     metadata: Metadata<K, V, LINKED_BUCKET_LEN>,
@@ -463,7 +462,7 @@ impl<K, V, L: LruList, const TYPE: char> Bucket<K, V, L, TYPE> {
             occupied_bitmap | (1_u32 << index),
             if TYPE == INDEX { Release } else { Relaxed },
         );
-        self.len.store(self.len.load(Relaxed) + 1, Relaxed);
+        self.len.store(self.len() + 1, Relaxed);
     }
 
     /// Clears unreachable entries.
@@ -683,10 +682,9 @@ unsafe impl<K: Eq + Send + Sync, V: Send + Sync, L: LruList, const TYPE: char> S
 
 impl<K, V, const LEN: usize> DataBlock<K, V, LEN> {
     /// Creates a new [`DataBlock`].
-    #[allow(clippy::uninit_assumed_init)]
     #[inline]
     const fn new() -> DataBlock<K, V, LEN> {
-        DataBlock(unsafe { MaybeUninit::uninit().assume_init() })
+        DataBlock([const { UnsafeCell::new(MaybeUninit::uninit()) }; LEN])
     }
 
     /// Returns a pointer to the entry at the given index.
@@ -1229,20 +1227,24 @@ impl<K, V> LinkedBucket<K, V> {
     /// Creates an empty [`LinkedBucket`].
     #[inline]
     fn new(next: Option<Shared<LinkedBucket<K, V>>>) -> Shared<Self> {
-        let mut bucket = Self {
-            metadata: Metadata {
-                occupied_bitmap: AtomicU32::default(),
-                removed_bitmap: AtomicU32::default(),
-                partial_hash_array: UnsafeCell::new(Default::default()),
-                link: AtomicShared::default(),
-            },
-            prev_link: AtomicPtr::default(),
-            data_block: DataBlock::new(),
-        };
-        if let Some(next) = next {
-            bucket.metadata.link = AtomicShared::from(next);
+        unsafe {
+            Shared::new_with_unchecked(|| {
+                let mut bucket = Self {
+                    metadata: Metadata {
+                        occupied_bitmap: AtomicU32::default(),
+                        removed_bitmap: AtomicU32::default(),
+                        partial_hash_array: UnsafeCell::new(Default::default()),
+                        link: AtomicShared::default(),
+                    },
+                    prev_link: AtomicPtr::default(),
+                    data_block: DataBlock::new(),
+                };
+                if let Some(next) = next {
+                    bucket.metadata.link = AtomicShared::from(next);
+                }
+                bucket
+            })
         }
-        unsafe { Shared::new_unchecked(bucket) }
     }
 }
 

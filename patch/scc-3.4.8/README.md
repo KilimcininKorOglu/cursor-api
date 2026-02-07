@@ -330,8 +330,8 @@ assert_eq!(treeindex.range(4..=8, &guard).count(), 5);
 
 The expected tail latency of a distribution of latencies of 1048576 insertion operations (`K = u64, V = u64`) is less than 50 microseconds on Apple M4 Pro.
 
-### [`HashMap`](#hashmap), [`HashIndex`](#hashindex), and [`TreeIndex`](#treeindex) Throughput
+### [`HashMap`](#hashmap), [`HashIndex`](#hashindex), and [`TreeIndex`](#treeindex) Multi-threaded Throughput
 
-- [Results on Intel Xeon (48 cores, avx2)](https://codeberg.org/wvwwvwwv/conc-map-bench).
+Multi-threaded throughput test results are available [here](https://codeberg.org/wvwwvwwv/scalable-concurrent-containers/src/branch/main/extended_benches/README.md).
 
 ## [Changelog](https://codeberg.org/wvwwvwwv/scalable-concurrent-containers/src/branch/main/CHANGELOG.md)

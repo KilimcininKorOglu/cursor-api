@@ -9,7 +9,7 @@ use super::internal_node::Locker as InternalNodeLocker;
 use super::leaf::{InsertResult, Iter, Leaf, RemoveResult, RevIter};
 use super::leaf_node::LeafNode;
 use crate::Comparable;
-use crate::async_helper::TryWait;
+use crate::async_helper::LockPager;
 
 /// [`Node`] is either [`Self::Internal`] or [`Self::Leaf`].
 pub enum Node<K, V> {
@@ -47,6 +47,15 @@ impl<K, V> Node<K, V> {
         match &self {
             Self::Internal(internal_node) => internal_node.is_retired(),
             Self::Leaf(leaf_node) => leaf_node.is_retired(),
+        }
+    }
+
+    /// Freezes children nodes or leaves.
+    #[inline]
+    pub(super) fn freeze(&self) -> bool {
+        match &self {
+            Self::Internal(internal_node) => internal_node.children.freeze(),
+            Self::Leaf(leaf_node) => leaf_node.children.freeze(),
         }
     }
 }
@@ -122,39 +131,37 @@ where
 
     /// Inserts a key-value pair.
     #[inline]
-    pub(super) fn insert<W: TryWait>(
+    pub(super) fn insert<P: LockPager>(
         &self,
         key: K,
         val: V,
-        async_wait: &mut W,
+        pager: &mut P,
         guard: &Guard,
     ) -> Result<InsertResult<K, V>, (K, V)> {
         match &self {
-            Self::Internal(internal_node) => internal_node.insert(key, val, async_wait, guard),
-            Self::Leaf(leaf_node) => leaf_node.insert(key, val, async_wait, guard),
+            Self::Internal(internal_node) => internal_node.insert(key, val, pager, guard),
+            Self::Leaf(leaf_node) => leaf_node.insert(key, val, pager, guard),
         }
     }
 
     /// Removes an entry associated with the given key.
     #[inline]
-    pub(super) fn remove_if<Q, F: FnMut(&V) -> bool, W>(
+    pub(super) fn remove_if<Q, F: FnMut(&V) -> bool, P>(
         &self,
         key: &Q,
         condition: &mut F,
-        async_wait: &mut W,
+        pager: &mut P,
         guard: &Guard,
     ) -> Result<RemoveResult, ()>
     where
         Q: Comparable<K> + ?Sized,
-        W: TryWait,
+        P: LockPager,
     {
         match &self {
             Self::Internal(internal_node) => {
-                internal_node.remove_if::<_, _, _>(key, condition, async_wait, guard)
+                internal_node.remove_if::<_, _, _>(key, condition, pager, guard)
             }
-            Self::Leaf(leaf_node) => {
-                leaf_node.remove_if::<_, _, _>(key, condition, async_wait, guard)
-            }
+            Self::Leaf(leaf_node) => leaf_node.remove_if::<_, _, _>(key, condition, pager, guard),
         }
     }
 
@@ -162,13 +169,13 @@ where
     ///
     /// Returns the number of remaining children.
     #[inline]
-    pub(super) fn remove_range<'g, Q, R: RangeBounds<Q>, W: TryWait>(
+    pub(super) fn remove_range<'g, Q, R: RangeBounds<Q>, P: LockPager>(
         &self,
         range: &R,
         start_unbounded: bool,
         valid_lower_max_leaf: Option<&'g Leaf<K, V>>,
         valid_upper_min_node: Option<&'g Node<K, V>>,
-        async_wait: &mut W,
+        pager: &mut P,
         guard: &'g Guard,
     ) -> Result<usize, ()>
     where
@@ -180,7 +187,7 @@ where
                 start_unbounded,
                 valid_lower_max_leaf,
                 valid_upper_min_node,
-                async_wait,
+                pager,
                 guard,
             ),
             Self::Leaf(leaf_node) => leaf_node.remove_range(
@@ -188,7 +195,7 @@ where
                 start_unbounded,
                 valid_lower_max_leaf,
                 valid_upper_min_node,
-                async_wait,
+                pager,
                 guard,
             ),
         }
@@ -203,15 +210,15 @@ where
     ) {
         if let Some(old_root) = root_ptr.get_shared() {
             let new_root = if old_root.is_retired() {
-                Some(Shared::new(Node::new_leaf_node()))
+                Some(Shared::new_with(Node::new_leaf_node))
             } else {
-                let mut internal_node = Node::new_internal_node();
-                let Node::Internal(node) = &mut internal_node else {
+                let internal_node = Shared::new_with(Node::new_internal_node);
+                let Node::Internal(node) = internal_node.as_ref() else {
                     return;
                 };
                 node.unbounded_child
                     .swap((Some(old_root), Tag::None), Relaxed);
-                Some(Shared::new(internal_node))
+                Some(internal_node)
             };
             // Updates the pointer before unlocking the root.
             if let Err((Some(new_root), _)) =
@@ -230,9 +237,9 @@ where
     ///
     /// Returns `false` if a conflict is detected.
     #[inline]
-    pub(super) fn cleanup_root<W: TryWait>(
+    pub(super) fn cleanup_root<P: LockPager>(
         root: &AtomicShared<Node<K, V>>,
-        async_wait: &mut W,
+        pager: &mut P,
         guard: &Guard,
     ) -> bool {
         let mut root_ptr = root.load(Acquire, guard);
@@ -252,28 +259,37 @@ where
             let Self::Internal(internal_node) = root_ref else {
                 break;
             };
-            if let Some(locker) = InternalNodeLocker::try_lock(internal_node) {
-                let new_root = if internal_node.children.is_empty() {
-                    // Replace the root with the unbounded child.
-                    internal_node.unbounded_child.get_shared(Acquire, guard)
-                } else {
-                    // The internal node is not empty.
-                    break;
-                };
-                match root.compare_exchange(root_ptr, (new_root, Tag::None), AcqRel, Acquire, guard)
-                {
-                    Ok((_, new_root_ptr)) => {
-                        locker.unlock_retire();
-                        root_ptr = new_root_ptr;
-                    }
-                    Err((_, new_root_ptr)) => {
-                        // The root node has been changed.
-                        root_ptr = new_root_ptr;
-                    }
+
+            if !internal_node.children.is_empty() {
+                // Not empty.
+                break;
+            }
+
+            let locker = match pager.try_acquire(&internal_node.lock) {
+                Ok(true) => InternalNodeLocker { internal_node },
+                Ok(false) => {
+                    // The root was retired.
+                    continue;
                 }
+                Err(()) => return false,
+            };
+
+            let new_root = if internal_node.children.is_empty() {
+                // Replace the root with the unbounded child.
+                internal_node.unbounded_child.get_shared(Acquire, guard)
             } else {
-                async_wait.try_wait(&internal_node.lock);
-                return false;
+                // The internal node is not empty.
+                break;
+            };
+            match root.compare_exchange(root_ptr, (new_root, Tag::None), AcqRel, Acquire, guard) {
+                Ok((_, new_root_ptr)) => {
+                    locker.unlock_retire();
+                    root_ptr = new_root_ptr;
+                }
+                Err((_, new_root_ptr)) => {
+                    // The root node has been changed.
+                    root_ptr = new_root_ptr;
+                }
             }
         }
 

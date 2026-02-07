@@ -3,9 +3,20 @@
 
 ## Version 3
 
+3.5.6
+
+* Add support for `MIRIFLAGS="-Zmiri-strict-provenance"`.
+* Fine-tune the `Hash*` resizing strategy.
+* Reduce lock contention during `TreeIndex` node split operations.
+
+3.5.5
+
+* Better `Hash*` resizing strategy: minimize any effect of mutable iterators on sampling.
+* Reduce the number of `memcpy` operations during `TreeIndex::insert*`.
+
 3.5.4
 
-* Optimize the `Hash*` resizing strategy.
+* Optimize the `Hash*` resizing strategy: reduce performance fluctuations by more accurately estimating the number of entries.
 
 3.5.3
 

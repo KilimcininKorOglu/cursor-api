@@ -324,7 +324,7 @@ impl Adapter for Openai {
                     conversation_message::MessageType::Ai
                 }
                 .into(),
-                images: vec![],
+                images,
                 bubble_id: Uuid::new_v4().to_byte_str(),
                 server_bubble_id: if is_user { None } else { Some(Uuid::new_v4().to_byte_str()) },
                 is_agentic: false,

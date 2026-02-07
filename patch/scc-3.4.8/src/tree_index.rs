@@ -17,7 +17,7 @@ use std::sync::atomic::Ordering::{AcqRel, Acquire};
 use sdd::{AtomicShared, Guard, Ptr, Shared, Tag};
 
 use crate::Comparable;
-use crate::async_helper::AsyncWait;
+use crate::async_helper::AsyncPager;
 use leaf::Iter as LeafIter;
 use leaf::RevIter as LeafRevIter;
 use leaf::{InsertResult, Leaf, RemoveResult};
@@ -204,13 +204,13 @@ where
     /// ```
     #[inline]
     pub async fn insert_async(&self, mut key: K, mut val: V) -> Result<(), (K, V)> {
-        let mut pinned_async_wait = pin!(AsyncWait::default());
+        let mut pinned_pager = pin!(AsyncPager::default());
         loop {
             {
                 let guard = Guard::new();
                 let root_ptr = self.root.load(Acquire, &guard);
                 if let Some(root) = root_ptr.as_ref() {
-                    match root.insert(key, val, &mut pinned_async_wait, &guard) {
+                    match root.insert(key, val, &mut pinned_pager, &guard) {
                         Ok(r) => match r {
                             InsertResult::Success => return Ok(()),
                             InsertResult::Duplicate(k, v) | InsertResult::Frozen(k, v) => {
@@ -230,7 +230,7 @@ where
                     }
                 } else if let Err((Some(new_node), _)) = self.root.compare_exchange(
                     Ptr::null(),
-                    (Some(Shared::new(Node::new_leaf_node())), Tag::None),
+                    (Some(Shared::new_with(Node::new_leaf_node)), Tag::None),
                     AcqRel,
                     Acquire,
                     &Guard::new(),
@@ -241,7 +241,7 @@ where
                     continue;
                 }
             };
-            pinned_async_wait.wait().await;
+            pinned_pager.wait().await;
         }
     }
 
@@ -287,7 +287,7 @@ where
                 }
             } else if let Err((Some(new_node), _)) = self.root.compare_exchange(
                 Ptr::null(),
-                (Some(Shared::new(Node::new_leaf_node())), Tag::None),
+                (Some(Shared::new_with(Node::new_leaf_node)), Tag::None),
                 AcqRel,
                 Acquire,
                 &Guard::new(),
@@ -365,33 +365,26 @@ where
     where
         Q: Comparable<K> + ?Sized,
     {
-        let mut pinned_async_wait = pin!(AsyncWait::default());
+        let mut pinned_pager = pin!(AsyncPager::default());
         let mut removed = false;
         loop {
             {
                 let guard = Guard::new();
                 if let Some(root) = self.root.load(Acquire, &guard).as_ref() {
-                    if let Ok(result) = root.remove_if::<_, _, _>(
-                        key,
-                        &mut condition,
-                        &mut pinned_async_wait,
-                        &guard,
-                    ) {
+                    if let Ok(result) =
+                        root.remove_if::<_, _, _>(key, &mut condition, &mut pinned_pager, &guard)
+                    {
                         match result {
                             RemoveResult::Success => return true,
                             RemoveResult::Retired => {
-                                if Node::cleanup_root(&self.root, &mut pinned_async_wait, &guard) {
+                                if Node::cleanup_root(&self.root, &mut pinned_pager, &guard) {
                                     return true;
                                 }
                                 removed = true;
                             }
                             RemoveResult::Fail => {
                                 if removed {
-                                    if Node::cleanup_root(
-                                        &self.root,
-                                        &mut pinned_async_wait,
-                                        &guard,
-                                    ) {
+                                    if Node::cleanup_root(&self.root, &mut pinned_pager, &guard) {
                                         return true;
                                     }
                                 } else {
@@ -405,7 +398,7 @@ where
                     return removed;
                 }
             }
-            pinned_async_wait.wait().await;
+            pinned_pager.wait().await;
         }
     }
 
@@ -492,7 +485,7 @@ where
     where
         Q: Comparable<K> + ?Sized,
     {
-        let mut pinned_async_wait = pin!(AsyncWait::default());
+        let mut pinned_pager = pin!(AsyncPager::default());
         let start_unbounded = matches!(range.start_bound(), Unbounded);
 
         loop {
@@ -508,22 +501,25 @@ where
                         start_unbounded,
                         None,
                         None,
-                        &mut pinned_async_wait,
+                        &mut pinned_pager,
                         &guard,
                     ) {
                         if num_children >= 2
-                            || Node::cleanup_root(&self.root, &mut pinned_async_wait, &guard)
+                            || Node::cleanup_root(&self.root, &mut pinned_pager, &guard)
                         {
                             // Completed removal and cleaning up the root.
                             return;
                         }
+                    } else {
+                        // The entire root node may have been retired.
+                        Node::cleanup_root(&self.root, &mut (), &guard);
                     }
                 } else {
                     // Nothing to remove.
                     return;
                 }
             }
-            pinned_async_wait.wait().await;
+            pinned_pager.wait().await;
         }
     }
 
@@ -573,6 +569,8 @@ where
                 }
                 break;
             }
+            // The entire root node may have been retired.
+            Node::cleanup_root(&self.root, &mut (), &guard);
         }
     }
 

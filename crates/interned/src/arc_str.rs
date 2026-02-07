@@ -1162,12 +1162,10 @@ mod tests {
     #[test]
     fn test_thread_safety() {
         run_isolated_test(|| {
-            use alloc::sync::Arc;
-
-            let s = Arc::new(ArcStr::new("shared"));
+            let s = ArcStr::new("shared");
             let handles: Vec<_> = (0..10)
                 .map(|_| {
-                    let s_clone = Arc::clone(&s);
+                    let s_clone = ArcStr::clone(&s);
                     thread::spawn(move || {
                         let local = ArcStr::new("shared");
                         assert_eq!(*s_clone, local);

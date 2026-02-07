@@ -1,8 +1,12 @@
-use crate::app::lazy::{PROXIES_FILE_PATH, SERVICE_TIMEOUT, TCP_KEEPALIVE, TCP_KEEPALIVE_INTERVAL, TCP_KEEPALIVE_RETRIES};
+use crate::app::lazy::{
+    HTTP2_ADAPTIVE_WINDOW, HTTP2_KEEP_ALIVE_INTERVAL, HTTP2_KEEP_ALIVE_TIMEOUT,
+    HTTP2_KEEP_ALIVE_WHILE_IDLE, PROXIES_FILE_PATH, SERVICE_TIMEOUT, TCP_KEEPALIVE,
+    TCP_KEEPALIVE_INTERVAL, TCP_KEEPALIVE_RETRIES,
+};
 use alloc::sync::Arc;
 use arc_swap::{ArcSwap, ArcSwapAny};
-use interned::Str;
 use core::{str::FromStr, time::Duration};
+use interned::Str;
 use manually_init::ManuallyInit;
 use memmap2::{MmapMut, MmapOptions};
 use reqwest::Client;
@@ -240,6 +244,10 @@ impl SingleProxy {
             .tcp_keepalive(TCP_KEEPALIVE.to_duration())
             .tcp_keepalive_interval(TCP_KEEPALIVE_INTERVAL.to_duration())
             .tcp_keepalive_retries(TCP_KEEPALIVE_RETRIES.to_count())
+            .http2_adaptive_window(*HTTP2_ADAPTIVE_WINDOW)
+            .http2_keep_alive_interval(HTTP2_KEEP_ALIVE_INTERVAL.to_duration())
+            .http2_keep_alive_timeout(HTTP2_KEEP_ALIVE_TIMEOUT.to_duration_or_default())
+            .http2_keep_alive_while_idle(*HTTP2_KEEP_ALIVE_WHILE_IDLE)
             .connect_timeout(Duration::from_secs(*SERVICE_TIMEOUT as _))
             .webpki_roots_only();
         let client = match self {
@@ -260,7 +268,7 @@ impl Serialize for SingleProxy {
         match self {
             Self::Non => serializer.serialize_str(NON_PROXY),
             Self::Sys => serializer.serialize_str(SYS_PROXY),
-            Self::Url(url) => serializer.serialize_str(&url.to_string()),
+            Self::Url(url) => serializer.serialize_str(&*url),
         }
     }
 }

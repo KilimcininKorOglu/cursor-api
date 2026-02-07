@@ -11,7 +11,7 @@ use super::Leaf;
 use super::leaf::{Array, ArrayIter, InsertResult, Iter, RemoveResult, RevIter, range_contains};
 use super::node::Node;
 use crate::Comparable;
-use crate::async_helper::TryWait;
+use crate::async_helper::LockPager;
 use crate::exit_guard::ExitGuard;
 
 /// [`LeafNode`] contains a list of instances of `K, V` [`Leaf`].
@@ -31,7 +31,7 @@ pub struct LeafNode<K, V> {
 
 /// [`Locker`] holds exclusive ownership of a [`LeafNode`].
 pub(super) struct Locker<'n, K, V> {
-    leaf_node: &'n LeafNode<K, V>,
+    pub(super) leaf_node: &'n LeafNode<K, V>,
 }
 
 /// A state machine to keep track of the progress of a bulk removal operation.
@@ -269,11 +269,11 @@ where
     ///
     /// Returns an error if a retry is required.
     #[inline]
-    pub(super) fn insert<W: TryWait>(
+    pub(super) fn insert<P: LockPager>(
         &self,
         mut key: K,
         mut val: V,
-        async_wait: &mut W,
+        pager: &mut P,
         guard: &Guard,
     ) -> Result<InsertResult<K, V>, (K, V)> {
         loop {
@@ -289,7 +289,7 @@ where
                                 return Ok(insert_result);
                             }
                             InsertResult::Full(k, v) => {
-                                match self.split_leaf(child_ptr, child, async_wait, guard) {
+                                match self.split_leaf(child_ptr, child, pager, guard) {
                                     Ok(true) => {
                                         key = k;
                                         val = v;
@@ -301,7 +301,12 @@ where
                             }
                             InsertResult::Frozen(k, v) => {
                                 // The `Leaf` is being split: retry.
-                                async_wait.try_wait(&self.lock);
+                                if pager.try_wait(&self.lock) && !self.children.validate(metadata) {
+                                    // There was a change in the children, worth in-place retrying.
+                                    key = k;
+                                    val = v;
+                                    continue;
+                                }
                                 return Err((k, v));
                             }
                         };
@@ -315,7 +320,7 @@ where
             if unbounded_ptr.is_null() {
                 match self.unbounded_child.compare_exchange(
                     Ptr::null(),
-                    (Some(Shared::new(Leaf::new())), Tag::None),
+                    (Some(Shared::new_with(Leaf::new)), Tag::None),
                     AcqRel,
                     Acquire,
                     guard,
@@ -338,12 +343,7 @@ where
                         return Ok(insert_result);
                     }
                     InsertResult::Full(k, v) => {
-                        match self.split_leaf(
-                            unbounded_ptr,
-                            &self.unbounded_child,
-                            async_wait,
-                            guard,
-                        ) {
+                        match self.split_leaf(unbounded_ptr, &self.unbounded_child, pager, guard) {
                             Ok(true) => {
                                 key = k;
                                 val = v;
@@ -354,7 +354,12 @@ where
                         }
                     }
                     InsertResult::Frozen(k, v) => {
-                        async_wait.try_wait(&self.lock);
+                        if pager.try_wait(&self.lock) && !self.children.validate(metadata) {
+                            // See above.
+                            key = k;
+                            val = v;
+                            continue;
+                        }
                         return Err((k, v));
                     }
                 };
@@ -369,11 +374,11 @@ where
     ///
     /// Returns an error if a retry is required.
     #[inline]
-    pub(super) fn remove_if<Q, F: FnMut(&V) -> bool, W: TryWait>(
+    pub(super) fn remove_if<Q, F: FnMut(&V) -> bool, P: LockPager>(
         &self,
         key: &Q,
         condition: &mut F,
-        async_wait: &mut W,
+        pager: &mut P,
         guard: &Guard,
     ) -> Result<RemoveResult, ()>
     where
@@ -389,7 +394,9 @@ where
                         let result = child.remove_if(key, condition);
                         if result == RemoveResult::Frozen {
                             // Its entries may be being relocated.
-                            async_wait.try_wait(&self.lock);
+                            if pager.try_wait(&self.lock) && !self.children.validate(metadata) {
+                                continue;
+                            }
                             return Err(());
                         } else if result == RemoveResult::Retired {
                             return Ok(self.post_remove(guard));
@@ -408,7 +415,9 @@ where
                 }
                 let result = unbounded.remove_if(key, condition);
                 if result == RemoveResult::Frozen {
-                    async_wait.try_wait(&self.lock);
+                    if pager.try_wait(&self.lock) && !self.children.validate(metadata) {
+                        continue;
+                    }
                     return Err(());
                 } else if result == RemoveResult::Retired {
                     return Ok(self.post_remove(guard));
@@ -423,13 +432,13 @@ where
     ///
     /// Returns the number of remaining children.
     #[inline]
-    pub(super) fn remove_range<'g, Q, R: RangeBounds<Q>, W: TryWait>(
+    pub(super) fn remove_range<'g, Q, R: RangeBounds<Q>, P: LockPager>(
         &self,
         range: &R,
         start_unbounded: bool,
         valid_lower_max_leaf: Option<&'g Leaf<K, V>>,
         valid_upper_min_node: Option<&'g Node<K, V>>,
-        async_wait: &mut W,
+        pager: &mut P,
         guard: &'g Guard,
     ) -> Result<usize, ()>
     where
@@ -438,8 +447,10 @@ where
         debug_assert!(valid_lower_max_leaf.is_none() || start_unbounded);
         debug_assert!(valid_lower_max_leaf.is_none() || valid_upper_min_node.is_none());
 
-        let Some(_lock) = Locker::try_lock(self) else {
-            async_wait.try_wait(&self.lock);
+        let _locker = if pager.try_acquire(&self.lock)? {
+            Locker { leaf_node: self }
+        } else {
+            // The leaf node was retired: retry.
             return Err(());
         };
 
@@ -498,7 +509,7 @@ where
                 true,
                 self.unbounded_child.load(Acquire, guard).as_ref(),
                 None,
-                async_wait,
+                pager,
                 guard,
             )?;
         } else if start_unbounded {
@@ -519,20 +530,24 @@ where
     /// # Errors
     ///
     /// Returns an error if locking failed or the full leaf node was changed.
-    fn split_leaf<W: TryWait>(
+    #[allow(clippy::too_many_lines)]
+    fn split_leaf<P: LockPager>(
         &self,
         full_leaf_ptr: Ptr<Leaf<K, V>>,
         full_leaf: &AtomicShared<Leaf<K, V>>,
-        async_wait: &mut W,
+        pager: &mut P,
         guard: &Guard,
     ) -> Result<bool, ()> {
         if self.is_retired() {
             // Let the parent node clean up this node.
             return Ok(false);
         }
-
         let Some(_locker) = Locker::try_lock(self) else {
-            async_wait.try_wait(&self.lock);
+            // Do not wait-and-acquire the lock as it is most likely that the leaf has already been
+            // split by the time it acquires the lock.
+            if pager.try_wait(&self.lock) {
+                return Ok(true);
+            }
             return Err(());
         };
 
@@ -541,42 +556,66 @@ where
             return Err(());
         }
 
+        let is_full = self.children.is_full();
         let target = full_leaf_ptr.as_ref().unwrap();
+
+        // The metadata of `target` should be frozen for stable distribution of entries.
         let frozen = target.freeze();
         debug_assert!(frozen);
-
         let exit_guard = ExitGuard::new((), |()| {
             target.unfreeze();
         });
 
-        let low_key_leaf = Shared::new(Leaf::new());
-        let high_key_leaf = Leaf::new();
-        let is_full = self.children.is_full();
-
-        // Need to freeze new leaves before making them reachable.
-        let frozen_low = low_key_leaf.freeze();
-        let frozen_high = high_key_leaf.freeze();
-        debug_assert!(frozen_low && frozen_high);
-
-        let mut is_high_key_leaf_empty = true;
-        if !target.distribute(|k, v, i, b, l| {
-            if b < l && is_full {
-                // E.g., `b == 2, l == 2`, then `i` can be as large as `1`: `high_key_leaf` is not
-                // needed.
-                return false;
-            }
-            // `v` is moved, not cloned; those new leaves do not own them until unfrozen.
-            let v = unsafe { ptr::from_ref(v).read() };
-            if i < b {
-                low_key_leaf.insert_unchecked(k.clone(), v, i);
-            } else {
-                high_key_leaf.insert_unchecked(k.clone(), v, i - b);
-                is_high_key_leaf_empty = false;
-            }
-            true
-        }) {
+        let mut low_key_leaf = None;
+        let mut high_key_leaf = None;
+        let mut i = 0;
+        if !target.distribute(
+            |boundary, len| {
+                // E.g., `boundary == 2, len == 2`, then `i` can be as large as `1`: `high_key_leaf`
+                // is not needed.
+                if (boundary as usize) < len && is_full {
+                    // No space for new leaves.
+                    return false;
+                }
+                true
+            },
+            |k, v, _, boundary| {
+                // `v` is moved, not cloned; those new leaves do not own them until unfrozen.
+                if i < boundary {
+                    let low_key_leaf = low_key_leaf.get_or_insert_with(|| {
+                        let new_leaf = Shared::new_with(Leaf::new);
+                        new_leaf.freeze();
+                        new_leaf
+                    });
+                    low_key_leaf.insert_unchecked(
+                        unsafe { ptr::from_ref(k).read() },
+                        unsafe { ptr::from_ref(v).read() },
+                        i,
+                    );
+                } else {
+                    let high_key_leaf = high_key_leaf.get_or_insert_with(|| {
+                        let new_leaf = Shared::new_with(Leaf::new);
+                        new_leaf.freeze();
+                        new_leaf
+                    });
+                    high_key_leaf.insert_unchecked(
+                        unsafe { ptr::from_ref(k).read() },
+                        unsafe { ptr::from_ref(v).read() },
+                        i - boundary,
+                    );
+                }
+                i += 1;
+            },
+        ) {
             return Ok(false);
         }
+
+        let low_key_leaf = low_key_leaf.unwrap_or_else(|| {
+            // `target` was empty.
+            let new_leaf = Shared::new_with(Leaf::new);
+            new_leaf.freeze();
+            new_leaf
+        });
 
         // Data race with iterators if the following code is executed without new leaves locked.
         // - T1 and T2 both observe, L1 -> L2.
@@ -590,32 +629,8 @@ where
         low_key_leaf.lock.lock_sync();
         let low_key_leaf_lock = &low_key_leaf.get_guarded_ref(guard).lock;
 
-        if is_high_key_leaf_empty {
-            // Unfreeze the leaf; it now takes ownership of the copied values.
-            let unfrozen_low = low_key_leaf.unfreeze();
-            debug_assert!(unfrozen_low);
-
-            target.replace_link(
-                |prev_next, next_prev, prev_ptr, next_ptr| {
-                    low_key_leaf.prev.store(prev_ptr.cast_mut(), Relaxed);
-                    low_key_leaf.next.store(next_ptr.cast_mut(), Relaxed);
-                    if let Some(prev_next) = prev_next {
-                        prev_next.store(low_key_leaf.as_ptr().cast_mut(), Release);
-                    }
-                    if let Some(next_prev) = next_prev {
-                        next_prev.store(low_key_leaf.as_ptr().cast_mut(), Release);
-                    }
-                    // From here, `Iter` can reach the new leaf.
-                },
-                guard,
-            );
-
-            full_leaf.swap((Some(low_key_leaf), Tag::None), Release);
-            let released = low_key_leaf_lock.release_lock();
-            debug_assert!(released);
-        } else {
+        if let Some(high_key_leaf) = high_key_leaf {
             let low_key_max = low_key_leaf.max_key().unwrap().clone();
-            let high_key_leaf = Shared::new(high_key_leaf);
 
             // Unfreeze the leaves; those leaves now take ownership of the copied values.
             let unfrozen_low = low_key_leaf.unfreeze();
@@ -656,6 +671,29 @@ where
 
             full_leaf.swap((Some(high_key_leaf), Tag::None), Release);
             let released = high_key_leaf_lock.release_lock();
+            debug_assert!(released);
+        } else {
+            // Unfreeze the leaf; it now takes ownership of the copied values.
+            let unfrozen = low_key_leaf.unfreeze();
+            debug_assert!(unfrozen);
+
+            target.replace_link(
+                |prev_next, next_prev, prev_ptr, next_ptr| {
+                    low_key_leaf.prev.store(prev_ptr.cast_mut(), Relaxed);
+                    low_key_leaf.next.store(next_ptr.cast_mut(), Relaxed);
+                    if let Some(prev_next) = prev_next {
+                        prev_next.store(low_key_leaf.as_ptr().cast_mut(), Release);
+                    }
+                    if let Some(next_prev) = next_prev {
+                        next_prev.store(low_key_leaf.as_ptr().cast_mut(), Release);
+                    }
+                    // From here, `Iter` can reach the new leaf.
+                },
+                guard,
+            );
+
+            full_leaf.swap((Some(low_key_leaf), Tag::None), Release);
+            let released = low_key_leaf_lock.release_lock();
             debug_assert!(released);
         }
 

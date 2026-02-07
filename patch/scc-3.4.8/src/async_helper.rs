@@ -2,6 +2,7 @@ use std::cell::UnsafeCell;
 use std::pin::{Pin, pin};
 use std::ptr;
 use std::sync::atomic::Ordering;
+use std::sync::atomic::Ordering::Acquire;
 
 use saa::lock::Mode;
 use saa::{Lock, Pager};
@@ -18,16 +19,23 @@ pub(crate) struct AsyncGuard {
 }
 
 #[derive(Debug)]
-pub(crate) struct AsyncWait {
+pub(crate) struct AsyncPager {
     /// Allows the user to await the lock anywhere in the code.
     pager: Pager<'static, Lock>,
 }
 
-/// [`TryWait`] allows [`AsyncWait`] to be used in synchronous methods.
-pub(crate) trait TryWait {
+/// [`LockPager`] enables asynchronous code to remotely wait for a [`Lock`].
+pub(crate) trait LockPager {
     /// Registers the [`Pager`] in the [`Lock`], or synchronously waits for the [`Lock`] to be
     /// available.
-    fn try_wait(&mut self, lock: &Lock);
+    ///
+    /// Returns `true` if the thread can retry the operation in-place.
+    #[must_use]
+    fn try_wait(&mut self, lock: &Lock) -> bool;
+
+    /// Tries to acquire the [`Lock`] synchronously, or registers the [`Pager`] in the [`Lock`] and
+    /// returns an error.
+    fn try_acquire(&mut self, lock: &Lock) -> Result<bool, ()>;
 }
 
 impl AsyncGuard {
@@ -80,7 +88,7 @@ impl AsyncGuard {
 unsafe impl Send for AsyncGuard {}
 unsafe impl Sync for AsyncGuard {}
 
-impl AsyncWait {
+impl AsyncPager {
     /// Awaits the [`Lock`] to be available.
     #[inline]
     pub async fn wait(self: &mut Pin<&mut Self>) {
@@ -90,7 +98,7 @@ impl AsyncWait {
     }
 }
 
-impl Default for AsyncWait {
+impl Default for AsyncPager {
     #[inline]
     fn default() -> Self {
         Self {
@@ -101,9 +109,9 @@ impl Default for AsyncWait {
     }
 }
 
-impl TryWait for Pin<&mut AsyncWait> {
+impl LockPager for Pin<&mut AsyncPager> {
     #[inline]
-    fn try_wait(&mut self, lock: &Lock) {
+    fn try_wait(&mut self, lock: &Lock) -> bool {
         let this = unsafe { ptr::read(self) };
         let mut pinned_pager = unsafe {
             let pager_ref = std::mem::transmute::<&mut Pager<'static, Lock>, &mut Pager<Lock>>(
@@ -112,14 +120,31 @@ impl TryWait for Pin<&mut AsyncWait> {
             Pin::new_unchecked(pager_ref)
         };
         lock.register_pager(&mut pinned_pager, Mode::WaitExclusive, false);
+        false
+    }
+
+    #[inline]
+    fn try_acquire(&mut self, lock: &Lock) -> Result<bool, ()> {
+        if lock.try_lock() {
+            return Ok(true);
+        } else if lock.is_poisoned(Acquire) {
+            return Ok(false);
+        }
+        let _: bool = self.try_wait(lock);
+        Err(())
     }
 }
 
-impl TryWait for () {
+impl LockPager for () {
     #[inline]
-    fn try_wait(&mut self, lock: &Lock) {
+    fn try_wait(&mut self, lock: &Lock) -> bool {
         let mut pinned_pager = pin!(Pager::default());
         lock.register_pager(&mut pinned_pager, Mode::WaitExclusive, true);
-        let _: Result<_, _> = pinned_pager.poll_sync();
+        pinned_pager.poll_sync().is_ok_and(|r| r)
+    }
+
+    #[inline]
+    fn try_acquire(&mut self, lock: &Lock) -> Result<bool, ()> {
+        Ok(lock.lock_sync())
     }
 }

@@ -80,6 +80,25 @@ fn range(c: &mut Criterion) {
     });
 }
 
+fn range_rev(c: &mut Criterion) {
+    c.bench_function("TreeIndex: range, rev", |b| {
+        b.iter_custom(|iters| {
+            let treeindex: TreeIndex<u64, u64> = TreeIndex::default();
+            for i in 0..iters {
+                assert!(treeindex.insert_sync(i, i).is_ok());
+            }
+            let start = Instant::now();
+            let guard = Guard::new();
+            for s in 0..iters {
+                let range = 0..iters - s;
+                let mut iter = treeindex.range(range.clone(), &guard);
+                assert_eq!(range.is_empty(), iter.next_back().is_none());
+            }
+            start.elapsed()
+        })
+    });
+}
+
 fn peek(c: &mut Criterion) {
     c.bench_function("TreeIndex: peek", |b| {
         b.iter_custom(|iters| {
@@ -104,6 +123,7 @@ criterion_group!(
     insert_rev,
     iter,
     range,
+    range_rev,
     peek
 );
 criterion_main!(tree_index);
