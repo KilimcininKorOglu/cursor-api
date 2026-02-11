@@ -55,7 +55,7 @@ impl<'a> Clone for Storage<'a> {
     fn clone(&self) -> Self {
         match self {
             Storage::Borrowed(maybe_vec) => {
-                // 安全：外部访问时一定是已初始化的
+                // 安全：外部访问时一定是Already初始化的
                 Storage::Borrowed(MaybeUninit::new(
                     unsafe { maybe_vec.assume_init_ref() }.clone(),
                 ))
@@ -103,7 +103,7 @@ impl<'a> StringBuilder<'a> {
             Storage::Mixed(vec) => vec.push(part),
             Storage::Borrowed(maybe_vec) => match part {
                 Cow::Borrowed(s) => {
-                    // 安全：进入方法时一定是已初始化的
+                    // 安全：进入方法时一定是Already初始化的
                     unsafe { maybe_vec.assume_init_mut() }.push(s);
                 }
                 Cow::Owned(s) => {
@@ -149,7 +149,7 @@ impl<'a> StringBuilder<'a> {
 
         match self.storage {
             Storage::Borrowed(maybe_parts) => {
-                // 安全：外部访问时一定是已初始化的
+                // 安全：外部访问时一定是Already初始化的
                 let parts = unsafe { maybe_parts.assume_init() };
                 if parts.len() == 1 {
                     return parts[0].to_string();
@@ -512,7 +512,7 @@ mod tests {
         // 测试 MaybeUninit 在状态Convert过程中的安全性
         let mut builder = StringBuilder::with_capacity(3);
 
-        // 初始状态：Borrowed，MaybeUninit 已初始化
+        // 初始状态：Borrowed，MaybeUninit Already初始化
         assert!(builder.is_borrowed_state());
 
         // 添加借用字符串，保持 Borrowed 状态

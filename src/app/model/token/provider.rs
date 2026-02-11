@@ -1,7 +1,7 @@
-//! 认证提供者模块
+//! 认证提供者模Block
 //!
-//! 本模块管理可配置的认证提供者列表，
-//! 可以通过环境变量 `ALLOWED_PROVIDERS` 自定义Support的提供者。
+//! 本模Block管理可配置的认证提供者列表，
+//! 可以通过环境变Amount `ALLOWED_PROVIDERS` 自定义Support的提供者。
 
 use core::fmt;
 use std::str::FromStr;
@@ -95,10 +95,10 @@ impl<'de> ::serde::Deserialize<'de> for Provider {
 
 /// 从环境配置初始化Support的提供者列表
 ///
-/// If设置了环境变量 `ALLOWED_PROVIDERS`，则从中Read，否则保持Default提供者列表。
-/// 环境变量应包含以逗号Separate的提供者标识符列表。
+/// If设置了环境变Amount `ALLOWED_PROVIDERS`，则从中Read，否则保持Default提供者列表。
+/// 环境变Amount应包含以逗号Separate的提供者标识符列表。
 ///
-/// # 环境变量示例
+/// # 环境变Amount示例
 /// ```text
 /// ALLOWED_PROVIDERS=auth0,google-oauth2,github,custom-provider
 /// ```

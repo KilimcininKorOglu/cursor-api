@@ -21,7 +21,7 @@ pub enum TokenError {
 impl std::fmt::Display for TokenError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(match self {
-            TokenError::AliasExists => "别名已存在",
+            TokenError::AliasExists => "别名Already存在",
             TokenError::InvalidId => "无效的Token ID",
         })
     }
@@ -47,11 +47,11 @@ impl core::error::Error for TokenError {}
 /// - `id_map`, `alias_map` 中的id指向的 `tokens[id]` 必To Some
 /// - `free_ids` 中的id必 < tokens.len() 且 `tokens[id]` To None
 ///
-/// 性能关键路径已Useunsafe消除边界Check
+/// 性能关键路径AlreadyUseunsafe消除边界Check
 pub struct TokenManager {
     /// 主存储：ID -> TokenInfo，UseOptionSupport删除后的Empty槽位
     tokens: Vec<Option<TokenInfo>>,
-    /// TokenKey -> ID映射，用于通过token内容查找
+    /// TokenKey -> ID映射，用于通过tokenContent查找
     id_map: HashMap<TokenKey, usize>,
     /// 别名 -> ID映射，用于用户友好的查找
     alias_map: HashMap<Alias, usize>,
@@ -83,7 +83,7 @@ impl TokenManager {
         token_info: TokenInfo,
         alias: S,
     ) -> Result<usize, TokenError> {
-        // Handle未命名或冲突的别名，自动生成唯一别名
+        // Handle未命名Or冲突的别名，自动生成唯一别名
         let mut alias: Cow<'_, str> = alias.into();
         if alias == UNNAMED || alias.starts_with(UNNAMED_PATTERN) {
             let id = self.free_ids.front().copied().unwrap_or(self.tokens.len());
@@ -108,7 +108,7 @@ impl TokenManager {
         self.id_map.insert(key, id);
         self.queue.push(key, id);
 
-        // SAFETY: id要么是reused_id（来自free_ids，必定<len），要么是刚push后的新索引
+        // SAFETY: id要么是reused_id（来自free_ids，必定<len），要么是Justpush后的新索引
         unsafe { *self.tokens.get_unchecked_mut(id) = Some(token_info) };
 
         let alias = Alias::new(alias);
@@ -176,7 +176,7 @@ impl TokenManager {
             return Err(TokenError::AliasExists);
         }
 
-        // SAFETY: 前面已CheckidHave效且Some
+        // SAFETY: 前面AlreadyCheckidHave效且Some
         unsafe {
             let old_alias = self.id_to_alias.get_unchecked_mut(id).take().unwrap_unchecked();
             self.alias_map.remove(&old_alias);
@@ -335,9 +335,9 @@ impl<'w> TokensWriter<'w> {
 
 /// Token写入器，通过Drop自动同步key变化
 ///
-/// Use场景：当需要修改token的key时，通过此类型Ensure：
-/// 1. 修改完成后自动更新id_map
-/// 2. 修改完成后自动更新queue中的key
+/// Use场景：当Need修改token的key时，通过此TypeEnsure：
+/// 1. 修改Completed后自动更新id_map
+/// 2. 修改Completed后自动更新queue中的key
 /// 3. 防止忘记手动同步导致的索引不一致
 pub struct TokenWriter<'w> {
     pub key: TokenKey,
@@ -360,7 +360,7 @@ impl Drop for TokenWriter<'_> {
         use core::hint::{assert_unchecked, unreachable_unchecked};
         let key = self.token.primary_token.key();
 
-        // 检测key是否变化，变化则更新所Have索引
+        // 检测keyWhether变化，变化则更新所Have索引
         if key != self.key {
             // SAFETY: TokenWriter只能通过into_token_writer创建，那时token必存在
             // self.key是创建时的token key，必在id_map中
@@ -381,7 +381,7 @@ impl Drop for TokenWriter<'_> {
 /// Format：UNNAMED_PATTERN + ID（如"unnamed_42"）
 #[inline]
 fn generate_unnamed_alias(id: usize) -> String {
-    // 预分配容量：pattern长度 + 6位数字
+    // 预分配容Amount：pattern长度 + 6位数字
     // 6位数字可表示0-999999，覆盖百万级token
     // 超过百万时String会自动扩容（额外一次realloc）
     const CAPACITY: usize = UNNAMED_PATTERN.len() + 6;

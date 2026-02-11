@@ -36,7 +36,7 @@ unsafe fn alloc_ids(s: &str) -> Id {
     let sptr = s.as_ptr();
     let len = s.len();
 
-    // 计算布局，字符串不需要特殊对齐
+    // 计算布局，字符串不Need特殊对齐
     let layout = Layout::from_size_align_unchecked(len + SUFFIX.len(), 1);
 
     // 分配内存
@@ -46,7 +46,7 @@ unsafe fn alloc_ids(s: &str) -> Id {
         handle_alloc_error(layout);
     }
 
-    // 复制字符串内容
+    // 复制字符串Content
     copy_nonoverlapping(sptr, ptr, len);
     copy_nonoverlapping(SUFFIX.as_ptr(), ptr.add(len), SUFFIX.len());
 

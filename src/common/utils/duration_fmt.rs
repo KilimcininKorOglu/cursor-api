@@ -112,7 +112,7 @@ pub enum Language {
     Random,
 }
 
-// Use宏定义常量
+// Use宏定义常Amount
 crate::define_typed_constants! {
     u64 => {
         SECONDS_PER_MINUTE = 60,

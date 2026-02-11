@@ -29,7 +29,7 @@ impl AppState {
         let proxies = proxies_result.unwrap_or_default();
         proxies.init();
 
-        // 计算初始统计信息
+        // 计算初始Statistics信息
         let error_count = log_manager.error_count();
         let total_count = log_manager.total_count();
 

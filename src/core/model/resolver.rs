@@ -61,7 +61,7 @@ impl ExtModel {
             });
         }
 
-        // 正常验证都Failed后，Check是否绕过验证
+        // 正常验证都Failed后，CheckWhether绕过验证
         if unsafe { BYPASS_MODEL_VALIDATION } && !model_str.is_empty() {
             let id = get_static_id(model_str);
             return Some(Self {

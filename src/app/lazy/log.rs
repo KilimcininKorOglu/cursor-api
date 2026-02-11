@@ -18,10 +18,10 @@ use tokio::{
 
 // --- 全局配置 ---
 
-/// 控制Debug模式的开关，从环境变量 "DEBUG" Read，DefaultTo true
+/// 控制Debug模式的开关，从环境变Amount "DEBUG" Read，DefaultTo true
 pub static DEBUG: ManuallyInit<bool> = ManuallyInit::new();
 
-/// Debug日志文件的路径，从环境变量 "DEBUG_LOG_FILE" Read，DefaultTo "debug.log"
+/// Debug日志文件的路径，从环境变Amount "DEBUG_LOG_FILE" Read，DefaultTo "debug.log"
 static DEBUG_LOG_FILE: ManuallyInit<Cow<'static, str>> = ManuallyInit::new();
 
 /// 全局日志文件句柄
@@ -59,7 +59,7 @@ pub fn init() {
 pub struct LogMessage {
     /// 全局递增的序列号，保证日志顺序
     pub seq: u64,
-    /// 已Format化的日志内容（包含时间戳）
+    /// AlreadyFormat化的日志Content（包含时间戳）
     pub content: String,
 }
 
@@ -75,17 +75,17 @@ fn next_log_seq() -> u64 { LOG_SEQUENCE.fetch_add(1, Ordering::Relaxed) }
 /// 全局单例的日志系统状态，Use OnceCell Ensure只初始化一次
 static LOGGER_STATE: OnceCell<LoggerState> = OnceCell::const_new();
 
-/// 日志系统的状态结构，包含发送通道、关闭信号and后台任务句柄
+/// 日志系统的状态结构，包含Send通道、关闭信号and后台任务句柄
 pub struct LoggerState {
-    /// 用于发送日志Message的无界通道发送端
+    /// 用于Send日志Message的无界通道Send端
     pub sender: UnboundedSender<LogMessage>,
-    /// 用于发送关闭信号的 watch 通道发送端
+    /// 用于Send关闭信号的 watch 通道Send端
     shutdown_tx: watch::Sender<bool>,
     /// 后台写入任务的句柄
     writer_handle: Mutex<Option<JoinHandle<()>>>,
 }
 
-/// Ensure日志系统已初始化并返回其状态
+/// Ensure日志系统Already初始化并返回其状态
 ///
 /// If日志系统尚未初始化，会创建所需的通道and后台任务
 ///
@@ -94,12 +94,12 @@ pub fn ensure_logger_initialized() -> impl Future<Output = &'static LoggerState>
     LOGGER_STATE.get_or_init(|| async {
         // 创建用于传递日志Message的无界通道
         let (sender, mut receiver) = mpsc::unbounded_channel::<LogMessage>();
-        // 创建用于发送关闭信号的 watch 通道
+        // 创建用于Send关闭信号的 watch 通道
         let (shutdown_tx, mut shutdown_rx) = watch::channel(false);
 
         // 启动后台写入任务
         let writer_handle = tokio::spawn(async move {
-            // 配置常量
+            // 配置常Amount
             const BUFFER_CAPACITY: usize = 65536; // 64KB
             const MAX_PENDING_MESSAGES: usize = 1000;
             const OUT_OF_ORDER_THRESHOLD: u64 = 100;
@@ -119,12 +119,12 @@ pub fn ensure_logger_initialized() -> impl Future<Output = &'static LoggerState>
                 tokio::select! {
                     biased; // 优先Handle上面的分支
 
-                    // 接收新的日志Message
+                    // 接收New日志Message
                     Some(message) = receiver.recv() => {
                         // 将Message加入待Handle队列
                         pending_messages.insert(message.seq, message.content);
 
-                        // Check待Handle队列是否过大
+                        // Check待Handle队列Whether过大
                         if pending_messages.len() > MAX_PENDING_MESSAGES {
                             let oldest_seq = *__unwrap!(pending_messages.keys().next());
                             eprintln!(
@@ -140,7 +140,7 @@ pub fn ensure_logger_initialized() -> impl Future<Output = &'static LoggerState>
                             buffer.push(b'\n');
                             next_seq += 1;
 
-                            // 缓冲区达到容量时刷新
+                            // 缓冲区达到容Amount时刷新
                             if buffer.len() >= BUFFER_CAPACITY {
                                 flush_byte_buffer(&mut buffer).await;
                                 interval.reset();
@@ -224,7 +224,7 @@ pub fn ensure_logger_initialized() -> impl Future<Output = &'static LoggerState>
     })
 }
 
-/// 将缓冲区内容刷新到日志文件
+/// 将缓冲区Content刷新到日志文件
 ///
 /// # 参数
 /// * `buffer` - 要写入的字节缓冲区，函数调用后会清Empty此缓冲区
@@ -256,21 +256,21 @@ async fn flush_byte_buffer(buffer: &mut Vec<u8>) {
 ///
 /// # 参数
 /// * `seq` - 日志序列号
-/// * `content` - 已Format化的日志内容
+/// * `content` - AlreadyFormat化的日志Content
 #[inline]
 fn submit_debug_log(seq: u64, content: String) {
     tokio::spawn(async move {
         let state = ensure_logger_initialized().await;
         let log_msg = LogMessage { seq, content };
         if let Err(e) = state.sender.send(log_msg) {
-            eprintln!("日志系统Error：发送日志Message至后台任务Failed。Error：{e}");
+            eprintln!("日志系统Error：Send日志Message至后台任务Failed。Error：{e}");
         }
     });
 }
 
 /// 记录Debug日志的宏
 ///
-/// 仅当 DEBUG 开启时记录日志，异步发送到日志Handle任务
+/// 仅当 DEBUG 开启时记录日志，异步Send到日志Handle任务
 #[macro_export]
 macro_rules! debug {
     ($($arg:tt)*) => {
@@ -291,20 +291,20 @@ pub fn debug_log(args: core::fmt::Arguments<'_>) {
     submit_debug_log(seq, msg);
 }
 
-/// 程序结束前调用，Ensure所Have缓冲日志写入文件
+/// 程序End前调用，Ensure所Have缓冲日志写入文件
 ///
-/// 发送关闭信号，等待后台写入任务完成
+/// Send关闭信号，等待后台写入任务Completed
 pub async fn flush_all_debug_logs() {
     if let Some(state) = LOGGER_STATE.get() {
         if *DEBUG {
-            __println!("日志系统：开始关闭流程...");
+            __println!("日志系统：Start关闭流程...");
         }
 
-        // 发送关闭信号
+        // Send关闭信号
         if let Err(err) = state.shutdown_tx.send(true)
             && *DEBUG
         {
-            println!("日志系统Debug：发送关闭信号Failed（May写入任务已提前结束）：{err}");
+            println!("日志系统Debug：Send关闭信号Failed（May写入任务Already提前End）：{err}");
         }
 
         // 提取后台任务句柄
@@ -313,12 +313,12 @@ pub async fn flush_all_debug_logs() {
             guard.take()
         };
 
-        // 等待后台任务完成，设置5秒超时
+        // 等待后台任务Completed，设置5秒超时
         if let Some(handle) = handle {
             match tokio::time::timeout(Duration::from_secs(5), handle).await {
                 Ok(Ok(_)) => {
                     if *DEBUG {
-                        __println!("日志系统：关闭完成");
+                        __println!("日志系统：关闭Completed");
                     }
                 }
                 Ok(Err(join_err)) => {
@@ -333,7 +333,7 @@ pub async fn flush_all_debug_logs() {
                 }
             }
         } else if *DEBUG {
-            __println!("日志系统Debug：未找到活动写入任务句柄，May已关闭。");
+            __println!("日志系统Debug：未找到活动写入任务句柄，MayAlready关闭。");
         }
     } else if *DEBUG {
         __println!("日志系统Debug：日志系统未初始化，无需关闭。");

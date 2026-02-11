@@ -45,7 +45,7 @@ pub fn validate_checksum(checksum: &str) -> bool {
         return false;
     }
 
-    // 单次遍历完成所Have字符校验
+    // 单次遍历Completed所Have字符校验
     for (i, &b) in bytes.iter().enumerate() {
         let valid = match (len, i) {
             // 通用字符校验（排除非法字符）

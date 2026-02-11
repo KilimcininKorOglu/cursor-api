@@ -16,17 +16,17 @@ use http::{Extensions, StatusCode};
 #[repr(u8)]
 #[derive(Clone, Copy, PartialEq)]
 enum StreamState {
-    /// 初始状态，什么都未开始
+    /// 初始状态，什么都未Start
     NotStarted,
-    // /// message_start 已完成，等待 content_block_start
+    // /// message_start AlreadyCompleted，等待 content_block_start
     // MessageStarted,
-    /// content_block_start 已完成，正在接收 content_block_delta
+    /// content_block_start AlreadyCompleted，正在接收 content_block_delta
     ContentBlockActive,
-    // /// content_block_stop 已完成，等待下一个 content_block_start 或 message_delta
+    // /// content_block_stop AlreadyCompleted，等待下一个 content_block_start Or message_delta
     // BetweenBlocks,
-    // /// message_delta 已完成，等待 message_stop
+    // /// message_delta AlreadyCompleted，等待 message_stop
     // MessageEnding,
-    /// message_stop 已完成，Stream end
+    /// message_stop AlreadyCompleted，Stream end
     Completed,
 }
 

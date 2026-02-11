@@ -10,10 +10,10 @@ pub enum Pattern {
     O(u8), // O1, O3, O4
 
     // 版本号
-    Version(Cow<'static, str>), // 3.5 或 v3.1
+    Version(Cow<'static, str>), // 3.5 Or v3.1
 
     // 日期Related（放括号）
-    Date(Cow<'static, str>),  // 2024-04-09 或 05-28
+    Date(Cow<'static, str>),  // 2024-04-09 Or 05-28
     DateMarker(&'static str), // latest, legacy (时间标记)
 
     // 普通词
@@ -91,7 +91,7 @@ pub fn parse_patterns(tokens: Vec<Token>) -> ParseResult {
                 }
             }
 
-            // 日期检测（4位或2位数字）
+            // 日期检测（4位Or2位数字）
             if (token.meta.digit_count == 4 || token.meta.digit_count == 2)
                 && let Some(date) = try_parse_date(&tokens, i)
             {
@@ -107,7 +107,7 @@ pub fn parse_patterns(tokens: Vec<Token>) -> ParseResult {
             continue;
         }
 
-        // 带点的版本号 - 直接借用，不需要分配
+        // 带点的版本号 - 直接借用，不Need分配
         if token.meta.has_dot {
             main_parts.push(Pattern::Version(Cow::Borrowed(token.content)));
             i += 1;
@@ -162,7 +162,7 @@ fn try_parse_date(tokens: &[Token], start: usize) -> Option<Cow<'static, str>> {
     // 只Have当4位数字看起来像 MMDD Format时才Handle（前两位 <= 12）
     if token.meta.digit_count == 4 {
         let bytes = token.content.as_bytes();
-        // Check是否May是月份（01-12）
+        // CheckWhetherMay是月份（01-12）
         let month = (bytes[0] - b'0') * 10 + (bytes[1] - b'0');
         if (1..=12).contains(&month) {
             // 预分配精确长度：2 + '-' + 2 = 5
@@ -194,9 +194,9 @@ fn try_parse_date(tokens: &[Token], start: usize) -> Option<Cow<'static, str>> {
 fn update_index_for_date(tokens: &[Token], start: usize) -> usize {
     let token = &tokens[start];
 
-    // MMDD 或单独的日期组件
+    // MMDD Or单独的日期组件
     if token.meta.digit_count == 4 || token.meta.digit_count == 2 {
-        // Check是否是 YYYY-MM-DD
+        // CheckWhether是 YYYY-MM-DD
         if token.meta.digit_count == 4
             && start + 2 < tokens.len()
             && tokens[start + 1].meta.is_digit_only
@@ -228,12 +228,12 @@ fn capitalize_first(s: &'static str) -> Cow<'static, str> {
 
     let first_byte = bytes[0];
 
-    // 快速路径：已经是大写
+    // 快速路径：Already经是大写
     if first_byte.is_ascii_uppercase() {
         return Cow::Borrowed(s);
     }
 
-    // 需要Convert：对于 ASCII 小写字母
+    // NeedConvert：对于 ASCII 小写字母
     if first_byte.is_ascii_lowercase() {
         // 预分配精确长度
         let mut result = String::with_capacity(s.len());
@@ -242,6 +242,6 @@ fn capitalize_first(s: &'static str) -> Cow<'static, str> {
         return Cow::Owned(result);
     }
 
-    // 非 ASCII 或非字母，保持原样
+    // 非 ASCII Or非字母，保持原样
     Cow::Borrowed(s)
 }

@@ -1,6 +1,6 @@
 //! 十六进制编Decode工具
 
-/// Decode查找表：将ASCII字符映射到0-15或0xFF（非法）
+/// Decode查找表：将ASCII字符映射到0-15Or0xFF（非法）
 pub(crate) const HEX_TABLE: &[u8; 256] = &{
     let mut buf = [0xFF; 256]; // Default非法值
     let mut i: u8 = 0;

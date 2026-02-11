@@ -1,4 +1,4 @@
-/// Cursor订阅计划类型
+/// Cursor订阅计划Type
 ///
 /// 各计划包含的usage额度：
 /// - Free: Have限的免费额度
@@ -22,7 +22,7 @@ pub enum MembershipType {
 }
 
 impl MembershipType {
-    // 定义常量字符串
+    // 定义常Amount字符串
     const FREE: &'static str = "free";
     const PRO: &'static str = "pro";
     const PRO_PLUS: &'static str = "pro_plus";

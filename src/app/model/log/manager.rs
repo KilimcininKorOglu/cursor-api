@@ -97,7 +97,7 @@ impl LogManager {
         Ok(())
     }
 
-    /// GetError日志数量
+    /// GetError日志数Amount
     #[inline]
     pub fn error_count(&self) -> u64 {
         self.logs.iter().filter(|log| log.status as u8 != 1).count() as u64

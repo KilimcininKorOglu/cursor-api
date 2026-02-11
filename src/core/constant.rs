@@ -382,7 +382,7 @@ impl Models {
             Model { id, client_id, owned_by, server_id, is_thinking, is_image, is_max, is_non_max }
         }
 
-        // 先Get当前模型列表的引用
+        // 先GetCurrent模型列表的引用
         let current_models = &guard.models;
 
         // 根据不同的FetchMode来确定如何Handle模型
@@ -436,13 +436,13 @@ impl Models {
         let old_ids: HashSet<_> = guard.models.iter().map(|m| m.id()).collect();
         let new_ids: HashSet<_> = new_models.iter().map(|m| m.id()).collect();
 
-        // Get需要添加and移除的模型
+        // GetNeed添加and移除的模型
         let to_add: Vec<_> = new_models.iter().filter(|m| !old_ids.contains(&m.id())).collect();
 
         let to_remove: Vec<_> =
             guard.models.iter().filter(|m| !new_ids.contains(&m.id())).collect();
 
-        // 从缓存中移除不再需要的ID
+        // 从缓存中移除不再Need的ID
         let mut ids: Vec<_> = guard
             .ids
             .iter()

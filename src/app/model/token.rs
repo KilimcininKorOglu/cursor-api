@@ -276,7 +276,7 @@ impl UserId {
 
     // ==================== Format检测与字符串Convert ====================
 
-    /// Check是否To旧FormatID（高32位To0）
+    /// CheckWhetherTo旧FormatID（高32位To0）
     #[inline]
     pub const fn is_legacy(&self) -> bool {
         // Memory layout (little-endian): [低32位][次低32位][次高32位][最高32位]

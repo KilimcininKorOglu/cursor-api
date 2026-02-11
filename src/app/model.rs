@@ -246,7 +246,7 @@ impl From<crate::common::model::userinfo::TokenUsage> for ChainUsage {
 //         let mut remaining = input.as_str();
 
 //         while !remaining.is_empty() {
-//             // Check是否以任一开始标记开头，并确定相应的结束标记
+//             // CheckWhether以任一Start标记开头，并确定相应的End标记
 //             let (role, end_tag, content) =
 //                 if let Some(r) = remaining.strip_prefix("<|BEGIN_SYSTEM|>\n") {
 //                     (Role::System, "\n<|END_SYSTEM|>\n", r)
@@ -258,17 +258,17 @@ impl From<crate::common::model::userinfo::TokenUsage> for ChainUsage {
 //                     return Self::Origin(input);
 //                 };
 
-//             // 更新remainingTo去除Prefix后的内容
+//             // 更新remainingTo去除Prefix后的Content
 //             remaining = content;
 
-//             // 查找结束标记
+//             // 查找End标记
 //             if let Some((content_part, after_end)) = remaining.split_once(end_tag) {
-//                 // 提取内容
+//                 // 提取Content
 //                 let content =
 //                     PromptContent(crate::leak::intern_arc(content_part.trim_leading_newlines()));
 //                 messages.push(PromptMessage { role, content });
 
-//                 // 移动到结束标记之后
+//                 // 移动到End标记之后
 //                 remaining = after_end;
 
 //                 // 跳过Message之间的额外换行符
@@ -349,7 +349,7 @@ impl ErrorInfo {
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ExtToken {
-    /// 主token - 可以是client或web token
+    /// 主token - 可以是clientOrweb token
     pub primary_token: Token,
     /// 次要token - If存在，必定是web token
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -431,7 +431,7 @@ impl ExtToken {
         unsafe { crate::common::model::HeaderValue::from_static(self.timezone_name()).into() }
     }
 
-    /// Get当前时区的当前时间
+    /// GetCurrent时区的Current时间
     #[inline]
     pub fn now(&self) -> chrono::DateTime<chrono_tz::Tz> {
         use chrono::TimeZone as _;
@@ -456,7 +456,7 @@ impl ExtToken {
 }
 
 pub struct UnextToken {
-    /// 主token - 可以是client或web token
+    /// 主token - 可以是clientOrweb token
     pub primary_token: Token,
     /// 次要token - If存在，必定是web token
     pub secondary_token: Option<Token>,
@@ -474,7 +474,7 @@ impl UnextToken {
 
 #[derive(Clone, Copy)]
 pub struct UnextTokenRef<'a> {
-    /// 主token - 可以是client或web token
+    /// 主token - 可以是clientOrweb token
     pub primary_token: &'a Token,
     /// 次要token - If存在，必定是web token
     pub secondary_token: Option<&'a Token>,

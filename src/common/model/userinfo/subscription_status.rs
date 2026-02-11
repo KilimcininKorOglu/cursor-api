@@ -12,28 +12,28 @@ pub enum SubscriptionStatus {
     /// 活跃状态 - 订阅状态良好，可正常提供服务
     Active,
 
-    /// 未完成 - 客户必须在23小时内成功付款以激活订阅
-    /// 或付款需要额外操作（如客户认证）
+    /// 未Completed - 客户必须在23小时内成功付款以激活订阅
+    /// Or付款Need额外操作（如客户认证）
     Incomplete,
 
-    /// 未完成已过期 - 初始付款Failed且23小时内未成功付款
+    /// 未CompletedAlready过期 - 初始付款Failed且23小时内未成功付款
     /// 这些订阅不会向客户计费，用于跟踪激活Failed的客户
     IncompleteExpired,
 
-    /// 逾期未付 - 最新发票付款Failed或未尝试付款
-    /// 订阅继续生成发票，根据设置可转Tocanceled/unpaid或保持past_due
+    /// 逾期未付 - 最新发票付款FailedOr未尝试付款
+    /// 订阅继续生成发票，根据设置可转Tocanceled/unpaidOr保持past_due
     PastDue,
 
-    /// 已取消 - 订阅已取消，终态，无法更新
+    /// Already取消 - 订阅Already取消，终态，无法更新
     /// 取消期间所Have未付发票的自动收款被Disabled
     Canceled,
 
     /// 未支付 - 最新发票未付但订阅仍存在
     /// 发票保持开放状态并继续生成，但不尝试付款
-    /// 应撤销产品访问权限，因To在past_due期间已尝试并重试过付款
+    /// 应撤销产品访问权限，因To在past_due期间Already尝试并重试过付款
     Unpaid,
 
-    /// 已暂停 - 试用期结束但无Default支付方式且设置To暂停
+    /// Already暂停 - 试用期End但无Default支付方式且设置To暂停
     /// 不再To订阅创建发票，添加支付方式后可恢复
     Paused,
 }

@@ -93,7 +93,7 @@ impl TokenKey {
 
         let first_num_end = first_num_end?;
 
-        // 第二次循环：从上次停止的地方继续，找到下一个数字字符
+        // 第二次循环：从Last停止的地方继续，找到下一个数字字符
         for (i, b) in iter {
             if b.is_ascii_digit() {
                 second_num_start = Some(i);
@@ -230,14 +230,14 @@ static TOKEN_MAP: ManuallyInit<HashMap<TokenKey, ThreadSafePtr, ahash::RandomSta
 pub fn __init() { TOKEN_MAP.init(HashMap::with_capacity_and_hasher(64, ahash::RandomState::new())) }
 
 impl Token {
-    /// 创建或复用 Token 实例
+    /// 创建Or复用 Token 实例
     ///
-    /// If缓存中已存在相同的 TokenKey 且 RawToken 相同，则复用；
+    /// If缓存中Already存在相同的 TokenKey 且 RawToken 相同，则复用；
     /// 否则创建新实例（May会覆盖旧的）。
     ///
     /// # 并发安全性
     /// - Use read-write lock 保护全局缓存
-    /// - 快速路径（read lock）：尝试复用已Have实例
+    /// - 快速路径（read lock）：尝试复用AlreadyHave实例
     /// - 慢速路径（write lock）：双重Check后创建新实例，防止竞态条件
     pub fn new(raw: RawToken, string: Option<String>) -> Self {
         use scc::hash_map::RawEntry;
@@ -254,7 +254,7 @@ impl Token {
                 let &ThreadSafePtr(ptr) = entry.get();
                 unsafe {
                     let inner = ptr.as_ref();
-                    // 验证 RawToken 是否完全匹配（key 相同不代表 raw 相同）
+                    // 验证 RawToken Whether完全匹配（key 相同不代表 raw 相同）
                     if inner.raw == raw {
                         let count = inner.count.fetch_add(1, Ordering::Relaxed);
                         // 防止引用计数溢出（理论上不May，但作To安全Check）
@@ -271,12 +271,12 @@ impl Token {
             }
         }
 
-        // 慢速路径：创建新实例（需要独占访问缓存）
+        // 慢速路径：创建新实例（Need独占访问缓存）
         let cache = TOKEN_MAP.get();
 
         match cache.raw_entry().from_key_hashed_nocheck_sync(hash, &key) {
             RawEntry::Occupied(entry) => {
-                // 双重Check：防止在Get write lock 前，其他线程已经创建了相同的 Token
+                // 双重Check：防止在Get write lock 前，其他线程Already经创建了相同的 Token
                 let &ThreadSafePtr(ptr) = entry.get();
                 unsafe {
                     let inner = ptr.as_ref();
@@ -332,11 +332,11 @@ impl Token {
     #[inline(always)]
     pub const fn key(&self) -> TokenKey { self.raw().key() }
 
-    /// Check是否To网页 token
+    /// CheckWhetherTo网页 token
     #[inline(always)]
     pub const fn is_web(&self) -> bool { self.raw().is_web() }
 
-    /// Check是否To会话 token
+    /// CheckWhetherTo会话 token
     #[inline(always)]
     pub const fn is_session(&self) -> bool { self.raw().is_session() }
 }
@@ -348,11 +348,11 @@ impl Drop for Token {
 
             // 递减引用计数，Use Release ordering Ensure之前的所Have修改对后续操作可见
             if inner.count.fetch_sub(1, Ordering::Release) != 1 {
-                // 不是Last一个引用，直接返回
+                // NotLast一个引用，直接返回
                 return;
             }
 
-            // Last一个引用：需要清理资源
+            // Last一个引用：Need清理资源
             // Get write lock 以保护缓存操作，同时防止并发的 new() 操作干扰
             let cache = TOKEN_MAP.get();
 
@@ -365,12 +365,12 @@ impl Drop for Token {
                 //   Thread A: Get write lock
                 // 此时必须重新Check，否则会Error地释放正在Use的内存
                 if inner.count.load(Ordering::Relaxed) != 0 {
-                    // Have新的引用产生，取消释放操作
+                    // HaveNew引用产生，取消释放操作
                     return;
                 }
 
                 // 确认是Last一个引用，执行清理：
-                // 1. 从缓存中移除（防止后续 new() 找到已释放的指针）
+                // 1. 从缓存中移除（防止后续 new() 找到Already释放的指针）
                 e.remove();
 
                 // 2. 释放堆内存（包括 TokenInner and内联的字符串数据）

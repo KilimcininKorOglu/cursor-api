@@ -40,7 +40,7 @@ pub fn format_output(result: ParseResult) -> String {
 
 #[inline(always)]
 fn capitalize_word(word: &str) -> Cow<'_, str> {
-    // 特殊CaseHandle - 需要完全替换
+    // 特殊CaseHandle - Need完全替换
     if word == "default" {
         return Cow::Borrowed("Default");
     }
@@ -50,13 +50,13 @@ fn capitalize_word(word: &str) -> Cow<'_, str> {
         return Cow::Borrowed(word);
     }
 
-    // 快速Check第一个字符是否已经是大写
+    // 快速Check第一个字符WhetherAlready经是大写
     let first_byte = bytes[0];
 
     // 对于 ASCII 字符的快速路径
     if first_byte.is_ascii() {
         if first_byte.is_ascii_uppercase() {
-            // 已经是大写，直接返回
+            // Already经是大写，直接返回
             return Cow::Borrowed(word);
         }
 
@@ -68,7 +68,7 @@ fn capitalize_word(word: &str) -> Cow<'_, str> {
             return Cow::Owned(result);
         }
 
-        // ASCII 但不是字母（如数字），保持原样
+        // ASCII 但Not字母（如数字），保持原样
         return Cow::Borrowed(word);
     }
 

@@ -12,7 +12,7 @@ pub struct TokenPayload {
     pub is_session: bool,
 }
 
-// 定义所Have常量
+// 定义所Have常Amount
 crate::define_typed_constants! {
     usize => {
         FIELD_COUNT = 8,
@@ -179,7 +179,7 @@ impl<'de> ::serde::Deserialize<'de> for TokenPayload {
                                 TYPE_WEB => false,
                                 _ => {
                                     return Err(de::Error::custom(format_args!(
-                                        "{MSG_TYPE_INVALID}{TYPE_SESSION} 或 {TYPE_WEB}"
+                                        "{MSG_TYPE_INVALID}{TYPE_SESSION} Or {TYPE_WEB}"
                                     )));
                                 }
                             });
@@ -231,7 +231,7 @@ impl<'de> ::serde::Deserialize<'de> for TokenPayload {
                 let exp = exp.ok_or_else(|| de::Error::missing_field(FIELD_EXP))?;
                 let is_session = is_session.ok_or_else(|| de::Error::missing_field(FIELD_TYPE))?;
 
-                // Check必须存在的常量Field
+                // Check必须存在的常AmountField
                 if !iss_seen {
                     return Err(de::Error::missing_field(FIELD_ISS));
                 }

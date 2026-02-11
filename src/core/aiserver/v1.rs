@@ -7,7 +7,7 @@ include!("v1/lite.rs");
 impl ErrorDetails {
     /// 将ErrorConvertTo相应的 HTTP 状态码。
     ///
-    /// 此方法根据Error的性质，将内部Error类型映射到标准的 HTTP 状态码，
+    /// 此方法根据Error的性质，将内部ErrorType映射到标准的 HTTP 状态码，
     /// 遵循 RESTful API 最佳实践。
     ///
     /// 返回值：
@@ -16,7 +16,7 @@ impl ErrorDetails {
         use error_details::Error;
         let code = match Error::try_from(error) {
             Ok(error) => match error {
-                // 400 - Bad Request: 客户端Error，RequestFormatError或无效
+                // 400 - Bad Request: 客户端Error，RequestFormatErrorOr无效
                 Error::BadRequest
                 | Error::BadModelName
                 | Error::SlashEditFileTooLong
@@ -33,7 +33,7 @@ impl ErrorDetails {
                 | Error::Unauthorized
                 | Error::GithubNoUserCredentials => 401,
 
-                // 402 - Payment Required: 需要付费
+                // 402 - Payment Required: Need付费
                 Error::UsagePricingRequired | Error::UsagePricingRequiredChangeable => 402,
 
                 // 403 - Forbidden: 权限RelatedError
@@ -77,7 +77,7 @@ impl ErrorDetails {
                 // 499 - Client Closed Request: 客户端关闭Request（非标准但常用）
                 Error::UserAbortedRequest => 499,
 
-                // 503 - Service Unavailable: 服务器因过载或维护暂时不可用
+                // 503 - Service Unavailable: 服务器因过载Or维护暂时不可用
                 Error::FreeUserUsageLimit
                 | Error::ProUserUsageLimit
                 | Error::ResourceExhausted
@@ -100,13 +100,13 @@ impl ErrorDetails {
         unsafe { NonZeroU16::new_unchecked(code) }
     }
 
-    /// 返回Error类型的 snake_case 字符串表示。
+    /// 返回ErrorType的 snake_case 字符串表示。
     ///
     /// 此方法将Error变体映射到其 snake_case 字符串名称，
-    /// 用于日志记录、Debug或 API Response。
+    /// 用于日志记录、DebugOr API Response。
     ///
     /// 返回值：
-    ///   - &'static str: Error类型的 snake_case 名称。
+    ///   - &'static str: ErrorType的 snake_case 名称。
     pub fn r#type(error: i32) -> &'static str {
         use error_details::Error;
         match Error::try_from(error) {
@@ -168,7 +168,7 @@ impl ErrorDetails {
                 Error::Custom => "custom",
                 Error::HooksBlocked => "hooks_blocked",
             },
-            Err(_) => crate::app::constant::UNKNOWN, // 未知Error类型的Default值
+            Err(_) => crate::app::constant::UNKNOWN, // 未知ErrorType的Default值
         }
     }
 }
@@ -214,7 +214,7 @@ impl TryFrom<image::DynamicImage> for image_proto::Dimension {
 
 impl AvailableModelsResponse {
     /// 根据 `AvailableModel` 的关键Field（`name`、`client_display_name`、`server_model_name`）
-    /// 判断两个Response是否相等。
+    /// 判断两个ResponseWhether相等。
     ///
     /// # 参数
     ///

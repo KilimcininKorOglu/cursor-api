@@ -109,10 +109,10 @@ impl ParseFromEnv for &'static str {
                     // If trim 后ToEmpty，UseDefault值（不分配）
                     None
                 } else if trimmed_len == value.len() {
-                    // 不需要 trim，直接Use
+                    // 不Need trim，直接Use
                     Some(Cow::Owned(value))
                 } else {
-                    // 需要 trim - 就地修改
+                    // Need trim - 就地修改
                     let start_offset = trimmed.as_ptr() as usize - value.as_ptr() as usize;
 
                     unsafe {
@@ -121,7 +121,7 @@ impl ParseFromEnv for &'static str {
                         // SAFETY:
                         // - trimmed 是 value.trim() 的结果，保证是 value 的子切片
                         // - start_offset and trimmed_len 来自Have效的切片边界
-                        // - 目标位置（索引 0）and长度在 vec 容量内
+                        // - 目标位置（索引 0）and长度在 vec 容Amount内
                         // - ptr::copy Support重叠内存区域（memmove 语义）
                         if start_offset > 0 {
                             ::core::ptr::copy(
@@ -441,7 +441,7 @@ pub async fn get_token_usage(
 //     let (token_part, checksum) = auth_token.split_at(comma_pos);
 //     let checksum = &checksum[1..]; // 跳过逗号
 
-//     // 解析 token - To了向前兼容,忽略Last一个:或%3A前的内容
+//     // 解析 token - To了向前兼容,忽略Last一个:Or%3A前的Content
 //     let colon_pos = token_part.rfind(':');
 //     let encoded_colon_pos = token_part.rfind("%3A");
 
@@ -477,7 +477,7 @@ pub async fn get_token_usage(
 //         delimiter_pos = auth_token.rfind(COMMA);
 //     }
 
-//     // 根据是否找到Separator来确定 token_part
+//     // 根据Whether找到Separator来确定 token_part
 //     let token_part = match delimiter_pos {
 //         Some(pos) => &auth_token[..pos],
 //         None => auth_token,

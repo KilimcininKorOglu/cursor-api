@@ -6,7 +6,7 @@ use std::io;
 pub enum ReleaseStage {
     /// 正式发布版本
     Release,
-    /// 预览版本，Format如 `-pre.6` 或 `-pre.6+build.8`
+    /// 预览版本，Format如 `-pre.6` Or `-pre.6+build.8`
     Preview {
         /// 预览版本号
         version: u16,

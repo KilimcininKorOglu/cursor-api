@@ -4,7 +4,7 @@ use chrono::{DateTime, Local, TimeZone as _};
 
 // 解析token
 // pub fn parse_token(token_part: &str) -> String {
-//     // 查找Last一个:或%3A的位置
+//     // 查找Last一个:Or%3A的位置
 //     let colon_pos = token_part.rfind(':');
 //     let encoded_colon_pos = token_part.rfind("%3A");
 
@@ -21,7 +21,7 @@ use chrono::{DateTime, Local, TimeZone as _};
 //     }
 // }
 
-// Token 加载函数，Support从字符串内容加载
+// Token 加载函数，Support从字符串Content加载
 // pub fn load_tokens_from_content(content: &str) -> Vec<TokenInfo> {
 //     let token_map: std::collections::HashMap<String, String> = content
 //         .lines()

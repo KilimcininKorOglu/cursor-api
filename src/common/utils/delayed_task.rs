@@ -42,8 +42,8 @@ impl DelayedTask {
         let _handle = tokio::spawn(async move {
             tokio::select! {
                 _ = sleep(delay) => {
-                    // 原子地尝试从 Scheduled 切换到 Running。
-                    // Use AcqRel 建立内存屏障：Ensure看到 cancel() 的修改，或让 cancel() 看到我们的修改。
+                    // 原子地尝试从 Scheduled Switch到 Running。
+                    // Use AcqRel 建立内存屏障：Ensure看到 cancel() 的修改，Or让 cancel() 看到我们的修改。
                     let res = task_inner.state.compare_exchange(
                         TaskState::Scheduled,
                         TaskState::Running,
@@ -56,7 +56,7 @@ impl DelayedTask {
                         task_inner.state.store(TaskState::Finished, Ordering::Release);
                     }
                 }
-                // 等待取消信号，If state 已被 cancel() 修改，这里会被唤醒
+                // 等待取消信号，If state Already被 cancel() 修改，这里会被唤醒
                 _ = task_inner.signal.notified() => {}
             }
         });
@@ -66,10 +66,10 @@ impl DelayedTask {
 
     /// 尝试取消任务。
     ///
-    /// If任务已经在运行或已完成，取消将Failed。
+    /// If任务Already经在运行OrAlreadyCompleted，取消将Failed。
     pub fn cancel(&self) -> bool {
-        // 解决竞态条件：只Have当前状态确认To Scheduled 时才切换To Cancelled。
-        // 此处 AcqRel 保证了与任务线程中状态切换的互斥性。
+        // 解决竞态条件：只HaveCurrent状态确认To Scheduled 时才SwitchTo Cancelled。
+        // 此处 AcqRel 保证了与任务线程中状态Switch的互斥性。
         let res = self.inner.state.compare_exchange(
             TaskState::Scheduled,
             TaskState::Cancelled,

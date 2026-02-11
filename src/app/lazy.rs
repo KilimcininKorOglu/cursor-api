@@ -127,7 +127,7 @@ macro_rules! def_cursor_api_url {
             }
         ),+ $(,)?
     ) => {
-        // To每个API生成静态变量andgetter函数
+        // To每个API生成静态变Amountandgetter函数
         $(
             $(
                 paste::paste! {
@@ -270,7 +270,7 @@ def_cursor_api_url! {
     }
 }
 
-// TCP and超时Related常量
+// TCP and超时Related常Amount
 const DEFAULT_TCP_KEEPALIVE: NonNegativeI16 = NonNegativeI16::new(60).unwrap();
 const MAX_TCP_KEEPALIVE: NonNegativeI16 = NonNegativeI16::new(600).unwrap();
 pub static TCP_KEEPALIVE: ManuallyInit<ToDuration<DEFAULT_TCP_KEEPALIVE, MAX_TCP_KEEPALIVE>> =

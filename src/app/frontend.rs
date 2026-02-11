@@ -356,7 +356,7 @@ impl FrontendLoader {
             }
         }
 
-        // 批量Read文件（去重缓存）
+        // 批AmountRead文件（去重缓存）
         let mut file_cache: HashMap<String, Bytes> =
             HashMap::with_capacity_and_hasher(unique_paths.len(), random_state.clone());
 
@@ -498,8 +498,8 @@ static ROUTE_REGISTRY: ManuallyInit<HashSet<&'static str>> = ManuallyInit::new()
 
 /// 初始化前端资源系统
 ///
-/// # 环境变量
-/// - `FRONTEND_PATH`: 前端资源路径（目录或 .zip 文件，Default: "frontend.zip"）
+/// # 环境变Amount
+/// - `FRONTEND_PATH`: 前端资源路径（目录Or .zip 文件，Default: "frontend.zip"）
 ///
 /// # 返回
 /// - `Ok(Option<ExchangeMap>)`: 初始化成功
@@ -520,7 +520,7 @@ pub fn init_frontend() -> Result<(HashMap<&'static str, RouteServiceFn>, Exchang
 
     let result = loader.build_routes()?;
 
-    println!("前端路由加载完成，共 {} 个路由", result.0.len());
+    println!("前端路由加载Completed，共 {} 个路由", result.0.len());
 
     Ok(result)
 }

@@ -1,8 +1,8 @@
-//! Cursor 版本信息管理模块
+//! Cursor 版本信息管理模Block
 //!
-//! 本模块Use ManuallyInit 来存储版本信息，这种设计考虑了以下因素：
+//! 本模BlockUse ManuallyInit 来存储版本信息，这种设计考虑了以下因素：
 //! 1. 版本信息在程序生命周期内只需初始化一次
-//! 2. 零开销访问：没Have原子操作或运行时Check
+//! 2. 零开销访问：没Have原子操作Or运行时Check
 //! 3. 符合单线程初始化、多线程只读的模式
 //!
 //! # Safety
@@ -14,12 +14,12 @@
 
 use manually_init::ManuallyInit;
 
-// 定义所Have常量
+// 定义所Have常Amount
 crate::define_typed_constants! {
     &'static str => {
         /// Default的客户端版本号
         DEFAULT_CLIENT_VERSION = "2.0.0",
-        /// 环境变量名：Cursor 客户端版本
+        /// 环境变Amount名：Cursor 客户端版本
         ENV_CURSOR_CLIENT_VERSION = "CURSOR_CLIENT_VERSION",
         /// Chrome 版本信息
         CHROME_VERSION_INFO = " Chrome/138.0.7204.251 Electron/37.7.0 Safari/537.36",
@@ -47,7 +47,7 @@ crate::define_typed_constants! {
     u8 => {
         /// 版本号中每个部分的最大数字位数
         VERSION_PART_MAX_DIGITS = 4,
-        /// 版本号中期望的点号数量
+        /// 版本号中期望的点号数Amount
         VERSION_DOT_COUNT = 2,
     }
 }
@@ -62,7 +62,7 @@ static HEADER_VALUE_UA_CURSOR_LATEST: ManuallyInit<http::header::HeaderValue> = 
 ///
 /// # Safety
 ///
-/// 调用者必须Ensure `initialize_cursor_version` 已经被调用。
+/// 调用者必须Ensure `initialize_cursor_version` Already经被调用。
 #[inline(always)]
 pub fn cursor_client_version() -> http::header::HeaderValue { CLIENT_VERSION.get().clone() }
 
@@ -77,7 +77,7 @@ pub fn cursor_version() -> bytes::Bytes {
 ///
 /// # Safety
 ///
-/// 调用者必须Ensure `initialize_cursor_version` 已经被调用。
+/// 调用者必须Ensure `initialize_cursor_version` Already经被调用。
 #[inline(always)]
 pub fn header_value_ua_cursor_latest() -> http::header::HeaderValue {
     HEADER_VALUE_UA_CURSOR_LATEST.get().clone()
@@ -90,7 +90,7 @@ pub fn header_value_ua_cursor_latest() -> http::header::HeaderValue {
 /// 此函数必须满足以下条件：
 /// 1. 在程序启动时的单线程环境中调用
 /// 2. 在整个程序生命周期中只能调用一次
-/// 3. 必须在调用 `cursor_client_version` 或 `header_value_ua_cursor_latest` 之前调用
+/// 3. 必须在调用 `cursor_client_version` Or `header_value_ua_cursor_latest` 之前调用
 pub fn initialize_cursor_version() {
     use ::core::ops::Deref as _;
 
@@ -127,7 +127,7 @@ pub fn initialize_cursor_version() {
     HEADER_VALUE_UA_CURSOR_LATEST.init(ua_header);
 }
 
-/// Check版本字符串是否符合 VSCode/Cursor 的版本Format
+/// Check版本字符串Whether符合 VSCode/Cursor 的版本Format
 ///
 /// 期望的Format：`major.minor.patch`
 /// 例如：`1.0.0`、`1.95.3`

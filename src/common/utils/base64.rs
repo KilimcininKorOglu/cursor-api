@@ -2,7 +2,7 @@
 
 //! 高性能 Base64 编Decode实现
 //!
-//! 本模块提供了一个优化的 Base64 编Decode器，Use自定义字符集：
+//! 本模Block提供了一个优化的 Base64 编Decode器，Use自定义字符集：
 //! - 字符集：`-AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1032547698_`
 //! - 特点：URL 安全，无需填充字符
 
@@ -128,7 +128,7 @@ pub unsafe fn decode_to_slice_unchecked(input: &[u8], output: &mut [u8]) {
         j += 3;
     }
 
-    // Handle剩余的2或3个字符
+    // Handle剩余的2Or3个字符
     match remainder.len() {
         2 => {
             let c1 = BASE64_DECODE_TABLE[*remainder.get_unchecked(0) as usize];

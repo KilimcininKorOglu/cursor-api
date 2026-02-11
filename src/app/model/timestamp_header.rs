@@ -76,7 +76,7 @@ const fn new(kilo_seconds: u64) -> u64 {
 #[inline(always)]
 pub fn read() -> [u8; 8] { TIMESTAMP_HEADER.load(Ordering::Relaxed).to_ne_bytes() }
 
-// Use指定千秒更新全局原子变量
+// Use指定千秒更新全局原子变Amount
 #[inline]
 pub fn update_global_with(kilo_seconds: u64) {
     TIMESTAMP_HEADER.store(new(kilo_seconds), Ordering::Relaxed)

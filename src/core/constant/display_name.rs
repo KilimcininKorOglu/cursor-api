@@ -60,7 +60,7 @@ pub fn init_display_name_cache() {
 /// assert_eq!(calculate_display_name("o3-mini"), "O3 Mini");
 ///
 /// // 边界Case
-/// assert_eq!(calculate_display_name("version-10-beta"), "Version 10 Beta"); // 10 不是单数字
+/// assert_eq!(calculate_display_name("version-10-beta"), "Version 10 Beta"); // 10 Not单数字
 /// assert_eq!(calculate_display_name("model-1-test-9-case"), "Model 1 Test 9 Case"); // 单数字不相邻
 /// ```
 pub fn calculate_display_name(identifier: &'static str) -> &'static str {

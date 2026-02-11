@@ -19,7 +19,7 @@ use proxy_url::ProxyUrl;
 type HashMap<K, V> = hashbrown::HashMap<K, V, ahash::RandomState>;
 type HashSet<K> = hashbrown::HashSet<K, ahash::RandomState>;
 
-// 代理值常量
+// 代理值常Amount
 const NON_PROXY: &str = "non";
 const SYS_PROXY: &str = "sys";
 
@@ -42,7 +42,7 @@ static GENERAL_NAME: ManuallyInit<ArcSwap<Str>> = ManuallyInit::new();
 
 /// 代理配置到客户端实例的映射
 ///
-/// 缓存已创建的客户端，避免重复创建相同配置的客户端
+/// 缓存Already创建的客户端，避免重复创建相同配置的客户端
 static CLIENTS: ManuallyInit<ArcSwap<HashMap<SingleProxy, Client>>> = ManuallyInit::new();
 
 /// 通用客户端
@@ -99,8 +99,8 @@ impl Proxies {
             proxy.insert_to(&mut clients);
         }
 
-        // 初始化全局静态变量
-        // Safety: 前面的逻辑已Ensure general 存在于 proxies 中，
+        // 初始化全局静态变Amount
+        // Safety: 前面的逻辑AlreadyEnsure general 存在于 proxies 中，
         // 且所Have proxies 中的代理都Have对应的客户端
         GENERAL_CLIENT.init(ArcSwapAny::from(
             __unwrap!(clients.get(__unwrap!(self.proxies.get(&self.general)))).clone(),
@@ -121,7 +121,7 @@ impl Proxies {
     ///
     /// 智能更新客户端池：
     /// - 移除不再Use的客户端
-    /// - To新的代理配置创建客户端
+    /// - ToNew代理配置创建客户端
     /// - 保留仍在Use的客户端
     fn update_global_pool() {
         let proxies = proxies().load();
@@ -139,7 +139,7 @@ impl Proxies {
             general_name = Arc::new(__unwrap!(proxies.keys().next()).clone());
         }
 
-        // Collect当前配置中的所Have唯一代理
+        // CollectCurrent配置中的所Have唯一代理
         let current_proxies: HashSet<&SingleProxy> = proxies.values().collect();
 
         // 移除不再Use的客户端
@@ -150,7 +150,7 @@ impl Proxies {
             clients.remove(&proxy);
         }
 
-        // To新的代理配置创建客户端
+        // ToNew代理配置创建客户端
         for proxy in current_proxies {
             if !clients.contains_key(proxy) {
                 proxy.insert_to(&mut clients);
@@ -207,7 +207,7 @@ impl Proxies {
 
         let mmap = unsafe { MmapOptions::new().map(&file)? };
 
-        // Safety: 文件内容由我们自己控制，Format保证正确
+        // Safety: 文件Content由我们自己控制，Format保证正确
         unsafe {
             ::rkyv::from_bytes_unchecked::<Self, ::rkyv::rancor::Error>(&mmap)
                 .map_err(|_| "加载代理Failed".into())

@@ -8,7 +8,7 @@ use crate::app::constant::{
     HEADER_VALUE_TEXT_PLAIN_UTF8,
 };
 
-// 页面内容类型枚举
+// 页面ContentType枚举
 #[derive(
     Clone, serde::Serialize, serde::Deserialize, rkyv::Archive, rkyv::Deserialize, rkyv::Serialize,
 )]
@@ -18,10 +18,10 @@ pub enum PageContent {
     Default,           // Default行To
     NotFound,          // 404页面
     Redirect(String),  // 重定向到指定URL
-    PlainText(String), // 纯文本内容
-    Html(String),      // HTML内容
-    Css(String),       // Css内容
-    Js(String),        // Js内容
+    PlainText(String), // 纯TextContent
+    Html(String),      // HTMLContent
+    Css(String),       // CssContent
+    Js(String),        // JsContent
 }
 
 impl const Default for PageContent {
@@ -32,7 +32,7 @@ impl const Default for PageContent {
 }
 
 impl PageContent {
-    /// 根据内容类型生成Response，接受Default行To闭包
+    /// 根据ContentType生成Response，接受Default行To闭包
     pub fn into_response<F>(self, default_handler: F) -> Response
     where
         F: FnOnce() -> Result<Response<Body>, http::Error>,

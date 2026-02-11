@@ -18,7 +18,7 @@ pub enum RequestLogsLimit {
     Disabled,
     /// 无Limit日志记录
     Unlimited,
-    /// HaveLimit的日志记录，参数To最大日志数量
+    /// HaveLimit的日志记录，参数To最大日志数Amount
     Limited(usize),
 }
 
@@ -34,7 +34,7 @@ impl RequestLogsLimit {
         }
     }
 
-    /// Check是否需要保存日志
+    /// CheckWhetherNeed保存日志
     #[inline(always)]
     pub fn should_log(&self) -> bool { !matches!(self, Self::Disabled) }
 
@@ -65,7 +65,7 @@ pub struct LogManager {
 }
 
 impl LogManager {
-    /// 创建新的日志管理器
+    /// 创建New日志管理器
     #[inline]
     pub fn new(logs_limit: RequestLogsLimit) -> Self {
         Self {
@@ -129,7 +129,7 @@ impl LogManager {
     fn rebuild_token_ref_counts(&mut self) {
         self.token_ref_counts.clear();
 
-        // 统计每个token被多少个日志引用
+        // Statistics每个token被多少个日志引用
         for log in &self.logs {
             let token_key = log.token_key();
             *self.token_ref_counts.entry(token_key).or_insert(0) += 1;
@@ -157,7 +157,7 @@ impl LogManager {
         }
     }
 
-    /// 内部方法：添加或更新token（仅在需要时调用）
+    /// 内部方法：添加Or更新token（仅在Need时调用）
     #[inline]
     fn insert_token(&mut self, key: TokenKey, token: ExtToken) { self.tokens.insert(key, token); }
 
@@ -182,7 +182,7 @@ impl LogManager {
             }
         }
 
-        // 添加新token（If提供且不存在的话）
+        // 添加新token（If提供且不存在If）
         // debug_assert_eq!(token_key, log_token_key, "token key 与日志中的不匹配");
         self.insert_token(log_token_key, ext_token);
 
@@ -279,11 +279,11 @@ impl LogManager {
     //     false
     // }
 
-    /// Check是否启用日志
+    /// CheckWhether启用日志
     #[inline]
     pub fn is_enabled(&self) -> bool { self.logs_limit.should_log() }
 
-    /// GetError日志数量
+    /// GetError日志数Amount
     #[inline]
     pub fn error_count(&self) -> u64 {
         self.logs.iter().filter(|log| log.status as u8 != 1).count() as u64
@@ -299,7 +299,7 @@ impl LogManager {
     //     self.tokens.len() as u64
     // }
 
-    // /// Gettoken引用计数统计
+    // /// Gettoken引用计数Statistics
     // #[inline]
     // pub fn token_ref_stats(&self) -> Vec<(TokenKey, usize)> {
     //     self.token_ref_counts

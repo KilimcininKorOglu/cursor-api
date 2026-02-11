@@ -29,13 +29,13 @@ impl PaymentId {
     pub const fn as_str(&self) -> &str { unsafe { std::str::from_utf8_unchecked(&self.0) } }
 }
 
-/// 验证字符是否To大写字母、小写字母或数字
+/// 验证字符WhetherTo大写字母、小写字母Or数字
 ///
 /// # 参数
 /// * `c` - 要验证的 u8 字符
 ///
 /// # 返回值
-/// * `bool` - If字符是 A-Z, a-z 或 0-9 之间的字符则返回 true，否则返回 false
+/// * `bool` - If字符是 A-Z, a-z Or 0-9 之间的字符则返回 true，否则返回 false
 #[inline]
 fn is_alphanumeric(c: u8) -> bool {
     c.is_ascii_uppercase() || c.is_ascii_lowercase() || c.is_ascii_digit()

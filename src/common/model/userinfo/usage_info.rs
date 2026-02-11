@@ -22,11 +22,11 @@ pub type TeamUsage = UsageSummary;
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Archive, RkyvDeserialize, RkyvSerialize)]
 pub struct PlanUsage {
     pub enabled: bool,
-    /// 已Use量（May是花费单位或Request计量单位）
+    /// AlreadyUseAmount（May是花费单位OrRequest计Amount单位）
     pub used: i32,
-    /// 配额上限（当前计费周期内的总限额）
+    /// 配额上限（Current计费周期内的总限额）
     pub limit: i32,
-    /// 剩余可用量 (= limit - used)
+    /// 剩余可用Amount (= limit - used)
     pub remaining: i32,
     /// 配额来源细分
     #[serde(default)]
@@ -35,13 +35,13 @@ pub struct PlanUsage {
 
 /// 配额来源细分
 ///
-/// - `included`: 计划包含的基础配额（如Pro的$20对应的量）
+/// - `included`: 计划包含的基础配额（如Pro的$20对应的Amount）
 /// - `bonus`: 额外赠送的bonus capacity（Animated发放）
 /// - `total`: included + bonus（总承诺配额）
 ///
-/// 注意：`total`May小于或等于`PlanUsage.limit`，其中：
+/// 注意：`total`May小于Or等于`PlanUsage.limit`，其中：
 /// - `limit`是账户的总配额上限
-/// - `breakdown`记录已发放/统计的配额细分
+/// - `breakdown`记录Already发放/Statistics的配额细分
 #[derive(Debug, Default, Clone, Copy, Serialize, Deserialize, Archive, RkyvDeserialize, RkyvSerialize)]
 pub struct UsageBreakdown {
     /// 基础包含配额
@@ -55,14 +55,14 @@ pub struct UsageBreakdown {
 /// 按需UseCase
 ///
 /// 当用户超出计划包含的配额后，可启用on-demand付费Use
-/// 按相同的API价格计费，无质量或速度降级
+/// 按相同的API价格计费，无质AmountOr速度降级
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Archive, RkyvDeserialize, RkyvSerialize)]
 pub struct OnDemandUsage {
-    /// 是否启用按需计费
+    /// Whether启用按需计费
     pub enabled: bool,
-    /// 已Use的按需配额
+    /// AlreadyUse的按需配额
     pub used: i32,
-    /// 按需配额上限（None表示无Limit或未设置）
+    /// 按需配额上限（None表示无LimitOr未设置）
     pub limit: Option<i32>,
     /// 剩余按需配额
     pub remaining: Option<i32>,

@@ -13,13 +13,13 @@ pub enum FetchMode {
 }
 
 impl FetchMode {
-    /// 表示截断模式的字符串常量
+    /// 表示截断模式的字符串常Amount
     const TRUNCATE: &'static str = "truncate";
 
-    /// 表示追加截断模式的字符串常量
+    /// 表示追加截断模式的字符串常Amount
     const APPEND_TRUNCATE: &'static str = "append:truncate";
 
-    /// 表示追加模式的字符串常量
+    /// 表示追加模式的字符串常Amount
     const APPEND: &'static str = "append";
 
     /// 从字符串解析Get模式
