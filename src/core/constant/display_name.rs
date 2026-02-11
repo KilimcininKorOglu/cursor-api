@@ -21,7 +21,7 @@ pub fn init_display_name_cache() {
 ///    - `YYYY-MM-DD` Format：`2024-04-09` → `(2024-04-09)`
 ///    - `MM-DD` Format：`03-25` → `(03-25)`  
 ///    - `MMDD` Format：`0528` → `(05-28)`
-/// 3. **Time marker**：`latest` and `legacy` 在括号中显示
+/// 3. **Time marker**：`latest` and `legacy` displayed in parentheses
 /// 4. **Special prefix**：
 ///    - `gpt` → `GPT`
 ///    - `o1`/`o3`/`o4` → `O1`/`O3`/`O4`
@@ -30,7 +30,7 @@ pub fn init_display_name_cache() {
 ///
 /// # Arguments
 ///
-/// * `identifier` - AI 模型的原始标识符字符串
+/// * `identifier` - Original identifier string of AI model
 ///
 /// # Returns
 ///
