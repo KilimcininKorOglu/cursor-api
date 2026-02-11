@@ -242,6 +242,6 @@ fn capitalize_first(s: &'static str) -> Cow<'static, str> {
         return Cow::Owned(result);
     }
 
-    // 非 ASCII Or非字母，保持原样
+    // Non-ASCII or non-letter, keep as is
     Cow::Borrowed(s)
 }
