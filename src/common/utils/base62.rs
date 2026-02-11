@@ -1,12 +1,12 @@
 #![allow(unsafe_op_in_unsafe_fn, unused)]
 
-//! 高性能固定长度 base62 编解码器
+//! 高性能固定长度 base62 编Decode器
 //!
-//! 本模块提供了针对 `u128` 类型优化的 base62 编解码功能。
+//! 本模块提供了针对 `u128` 类型优化的 base62 编Decode功能。
 //!
 //! # 特性
 //!
-//! - 固定长度输出：所有编码结果恰好为 22 字节
+//! - 固定长度输出：所有Encode结果恰好为 22 字节
 //! - 高性能：使用魔术数除法避免昂贵的 u128 除法操作
 //! - 零分配：不需要堆内存分配
 //! - 前导零填充：数值较小时自动在前面补 '0'
@@ -33,7 +33,7 @@ use core::fmt;
 /// Base62 的基数
 const BASE: u64 = 62;
 
-/// 编码输出的固定长度
+/// Encode输出的固定长度
 pub const BASE62_LEN: usize = 22;
 
 /// 62^10 - 用于将 u128 分解为可管理的块
@@ -55,7 +55,7 @@ const DIV_BASE_TO_10_SHIFT: u8 = 59;
 /// Base62 字符集（标准顺序：0-9, A-Z, a-z）
 const CHARSET: &[u8; 62] = b"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
-/// 解码查找表 - 将 ASCII 字符映射到其 base62 值
+/// Decode查找表 - 将 ASCII 字符映射到其 base62 值
 ///
 /// - 有效字符映射到 0-61
 /// - 无效字符映射到 0xFF
@@ -70,13 +70,13 @@ const DECODE_LUT: &[u8; 256] = &{
 };
 
 // ============================================================================
-// 错误类型
+// Error类型
 // ============================================================================
 
-/// Base62 解码错误
+/// Base62 DecodeError
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum DecodeError {
-    /// 解码结果超出 u128 范围
+    /// Decode结果超出 u128 范围
     ArithmeticOverflow,
     /// 遇到无效的 base62 字符
     InvalidCharacter {
@@ -160,19 +160,19 @@ const fn mulh(x: u128, y: u128) -> u128 {
 // 公共 API
 // ============================================================================
 
-/// 将 u128 编码为固定长度的 base62 字符串
+/// 将 u128 Encode为固定长度的 base62 字符串
 ///
 /// # 参数
 ///
-/// - `num`: 要编码的数值
+/// - `num`: 要Encode的数值
 /// - `buf`: 输出缓冲区，必须恰好为 [`BASE62_LEN`] 字节
 ///
 /// # 性能
 ///
 /// 此函数经过高度优化：
 /// - 使用两次快速除法将 u128 分解为三个 u64 块
-/// - 每个块使用原生 u64 运算进行编码
-/// - 无分支预测失败，无内存分配
+/// - 每个块使用原生 u64 运算进行Encode
+/// - 无分支预测Failed，无内存分配
 ///
 /// # 示例
 ///
@@ -189,7 +189,7 @@ pub fn encode_fixed(num: u128, buf: &mut [u8; BASE62_LEN]) {
     let (quotient, low) = fast_div_base_to_10(num);
     let (high, mid) = fast_div_base_to_10(quotient);
 
-    // 编码各个块
+    // Encode各个块
     // SAFETY: 所有索引都在编译时已知的范围内
     unsafe {
         // 低 10 位 -> buf[12..22]
@@ -201,13 +201,13 @@ pub fn encode_fixed(num: u128, buf: &mut [u8; BASE62_LEN]) {
     }
 }
 
-/// 编码 u64 值到指定长度的 base62 字符串
+/// Encode u64 值到指定长度的 base62 字符串
 ///
 /// # Safety
 ///
 /// 调用者必须确保：
 /// - `ptr` 指向至少 `len` 字节的有效内存
-/// - `num` 编码后不会超过 `len` 个字符
+/// - `num` Encode后不会超过 `len` 个字符
 #[inline(always)]
 unsafe fn encode_u64_chunk(mut num: u64, len: usize, ptr: *mut u8) {
     for i in (0..len).rev() {
@@ -217,16 +217,16 @@ unsafe fn encode_u64_chunk(mut num: u64, len: usize, ptr: *mut u8) {
     }
 }
 
-/// 将固定长度的 base62 字符串解码为 u128
+/// 将固定长度的 base62 字符串Decode为 u128
 ///
 /// # 参数
 ///
 /// - `buf`: 输入缓冲区，必须恰好为 [`BASE62_LEN`] 字节
 ///
-/// # 错误
+/// # Error
 ///
 /// - [`DecodeError::InvalidCharacter`]: 输入包含非 base62 字符
-/// - [`DecodeError::ArithmeticOverflow`]: 解码结果超出 u128 范围
+/// - [`DecodeError::ArithmeticOverflow`]: Decode结果超出 u128 范围
 ///
 /// # 示例
 ///

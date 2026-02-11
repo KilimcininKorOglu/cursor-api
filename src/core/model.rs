@@ -161,7 +161,7 @@ impl ::core::fmt::Display for MessageId {
 
 // impl ToolUseId {
 //     /// 从字符串解析 ToolUseId
-//     /// 支持两种格式：
+//     /// Support两种Format：
 //     /// - "tool_xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx" (40字符)
 //     /// - "toolu_01xxxxxxxxxxxxxxxxxxxx" (30字符)
 //     pub fn parse_str(s: &str) -> Option<Self> {
@@ -169,7 +169,7 @@ impl ::core::fmt::Display for MessageId {
 
 //         let input = s.as_bytes();
 //         match (input.len(), input) {
-//             // UUID格式：tool_xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx
+//             // UUIDFormat：tool_xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx
 //             (40, [b't', b'o', b'o', b'l', b'_', s @ ..]) => {
 //                 // 验证连字符位置
 //                 if !matches!([s[8], s[13], s[18], s[23]], [b'-', b'-', b'-', b'-']) {
@@ -211,7 +211,7 @@ impl ::core::fmt::Display for MessageId {
 //                 Some(Self(u128::from_ne_bytes(buf)))
 //             }
 
-//             // Base62格式：toolu_01xxxxxxxxxxxxxxxxxxxx
+//             // Base62Format：toolu_01xxxxxxxxxxxxxxxxxxxx
 //             (30, [b't', b'o', b'o', b'l', b'u', b'_', b'0', b'1', s @ ..]) => {
 //                 crate::common::utils::base62::decode_fixed(unsafe { &*s.as_ptr().cast() })
 //                     .ok()
@@ -222,7 +222,7 @@ impl ::core::fmt::Display for MessageId {
 //         }
 //     }
 
-//     /// 转换为Base62格式字符串
+//     /// 转换为Base62Format字符串
 //     #[allow(clippy::wrong_self_convention)]
 //     #[inline(always)]
 //     pub fn to_str<'buf>(&self, buf: &'buf mut [u8; 30]) -> &'buf mut str {
@@ -230,7 +230,7 @@ impl ::core::fmt::Display for MessageId {
 //             // 复制前缀 "toolu_01"
 //             ::core::ptr::copy_nonoverlapping(TOOLU01_PREFIX.as_ptr(), buf.as_mut_ptr(), 8);
 
-//             // 编码后续的Base62部分
+//             // Encode后续的Base62部分
 //             crate::common::utils::base62::encode_fixed(
 //                 self.0,
 //                 &mut *buf.as_mut_ptr().add(8).cast(),
@@ -240,7 +240,7 @@ impl ::core::fmt::Display for MessageId {
 //         }
 //     }
 
-//     /// 转换为UUID格式的ByteStr
+//     /// 转换为UUIDFormat的ByteStr
 //     pub fn to_byte_str(self) -> prost::ByteStr {
 //         let mut v = Vec::with_capacity(40);
 //         v.extend_from_slice(b"tool_");
@@ -249,7 +249,7 @@ impl ::core::fmt::Display for MessageId {
 //         unsafe { prost::ByteStr::from_utf8_unchecked(bytes::Bytes::from(v)) }
 //     }
 
-//     /// 格式化为UUID样式的字符串（不含前缀）
+//     /// Format化为UUID样式的字符串（不含前缀）
 //     #[inline]
 //     const fn format_hyphenated(src: [u8; 16]) -> [u8; 35] {
 //         const HEX_LUT: &[u8; 16] = b"0123456789abcdef";

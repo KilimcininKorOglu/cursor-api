@@ -21,7 +21,7 @@ impl AppState {
         let (log_manager_result, token_manager_result, proxies_result) =
             tokio::join!(LogManager::load(), TokenManager::load(), Proxies::load());
 
-        // 获取结果，处理错误
+        // 获取结果，处理Error
         let log_manager = log_manager_result?;
         let token_manager = token_manager_result?;
 
@@ -43,19 +43,19 @@ impl AppState {
         })
     }
 
-    /// 增加总请求计数
+    /// 增加总Request计数
     #[inline(always)]
     pub fn increment_total(&self) { self.total_requests.fetch_add(1, Ordering::Relaxed); }
 
-    /// 增加活跃请求计数
+    /// 增加活跃Request计数
     #[inline(always)]
     pub fn increment_active(&self) { self.active_requests.fetch_add(1, Ordering::Relaxed); }
 
-    /// 减少活跃请求计数
+    /// 减少活跃Request计数
     #[inline(always)]
     pub fn decrement_active(&self) { self.active_requests.fetch_sub(1, Ordering::Relaxed); }
 
-    /// 增加错误请求计数
+    /// 增加ErrorRequest计数
     #[inline(always)]
     pub fn increment_error(&self) { self.error_requests.fetch_add(1, Ordering::Relaxed); }
 

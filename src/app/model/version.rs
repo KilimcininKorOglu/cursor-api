@@ -6,7 +6,7 @@ use std::io;
 pub enum ReleaseStage {
     /// 正式发布版本
     Release,
-    /// 预览版本，格式如 `-pre.6` 或 `-pre.6+build.8`
+    /// 预览版本，Format如 `-pre.6` 或 `-pre.6+build.8`
     Preview {
         /// 预览版本号
         version: u16,
@@ -52,7 +52,7 @@ impl core::fmt::Display for ReleaseStage {
     }
 }
 
-/// 遵循格式：v0.4.0-pre.6+build.8
+/// 遵循Format：v0.4.0-pre.6+build.8
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub struct Version {
     pub major: u16,
@@ -85,7 +85,7 @@ impl core::fmt::Display for Version {
 impl Version {
     /// 写入到 writer
     ///
-    /// 二进制格式（使用原生字节序）：
+    /// 二进制Format（使用原生字节序）：
     /// - [0-1] major: u16
     /// - [2-3] minor: u16
     /// - [4-5] patch: u16
@@ -95,7 +95,7 @@ impl Version {
     ///
     /// # Errors
     ///
-    /// 如果写入失败，返回 I/O 错误
+    /// 如果写入Failed，返回 I/O Error
     pub fn write_to<W: io::Write>(&self, writer: &mut W) -> io::Result<()> {
         // 写入固定头部
         writer.write_all(&self.major.to_ne_bytes())?;
@@ -121,17 +121,17 @@ impl Version {
         Ok(())
     }
 
-    /// 从 reader 读取
+    /// 从 reader Read
     ///
     /// # Errors
     ///
     /// - `UnexpectedEof`: 数据不足
     /// - `InvalidData`: len 值非法（>2）
-    /// - 其他 I/O 错误
+    /// - 其他 I/O Error
     pub fn read_from<R: io::Read>(reader: &mut R) -> io::Result<Self> {
         let mut buf = [0u8; 2];
 
-        // 读取固定头部
+        // Read固定头部
         reader.read_exact(&mut buf)?;
         let major = u16::from_ne_bytes(buf);
 
@@ -144,7 +144,7 @@ impl Version {
         reader.read_exact(&mut buf)?;
         let len = u16::from_ne_bytes(buf);
 
-        // 根据 len 读取 metadata
+        // 根据 len Read metadata
         let stage = match len {
             0 => ReleaseStage::Release,
             1 => {

@@ -29,7 +29,7 @@ struct Openai;
 
 crate::define_typed_constants! {
     &'static str => {
-        /// 支持的图片格式
+        /// Support的ImageFormat
         FORMAT_PNG = "png",
         FORMAT_JPEG = "jpeg",
         FORMAT_JPG = "jpg",
@@ -97,7 +97,7 @@ impl Adapter for Openai {
     fn _process_base64_image(url: &str) -> Result<(Vec<u8>, image::ImageFormat), AdapterError> {
         let (format, data) =
             url.split_once(BASE64_SEPARATOR).ok_or(AdapterError::Base64DecodeFailed)?;
-        // 检查图片格式
+        // 检查ImageFormat
         let format = match format {
             FORMAT_PNG => image::ImageFormat::Png,
             FORMAT_JPG | FORMAT_JPEG => image::ImageFormat::Jpeg,
@@ -155,7 +155,7 @@ impl Adapter for Openai {
             ));
         }
 
-        // 如果第一条是 assistant，插入空的 user 消息
+        // 如果第一条是 assistant，插入空的 user Message
         if params
             .first()
             .is_some_and(|param| matches!(param, ChatCompletionMessageParam::Assistant { .. }))
@@ -353,7 +353,7 @@ impl Adapter for Openai {
             }
         }
 
-        // 获取最后一条用户消息的URLs
+        // 获取最后一条用户Message的URLs
         let external_links = messages
             .last_mut()
             .map(|msg| {

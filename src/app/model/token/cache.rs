@@ -33,7 +33,7 @@ pub struct TokenKey {
 impl TokenKey {
     /// 将 TokenKey 序列化为 base64 字符串
     ///
-    /// 格式：24字节（16字节 user_id + 8字节 randomness）编码为 32 字符的 base64
+    /// Format：24字节（16字节 user_id + 8字节 randomness）Encode为 32 字符的 base64
     #[allow(clippy::inherent_to_string)]
     #[inline]
     pub fn to_string(self) -> String {
@@ -47,7 +47,7 @@ impl TokenKey {
 
     /// 将 TokenKey 序列化为可读字符串
     ///
-    /// 格式：`<user_id>-<randomness>`
+    /// Format：`<user_id>-<randomness>`
     #[inline]
     pub fn to_string2(self) -> String {
         let mut buffer = itoa::Buffer::new();
@@ -60,9 +60,9 @@ impl TokenKey {
 
     /// 从字符串解析 TokenKey
     ///
-    /// 支持两种格式：
-    /// 1. 32字符的 base64 编码
-    /// 2. `<user_id>-<randomness>` 格式
+    /// Support两种Format：
+    /// 1. 32字符的 base64 Encode
+    /// 2. `<user_id>-<randomness>` Format
     pub fn from_string(s: &str) -> Option<Self> {
         let bytes = s.as_bytes();
 
@@ -70,7 +70,7 @@ impl TokenKey {
             return None;
         }
 
-        // base64 格式
+        // base64 Format
         if bytes.len() == 32 {
             let decoded: [u8; 24] = __unwrap!(from_base64(s)?.try_into());
             let user_id = UserId::from_bytes(__unwrap!(decoded[0..16].try_into()));
@@ -78,7 +78,7 @@ impl TokenKey {
             return Some(Self { user_id, randomness });
         }
 
-        // 分隔符格式
+        // 分隔符Format
         let mut iter = bytes.iter().enumerate();
         let mut first_num_end = None;
         let mut second_num_start = None;
@@ -185,7 +185,7 @@ impl TokenInner {
     }
 }
 
-/// 引用计数的 Token，支持全局缓存复用
+/// 引用计数的 Token，Support全局缓存复用
 ///
 /// Token 是不可变的，线程安全的，并且会自动进行缓存管理。
 /// 相同的 TokenKey 会复用同一个底层实例。
@@ -363,7 +363,7 @@ impl Drop for Token {
                 //   Thread A: fetch_sub 返回 1
                 //   Thread B: 在 new() 中找到此 token，fetch_add 增加计数
                 //   Thread A: 获取 write lock
-                // 此时必须重新检查，否则会错误地释放正在使用的内存
+                // 此时必须重新检查，否则会Error地释放正在使用的内存
                 if inner.count.load(Ordering::Relaxed) != 0 {
                     // 有新的引用产生，取消释放操作
                     return;

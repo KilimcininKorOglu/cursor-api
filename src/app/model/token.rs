@@ -17,7 +17,7 @@ pub use provider::{Provider, parse_providers};
 use std::{io, str::FromStr};
 
 mod randomness {
-    /// 字节在格式化字符串中的起始位置（格式：XXXXXXXX-XXXX-XXXX）
+    /// 字节在Format化字符串中的起始位置（Format：XXXXXXXX-XXXX-XXXX）
     pub(super) static BYTE_OFFSETS: [usize; 8] = [0, 2, 4, 6, 9, 11, 14, 16];
 }
 
@@ -239,13 +239,13 @@ impl<'de> ::serde::Deserialize<'de> for Subject {
     }
 }
 
-/// 用户标识符，支持两种格式的高效ID系统
+/// 用户标识符，Support两种Format的高效ID系统
 ///
-/// 采用向前兼容设计，通过检查高32位区分格式：
-/// - 旧格式：24字符十六进制，高32位为0
-/// - 新格式：`user_` + 26字符ULID，充分利用128位空间
+/// 采用向前兼容设计，通过检查高32位区分Format：
+/// - 旧Format：24字符十六进制，高32位为0
+/// - 新Format：`user_` + 26字符ULID，充分利用128位空间
 ///
-/// ULID时间戳特性确保新格式高32位非零，实现无歧义格式识别。
+/// ULID时间戳特性确保新Format高32位非零，实现无歧义Format识别。
 #[derive(
     Clone, Copy, PartialEq, Eq, Hash, ::rkyv::Archive, ::rkyv::Serialize, ::rkyv::Deserialize,
 )]
@@ -274,9 +274,9 @@ impl UserId {
     #[inline]
     pub const fn to_bytes(self) -> [u8; 16] { self.0 }
 
-    // ==================== 格式检测与字符串转换 ====================
+    // ==================== Format检测与字符串转换 ====================
 
-    /// 检查是否为旧格式ID（高32位为0）
+    /// 检查是否为旧FormatID（高32位为0）
     #[inline]
     pub const fn is_legacy(&self) -> bool {
         // Memory layout (little-endian): [低32位][次低32位][次高32位][最高32位]
@@ -293,12 +293,12 @@ impl UserId {
         parts[HIGH_INDEX] == 0
     }
 
-    /// 高性能字符串转换，旧格式24字符，新格式31字符
+    /// 高性能字符串转换，旧Format24字符，新Format31字符
     #[allow(clippy::wrong_self_convention)]
     #[inline]
     pub fn to_str<'buf>(&self, buf: &'buf mut [u8; 31]) -> &'buf mut str {
         if self.is_legacy() {
-            // 旧格式：24字符 hex，从 bytes[4..16] 编码
+            // 旧Format：24字符 hex，从 bytes[4..16] Encode
             for (i, &byte) in self.0[4..].iter().enumerate() {
                 buf[i * 2] = HEX_CHARS[(byte >> 4) as usize];
                 buf[i * 2 + 1] = HEX_CHARS[(byte & 0x0f) as usize];
@@ -307,7 +307,7 @@ impl UserId {
             // SAFETY: HEX_CHARS 确保输出是有效 ASCII
             unsafe { core::str::from_utf8_unchecked_mut(&mut buf[..24]) }
         } else {
-            // 新格式：user_ + 26字符 ULID
+            // 新Format：user_ + 26字符 ULID
             unsafe {
                 core::ptr::copy_nonoverlapping(Self::PREFIX.as_ptr(), buf.as_mut_ptr(), 5);
                 ulid::to_str(self.as_u128(), &mut *(buf.as_mut_ptr().add(5) as *mut [u8; 26]));
@@ -537,7 +537,7 @@ impl FromStr for RawToken {
     type Err = TokenError;
 
     fn from_str(token: &str) -> Result<Self, Self::Err> {
-        // 1. 分割并验证token格式
+        // 1. 分割并验证tokenFormat
         let parts = token.strip_prefix(HEADER_B64).ok_or(TokenError::InvalidHeader)?;
 
         let (payload_b64, signature_b64) =
@@ -547,7 +547,7 @@ impl FromStr for RawToken {
             return Err(TokenError::InvalidSignatureLength);
         }
 
-        // 2. 解码payload和signature
+        // 2. Decodepayload和signature
         let payload =
             URL_SAFE_NO_PAD.decode_to_vec(payload_b64).map_err(|_| TokenError::InvalidBase64)?;
 

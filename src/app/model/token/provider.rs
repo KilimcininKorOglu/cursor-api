@@ -1,7 +1,7 @@
 //! 认证提供者模块
 //!
 //! 本模块管理可配置的认证提供者列表，
-//! 可以通过环境变量 `ALLOWED_PROVIDERS` 自定义支持的提供者。
+//! 可以通过环境变量 `ALLOWED_PROVIDERS` 自定义Support的提供者。
 
 use core::fmt;
 use std::str::FromStr;
@@ -15,14 +15,14 @@ crate::def_pub_const!(
     GITHUB = "github",
 );
 
-/// 默认支持的认证提供者列表
+/// 默认Support的认证提供者列表
 const DEFAULT_PROVIDERS: &'static [&'static str] = &[AUTH0, GOOGLE_OAUTH2, GITHUB];
 static mut PROVIDERS: &'static [&'static str] = DEFAULT_PROVIDERS;
 
 /// 表示一个认证提供者
 ///
 /// 这是一个对静态字符串标识符的包装，
-/// 该标识符会与支持的提供者列表进行验证
+/// 该标识符会与Support的提供者列表进行验证
 #[derive(Clone, Copy)]
 #[repr(transparent)]
 pub struct Provider(usize);
@@ -93,9 +93,9 @@ impl<'de> ::serde::Deserialize<'de> for Provider {
     }
 }
 
-/// 从环境配置初始化支持的提供者列表
+/// 从环境配置初始化Support的提供者列表
 ///
-/// 如果设置了环境变量 `ALLOWED_PROVIDERS`，则从中读取，否则保持默认提供者列表。
+/// 如果设置了环境变量 `ALLOWED_PROVIDERS`，则从中Read，否则保持默认提供者列表。
 /// 环境变量应包含以逗号分隔的提供者标识符列表。
 ///
 /// # 环境变量示例

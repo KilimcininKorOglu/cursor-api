@@ -38,7 +38,7 @@ impl core::error::Error for TokenError {}
 /// - **ID重用**：FIFO队列管理空闲ID，减少内存碎片
 ///   - 优先重用最早释放的ID，提高cache locality
 ///   - Vec不会无限增长，删除后的槽位会被新token复用
-/// - **多索引**：支持ID/别名/TokenKey三种查询方式
+/// - **多索引**：SupportID/别名/TokenKey三种查询方式
 /// - **无锁设计**：单线程优化，避免同步开销
 ///
 /// 数据结构不变性：
@@ -49,7 +49,7 @@ impl core::error::Error for TokenError {}
 ///
 /// 性能关键路径已使用unsafe消除边界检查
 pub struct TokenManager {
-    /// 主存储：ID -> TokenInfo，使用Option支持删除后的空槽位
+    /// 主存储：ID -> TokenInfo，使用OptionSupport删除后的空槽位
     tokens: Vec<Option<TokenInfo>>,
     /// TokenKey -> ID映射，用于通过token内容查找
     id_map: HashMap<TokenKey, usize>,
@@ -294,7 +294,7 @@ impl TokenManager {
         let helpers = unsafe {
             ::rkyv::from_bytes_unchecked::<Vec<TokenInfoHelper>, ::rkyv::rancor::Error>(&mmap)
         }
-        .map_err(|_| "加载令牌失败")?;
+        .map_err(|_| "加载令牌Failed")?;
         let mut manager = Self::new(helpers.len());
 
         for helper in helpers {
@@ -378,7 +378,7 @@ impl Drop for TokenWriter<'_> {
 }
 
 /// 生成未命名token的默认别名
-/// 格式：UNNAMED_PATTERN + ID（如"unnamed_42"）
+/// Format：UNNAMED_PATTERN + ID（如"unnamed_42"）
 #[inline]
 fn generate_unnamed_alias(id: usize) -> String {
     // 预分配容量：pattern长度 + 6位数字

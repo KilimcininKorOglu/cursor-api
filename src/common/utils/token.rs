@@ -21,7 +21,7 @@ use chrono::{DateTime, Local, TimeZone as _};
 //     }
 // }
 
-// Token 加载函数，支持从字符串内容加载
+// Token 加载函数，Support从字符串内容加载
 // pub fn load_tokens_from_content(content: &str) -> Vec<TokenInfo> {
 //     let token_map: std::collections::HashMap<String, String> = content
 //         .lines()
@@ -58,11 +58,11 @@ use chrono::{DateTime, Local, TimeZone as _};
 
 #[rustfmt::skip]
 pub fn validate_token(token: &str) -> bool {
-    // 检查 token 格式和分割
+    // 检查 token Format和分割
     let Some(parts) = token.strip_prefix(HEADER_B64) else { return false };
     let Some((payload, signature)) = parts.split_once('.') else { return false };
 
-    // 解码 signature 和 payload
+    // Decode signature 和 payload
     let Ok(signature) = URL_SAFE_NO_PAD.decode(signature) else { return false };
     if signature.len() != 32 { return false };
     let Ok(payload) = URL_SAFE_NO_PAD.decode(payload) else { return false };
@@ -82,7 +82,7 @@ pub fn validate_token(token: &str) -> bool {
         return false;
     }
 
-    // 验证字符格式
+    // 验证字符Format
     for (i, &b) in bytes.iter().enumerate() {
         let valid = match i {
             0..=7 | 9..=12 | 14..=17 => b.is_ascii_hexdigit(),
@@ -137,7 +137,7 @@ pub fn extract_time(token: &str) -> Option<JwtTime> {
         return None;
     }
 
-    // 解码 payload (第二部分)
+    // Decode payload (第二部分)
     let payload = match URL_SAFE_NO_PAD.decode(parts[1]) {
         Ok(decoded) => decoded,
         Err(_) => return None,

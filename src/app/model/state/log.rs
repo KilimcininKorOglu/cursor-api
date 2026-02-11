@@ -11,14 +11,14 @@ use tokio::fs::OpenOptions;
 
 type HashMap<K, V> = hashbrown::HashMap<K, V, ahash::RandomState>;
 
-/// 请求日志限制枚举
+/// Request日志Limit枚举
 #[derive(Debug, Clone, Copy)]
 pub enum RequestLogsLimit {
-    /// 禁用日志记录
+    /// Disabled日志记录
     Disabled,
-    /// 无限制日志记录
+    /// 无Limit日志记录
     Unlimited,
-    /// 有限制的日志记录，参数为最大日志数量
+    /// 有Limit的日志记录，参数为最大日志数量
     Limited(usize),
 }
 
@@ -38,7 +38,7 @@ impl RequestLogsLimit {
     #[inline(always)]
     pub fn should_log(&self) -> bool { !matches!(self, Self::Disabled) }
 
-    /// 获取日志限制
+    /// 获取日志Limit
     #[inline(always)]
     pub fn get_limit(&self) -> Option<usize> {
         match self {
@@ -88,7 +88,7 @@ impl LogManager {
             100usize,
         ));
 
-        // 如果禁用日志，则返回空管理器
+        // 如果Disabled日志，则返回空管理器
         if !logs_limit.should_log() {
             return Ok(Self::new(logs_limit));
         }
@@ -164,14 +164,14 @@ impl LogManager {
     /// 公开方法：添加日志时同时更新相关token
     #[inline(never)]
     pub fn push_log_with_token(&mut self, log: RequestLog, ext_token: ExtToken) {
-        // 如果禁用日志，则直接返回
+        // 如果Disabled日志，则直接返回
         if !self.logs_limit.should_log() {
             return;
         }
 
         let log_token_key = log.token_key();
 
-        // 根据限制策略管理日志队列
+        // 根据Limit策略管理日志队列
         if let Some(limit) = self.logs_limit.get_limit() {
             while self.logs.len() >= limit {
                 if let Some(removed_log) = self.logs.pop_front() {
@@ -196,7 +196,7 @@ impl LogManager {
     /// 保存数据到文件
     #[inline(never)]
     pub async fn save(&self) -> Result<(), Box<dyn core::error::Error + Send + Sync + 'static>> {
-        // 如果禁用日志，则跳过保存
+        // 如果Disabled日志，则跳过保存
         if !self.logs_limit.should_log() {
             return Ok(());
         }
@@ -283,7 +283,7 @@ impl LogManager {
     #[inline]
     pub fn is_enabled(&self) -> bool { self.logs_limit.should_log() }
 
-    /// 获取错误日志数量
+    /// 获取Error日志数量
     #[inline]
     pub fn error_count(&self) -> u64 {
         self.logs.iter().filter(|log| log.status as u8 != 1).count() as u64

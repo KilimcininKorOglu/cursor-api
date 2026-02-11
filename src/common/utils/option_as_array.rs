@@ -42,10 +42,10 @@ where
         }
         fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
         where A: de::SeqAccess<'de> {
-            // 尝试读取数组的第一个元素
+            // 尝试Read数组的第一个元素
             match seq.next_element()? {
                 Some(value) => {
-                    // 读取到值，对应 [v] -> Some(value)
+                    // Read到值，对应 [v] -> Some(value)
                     Ok(Some(value))
                 }
                 None => {

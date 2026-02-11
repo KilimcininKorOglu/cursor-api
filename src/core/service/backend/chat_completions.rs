@@ -85,7 +85,7 @@ impl ProtocolHandler for ChatCompletions {
         let (ext_token, use_pri) = __unwrap!(extensions.remove::<TokenBundleResult>())
             .map_err(ErrorExt::into_openai_tuple)?;
 
-        // 验证模型是否支持并获取模型信息
+        // 验证模型是否Support并获取模型信息
         let model = if let Some(model) = ExtModel::from_str(&request.model) {
             model
         } else {
@@ -104,7 +104,7 @@ impl ProtocolHandler for ChatCompletions {
         let current_id: u64;
         let mut usage_check = None;
 
-        // 更新请求日志
+        // 更新Request日志
         state.increment_total();
         state.increment_active();
         if log_manager::is_enabled() {

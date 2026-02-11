@@ -47,12 +47,12 @@ static CLIENTS: ManuallyInit<ArcSwap<HashMap<SingleProxy, Client>>> = ManuallyIn
 
 /// 通用客户端
 ///
-/// 用于未指定特定代理的请求，指向 GENERAL_NAME 对应的客户端
+/// 用于未指定特定代理的Request，指向 GENERAL_NAME 对应的客户端
 static GENERAL_CLIENT: ManuallyInit<ArcSwapAny<Client>> = ManuallyInit::new();
 
 // /// 获取图像客户端
 // ///
-// /// 用于获取HTTP图像的请求，指向 FETCH_IMAGE_NAME 对应的客户端
+// /// 用于获取HTTP图像的Request，指向 FETCH_IMAGE_NAME 对应的客户端
 // static FETCH_IMAGE_CLIENT: ArcSwapAny<Option<Client>> = unsafe {
 //     core::intrinsics::transmute_unchecked::<ArcSwapOption<()>, _>(ArcSwapOption::const_empty())
 // };
@@ -207,10 +207,10 @@ impl Proxies {
 
         let mmap = unsafe { MmapOptions::new().map(&file)? };
 
-        // Safety: 文件内容由我们自己控制，格式保证正确
+        // Safety: 文件内容由我们自己控制，Format保证正确
         unsafe {
             ::rkyv::from_bytes_unchecked::<Self, ::rkyv::rancor::Error>(&mmap)
-                .map_err(|_| "加载代理失败".into())
+                .map_err(|_| "加载代理Failed".into())
         }
     }
 
@@ -251,10 +251,10 @@ impl SingleProxy {
             .connect_timeout(Duration::from_secs(*SERVICE_TIMEOUT as _))
             .webpki_roots_only();
         let client = match self {
-            SingleProxy::Non => builder.no_proxy().build().expect("创建无代理客户端失败"),
-            SingleProxy::Sys => builder.build().expect("创建默认客户端失败"),
+            SingleProxy::Non => builder.no_proxy().build().expect("创建无代理客户端Failed"),
+            SingleProxy::Sys => builder.build().expect("创建默认客户端Failed"),
             SingleProxy::Url(url) => {
-                builder.proxy(url.to_proxy()).build().expect("创建代理客户端失败")
+                builder.proxy(url.to_proxy()).build().expect("创建代理客户端Failed")
             }
         };
 
@@ -356,7 +356,7 @@ pub fn get_client_or_general(name: Option<&str>) -> Client {
     }
 }
 
-/// 获取请求图像客户端
+/// 获取Request图像客户端
 #[inline]
 pub fn get_fetch_image_client() -> Client {
     // fetch_image_client().load_full().unwrap_or_else(get_general_client)

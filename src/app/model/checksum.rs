@@ -67,7 +67,7 @@ impl Checksum {
         }
     }
 
-    // 处理 72 字节格式：时间戳(8) + 设备哈希(64)
+    // 处理 72 字节Format：时间戳(8) + 设备哈希(64)
     #[inline]
     fn repair_short(bytes: &[u8; 72]) -> Self {
         // 验证时间戳部分
@@ -75,7 +75,7 @@ impl Checksum {
             return Self::random();
         }
 
-        // 解码设备哈希
+        // Decode设备哈希
         let first = match decode_hex_hash(unsafe { &*(bytes.as_ptr().add(8) as *const [u8; 64]) }) {
             Some(hash) => hash,
             None => return Self::random(),
@@ -84,7 +84,7 @@ impl Checksum {
         Self { first, second: Hash::random() }
     }
 
-    // 处理 129 字节格式：设备哈希(64) + '/' + MAC哈希(64)
+    // 处理 129 字节Format：设备哈希(64) + '/' + MAC哈希(64)
     #[inline]
     fn repair_normal(bytes: &[u8; 129]) -> Self {
         // 验证分隔符
@@ -92,7 +92,7 @@ impl Checksum {
             return Self::default();
         }
 
-        // 解码两个哈希
+        // Decode两个哈希
         let first = match decode_hex_hash(unsafe { &*(bytes.as_ptr() as *const [u8; 64]) }) {
             Some(hash) => hash,
             None => return Self::random(),
@@ -107,7 +107,7 @@ impl Checksum {
         Self { first, second }
     }
 
-    // 处理 137 字节格式：时间戳(8) + 设备哈希(64) + '/' + MAC哈希(64)
+    // 处理 137 字节Format：时间戳(8) + 设备哈希(64) + '/' + MAC哈希(64)
     #[inline]
     fn repair_full(bytes: &[u8; 137]) -> Self {
         // 验证时间戳
@@ -120,7 +120,7 @@ impl Checksum {
             return Self::random();
         }
 
-        // 解码两个哈希
+        // Decode两个哈希
         let first = match decode_hex_hash(unsafe { &*(bytes.as_ptr().add(8) as *const [u8; 64]) }) {
             Some(hash) => hash,
             None => return Self::random(),
@@ -168,7 +168,7 @@ impl Checksum {
     }
 }
 
-// 验证时间戳格式（允许字母数字、'-'、'_'）
+// 验证时间戳Format（允许字母数字、'-'、'_'）
 #[inline]
 const fn is_valid_timestamp(bytes: &[u8; 8]) -> bool {
     let mut i = 0;
@@ -182,7 +182,7 @@ const fn is_valid_timestamp(bytes: &[u8; 8]) -> bool {
     true
 }
 
-// 解码 64 字符的十六进制字符串为 Hash
+// Decode 64 字符的十六进制字符串为 Hash
 #[inline]
 const fn decode_hex_hash(hex_bytes: &[u8; 64]) -> Option<Hash> {
     let mut result = [0u8; 32];

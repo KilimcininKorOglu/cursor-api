@@ -18,10 +18,10 @@ use tokio::{
 
 // --- 全局配置 ---
 
-/// 控制Debug模式的开关，从环境变量 "DEBUG" 读取，默认为 true
+/// 控制Debug模式的开关，从环境变量 "DEBUG" Read，默认为 true
 pub static DEBUG: ManuallyInit<bool> = ManuallyInit::new();
 
-/// Debug日志文件的路径，从环境变量 "DEBUG_LOG_FILE" 读取，默认为 "debug.log"
+/// Debug日志文件的路径，从环境变量 "DEBUG_LOG_FILE" Read，默认为 "debug.log"
 static DEBUG_LOG_FILE: ManuallyInit<Cow<'static, str>> = ManuallyInit::new();
 
 /// 全局日志文件句柄
@@ -47,19 +47,19 @@ pub fn init() {
         .create(true)
         .append(true)
         .open(&**DEBUG_LOG_FILE)
-        .expect("致命错误：日志系统初始化失败 - 无法打开日志文件");
+        .expect("致命Error：日志系统初始化Failed - 无法打开日志文件");
 
     // 转换为 tokio 文件句柄
     LOG_FILE.init(Mutex::new(File::from_std(file)));
 }
 
-// --- 日志消息结构 ---
+// --- 日志Message结构 ---
 
-/// 带序列号的日志消息，确保有序处理
+/// 带序列号的日志Message，确保有序处理
 pub struct LogMessage {
     /// 全局递增的序列号，保证日志顺序
     pub seq: u64,
-    /// 已格式化的日志内容（包含时间戳）
+    /// 已Format化的日志内容（包含时间戳）
     pub content: String,
 }
 
@@ -77,7 +77,7 @@ static LOGGER_STATE: OnceCell<LoggerState> = OnceCell::const_new();
 
 /// 日志系统的状态结构，包含发送通道、关闭信号和后台任务句柄
 pub struct LoggerState {
-    /// 用于发送日志消息的无界通道发送端
+    /// 用于发送日志Message的无界通道发送端
     pub sender: UnboundedSender<LogMessage>,
     /// 用于发送关闭信号的 watch 通道发送端
     shutdown_tx: watch::Sender<bool>,
@@ -92,7 +92,7 @@ pub struct LoggerState {
 /// 返回日志系统状态的引用
 pub fn ensure_logger_initialized() -> impl Future<Output = &'static LoggerState> {
     LOGGER_STATE.get_or_init(|| async {
-        // 创建用于传递日志消息的无界通道
+        // 创建用于传递日志Message的无界通道
         let (sender, mut receiver) = mpsc::unbounded_channel::<LogMessage>();
         // 创建用于发送关闭信号的 watch 通道
         let (shutdown_tx, mut shutdown_rx) = watch::channel(false);
@@ -110,31 +110,31 @@ pub fn ensure_logger_initialized() -> impl Future<Output = &'static LoggerState>
             let mut interval = tokio::time::interval(flush_interval);
             interval.tick().await; // 消耗初始 tick
 
-            // 用于缓存乱序到达的消息
+            // 用于缓存乱序到达的Message
             let mut pending_messages = alloc::collections::BTreeMap::new();
             let mut next_seq = 0u64;
 
-            // 主循环：处理日志消息、定时刷新和关闭信号
+            // 主循环：处理日志Message、定时刷新和关闭信号
             loop {
                 tokio::select! {
                     biased; // 优先处理上面的分支
 
-                    // 接收新的日志消息
+                    // 接收新的日志Message
                     Some(message) = receiver.recv() => {
-                        // 将消息加入待处理队列
+                        // 将Message加入待处理队列
                         pending_messages.insert(message.seq, message.content);
 
                         // 检查待处理队列是否过大
                         if pending_messages.len() > MAX_PENDING_MESSAGES {
                             let oldest_seq = *__unwrap!(pending_messages.keys().next());
                             eprintln!(
-                                "日志系统警告：待处理消息过多（>{MAX_PENDING_MESSAGES}），强制跳过序号 {next_seq}-{}",
+                                "日志系统警告：待处理Message过多（>{MAX_PENDING_MESSAGES}），强制跳过序号 {next_seq}-{}",
                                 oldest_seq - 1
                             );
                             next_seq = oldest_seq;
                         }
 
-                        // 处理所有连续的消息
+                        // 处理所有连续的Message
                         while let Some(content) = pending_messages.remove(&next_seq) {
                             buffer.extend_from_slice(content.as_bytes());
                             buffer.push(b'\n');
@@ -150,13 +150,13 @@ pub fn ensure_logger_initialized() -> impl Future<Output = &'static LoggerState>
 
                     // 定时刷新触发
                     _ = interval.tick() => {
-                        // 定时刷新时，如果有积压的消息且等待时间过长，强制写入
+                        // 定时刷新时，如果有积压的Message且等待时间过长，强制写入
                         if !pending_messages.is_empty() {
                             let oldest_seq = *__unwrap!(pending_messages.keys().next());
-                            // 如果最旧的消息序号与期望序号相差太大，可能有消息丢失
+                            // 如果最旧的Message序号与期望序号相差太大，可能有Message丢失
                             if oldest_seq > next_seq + OUT_OF_ORDER_THRESHOLD {
                                 eprintln!(
-                                    "日志系统警告：检测到可能的消息丢失，跳过序号 {next_seq} 到 {}",
+                                    "日志系统警告：检测到可能的Message丢失，跳过序号 {next_seq} 到 {}",
                                     oldest_seq - 1
                                 );
                                 next_seq = oldest_seq;
@@ -168,12 +168,12 @@ pub fn ensure_logger_initialized() -> impl Future<Output = &'static LoggerState>
                     // 监听关闭信号
                     result = shutdown_rx.changed() => {
                         if result.is_err() || *shutdown_rx.borrow() {
-                            // 接收剩余所有消息
+                            // 接收剩余所有Message
                             while let Ok(message) = receiver.try_recv() {
                                 pending_messages.insert(message.seq, message.content);
                             }
 
-                            // 处理所有待处理的消息并记录缺失范围
+                            // 处理所有待处理的Message并记录缺失范围
                             let mut missing_ranges = Vec::new();
                             for (seq, content) in pending_messages {
                                 if seq != next_seq {
@@ -204,7 +204,7 @@ pub fn ensure_logger_initialized() -> impl Future<Output = &'static LoggerState>
 
                     // 所有其他情况（如通道关闭）
                     else => {
-                        // 处理剩余的待处理消息
+                        // 处理剩余的待处理Message
                         for (_, content) in pending_messages {
                             buffer.extend_from_slice(content.as_bytes());
                             buffer.push(b'\n');
@@ -238,7 +238,7 @@ async fn flush_byte_buffer(buffer: &mut Vec<u8>) {
 
     // 写入数据
     if let Err(err) = file_guard.write_all(buffer).await {
-        eprintln!("日志系统错误：写入日志数据失败。错误：{err}");
+        eprintln!("日志系统Error：写入日志数据Failed。Error：{err}");
         buffer.clear();
         return;
     }
@@ -246,7 +246,7 @@ async fn flush_byte_buffer(buffer: &mut Vec<u8>) {
 
     // 确保数据刷新到磁盘
     if let Err(err) = file_guard.flush().await {
-        eprintln!("日志系统错误：刷新日志文件缓冲区到磁盘失败。错误：{err}");
+        eprintln!("日志系统Error：刷新日志文件缓冲区到磁盘Failed。Error：{err}");
     }
 }
 
@@ -256,14 +256,14 @@ async fn flush_byte_buffer(buffer: &mut Vec<u8>) {
 ///
 /// # 参数
 /// * `seq` - 日志序列号
-/// * `content` - 已格式化的日志内容
+/// * `content` - 已Format化的日志内容
 #[inline]
 fn submit_debug_log(seq: u64, content: String) {
     tokio::spawn(async move {
         let state = ensure_logger_initialized().await;
         let log_msg = LogMessage { seq, content };
         if let Err(e) = state.sender.send(log_msg) {
-            eprintln!("日志系统错误：发送日志消息至后台任务失败。错误：{e}");
+            eprintln!("日志系统Error：发送日志Message至后台任务Failed。Error：{e}");
         }
     });
 }
@@ -304,7 +304,7 @@ pub async fn flush_all_debug_logs() {
         if let Err(err) = state.shutdown_tx.send(true)
             && *DEBUG
         {
-            println!("日志系统Debug：发送关闭信号失败（可能写入任务已提前结束）：{err}");
+            println!("日志系统Debug：发送关闭信号Failed（可能写入任务已提前结束）：{err}");
         }
 
         // 提取后台任务句柄
@@ -323,12 +323,12 @@ pub async fn flush_all_debug_logs() {
                 }
                 Ok(Err(join_err)) => {
                     eprintln!(
-                        "日志系统错误：后台写入任务异常终止。部分日志可能丢失。错误详情：{join_err}"
+                        "日志系统Error：后台写入任务异常终止。部分日志可能丢失。Error详情：{join_err}"
                     );
                 }
                 Err(_) => {
                     __eprintln!(
-                        "日志系统错误：等待后台写入任务超时（5秒）。部分日志可能未能写入。"
+                        "日志系统Error：等待后台写入任务超时（5秒）。部分日志可能未能写入。"
                     );
                 }
             }

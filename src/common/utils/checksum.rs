@@ -51,7 +51,7 @@ pub fn validate_checksum(checksum: &str) -> bool {
             // 通用字符校验（排除非法字符）
             (_, _) if !b.is_ascii_alphanumeric() && b != b'/' && b != b'-' && b != b'_' => false,
 
-            // 格式校验
+            // Format校验
             (72, 0..=7) => true, // 时间戳部分（由extract_time_ks验证）
             (72, 8..=71) => b.is_ascii_hexdigit(),
 

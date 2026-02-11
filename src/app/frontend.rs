@@ -98,7 +98,7 @@ where D: serde::Deserializer<'de> {
                 RouteDef::File { content_type: None, path: file_path }
             }
             RouteDefinition::Object(def) => {
-                // 完整格式：直接使用对象
+                // 完整Format：直接使用对象
                 def
             }
         };
@@ -316,7 +316,7 @@ impl FrontendLoader {
         let cursor = Cursor::new(bytes);
         let mut archive = ZipArchive::new(cursor)?;
 
-        // 读取 route_registry.json
+        // Read route_registry.json
         let registry = {
             let mut registry_file =
                 archive.by_name("route_registry.json").map_err(|e| match e {
@@ -356,7 +356,7 @@ impl FrontendLoader {
             }
         }
 
-        // 批量读取文件（去重缓存）
+        // 批量Read文件（去重缓存）
         let mut file_cache: HashMap<String, Bytes> =
             HashMap::with_capacity_and_hasher(unique_paths.len(), random_state.clone());
 
@@ -503,7 +503,7 @@ static ROUTE_REGISTRY: ManuallyInit<HashSet<&'static str>> = ManuallyInit::new()
 ///
 /// # 返回
 /// - `Ok(Option<ExchangeMap>)`: 初始化成功
-/// - `Err(FrontendError)`: 初始化失败
+/// - `Err(FrontendError)`: 初始化Failed
 pub fn init_frontend() -> Result<(HashMap<&'static str, RouteServiceFn>, ExchangeMap), FrontendError>
 {
     ROUTE_REGISTRY.init(HashSet::with_hasher(ahash::RandomState::new()));
@@ -535,7 +535,7 @@ static mut METADATA: Option<&'static str> = None;
 
 pub const fn metadata() -> Option<&'static str> { unsafe { METADATA } }
 
-// /// 处理前端请求
+// /// 处理前端Request
 // pub async fn handle_frontend(parts: http::request::Parts) -> RouteService {
 //     let registry = &*ROUTE_REGISTRY;
 

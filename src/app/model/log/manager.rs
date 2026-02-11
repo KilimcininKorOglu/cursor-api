@@ -64,7 +64,7 @@ impl LogManager {
         let manager = unsafe {
             ::rkyv::from_bytes_unchecked::<super::LogManagerHelper, rkyv::rancor::Error>(&mmap)
         }
-        .map_err(|_| "加载日志失败")?;
+        .map_err(|_| "加载日志Failed")?;
 
         Ok(manager.into())
     }
@@ -97,7 +97,7 @@ impl LogManager {
         Ok(())
     }
 
-    /// 获取错误日志数量
+    /// 获取Error日志数量
     #[inline]
     pub fn error_count(&self) -> u64 {
         self.logs.iter().filter(|log| log.status as u8 != 1).count() as u64

@@ -23,15 +23,15 @@ static SERVERS: ManuallyInit<Servers> = ManuallyInit::new();
 /// 满足：系统时间 + DELTA = 准确时间
 pub static DELTA: AtomicI64 = AtomicI64::new(0);
 
-// ========== 错误类型定义 ==========
+// ========== Error类型定义 ==========
 
 #[derive(Debug)]
 pub enum NtpError {
-    /// NTP 协议层错误
+    /// NTP 协议层Error
     Protocol(&'static str),
-    /// 网络 I/O 错误
+    /// 网络 I/O Error
     Io(std::io::Error),
-    /// 请求超时
+    /// Request超时
     Timeout,
     /// 时间Parse error
     TimeParse,
@@ -40,9 +40,9 @@ pub enum NtpError {
 impl std::fmt::Display for NtpError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            NtpError::Protocol(msg) => write!(f, "NTP协议错误: {msg}"),
-            NtpError::Io(e) => write!(f, "IO错误: {e}"),
-            NtpError::Timeout => write!(f, "NTP请求超时"),
+            NtpError::Protocol(msg) => write!(f, "NTP协议Error: {msg}"),
+            NtpError::Io(e) => write!(f, "IOError: {e}"),
+            NtpError::Timeout => write!(f, "NTPRequest超时"),
             NtpError::TimeParse => write!(f, "时间Parse error"),
         }
     }
@@ -73,7 +73,7 @@ pub struct Servers {
 
 impl Servers {
     /// 从环境变量 NTP_SERVERS 初始化服务器列表
-    /// 格式：逗号分隔的服务器地址，如 "pool.ntp.org,time.cloudflare.com"
+    /// Format：逗号分隔的服务器地址，如 "pool.ntp.org,time.cloudflare.com"
     pub fn init() {
         let env = crate::common::utils::parse_from_env("NTP_SERVERS", EMPTY_STRING);
         let servers: Vec<String> =
@@ -94,7 +94,7 @@ impl IntoIterator for &'static Servers {
 // ========== 时间转换函数 ==========
 
 /// 将 NTP 64位时间戳转换为 Unix DateTime
-/// NTP 时间戳格式：高32位为秒，低32位为秒的小数部分
+/// NTP 时间戳Format：高32位为秒，低32位为秒的小数部分
 fn ntp_to_unix_timestamp(ntp_ts: u64) -> DateTime<Utc> {
     let ntp_secs = (ntp_ts >> 32) as i64;
     let ntp_frac = ntp_ts & 0xFFFFFFFF;
@@ -144,7 +144,7 @@ impl NtpTimestamps {
     }
 }
 
-/// 验证 NTP 响应包的有效性
+/// 验证 NTP Response包的有效性
 /// 检查协议版本、模式、stratum 层级等字段
 #[inline]
 fn validate_ntp_response(packet: [u8; 48]) -> Result<(), NtpError> {
@@ -160,10 +160,10 @@ fn validate_ntp_response(packet: [u8; 48]) -> Result<(), NtpError> {
         _ => "无效",
     };
 
-    crate::debug!("NTP响应: 版本={version}, 模式={mode}, 层级={stratum}({stratum_desc})");
+    crate::debug!("NTPResponse: 版本={version}, 模式={mode}, 层级={stratum}({stratum_desc})");
 
     if mode != MODE_SERVER {
-        return Err(NtpError::Protocol("响应模式不正确"));
+        return Err(NtpError::Protocol("Response模式不正确"));
     }
 
     match stratum {
@@ -194,8 +194,8 @@ async fn connect_to_ntp_server(socket: &UdpSocket) -> Result<&'static str, NtpEr
     Err(NtpError::Protocol("无法连接到任何NTP服务器"))
 }
 
-/// 发送 NTP 请求并接收响应
-/// 返回：响应数据包和四个关键时间戳
+/// 发送 NTP Request并接收Response
+/// 返回：Response数据包和四个关键时间戳
 async fn send_and_receive_ntp_packet(
     socket: &UdpSocket,
 ) -> Result<([u8; PACKET_SIZE], NtpTimestamps), NtpError> {
@@ -212,14 +212,14 @@ async fn send_and_receive_ntp_packet(
     // 发送数据包（带超时保护）
     tokio::time::timeout(Duration::from_secs(TIMEOUT_SECS), socket.send(&packet)).await??;
 
-    // 接收响应（带超时保护）
+    // 接收Response（带超时保护）
     tokio::time::timeout(Duration::from_secs(TIMEOUT_SECS), socket.recv(&mut packet)).await??;
 
     // 记录 T4：客户端接收时刻（尽可能接近接收瞬间）
     let t4_system = SystemTime::now();
     let t4_ntp = system_time_to_ntp_timestamp(t4_system)?;
 
-    // 从响应包中提取 T2 和 T3
+    // 从Response包中提取 T2 和 T3
     let t2_ntp = u64::from_be_bytes(packet[32..40].try_into().unwrap());
     let t3_ntp = u64::from_be_bytes(packet[40..48].try_into().unwrap());
 
@@ -280,7 +280,7 @@ pub async fn sync_once() -> Result<i64, NtpError> {
                 samples.push((delta, rtt));
             }
             Err(e) => {
-                crate::debug!("NTP采样失败 ({}/{}): {}", i + 1, sample_count, e);
+                crate::debug!("NTP采样Failed ({}/{}): {}", i + 1, sample_count, e);
             }
         }
 
@@ -301,7 +301,7 @@ pub async fn sync_once() -> Result<i64, NtpError> {
     // 3. 按 RTT 排序（从小到大）
     samples.sort_by_key(|(_, rtt)| *rtt);
 
-    // 4. 动态过滤：基于比例策略
+    // 4. Animated过滤：基于比例策略
     // 保留 RTT 最小的 70% 样本，去除长尾噪声（网络延迟服从长尾分布）
     // 至少保留 4 个样本以保证统计可靠性，但不超过实际样本数
     const KEEP_RATIO: f64 = 0.70;
@@ -369,7 +369,7 @@ pub async fn sync_once() -> Result<i64, NtpError> {
 
 // ========== 环境变量解析 ==========
 
-/// 从环境变量读取同步间隔
+/// 从环境变量Read同步间隔
 /// 默认值：3600 秒（1 小时）
 fn parse_sync_interval() -> u64 {
     crate::common::utils::parse_from_env("NTP_SYNC_INTERVAL_SECS", 3600u64)
@@ -389,7 +389,7 @@ fn parse_sample_config() -> (usize, u64) {
 ///
 /// 行为：
 /// - 无服务器配置：静默返回，DELTA 保持为 0
-/// - 同步失败：打印错误到标准输出，DELTA 保持为 0
+/// - 同步Failed：打印Error到标准输出，DELTA 保持为 0
 /// - 同步成功：更新 DELTA，记录日志，**自动启动周期性同步任务**
 pub async fn init_sync(stdout_ready: alloc::sync::Arc<tokio::sync::Notify>) {
     let servers = SERVERS.get();
@@ -414,7 +414,7 @@ pub async fn init_sync(stdout_ready: alloc::sync::Arc<tokio::sync::Notify>) {
         }
         Err(e) => {
             stdout_ready.notified().await;
-            println!("\r\x1B[2KNTP同步失败: {e}");
+            println!("\r\x1B[2KNTP同步Failed: {e}");
         }
     }
 }
@@ -429,7 +429,7 @@ pub async fn init_sync(stdout_ready: alloc::sync::Arc<tokio::sync::Notify>) {
 /// - 在后台持续运行
 /// - 按配置的间隔执行同步
 /// - 首次 tick 被跳过（启动时已由 init_sync 完成同步）
-/// - 同步失败时记录到日志文件，不影响后续同步
+/// - 同步Failed时记录到日志文件，不影响后续同步
 fn spawn_periodic_sync() {
     let interval_secs = parse_sync_interval();
 
@@ -454,7 +454,7 @@ fn spawn_periodic_sync() {
                     crate::debug!("NTP周期性同步成功: δ = {}ms", delta_nanos / 1_000_000);
                 }
                 Err(e) => {
-                    crate::debug!("NTP周期性同步失败: {e}");
+                    crate::debug!("NTP周期性同步Failed: {e}");
                 }
             }
         }

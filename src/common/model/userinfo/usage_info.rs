@@ -22,7 +22,7 @@ pub type TeamUsage = UsageSummary;
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Archive, RkyvDeserialize, RkyvSerialize)]
 pub struct PlanUsage {
     pub enabled: bool,
-    /// 已使用量（可能是花费单位或请求计量单位）
+    /// 已使用量（可能是花费单位或Request计量单位）
     pub used: i32,
     /// 配额上限（当前计费周期内的总限额）
     pub limit: i32,
@@ -36,7 +36,7 @@ pub struct PlanUsage {
 /// 配额来源细分
 ///
 /// - `included`: 计划包含的基础配额（如Pro的$20对应的量）
-/// - `bonus`: 额外赠送的bonus capacity（动态发放）
+/// - `bonus`: 额外赠送的bonus capacity（Animated发放）
 /// - `total`: included + bonus（总承诺配额）
 ///
 /// 注意：`total`可能小于或等于`PlanUsage.limit`，其中：
@@ -62,7 +62,7 @@ pub struct OnDemandUsage {
     pub enabled: bool,
     /// 已使用的按需配额
     pub used: i32,
-    /// 按需配额上限（None表示无限制或未设置）
+    /// 按需配额上限（None表示无Limit或未设置）
     pub limit: Option<i32>,
     /// 剩余按需配额
     pub remaining: Option<i32>,

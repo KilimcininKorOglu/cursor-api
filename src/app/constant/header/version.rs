@@ -97,7 +97,7 @@ pub fn initialize_cursor_version() {
     let version =
         crate::common::utils::parse_from_env(ENV_CURSOR_CLIENT_VERSION, DEFAULT_CLIENT_VERSION);
 
-    // 验证版本格式
+    // 验证版本Format
     validate_version_string(&version);
 
     let version_header = match http::header::HeaderValue::from_str(&version) {
@@ -127,14 +127,14 @@ pub fn initialize_cursor_version() {
     HEADER_VALUE_UA_CURSOR_LATEST.init(ua_header);
 }
 
-/// 检查版本字符串是否符合 VSCode/Cursor 的版本格式
+/// 检查版本字符串是否符合 VSCode/Cursor 的版本Format
 ///
-/// 期望的格式：`major.minor.patch`
+/// 期望的Format：`major.minor.patch`
 /// 例如：`1.0.0`、`1.95.3`
 ///
 /// # Returns
 ///
-/// 如果版本格式有效返回 `true`，否则返回 `false`
+/// 如果版本Format有效返回 `true`，否则返回 `false`
 #[inline]
 pub const fn is_valid_version_format(version: &str) -> bool {
     // 快速路径：检查基本长度要求
@@ -179,7 +179,7 @@ pub const fn is_valid_version_format(version: &str) -> bool {
 
 /// 验证并警告无效的版本字符串
 ///
-/// 如果版本字符串不符合格式，打印警告信息但不终止程序
+/// 如果版本字符串不符合Format，打印警告信息但不终止程序
 #[inline]
 pub fn validate_version_string(version: &str) {
     if !is_valid_version_format(version) {

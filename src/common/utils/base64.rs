@@ -1,15 +1,15 @@
 #![allow(unsafe_op_in_unsafe_fn)]
 
-//! 高性能 Base64 编解码实现
+//! 高性能 Base64 编Decode实现
 //!
-//! 本模块提供了一个优化的 Base64 编解码器，使用自定义字符集：
+//! 本模块提供了一个优化的 Base64 编Decode器，使用自定义字符集：
 //! - 字符集：`-AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1032547698_`
 //! - 特点：URL 安全，无需填充字符
 
 /// Base64 字符集
 const BASE64_CHARS: &[u8; 64] = b"-AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1032547698_";
 
-/// Base64 解码查找表
+/// Base64 decode查找表
 const BASE64_DECODE_TABLE: [u8; 256] = {
     let mut table = [0xFF_u8; 256];
     let mut i = 0;
@@ -20,7 +20,7 @@ const BASE64_DECODE_TABLE: [u8; 256] = {
     table
 };
 
-/// 计算编码后的精确长度
+/// 计算Encode后的精确长度
 #[inline]
 pub const fn encoded_len(input_len: usize) -> usize {
     let d = input_len / 3;
@@ -28,14 +28,14 @@ pub const fn encoded_len(input_len: usize) -> usize {
 
     (if r > 0 { d + 1 } else { d }) * 4
         - match r {
-            1 => 2, // 1字节编码为2个字符
-            2 => 1, // 2字节编码为3个字符
-            0 => 0, // 3字节编码为4个字符
+            1 => 2, // 1字节Encode为2个字符
+            2 => 1, // 2字节Encode为3个字符
+            0 => 0, // 3字节Encode为4个字符
             _ => unreachable!(),
         }
 }
 
-/// 计算解码后的精确长度
+/// 计算Decode后的精确长度
 #[inline]
 pub const fn decoded_len(encoded_len: usize) -> Option<usize> {
     match encoded_len % 4 {
@@ -47,7 +47,7 @@ pub const fn decoded_len(encoded_len: usize) -> Option<usize> {
     }
 }
 
-/// 将字节数据编码到提供的缓冲区
+/// 将字节数据Encode到提供的缓冲区
 ///
 /// # Safety
 ///
@@ -99,7 +99,7 @@ pub unsafe fn encode_to_slice_unchecked(input: &[u8], output: &mut [u8]) {
     }
 }
 
-/// 将 Base64 数据解码到提供的缓冲区
+/// 将 Base64 数据Decode到提供的缓冲区
 ///
 /// # Safety
 ///
@@ -150,7 +150,7 @@ pub unsafe fn decode_to_slice_unchecked(input: &[u8], output: &mut [u8]) {
     }
 }
 
-/// 编码到新分配的 String
+/// Encode到新分配的 String
 #[inline]
 pub fn to_base64(bytes: &[u8]) -> String {
     if bytes.is_empty() {
@@ -170,7 +170,7 @@ pub fn to_base64(bytes: &[u8]) -> String {
     }
 }
 
-/// 解码到新分配的 Vec
+/// Decode到新分配的 Vec
 #[inline]
 pub fn from_base64(input: &str) -> Option<Vec<u8>> {
     let input = input.as_bytes();

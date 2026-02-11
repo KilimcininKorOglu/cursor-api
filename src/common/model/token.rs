@@ -31,7 +31,7 @@ crate::define_typed_constants! {
         FIELD_AUD = "aud",
         FIELD_TYPE = "type",
 
-        // 错误消息
+        // ErrorMessage
         MSG_EXPECTING_FIELD = "字段名称",
         MSG_EXPECTING_STRUCT = "结构体 TokenPayload",
         MSG_TYPE_INVALID = "type 字段值必须为 ",

@@ -66,7 +66,7 @@ impl DelayedTask {
 
     /// 尝试取消任务。
     ///
-    /// 如果任务已经在运行或已完成，取消将失败。
+    /// 如果任务已经在运行或已完成，取消将Failed。
     pub fn cancel(&self) -> bool {
         // 解决竞态条件：只有当前状态确认为 Scheduled 时才切换为 Cancelled。
         // 此处 AcqRel 保证了与任务线程中状态切换的互斥性。

@@ -1,4 +1,4 @@
-//! 这是一个处理来自Cursor API错误的模块，无需使用的字段已注释
+//! 这是一个处理来自Cursor APIError的模块，无需使用的字段已注释
 
 use super::CanonicalError;
 use crate::core::aiserver;
@@ -78,13 +78,13 @@ impl CursorError {
             .into(),
             0 => {
                 __cold_path!();
-                eprintln!("收到未知错误，please contact developer for support");
+                eprintln!("收到未知Error，please contact developer for support");
                 crate::debug!("code: {:?}", self.error.code);
                 CanonicalError::unknown()
             }
             n => {
-                eprintln!("收到少见错误数: {n}，please contact developer for support");
-                crate::debug!("错误({n}): {:?}", self.error);
+                eprintln!("收到少见Error数: {n}，please contact developer for support");
+                crate::debug!("Error({n}): {:?}", self.error);
                 self.error.details.into_iter().map(|detail| detail.value.into()).sum()
             }
         };

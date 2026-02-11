@@ -548,7 +548,7 @@ struct TimeParts {
     nanos: u32,
 }
 
-// 格式化实现
+// Format化实现
 impl HumanDuration {
     /// Randomly selects a format for variety.
     ///
@@ -683,7 +683,7 @@ impl HumanDuration {
             first = false;
         }
 
-        // 秒+毫秒部分：使用 itoa + 手动格式化
+        // 秒+毫秒部分：使用 itoa + 手动Format化
         if !first {
             f.write_str(separator)?;
         }

@@ -4,15 +4,15 @@ use std::num::ParseIntError;
 
 /// 表示一个有效期范围，以两个u32值表示起始和结束时间。
 ///
-/// 该结构体使用透明内存布局，通过[u32; 2]实现8字节大小。
-/// 支持从字符串解析，比如"60"表示60-60的范围，"3600-86400"表示3600到86400的闭区间。
+/// 该结构体使用透明内存布局，通过[u32; 2]实现8字节Size。
+/// Support从字符串解析，比如"60"表示60-60的范围，"3600-86400"表示3600到86400的闭区间。
 #[repr(transparent)]
 pub struct ValidityRange {
     range: [u32; 2], // range[0]为start，range[1]为end
 }
 
 // 验证内存布局约束
-const _: [u8; 8] = [0; ::core::mem::size_of::<ValidityRange>()]; // 确保大小为8字节
+const _: [u8; 8] = [0; ::core::mem::size_of::<ValidityRange>()]; // 确保Size为8字节
 
 impl ValidityRange {
     /// 创建新的有效期范围实例
@@ -69,7 +69,7 @@ impl ValidityRange {
 
     /// 从字符串解析有效期范围
     ///
-    /// 支持两种格式：
+    /// Support两种Format：
     /// - "N" 表示N-N的单点范围
     /// - "N-M" 表示从N到M的范围
     ///
@@ -79,7 +79,7 @@ impl ValidityRange {
     ///
     /// # 返回值
     ///
-    /// 成功解析返回`Ok(ValidityRange)`，失败返回包含错误类型的`Err`
+    /// 成功解析返回`Ok(ValidityRange)`，Failed返回包含Error类型的`Err`
     ///
     /// # 示例
     ///
@@ -99,17 +99,17 @@ impl ValidityRange {
 
             Ok(ValidityRange::new(start, end))
         } else {
-            // 格式: "value" (表示value-value)
+            // Format: "value" (表示value-value)
             let value = s.parse::<u32>()?;
             Ok(ValidityRange::new(value, value))
         }
     }
 }
 
-/// 实现Display特性，用于格式化输出
+/// 实现Display特性，用于Format化输出
 ///
 /// 对于相同的起始和结束值，只显示一个数字；
-/// 对于不同的值，显示为"start-end"格式。
+/// 对于不同的值，显示为"start-end"Format。
 impl std::fmt::Display for ValidityRange {
     #[inline]
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -124,7 +124,7 @@ impl std::fmt::Display for ValidityRange {
     }
 }
 
-/// 实现Debug特性，提供更详细的格式化输出
+/// 实现Debug特性，提供更详细的Format化输出
 impl std::fmt::Debug for ValidityRange {
     #[inline]
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -132,7 +132,7 @@ impl std::fmt::Debug for ValidityRange {
     }
 }
 
-/// 实现FromStr特性，支持从字符串解析
+/// 实现FromStr特性，Support从字符串解析
 ///
 /// 这使得可以直接使用`str.parse()`方法解析字符串为ValidityRange
 impl std::str::FromStr for ValidityRange {

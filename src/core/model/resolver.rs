@@ -25,8 +25,8 @@ pub struct ExtModel {
 
 impl ExtModel {
     /// 从字符串解析 ExtModel
-    /// 支持 "-online" 和 "-max" 后缀
-    /// 当 BYPASS_MODEL_VALIDATION 为 true 时，在正常验证失败后仍返回结果
+    /// Support "-online" 和 "-max" 后缀
+    /// 当 BYPASS_MODEL_VALIDATION 为 true 时，在正常验证Failed后仍返回结果
     #[inline]
     pub fn from_str(s: &str) -> Option<Self> {
         // 处理 online 后缀
@@ -61,7 +61,7 @@ impl ExtModel {
             });
         }
 
-        // 正常验证都失败后，检查是否绕过验证
+        // 正常验证都Failed后，检查是否绕过验证
         if unsafe { BYPASS_MODEL_VALIDATION } && !model_str.is_empty() {
             let id = get_static_id(model_str);
             return Some(Self {

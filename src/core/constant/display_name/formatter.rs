@@ -6,7 +6,7 @@ use super::parser::{ParseResult, Pattern};
 pub fn format_output(result: ParseResult) -> String {
     let mut output = String::with_capacity(64);
 
-    // 格式化主体部分
+    // Format化主体部分
     for (i, pattern) in result.main_parts.iter().enumerate() {
         if i > 0 {
             output.push(' ');
@@ -24,7 +24,7 @@ pub fn format_output(result: ParseResult) -> String {
         }
     }
 
-    // 格式化日期相关部分（括号内）
+    // Format化日期相关部分（括号内）
     for date_item in result.date_parts.iter() {
         output.push_str(" (");
         match date_item {

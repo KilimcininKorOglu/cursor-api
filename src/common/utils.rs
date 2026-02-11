@@ -122,7 +122,7 @@ impl ParseFromEnv for &'static str {
                         // - trimmed 是 value.trim() 的结果，保证是 value 的子切片
                         // - start_offset 和 trimmed_len 来自有效的切片边界
                         // - 目标位置（索引 0）和长度在 vec 容量内
-                        // - ptr::copy 支持重叠内存区域（memmove 语义）
+                        // - ptr::copy Support重叠内存区域（memmove 语义）
                         if start_offset > 0 {
                             ::core::ptr::copy(
                                 vec.as_ptr().add(start_offset),
@@ -573,11 +573,11 @@ fn generate_pkce_pair() -> ([u8; 43], [u8; 43]) {
         .expect("System RNG unavailable: cannot generate secure PKCE verifier");
 
     unsafe {
-        // Base64 编码为 code_verifier (32 bytes -> 43 chars)
+        // Base64 Encode为 code_verifier (32 bytes -> 43 chars)
         let mut code_verifier = MaybeUninit::<[u8; 43]>::uninit();
 
-        // SAFETY: 32 字节的 Base64URL 编码（无 padding）= ceil(32 * 8 / 6) = 43 字节
-        // 这是编码算法的数学定义，buffer 大小精确匹配，encode_slice 不会失败
+        // SAFETY: 32 字节的 Base64URL Encode（无 padding）= ceil(32 * 8 / 6) = 43 字节
+        // 这是Encode算法的数学定义，buffer Size精确匹配，encode_slice 不会Failed
         let _ = URL_SAFE_NO_PAD
             .encode(&verifier_bytes, Out::from_uninit_slice(code_verifier.as_bytes_mut()));
 
@@ -586,10 +586,10 @@ fn generate_pkce_pair() -> ([u8; 43], [u8; 43]) {
         // SHA-256 哈希 code_verifier (43 bytes -> 32 bytes)
         let hash_result = sha2::Sha256::digest(code_verifier);
 
-        // Base64 编码为 code_challenge (32 bytes -> 43 chars)
+        // Base64 Encode为 code_challenge (32 bytes -> 43 chars)
         let mut code_challenge = MaybeUninit::<[u8; 43]>::uninit();
 
-        // SAFETY: 同上，SHA-256 固定输出 32 字节，编码后固定 43 字节
+        // SAFETY: 同上，SHA-256 固定输出 32 字节，Encode后固定 43 字节
         let _ = URL_SAFE_NO_PAD
             .encode(&hash_result, Out::from_uninit_slice(code_challenge.as_bytes_mut()));
 
@@ -651,7 +651,7 @@ async fn upgrade_token(ext_token: &ExtToken, use_pri: bool) -> Option<Token> {
     let mut buf = [0; 36];
     let uuid = uuid::Uuid::new_v4().hyphenated().encode_lower(&mut buf) as &str;
 
-    // 发起刷新请求
+    // 发起刷新Request
     let upgrade_response = super::client::build_token_upgrade_request(
         &ext_token.get_client(),
         uuid,

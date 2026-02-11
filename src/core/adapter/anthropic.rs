@@ -143,7 +143,7 @@ impl Adapter for Anthropic {
             ));
         }
 
-        // 如果第一条是 assistant，插入空的 user 消息
+        // 如果第一条是 assistant，插入空的 user Message
         if params.first().is_some_and(|input| input.role == Role::Assistant) {
             params.insert(
                 0,
@@ -386,7 +386,7 @@ impl Adapter for Anthropic {
             }
         }
 
-        // 获取最后一条用户消息的URLs
+        // 获取最后一条用户Message的URLs
         let external_links = messages
             .last_mut()
             .map(|msg| {

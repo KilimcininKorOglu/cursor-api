@@ -42,7 +42,7 @@ unsafe fn alloc_ids(s: &str) -> Id {
     // 分配内存
     let ptr = alloc(layout);
     if ptr.is_null() {
-        // 内存分配失败
+        // 内存分配Failed
         handle_alloc_error(layout);
     }
 

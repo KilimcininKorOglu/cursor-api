@@ -159,7 +159,7 @@ fn try_parse_date(tokens: &[Token], start: usize) -> Option<Cow<'static, str>> {
     }
 
     // MMDD -> MM-DD (如 0528)
-    // 只有当4位数字看起来像 MMDD 格式时才处理（前两位 <= 12）
+    // 只有当4位数字看起来像 MMDD Format时才处理（前两位 <= 12）
     if token.meta.digit_count == 4 {
         let bytes = token.content.as_bytes();
         // 检查是否可能是月份（01-12）

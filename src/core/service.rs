@@ -364,7 +364,7 @@ pub async fn handle_chat_completions(
         current_id = 0;
     }
 
-    // 将消息转换为hex格式
+    // 将Message转换为hexFormat
     let msg_id = uuid::Uuid::new_v4();
     let data = match super::adapter::openai::encode_create_params(
         params,
@@ -388,7 +388,7 @@ pub async fn handle_chat_completions(
     };
     let msg_id = MessageId::new(msg_id.as_bytes());
 
-    // 构建请求客户端
+    // 构建Request客户端
     let req = build_client_request(AiServiceRequest {
         ext_token: &ext_token,
         fs_client_key: None,
@@ -401,20 +401,20 @@ pub async fn handle_chat_completions(
         exact_length: Some(data.len()),
     });
     // crate::debug!("request: {req:?}");
-    // 发送请求
+    // 发送Request
     let response = req.body(data).send().await;
 
-    // 处理请求结果
+    // 处理Request结果
     let response = match response {
         Ok(resp) => {
-            // 更新请求日志为成功
+            // 更新Request日志为成功
             log_manager::update_log(current_id, LogUpdate::Success).await;
             resp
         }
         Err(e) => {
             let e = e.without_url();
 
-            // 根据错误类型返回不同的状态码
+            // 根据Error类型返回不同的状态码
             let status_code = if e.is_timeout() {
                 StatusCode::GATEWAY_TIMEOUT
             } else {
@@ -423,7 +423,7 @@ pub async fn handle_chat_completions(
             crate::debug!("request: {e:?}");
             let e = e.to_string();
 
-            // 更新请求日志为失败
+            // 更新Request日志为Failed
             let error = Str::new(&e);
             log_manager::update_log(current_id, LogUpdate::Failure(ErrorInfo::Simple(error))).await;
             state.decrement_active();
@@ -433,7 +433,7 @@ pub async fn handle_chat_completions(
         }
     };
 
-    // 释放活动请求计数
+    // 释放活动Request计数
     state.decrement_active();
 
     // crate::debug!("[{}] {:?}", response.status(), response.headers());
@@ -455,7 +455,7 @@ pub async fn handle_chat_completions(
         let last_content_type = Arc::new(Atomic::new(LastContentType::None));
         let is_need = stream_options.include_usage;
 
-        // 定义消息处理器的上下文结构体
+        // 定义Message处理器的上下文结构体
         struct MessageProcessContext<'a> {
             response_id: &'a str,
             model: &'static str,
@@ -480,7 +480,7 @@ pub async fn handle_chat_completions(
             vector.extend_from_slice(b"\n\n");
         }
 
-        // 处理消息并生成响应数据的辅助函数
+        // 处理Message并生成Response数据的辅助函数
         async fn process_messages<I>(
             messages: impl IntoIterator<Item = I::Item, IntoIter = I>,
             ctx: &MessageProcessContext<'_>,
@@ -643,7 +643,7 @@ pub async fn handle_chat_completions(
                             decoder.decode(&chunk, convert_web_ref)
                         {
                             let canonical = error.canonical();
-                            // 更新请求日志为失败
+                            // 更新Request日志为Failed
                             log_manager::update_log(
                                 current_id,
                                 LogUpdate::Failure2(
@@ -667,7 +667,7 @@ pub async fn handle_chat_completions(
                         .into_openai_tuple());
                     }
                     None => {
-                        // 更新请求日志为失败
+                        // 更新Request日志为Failed
                         log_manager::update_log(
                             current_id,
                             LogUpdate::Failure(ErrorInfo::Simple(Str::from_static(
@@ -727,7 +727,7 @@ pub async fn handle_chat_completions(
                         Ok(msgs) => msgs,
                         Err(e) => {
                             match e {
-                                // 处理普通空流错误
+                                // 处理普通空流Error
                                 StreamError::EmptyStream => {
                                     let empty_stream_count = decoder.lock().await.get_empty_stream_count();
                                     if empty_stream_count > 1 {
@@ -848,7 +848,7 @@ pub async fn handle_chat_completions(
                 .body(Body::from_stream(stream))
         ))
     } else {
-        // 非流式响应
+        // 非流式Response
         let start_time = std::time::Instant::now();
         let mut decoder = StreamDecoder::new().no_first_cache();
         let mut thinking_text = String::with_capacity(128);
@@ -921,9 +921,9 @@ pub async fn handle_chat_completions(
 
         full_text = full_text.trim_leading_newlines();
 
-        // 检查响应是否为空
+        // 检查Response是否为空
         if full_text.is_empty() {
-            // 更新请求日志为失败
+            // 更新Request日志为Failed
             log_manager::update_log(
                 current_id,
                 LogUpdate::Failure(ErrorInfo::Simple(Str::from_static(ERR_RESPONSE_RECEIVED))),
@@ -973,7 +973,7 @@ pub async fn handle_chat_completions(
             usage: openai_usage,
         };
 
-        // 更新请求日志时间信息和状态
+        // 更新Request日志时间信息和状态
         let total_time = start_time.elapsed().as_secs_f64();
         let content_delays = decoder.take_content_delays();
         let thinking_content = decoder.take_thinking_content();
@@ -1011,7 +1011,7 @@ pub async fn handle_messages(
     let (ext_token, use_pri) = __unwrap!(extensions.remove::<TokenBundleResult>())
         .map_err(AuthError::into_anthropic_tuple)?;
 
-    // 验证模型是否支持并获取模型信息
+    // 验证模型是否Support并获取模型信息
     let model = if let Some(model) = ExtModel::from_str(request.model.as_str()) {
         model
     } else {
@@ -1020,7 +1020,7 @@ pub async fn handle_messages(
     let is_stream = request.stream;
     let (params, tools) = request.strip();
 
-    // 验证请求
+    // 验证Request
     if params.0.is_empty() {
         return Err(ChatError::EmptyMessages(StatusCode::BAD_REQUEST).into_anthropic_tuple());
     }
@@ -1034,7 +1034,7 @@ pub async fn handle_messages(
 
     let request_time = __unwrap!(extensions.remove::<DateTime>());
 
-    // 更新请求日志
+    // 更新Request日志
     state.increment_total();
     state.increment_active();
     if log_manager::is_enabled() {
@@ -1165,7 +1165,7 @@ pub async fn handle_messages(
         current_id = 0;
     }
 
-    // 将消息转换为hex格式
+    // 将Message转换为hexFormat
     let stream = is_stream;
     let msg_id = uuid::Uuid::new_v4();
     let data = match super::adapter::anthropic::encode_create_params(
@@ -1190,7 +1190,7 @@ pub async fn handle_messages(
     };
     let msg_id = MessageId::new(msg_id.as_bytes());
 
-    // 构建请求客户端
+    // 构建Request客户端
     let req = build_client_request(AiServiceRequest {
         ext_token: &ext_token,
         fs_client_key: None,
@@ -1203,20 +1203,20 @@ pub async fn handle_messages(
         exact_length: Some(data.len()),
     });
     // crate::debug!("request: {req:?}");
-    // 发送请求
+    // 发送Request
     let response = req.body(data).send().await;
 
-    // 处理请求结果
+    // 处理Request结果
     let response = match response {
         Ok(resp) => {
-            // 更新请求日志为成功
+            // 更新Request日志为成功
             log_manager::update_log(current_id, LogUpdate::Success).await;
             resp
         }
         Err(e) => {
             let e = e.without_url();
 
-            // 根据错误类型返回不同的状态码
+            // 根据Error类型返回不同的状态码
             let status_code = if e.is_timeout() {
                 StatusCode::GATEWAY_TIMEOUT
             } else {
@@ -1225,7 +1225,7 @@ pub async fn handle_messages(
             crate::debug!("request: {e:?}");
             let e = e.to_string();
 
-            // 更新请求日志为失败
+            // 更新Request日志为Failed
             let error = Str::new(&e);
             log_manager::update_log(current_id, LogUpdate::Failure(ErrorInfo::Simple(error))).await;
             state.decrement_active();
@@ -1235,7 +1235,7 @@ pub async fn handle_messages(
         }
     };
 
-    // 释放活动请求计数
+    // 释放活动Request计数
     state.decrement_active();
 
     // crate::debug!("[{}] {:?}", response.status(), response.headers());
@@ -1256,7 +1256,7 @@ pub async fn handle_messages(
         let stream_state = Arc::new(Atomic::new(StreamState::NotStarted));
         let last_content_type = Arc::new(Atomic::new(LastContentType::None));
 
-        // 定义消息处理器的上下文结构体
+        // 定义Message处理器的上下文结构体
         struct MessageProcessContext<'a> {
             msg_id: &'a str,
             model: &'static str,
@@ -1280,7 +1280,7 @@ pub async fn handle_messages(
             vector.extend_from_slice(b"\n\n");
         }
 
-        // 处理消息并生成响应数据的辅助函数
+        // 处理Message并生成Response数据的辅助函数
         async fn process_messages(
             messages: Vec<StreamMessage>,
             ctx: &MessageProcessContext<'_>,
@@ -1290,7 +1290,7 @@ pub async fn handle_messages(
             for message in messages {
                 match message {
                     StreamMessage::Thinking(thinking) => {
-                        // 检查是否需要开始消息
+                        // 检查是否需要开始Message
                         let is_start =
                             ctx.stream_state.load(Ordering::Acquire) == StreamState::NotStarted;
                         if is_start {
@@ -1364,7 +1364,7 @@ pub async fn handle_messages(
                         }
                     }
                     StreamMessage::Content(text) => {
-                        // 检查是否需要开始消息
+                        // 检查是否需要开始Message
                         let is_start =
                             ctx.stream_state.load(Ordering::Acquire) == StreamState::NotStarted;
                         if is_start {
@@ -1522,7 +1522,7 @@ pub async fn handle_messages(
                             decoder.decode(&chunk, convert_web_ref)
                         {
                             let canonical = error.canonical();
-                            // 更新请求日志为失败
+                            // 更新Request日志为Failed
                             log_manager::update_log(
                                 current_id,
                                 LogUpdate::Failure2(
@@ -1546,7 +1546,7 @@ pub async fn handle_messages(
                         .into_anthropic_tuple());
                     }
                     None => {
-                        // 更新请求日志为失败
+                        // 更新Request日志为Failed
                         log_manager::update_log(
                             current_id,
                             LogUpdate::Failure(ErrorInfo::Simple(Str::from_static(
@@ -1601,7 +1601,7 @@ pub async fn handle_messages(
                         Ok(msgs) => msgs,
                         Err(e) => {
                             match e {
-                                // 处理普通空流错误
+                                // 处理普通空流Error
                                 StreamError::EmptyStream => {
                                     let empty_stream_count = decoder.lock().await.get_empty_stream_count();
                                     if empty_stream_count > 1 {
@@ -1696,7 +1696,7 @@ pub async fn handle_messages(
                 .body(Body::from_stream(stream))
         ))
     } else {
-        // 非流式响应
+        // 非流式Response
         let start_time = std::time::Instant::now();
         let mut decoder = StreamDecoder::new().no_first_cache();
         let mut content = Vec::with_capacity(16);
@@ -1846,7 +1846,7 @@ pub async fn handle_messages(
             model: model.id,
         };
 
-        // 更新请求日志时间信息和状态
+        // 更新Request日志时间信息和状态
         let total_time = start_time.elapsed().as_secs_f64();
         let content_delays = decoder.take_content_delays();
         let thinking_content = decoder.take_thinking_content();
@@ -1883,7 +1883,7 @@ pub async fn handle_messages_count_tokens(
     let (ext_token, use_pri) = __unwrap!(extensions.remove::<TokenBundleResult>())
         .map_err(AuthError::into_anthropic_tuple)?;
 
-    // 验证模型是否支持并获取模型信息
+    // 验证模型是否Support并获取模型信息
     let model = if let Some(model) = ExtModel::from_str(request.model.as_str()) {
         model
     } else {
@@ -1891,7 +1891,7 @@ pub async fn handle_messages_count_tokens(
     };
     let (params, tools) = request.strip();
 
-    // 验证请求
+    // 验证Request
     if params.0.is_empty() {
         return Err(ChatError::EmptyMessages(StatusCode::BAD_REQUEST).into_anthropic_tuple());
     }
@@ -1900,7 +1900,7 @@ pub async fn handle_messages_count_tokens(
 
     let environment_info = __unwrap!(extensions.remove::<EnvironmentInfo>());
 
-    // 将消息转换为hex格式
+    // 将Message转换为hexFormat
     let msg_id = uuid::Uuid::new_v4();
     let (data, compressed) = match super::adapter::anthropic::non_stream::encode_create_params(
         params,
@@ -1918,7 +1918,7 @@ pub async fn handle_messages_count_tokens(
         Err(e) => return Err(e.into_anthropic_tuple()),
     };
 
-    // 构建请求客户端
+    // 构建Request客户端
     let req = build_client_request(AiServiceRequest {
         ext_token: &ext_token,
         fs_client_key: None,
@@ -1931,7 +1931,7 @@ pub async fn handle_messages_count_tokens(
         exact_length: Some(data.len()),
     });
     // crate::debug!("request: {req:?}");
-    // 请求
+    // Request
     let response = match CollectBytes(req.body(data)).await {
         Ok(resp) => {
             use super::{aiserver::v1::GetPromptDryRunResponse, error::CursorError};
@@ -1953,7 +1953,7 @@ pub async fn handle_messages_count_tokens(
         Err(e) => {
             let e = e.without_url();
 
-            // 根据错误类型返回不同的状态码
+            // 根据Error类型返回不同的状态码
             let status_code = if e.is_timeout() {
                 StatusCode::GATEWAY_TIMEOUT
             } else {

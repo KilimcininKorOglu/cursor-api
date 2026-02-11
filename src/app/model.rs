@@ -111,7 +111,7 @@ impl LogStatus {
     }
 }
 
-// 请求日志
+// Request日志
 #[derive(Serialize, Clone)]
 pub struct RequestLog {
     pub id: u64,
@@ -271,7 +271,7 @@ impl From<crate::common::model::userinfo::TokenUsage> for ChainUsage {
 //                 // 移动到结束标记之后
 //                 remaining = after_end;
 
-//                 // 跳过消息之间的额外换行符
+//                 // 跳过Message之间的额外换行符
 //                 if remaining.as_bytes().first().copied() == Some(b'\n') {
 //                     remaining = unsafe { remaining.get_unchecked(1..) };
 //                 }
