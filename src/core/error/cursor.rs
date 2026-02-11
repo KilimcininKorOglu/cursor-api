@@ -78,12 +78,12 @@ impl CursorError {
             .into(),
             0 => {
                 __cold_path!();
-                eprintln!("收到未知Error，please contact developer for support");
+                eprintln!("Received unknown error, please contact developer for support");
                 crate::debug!("code: {:?}", self.error.code);
                 CanonicalError::unknown()
             }
             n => {
-                eprintln!("收到少见Error数: {n}，please contact developer for support");
+                eprintln!("Received rare error count: {n}, please contact developer for support");
                 crate::debug!("Error({n}): {:?}", self.error);
                 self.error.details.into_iter().map(|detail| detail.value.into()).sum()
             }

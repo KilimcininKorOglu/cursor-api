@@ -18,15 +18,15 @@ use http::{Extensions, StatusCode};
 enum StreamState {
     /// Initial state, nothing started yet
     NotStarted,
-    // /// message_start AlreadyCompleted，等待 content_block_start
+    // /// message_start completed, waiting for content_block_start
     // MessageStarted,
-    /// content_block_start AlreadyCompleted，正在接收 content_block_delta
+    /// content_block_start completed, receiving content_block_delta
     ContentBlockActive,
-    // /// content_block_stop AlreadyCompleted，等待下一个 content_block_start Or message_delta
+    // /// content_block_stop completed, waiting for next content_block_start or message_delta
     // BetweenBlocks,
-    // /// message_delta AlreadyCompleted，等待 message_stop
+    // /// message_delta completed, waiting for message_stop
     // MessageEnding,
-    /// message_stop AlreadyCompleted，Stream end
+    /// message_stop completed, stream end
     Completed,
 }
 

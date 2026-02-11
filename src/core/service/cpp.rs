@@ -355,7 +355,7 @@ pub async fn handle_stream_cpp(
             Err(()) => {
                 let count = decoder.get_empty_stream_count();
                 if count > 1 {
-                    eprintln!("[Warning] 连续Empty流: {count} 次");
+                    eprintln!("[Warning] Continuous empty stream: {count} times");
                     return Ok(Bytes::from_static(
                         b"event: error\ndata: {\"type\":\"error\",\"error\":{\"code\":533,\"type\":\"unknown\",\"details\":{\"title\":\"Empty\",\"detail\":\"Empty stream\"}}}\n\n",
                     ));

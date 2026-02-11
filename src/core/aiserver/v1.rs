@@ -5,18 +5,18 @@ use core::num::NonZeroU16;
 include!("v1/lite.rs");
 
 impl ErrorDetails {
-    /// Convert error to corresponding HTTP status code。
+    /// Convert error to corresponding HTTP status code.
     ///
-    /// 此方法根据Error的性质，将内部ErrorType映射到标准的 HTTP 状态码，
-    /// 遵循 RESTful API 最佳实践。
+    /// This method maps internal error types to standard HTTP status codes based on error nature,
+    /// following RESTful API best practices.
     ///
-    /// Return value：
-    ///   - u16: 与Error对应的 HTTP 状态码。
+    /// Return value:
+    ///   - u16: HTTP status code corresponding to the error.
     pub fn status_code(error: i32) -> NonZeroU16 {
         use error_details::Error;
         let code = match Error::try_from(error) {
             Ok(error) => match error {
-                // 400 - Bad Request: 客户端Error，RequestFormatErrorOr无效
+                // 400 - Bad Request: client error, request format error or invalid
                 Error::BadRequest
                 | Error::BadModelName
                 | Error::SlashEditFileTooLong
@@ -24,7 +24,7 @@ impl ErrorDetails {
                 | Error::ClaudeImageTooLarge
                 | Error::ConversationTooLong => 400,
 
-                // 401 - Unauthorized: 身份验证RelatedError
+                // 401 - Unauthorized: authentication related error
                 Error::BadApiKey
                 | Error::BadUserApiKey
                 | Error::InvalidAuthId
@@ -33,10 +33,10 @@ impl ErrorDetails {
                 | Error::Unauthorized
                 | Error::GithubNoUserCredentials => 401,
 
-                // 402 - Payment Required: Need付费
+                // 402 - Payment Required: payment required
                 Error::UsagePricingRequired | Error::UsagePricingRequiredChangeable => 402,
 
-                // 403 - Forbidden: 权限RelatedError
+                // 403 - Forbidden: permission related error
                 Error::NotLoggedIn
                 | Error::NotHighEnoughPermissions
                 | Error::AgentRequiresLogin
@@ -46,7 +46,7 @@ impl ErrorDetails {
                 | Error::GithubAppNoAccess
                 | Error::HooksBlocked => 403,
 
-                // 404 - Not Found: 资源未找到Error
+                // 404 - Not Found: resource not found error
                 Error::NotFound
                 | Error::UserNotFound
                 | Error::TaskUuidNotFound
