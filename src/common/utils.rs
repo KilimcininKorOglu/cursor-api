@@ -559,7 +559,7 @@ pub fn tokeninfo_to_token(tuple: (configured_key::TokenInfo, [u8; 32])) -> Optio
 /// 生成 PKCE code_verifier and对应的 code_challenge (S256 method)
 ///
 /// # Panics
-/// If系统随机数生成器不可用则 panic（极其罕见，通常表示系统级故障）
+/// If系统随机数生成器不可用则 panic（极其Rare，通常表示系统级故障）
 #[inline]
 fn generate_pkce_pair() -> ([u8; 43], [u8; 43]) {
     use core::mem::MaybeUninit;

@@ -128,7 +128,7 @@ pub fn ensure_logger_initialized() -> impl Future<Output = &'static LoggerState>
                         if pending_messages.len() > MAX_PENDING_MESSAGES {
                             let oldest_seq = *__unwrap!(pending_messages.keys().next());
                             eprintln!(
-                                "日志系统警告：待HandleMessage过多（>{MAX_PENDING_MESSAGES}），强制跳过序号 {next_seq}-{}",
+                                "日志系统Warning：待HandleMessage过多（>{MAX_PENDING_MESSAGES}），强制跳过序号 {next_seq}-{}",
                                 oldest_seq - 1
                             );
                             next_seq = oldest_seq;
@@ -156,7 +156,7 @@ pub fn ensure_logger_initialized() -> impl Future<Output = &'static LoggerState>
                             // If最旧的Message序号与期望序号相差太大，MayHaveMessage丢失
                             if oldest_seq > next_seq + OUT_OF_ORDER_THRESHOLD {
                                 eprintln!(
-                                    "日志系统警告：检测到May的Message丢失，跳过序号 {next_seq} 到 {}",
+                                    "日志系统Warning：检测到May的Message丢失，跳过序号 {next_seq} 到 {}",
                                     oldest_seq - 1
                                 );
                                 next_seq = oldest_seq;
@@ -186,7 +186,7 @@ pub fn ensure_logger_initialized() -> impl Future<Output = &'static LoggerState>
 
                             // 报告缺失的日志
                             if !missing_ranges.is_empty() {
-                                eprintln!("日志系统警告：关闭时发现缺失的日志序号：");
+                                eprintln!("日志系统Warning：关闭时发现缺失的日志序号：");
                                 for (start, end) in missing_ranges {
                                     if start == end {
                                         eprintln!("  序号 {start}");

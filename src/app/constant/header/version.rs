@@ -177,9 +177,9 @@ pub const fn is_valid_version_format(version: &str) -> bool {
     dot_count == VERSION_DOT_COUNT && digit_count > 0
 }
 
-/// 验证并警告无效的版本字符串
+/// 验证并Warning无效的版本字符串
 ///
-/// If版本字符串不符合Format，打印警告信息但不终止程序
+/// If版本字符串不符合Format，打印Warning信息但不终止程序
 #[inline]
 pub fn validate_version_string(version: &str) {
     if !is_valid_version_format(version) {

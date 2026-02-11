@@ -85,7 +85,7 @@ impl ProtocolHandler for ChatCompletions {
         let (ext_token, use_pri) = __unwrap!(extensions.remove::<TokenBundleResult>())
             .map_err(ErrorExt::into_openai_tuple)?;
 
-        // 验证模型是否Support并Get模型信息
+        // Verify if model is supported and Get model info
         let model = if let Some(model) = ExtModel::from_str(&request.model) {
             model
         } else {
@@ -104,7 +104,7 @@ impl ProtocolHandler for ChatCompletions {
         let current_id: u64;
         let mut usage_check = None;
 
-        // 更新Request日志
+        // Update Request log
         state.increment_total();
         state.increment_active();
         if log_manager::is_enabled() {
@@ -132,7 +132,7 @@ impl ProtocolHandler for ChatCompletions {
             )
             .await;
 
-            // If需要Get用户UseCase,创建后台任务Getprofile
+            // If need to Get user UseCase, create background task Get profile
             if model
                 .is_usage_check(current_config.usage_check_models.as_ref().map(UsageCheck::from_pb))
             {
@@ -145,7 +145,7 @@ impl ProtocolHandler for ChatCompletions {
                     let (usage, stripe, user, ..) =
                         get_token_profile(client(), unext.as_ref(), use_pri, false).await;
 
-                    // 更新日志中的profile
+                    // Update profile in log
                     log_manager::update_log(
                         log_id,
                         LogUpdate::TokenProfile(user.clone(), usage, stripe),
@@ -154,7 +154,7 @@ impl ProtocolHandler for ChatCompletions {
 
                     let mut alias_updater = None;
 
-                    // 更新token manager中的profile
+                    // Update profile in token manager
                     if let Some(id) = {
                         state
                             .token_manager_read()

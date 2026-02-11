@@ -38,7 +38,7 @@ use chrono::{DateTime, Local, TimeZone as _};
 //                     Some((token, generate_checksum_with_repair(checksum)))
 //                 }
 //                 _ => {
-//                     eprintln!("警告: 忽略无效的token-list行: {line}");
+//                     eprintln!("Warning: 忽略无效的token-list行: {line}");
 //                     None
 //                 }
 //             }
