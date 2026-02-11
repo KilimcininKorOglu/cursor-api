@@ -1,28 +1,28 @@
-/// 模型数据Get模式
+/// Model data fetch mode
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[repr(u8)]
 pub enum FetchMode {
-    /// 覆盖现Have数据
+    /// Overwrite existing data
     Truncate,
 
-    /// 追加新数据并部分覆盖现Have数据
+    /// Append new data and partially overwrite existing data
     AppendTruncate,
 
-    /// 追加新数据
+    /// Append new data
     Append,
 }
 
 impl FetchMode {
-    /// 表示截断模式的字符串常Amount
+    /// String constant representing truncate mode
     const TRUNCATE: &'static str = "truncate";
 
-    /// 表示追加截断模式的字符串常Amount
+    /// String constant representing append truncate mode
     const APPEND_TRUNCATE: &'static str = "append:truncate";
 
-    /// 表示追加模式的字符串常Amount
+    /// String constant representing append mode
     const APPEND: &'static str = "append";
 
-    /// 从字符串解析Get模式
+    /// Parse fetch mode from string
     #[inline]
     pub fn from_str(mut s: String) -> Self {
         s.make_ascii_lowercase();
@@ -34,7 +34,7 @@ impl FetchMode {
         }
     }
 
-    /// 返回Get模式的字符串表示
+    /// Return string representation of fetch mode
     #[inline]
     pub fn as_str(&self) -> &'static str {
         match self {
@@ -51,7 +51,7 @@ impl const Default for FetchMode {
 }
 
 impl ::serde::Serialize for FetchMode {
-    /// 序列化Get模式
+    /// Serialize fetch mode
     #[inline]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -62,7 +62,7 @@ impl ::serde::Serialize for FetchMode {
 }
 
 impl<'de> ::serde::Deserialize<'de> for FetchMode {
-    /// 反序列化Get模式
+    /// Deserialize fetch mode
     #[inline]
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
