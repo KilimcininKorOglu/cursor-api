@@ -948,7 +948,7 @@
       <span>Set Timezone</span>
     </div>
     <div class="context-menu-item proxy-menu">
-      <span>SettingsProxy</span>
+      <span>Set Proxy</span>
       <div class="proxy-submenu" id="proxySubmenu">
         <div class="context-menu-item" onclick="setProxy('')">
           <span>Unspecified</span>
@@ -956,7 +956,7 @@
           <span class="check-mark"></span>
         </div>
         <div class="context-menu-divider"></div>
-        <!-- Proxy列表将动态Add在这里 -->
+        <!-- Proxy list will be dynamically added here -->
       </div>
     </div>
     <div class="context-menu-divider"></div>
@@ -966,30 +966,30 @@
     </div>
   </div>
 
-  <!-- Details面板 -->
+  <!-- Details panel -->
   <div id="detailsPanel" class="details-panel">
     <div class="details-header">
-      <h3 id="detailsTitle">TokenDetails</h3>
+      <h3 id="detailsTitle">Token Details</h3>
       <button onclick="toggleDetailsPanel(false)" style="width: unset">
         ×
       </button>
     </div>
     <div id="detailsContent" class="details-content">
-      <!-- Details内容将在这里动态生成 -->
+      <!-- Details content will be dynamically generated here -->
     </div>
     <div class="details-actions">
       <button onclick="refreshSelectedProfiles()" class="secondary">
-        RefreshProfile
+        Refresh Profile
       </button>
       <button onclick="refreshSelectedConfigVersions()" class="secondary">
-        RefreshConfig Version
+        Refresh Config Version
       </button>
       <button onclick="generateKey()" class="secondary">Generate Key</button>
       <button onclick="deleteSelectedTokens()" class="danger">Delete</button>
     </div>
   </div>
 
-  <!-- Generate Key对话框 -->
+  <!-- Generate Key dialog -->
   <div class="modal-backdrop" id="keyModal-backdrop"></div>
   <div class="modal" id="keyModal">
     <div class="modal-header">
@@ -1024,12 +1024,12 @@
         </select>
       </div>
       <div class="form-group">
-        <label>使Usage检查模型规则:</label>
+        <label>Usage Check Model Rules:</label>
         <select id="usageCheckType" onchange="toggleModelList()">
           <option value="">Follow Global</option>
           <option value="default">Default</option>
           <option value="disabled">Disable</option>
-          <option value="all">所有</option>
+          <option value="all">All</option>
           <option value="custom">Custom</option>
         </select>
         <div id="modelListContainer" class="model-list" style="
@@ -1038,14 +1038,14 @@
             overflow-y: auto;
             margin-top: 8px;
           ">
-          <!-- 动态填充模型列表 -->
+          <!-- Dynamically populate model list -->
         </div>
       </div>
       <div class="form-group">
-        <label>ProxyService器:</label>
+        <label>Proxy Server:</label>
         <select id="proxySelect">
-          <option value="">跟随TokenSettings</option>
-          <!-- Proxy选items将在这里动态生成 -->
+          <option value="">Follow Token Settings</option>
+          <!-- Proxy options will be dynamically generated here -->
         </select>
       </div>
       <div class="form-group">
@@ -1062,21 +1062,21 @@
     </div>
     <div class="modal-footer">
       <button onclick="closeModal('keyModal')" class="secondary">Cancel</button>
-      <button onclick="generateKeySubmit()" class="primary">生成</button>
+      <button onclick="generateKeySubmit()" class="primary">Generate</button>
     </div>
   </div>
 
-  <!-- ConfirmDelete对话框 -->
+  <!-- Confirm delete dialog -->
   <div class="modal-backdrop" id="confirmModal-backdrop"></div>
   <div class="modal" id="confirmModal">
     <div class="modal-header">
-      <h3>ConfirmDelete</h3>
+      <h3>Confirm Delete</h3>
       <button class="modal-close" onclick="closeModal('confirmModal')">
         ×
       </button>
     </div>
     <div class="modal-body">
-      <p id="confirmMessage">OK要Delete选中的Token吗？</p>
+      <p id="confirmMessage">Are you sure you want to delete the selected Token?</p>
     </div>
     <div class="modal-footer">
       <button onclick="closeModal('confirmModal')" class="secondary">
@@ -1086,22 +1086,22 @@
     </div>
   </div>
 
-  <!-- 批量Add对话框 -->
+  <!-- Batch add dialog -->
   <div class="modal-backdrop" id="addTokensModal-backdrop"></div>
   <div class="modal" id="addTokensModal">
     <div class="modal-header">
-      <h3>批量AddToken</h3>
+      <h3>Batch Add Tokens</h3>
       <button class="modal-close" onclick="closeModal('addTokensModal')">
         ×
       </button>
     </div>
     <div class="modal-body">
       <div class="form-group">
-        <label>AddToken:</label>
-        <textarea id="addTokensInput" placeholder="每行输入一token，格式为token或token,checksum" rows="8"></textarea>
+        <label>Add Tokens:</label>
+        <textarea id="addTokensInput" placeholder="Enter one token per line, format: token or token,checksum" rows="8"></textarea>
       </div>
       <div class="form-group">
-        <label>TokenStatus:</label>
+        <label>Token Status:</label>
         <select id="addTokensStatus">
           <option value="enabled">Enable</option>
           <option value="disabled">Disable</option>
@@ -1116,18 +1116,18 @@
     </div>
   </div>
 
-  <!-- ImportExport对话框 -->
+  <!-- Import/Export dialog -->
   <div class="modal-backdrop" id="importModal-backdrop"></div>
   <div class="modal" id="importModal">
     <div class="modal-header">
-      <h3>ImportToken列表</h3>
+      <h3>Import Token List</h3>
       <button class="modal-close" onclick="closeModal('importModal')">
         ×
       </button>
     </div>
     <div class="modal-body">
       <div class="form-group">
-        <label>SelectJSON文件:</label>
+        <label>Select JSON File:</label>
         <input type="file" id="importFile" accept=".json" />
       </div>
     </div>
@@ -1139,11 +1139,11 @@
     </div>
   </div>
 
-  <!-- ProxySelect对话框 -->
+  <!-- Proxy select dialog -->
   <div class="modal-backdrop" id="proxySelectModal-backdrop"></div>
   <div class="modal" id="proxySelectModal">
     <div class="modal-header">
-      <h3>SelectProxy</h3>
+      <h3>Select Proxy</h3>
       <button class="modal-close" onclick="closeModal('proxySelectModal')">
         ×
       </button>
@@ -1160,10 +1160,10 @@
           "></div>
       </div>
       <div class="form-group">
-        <label>Proxy列表:</label>
+        <label>Proxy List:</label>
         <select id="proxySelectDropdown" style="width: 100%">
           <option value="">Unspecified</option>
-          <!-- Proxy列表将动态Add -->
+          <!-- Proxy list will be dynamically added -->
         </select>
       </div>
     </div>
@@ -1175,14 +1175,14 @@
     </div>
   </div>
 
-  <!-- 全局通知区域 -->
+  <!-- Global notification area -->
   <div id="toast-container" class="toast-container"></div>
 
-  <!-- TimezoneSelect对话框 -->
+  <!-- Timezone select dialog -->
   <div class="modal-backdrop" id="timezoneModal-backdrop"></div>
   <div class="modal" id="timezoneModal">
     <div class="modal-header">
-      <h3>SettingsTimezone</h3>
+      <h3>Set Timezone</h3>
       <button class="modal-close" onclick="closeModal('timezoneModal')">
         ×
       </button>
@@ -1199,11 +1199,11 @@
           "></div>
       </div>
       <div class="form-group">
-        <label>SearchTimezone:</label>
-        <input type="text" id="timezoneSearchInput" placeholder="输入关键词SearchTimezone..." style="width: 100%" />
+        <label>Search Timezone:</label>
+        <input type="text" id="timezoneSearchInput" placeholder="Enter keyword to search timezone..." style="width: 100%" />
       </div>
       <div class="form-group">
-        <label>Timezone列表:</label>
+        <label>Timezone List:</label>
         <div id="timezoneListContainer" style="
             max-height: 300px;
             overflow-y: auto;
@@ -1211,7 +1211,7 @@
             border: 1px solid var(--border-color);
             border-radius: var(--border-radius);
           ">
-          <!-- Timezone列表将在这里动态生成 -->
+          <!-- Timezone list will be dynamically generated here -->
         </div>
       </div>
     </div>
@@ -1224,7 +1224,7 @@
   </div>
 
   <script>
-    // 全局变量
+    // Global variables
     let allTokens = [];
     let globalTags = [];
     let selectedTag = "all";
@@ -1233,42 +1233,42 @@
     let tokenToDelete = null;
     let tokenToEditTags = null;
     let availableModels = [];
-    let selectedTokens = new Set(); // 存储选中的Token
+    let selectedTokens = new Set(); // Store selected tokens
     let lastSelectedIndex = -1;
     let isMouseDown = false;
     let startPoint = { x: 0, y: 0 };
     let selectionBox = document.getElementById("selectionBox");
     let detailsPanelOpen = false;
     let tokensToDelete = [];
-    // Proxy相关全局变量
-    let proxyList = []; // 缓存Proxy列表
-    let currentProxy = ""; // 当前使用的通用Proxy
-    // 当前正在EditProxy的token
+    // Proxy related global variables
+    let proxyList = []; // Cache proxy list
+    let currentProxy = ""; // Current general proxy
+    // Token currently being edited for proxy
     let currentEditingToken = "";
 
-    // 初始化TokenHandling
+    // Initialize token handling
     initializeTokenHandling("authToken");
 
-    // 检测YesMac还Yes其他System，Mac使用metaKey(Command键)，其他System使用ctrlKey
+    // Detect if Mac or other system, Mac uses metaKey (Command), others use ctrlKey
     function isModifierKey(e) {
       const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
       return isMac ? e.metaKey : e.ctrlKey;
     }
 
-    // 初始化
+    // Initialize
     document.addEventListener("DOMContentLoaded", async () => {
-      // 获取模型和Token信息
+      // Get models and token info
       getModels();
-      // 获取Proxy列表
+      // Get proxy list
       await getProxies();
       getTokenInfo();
 
-      // 监听Search输入
+      // Listen for search input
       document
         .getElementById("searchInput")
         .addEventListener("input", filterTokens);
 
-      // 监听Filter下拉框
+      // Listen for filter dropdowns
       document
         .getElementById("membershipFilter")
         .addEventListener("change", filterTokens);
@@ -1292,20 +1292,20 @@
         .addEventListener("change", filterTokens);
       document
         .getElementById("timezoneFilter")
-        .addEventListener("change", filterTokens); // TimezoneFilter监听
+        .addEventListener("change", filterTokens); // Timezone filter listener
 
-      // Settings键盘快捷键
+      // Setup keyboard shortcuts
       setupKeyboardShortcuts();
 
-      // Settings鼠标Select
+      // Setup mouse selection
       setupMouseSelection();
 
-      // Settings文件System的上下文菜单
+      // Setup file system context menu
       setupContextMenu();
 
       updateStatusBar();
 
-      // 快捷键支持
+      // Keyboard shortcut support
       document.addEventListener("keydown", function (e) {
         const modifierKey = isModifierKey(e);
         if (modifierKey && e.key === "Enter") {
@@ -1315,7 +1315,7 @@
             activeElement.id === "tokenInput" ||
             activeElement.id === "batchTokenInput"
           ) {
-            // 根据当前焦点OKActions
+            // Execute action based on current focus
             const action =
               document.querySelector(".button-group button.active") ||
               document.querySelector(".batch-actions button");
@@ -1335,13 +1335,13 @@
       });
     });
 
-    // Settings键盘快捷键
+    // Setup keyboard shortcuts
     function setupKeyboardShortcuts() {
       document.addEventListener("keydown", function (e) {
         const modifierKey = isModifierKey(e);
 
         if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") {
-          // 但允许Ctrl/Command+Enter执行提交Actions
+          // But allow Ctrl/Command+Enter to execute submit action
           if (
             modifierKey &&
             e.key === "Enter" &&
@@ -1352,7 +1352,7 @@
           return;
         }
 
-        // 文件SystemActions快捷键
+        // File system action shortcuts
         switch (e.key) {
           case "a":
             if (modifierKey) {
@@ -1411,9 +1411,9 @@
             if (selectedTokens.size === 1) {
               startRenaming([...selectedTokens][0]);
             } else if (selectedTokens.size > 1) {
-              showToast("一次只能Rename一Token", "info");
+              showToast("Can only rename one token at a time", "info");
             } else {
-              showToast("请先Select要Rename的Token", "info");
+              showToast("Please select a token to rename first", "info");
             }
             break;
           case "Escape":
@@ -1426,13 +1426,13 @@
       });
     }
 
-    // Settings鼠标Select
+    // Setup mouse selection
     function setupMouseSelection() {
       const tokenFiles = document.querySelector(".token-files");
 
-      // 鼠标按下StartSelect
+      // Mouse down to start selection
       tokenFiles.addEventListener("mousedown", function (e) {
-        // 仅在左键点击且不Yes点击在表格行上时Enable框选
+        // Only enable box selection on left click and not clicking on table row
         if (
           e.button !== 0 ||
           e.target.closest("tr") ||
@@ -1455,7 +1455,7 @@
         selectionBox.style.height = "0px";
         selectionBox.style.display = "block";
 
-        // 清除现有Select，除非按住Ctrl键
+        // Clear existing selection unless Ctrl key is held
         if (!isModifierKey(e)) {
           clearSelection();
         }
@@ -1463,7 +1463,7 @@
         e.preventDefault();
       });
 
-      // 鼠标移动UpdateSelect框
+      // Mouse move to update selection box
       document.addEventListener("mousemove", function (e) {
         if (!isMouseDown) return;
 
@@ -1484,7 +1484,7 @@
         selectionBox.style.width = width + "px";
         selectionBox.style.height = height + "px";
 
-        // 检测与行的相交并UpdateSelect
+        // Detect intersection with rows and update selection
         const boxRect = selectionBox.getBoundingClientRect();
         const rows = document.querySelectorAll("#fileListBody tr");
 
@@ -1492,7 +1492,7 @@
           const rowRect = row.getBoundingClientRect();
           const token = row.dataset.token;
 
-          // 检查YesNo相交
+          // Check if intersecting
           if (
             rowRect.top < boxRect.bottom &&
             rowRect.bottom > boxRect.top &&
@@ -1508,7 +1508,7 @@
         updateSelectionStatus();
       });
 
-      // 鼠标释放EndSelect
+      // Mouse release to end selection
       document.addEventListener("mouseup", function () {
         if (isMouseDown) {
           isMouseDown = false;
@@ -1517,7 +1517,7 @@
         }
       });
 
-      // 防止拖动Select时选中文本
+      // Prevent text selection while dragging
       tokenFiles.addEventListener("selectstart", function (e) {
         if (isMouseDown) {
           e.preventDefault();
@@ -1525,12 +1525,12 @@
       });
     }
 
-    // Settings上下文菜单
+    // Setup context menu
     function setupContextMenu() {
       const tokenFiles = document.querySelector(".token-files");
       const contextMenu = document.getElementById("contextMenu");
 
-      // 右键点击Show菜单
+      // Right click to show menu
       tokenFiles.addEventListener("contextmenu", function (e) {
         const row = e.target.closest("tr");
         if (!row) return;
@@ -1539,74 +1539,74 @@
 
         const token = row.dataset.token;
 
-        // 如果点击的行不在选中items中，则清除Select并选中该行
+        // If clicked row is not in selected items, clear selection and select this row
         if (!selectedTokens.has(token)) {
           clearSelection();
           selectToken(token);
           updateSelectionStatus();
         }
 
-        // Settings当前处理的token
+        // Set current token being processed
         currentToken = token;
 
-        // UpdateProxy子菜单
+        // Update proxy submenu
         updateProxySubmenu();
 
-        // UpdateStatus子菜单
+        // Update status submenu
         updateStatusSubmenu();
 
-        // Update多选时的菜单items文本
+        // Update menu item text for multi-selection
         if (selectedTokens.size > 1) {
           document.querySelector(
             '.context-menu-item[onclick="viewDetails()"] span:first-child',
-          ).textContent = "ViewDetails(单)";
+          ).textContent = "View Details (single)";
           document.querySelector(
             '.context-menu-item[onclick="refreshSelectedProfiles()"] span:first-child',
-          ).textContent = `RefreshProfile(已选${selectedTokens.size})`;
+          ).textContent = `Refresh Profile (${selectedTokens.size} selected)`;
           document.querySelector(
             '.context-menu-item[onclick="refreshSelectedConfigVersions()"] span:first-child',
-          ).textContent = `RefreshConfig Version(已选${selectedTokens.size})`;
+          ).textContent = `Refresh Config Version (${selectedTokens.size} selected)`;
           document.querySelector(
             '.context-menu-item[onclick="upgradeSelectedTokens()"] span:first-child',
-          ).textContent = `RefreshToken(已选${selectedTokens.size})`;
+          ).textContent = `Refresh Token (${selectedTokens.size} selected)`;
           document.querySelector(
             '.context-menu-item[onclick="openTimezoneSelector()"] span:first-child',
-          ).textContent = `SettingsTimezone(已选${selectedTokens.size})`;
+          ).textContent = `Set Timezone (${selectedTokens.size} selected)`;
           document.querySelector(
             ".context-menu-item.proxy-menu span:first-child",
-          ).textContent = `SettingsProxy(已选${selectedTokens.size})`;
+          ).textContent = `Set Proxy (${selectedTokens.size} selected)`;
           document.querySelector(
             '.context-menu-item[onclick="deleteSelectedTokens()"] span:first-child',
-          ).textContent = `Delete(已选${selectedTokens.size})`;
+          ).textContent = `Delete (${selectedTokens.size} selected)`;
         } else {
           document.querySelector(
             '.context-menu-item[onclick="viewDetails()"] span:first-child',
-          ).textContent = "ViewDetails";
+          ).textContent = "View Details";
           document.querySelector(
             '.context-menu-item[onclick="refreshSelectedProfiles()"] span:first-child',
-          ).textContent = "RefreshProfile";
+          ).textContent = "Refresh Profile";
           document.querySelector(
             '.context-menu-item[onclick="refreshSelectedConfigVersions()"] span:first-child',
-          ).textContent = "RefreshConfig Version";
+          ).textContent = "Refresh Config Version";
           document.querySelector(
             '.context-menu-item[onclick="upgradeSelectedTokens()"] span:first-child',
-          ).textContent = "RefreshToken";
+          ).textContent = "Refresh Token";
           document.querySelector(
             '.context-menu-item[onclick="openTimezoneSelector()"] span:first-child',
-          ).textContent = "SettingsTimezone";
+          ).textContent = "Set Timezone";
           document.querySelector(
             ".context-menu-item.proxy-menu span:first-child",
-          ).textContent = "SettingsProxy";
+          ).textContent = "Set Proxy";
           document.querySelector(
             '.context-menu-item[onclick="deleteSelectedTokens()"] span:first-child',
           ).textContent = "Delete";
         }
 
-        // 计算菜单位置
+        // Calculate menu position
         positionContextMenu(contextMenu, e.clientX, e.clientY);
       });
 
-      // 点击其他地方Close菜单
+      // Click elsewhere to close menu
       document.addEventListener("click", function (e) {
         if (!contextMenu.contains(e.target)) {
           contextMenu.style.display = "none";
@@ -1614,60 +1614,60 @@
       });
     }
 
-    // 计算和Settings菜单位置
+    // Calculate and set menu position
     function positionContextMenu(menu, x, y) {
-      // 首先Show菜单但设为不可见，以便获取其尺寸
+      // First show menu but set invisible to get its dimensions
       menu.style.display = "block";
       menu.style.visibility = "hidden";
 
-      // 获取菜单尺寸和窗口尺寸
+      // Get menu dimensions and window dimensions
       const menuRect = menu.getBoundingClientRect();
       const menuWidth = menuRect.width;
       const menuHeight = menuRect.height;
       const windowWidth = window.innerWidth;
       const windowHeight = window.innerHeight;
 
-      // 计算最佳位置
+      // Calculate best position
       let posX = x;
       let posY = y;
 
-      // 水平方向调整 - 如果菜单会超出右边界，则向左Expand
+      // Horizontal adjustment - if menu exceeds right boundary, expand left
       if (x + menuWidth > windowWidth) {
-        posX = windowWidth - menuWidth - 5; // 5px的安全边距
+        posX = windowWidth - menuWidth - 5; // 5px safety margin
       }
 
-      // 垂直方向调整 - 如果菜单会超出底部边界，则向上Expand
+      // Vertical adjustment - if menu exceeds bottom boundary, expand up
       if (y + menuHeight > windowHeight) {
-        posY = windowHeight - menuHeight - 5; // 5px的安全边距
+        posY = windowHeight - menuHeight - 5; // 5px safety margin
 
-        // 如果向上Expand也不够空间，尽量Show在视口中央
+        // If expanding up also lacks space, try to show in viewport center
         if (posY < 0) {
           posY = Math.max(5, (windowHeight - menuHeight) >> 1);
         }
       }
 
-      // 应用计算后的位置
+      // Apply calculated position
       menu.style.left = `${posX}px`;
       menu.style.top = `${posY}px`;
       menu.style.visibility = "visible";
 
-      // 调整子菜单方向
+      // Adjust submenu direction
       adjustSubmenuPosition(menu, windowWidth, windowHeight);
     }
 
-    // 调整子菜单位置
+    // Adjust submenu position
     function adjustSubmenuPosition(menu, windowWidth, windowHeight) {
       const proxyMenu = menu.querySelector(".proxy-menu");
       if (!proxyMenu) return;
 
-      // Reset方向类
+      // Reset direction classes
       proxyMenu.classList.remove("open-upward", "open-leftward");
 
-      // 获取菜单items位置
+      // Get menu item position
       const menuItemRect = proxyMenu.getBoundingClientRect();
       const submenu = proxyMenu.querySelector(".proxy-submenu");
 
-      // 先临时Show子菜单以获取其尺寸
+      // Temporarily show submenu to get its dimensions
       const originalVisibility = submenu.style.visibility;
       submenu.style.visibility = "hidden";
       submenu.style.opacity = "1";
@@ -1676,20 +1676,20 @@
       const submenuHeight = submenuRect.height;
       const submenuWidth = submenuRect.width;
 
-      // 还原子菜单Status
+      // Restore submenu status
       submenu.style.visibility = originalVisibility;
       submenu.style.opacity = "";
 
-      // 检查右侧YesNo有足够空间
+      // Check if right side has enough space
       const rightSpace = windowWidth - menuItemRect.right;
       if (rightSpace < submenuWidth) {
         proxyMenu.classList.add("open-leftward");
       }
 
-      // 检查底部YesNo有足够空间
+      // Check if bottom has enough space
       const bottomSpace = windowHeight - menuItemRect.top;
       if (bottomSpace < submenuHeight) {
-        // 如果底部空间不够，检查顶部YesNo有足够空间
+        // If bottom space is not enough, check if top has enough space
         const topSpace = menuItemRect.bottom;
         if (topSpace >= submenuHeight || topSpace > bottomSpace) {
           proxyMenu.classList.add("open-upward");
@@ -1697,35 +1697,35 @@
       }
     }
 
-    // UpdateProxy子菜单
+    // Update proxy submenu
     function updateProxySubmenu() {
       const submenu = document.getElementById("proxySubmenu");
       if (!submenu) return;
 
-      // 获取选中的token对象 - 格式: [index, alias, tokenData]
+      // Get selected token objects - format: [index, alias, tokenData]
       const selectedTokenArrs = allTokens.filter((tokenArr) => {
         const [_, __, tokenData] = tokenArr;
         return selectedTokens.has(tokenData.primary_token);
       });
       const selectionSize = selectedTokenArrs.length;
 
-      // 计算选中items中的Proxy使用情况
-      const selectedProxyUsage = { "": 0 }; // 初始化 "Unspecified" 计数
+      // Calculate proxy usage in selected items
+      const selectedProxyUsage = { "": 0 }; // Initialize "Unspecified" count
       proxyList.forEach((proxy) => {
         selectedProxyUsage[proxy] = 0;
-      }); // 初始化已知Proxy计数
+      }); // Initialize known proxy counts
 
       selectedTokenArrs.forEach((tokenArr) => {
         const [_, __, tokenData] = tokenArr;
-        const proxy = tokenData.proxy || ""; // 获取选中 token 的Proxy
-        // 确保计数对象里有这key
+        const proxy = tokenData.proxy || ""; // Get selected token's proxy
+        // Ensure count object has this key
         if (!(proxy in selectedProxyUsage)) {
           selectedProxyUsage[proxy] = 0;
         }
-        selectedProxyUsage[proxy]++; // 增加对应Proxy的计数
+        selectedProxyUsage[proxy]++; // Increment corresponding proxy count
       });
 
-      // 构建 "Unspecified" 选items
+      // Build "Unspecified" option
       const isUnspecifiedActive =
         selectionSize > 0 && selectedProxyUsage[""] === selectionSize;
       let html = `
@@ -1737,12 +1737,12 @@
       <div class="context-menu-divider"></div>
     `;
 
-      // Add所有AvailableProxy选items
+      // Add all available proxy options
       if (proxyList.length > 0) {
         proxyList.forEach((proxy) => {
-          if (!proxy) return; // 跳过空Proxy名
-          const count = selectedProxyUsage[proxy] || 0; // 获取选中items中使用这Proxy的Count
-          // 检查YesNo所有选中的 Token 都使用了此Proxy
+          if (!proxy) return; // Skip empty proxy name
+          const count = selectedProxyUsage[proxy] || 0; // Get count of selected items using this proxy
+          // Check if all selected tokens use this proxy
           const isActive =
             selectionSize > 0 && count === selectionSize && proxy !== "";
 
@@ -1755,23 +1755,23 @@
         `;
         });
       } else {
-        html += `<div class="context-menu-item disabled"><span>NoneAvailableProxy</span></div>`;
+        html += `<div class="context-menu-item disabled"><span>No available proxy</span></div>`;
       }
 
       submenu.innerHTML = html;
 
-      // Add has-submenu 类以便Show箭头
+      // Add has-submenu class to show arrow
       const proxyMenuEl = document.querySelector(".proxy-menu");
       if (proxyMenuEl) {
         proxyMenuEl.classList.add("has-submenu");
       }
     }
 
-    // 获取Token信息
+    // Get token info
     async function getTokenInfo() {
-      showToast("LoadingToken列表...", "info");
+      showToast("Loading token list...", "info");
 
-      // Save当前Filterrecords件
+      // Save current filter conditions
       const searchTerm = document.getElementById("searchInput").value;
       const membershipFilter =
         document.getElementById("membershipFilter").value;
@@ -1781,22 +1781,22 @@
       const trialMaxValue = document.getElementById("trialMax").value;
       const profileFilter = document.getElementById("profileFilter").value;
       const proxyFilter = document.getElementById("proxyFilter").value;
-      const timezoneFilter = document.getElementById("timezoneFilter").value; // SaveTimezoneFilterrecords件
+      const timezoneFilter = document.getElementById("timezoneFilter").value; // Save timezone filter condition
 
-      // RefreshProxy列表
+      // Refresh proxy list
       await getProxies();
 
       const data = await makeAuthenticatedRequest("/tokens/get");
       if (data && data.tokens) {
-        // 直接使用新的数据格式
+        // Use new data format directly
         allTokens = data.tokens;
         renderTokens(allTokens);
         updateStatusBar();
-        updateProxyFilter(); // UpdateProxyFilter下拉框
-        updateTimezoneFilter(); // UpdateTimezoneFilter下拉框
-        updateStatusSubmenu(); // UpdateStatus子菜单
+        updateProxyFilter(); // Update proxy filter dropdown
+        updateTimezoneFilter(); // Update timezone filter dropdown
+        updateStatusSubmenu(); // Update status submenu
 
-        // 恢复Filterrecords件
+        // Restore filter conditions
         document.getElementById("searchInput").value = searchTerm;
         document.getElementById("membershipFilter").value = membershipFilter;
         document.getElementById("usageMin").value = usageMinValue;
@@ -1805,33 +1805,33 @@
         document.getElementById("trialMax").value = trialMaxValue;
         document.getElementById("profileFilter").value = profileFilter;
         document.getElementById("proxyFilter").value = proxyFilter;
-        document.getElementById("timezoneFilter").value = timezoneFilter; // 恢复TimezoneFilterrecords件
+        document.getElementById("timezoneFilter").value = timezoneFilter; // Restore timezone filter condition
 
-        // 应用Filter
+        // Apply filter
         filterTokens();
 
-        showToast("Token列表已Update", "success");
+        showToast("Token list updated", "success");
       } else {
-        showToast("获取Token列表Failed", "error");
+        showToast("Failed to get token list", "error");
       }
     }
 
-    // UpdateProxyFilter下拉框
+    // Update proxy filter dropdown
     function updateProxyFilter() {
       const proxyFilterSelect = document.getElementById("proxyFilter");
 
-      // 保持Page一和Page二选items（AllProxy和Unspecified Proxy）
+      // Keep first and second options (All Proxies and Unspecified Proxy)
       while (proxyFilterSelect.options.length > 2) {
         proxyFilterSelect.remove(2);
       }
 
-      // 使用公Total方法获取Proxy使用统计
+      // Use common method to get proxy usage stats
       const proxyUsage = getProxyUsageStats();
 
-      // AddProxy选items
+      // Add proxy options
       proxyList.forEach((proxy) => {
         if (proxy) {
-          // 确保Proxy名不为空
+          // Ensure proxy name is not empty
           const option = document.createElement("option");
           option.value = proxy;
           option.textContent = `${proxy} (${proxyUsage[proxy] || 0})`;
@@ -1840,54 +1840,54 @@
       });
     }
 
-    // SettingsProxy
+    // Set proxy
     async function setProxy(proxyName) {
       if (selectedTokens.size === 0) {
-        showToast("请先SelectToken", "info");
+        showToast("Please select a token first", "info");
         return;
       }
 
-      // 获取选中token的别名 - 格式: [index, alias, tokenData]
+      // Get selected token aliases - format: [index, alias, tokenData]
       const aliasesToUpdate = [...selectedTokens].map((token) => {
         const tokenArr = allTokens.find((arr) => {
           const [_, __, tokenData] = arr;
           return tokenData.primary_token === token;
         });
-        return tokenArr ? tokenArr[1] : token; // tokenArr[1] Yes alias
+        return tokenArr ? tokenArr[1] : token; // tokenArr[1] is alias
       });
 
-      showToast("正在UpdateProxySettings...", "info");
+      showToast("Updating proxy settings...", "info");
 
       try {
         const data = await makeAuthenticatedRequest("/tokens/proxy/set", {
           body: JSON.stringify({
             aliases: aliasesToUpdate,
-            proxy: proxyName || null, // 空字符串发送null以清除Proxy
+            proxy: proxyName || null, // Empty string sends null to clear proxy
           }),
         });
 
         if (data && data.status === "success") {
-          showToast(data.message || "ProxySettingsSuccess", "success");
-          getTokenInfo(); // RefreshToken列表
+          showToast(data.message || "Proxy settings successful", "success");
+          getTokenInfo(); // Refresh token list
         } else {
-          showToast("ProxySettingsFailed", "error");
+          showToast("Proxy settings failed", "error");
         }
       } catch (error) {
-        showToast("ProxySettingsFailed", "error");
+        showToast("Proxy settings failed", "error");
       }
     }
 
-    // UpdateGenerate Key对话框中的ProxySelect
+    // Update proxy select in Generate Key dialog
     function updateProxySelect() {
       const proxySelect = document.getElementById("proxySelect");
       if (!proxySelect || proxyList.length === 0) return;
 
-      // Clear现有选items（保留Page一"跟随TokenSettings"选items）
+      // Clear existing options (keep first "Follow Token Settings" option)
       while (proxySelect.options.length > 1) {
         proxySelect.remove(1);
       }
 
-      // AddProxy选items
+      // Add proxy options
       proxyList.forEach((proxy) => {
         const option = document.createElement("option");
         option.value = proxy;
@@ -1896,7 +1896,7 @@
       });
     }
 
-    // 渲染Token列表
+    // Render token list
     function renderTokens(tokens) {
       const fileListBody = document.getElementById("fileListBody");
       const emptyState = document.getElementById("emptyState");
@@ -1911,7 +1911,7 @@
 
       fileListBody.innerHTML = tokens
         .map((tokenArr, idx) => {
-          // 格式: [index, alias, tokenData]
+          // Format: [index, alias, tokenData]
           const [index, alias, tokenData] = tokenArr;
           const user = tokenData.user || {};
           const stripe = tokenData.stripe || {};
@@ -1945,11 +1945,11 @@
         })
         .join("");
 
-      // Add点击事件处理
+      // Add click event handling
       const rows = document.querySelectorAll("#fileListBody tr");
       rows.forEach((row) => {
         row.addEventListener("click", function (e) {
-          // 如果点击的YesProxyName或TimezoneName，不处理行Select
+          // If clicking on proxy name or timezone name, don't handle row selection
           if (
             e.target.classList.contains("proxy-name") ||
             e.target.classList.contains("timezone-name")
@@ -1966,7 +1966,7 @@
           const modifierKey = isModifierKey(e);
 
           if (e.shiftKey && lastSelectedIndex !== -1) {
-            // Shift+点击实现RangeSelect
+            // Shift+click for range selection
             const start = Math.min(lastSelectedIndex, index);
             const end = Math.max(lastSelectedIndex, index);
 
@@ -1977,7 +1977,7 @@
               selectToken(rowToken);
             }
           } else if (modifierKey) {
-            // Ctrl+点击实现多选
+            // Ctrl+click for multi-selection
             if (selectedTokens.has(token)) {
               deselectToken(token);
             } else {
@@ -1985,7 +1985,7 @@
               lastSelectedIndex = index;
             }
           } else {
-            // 普通点击
+            // Normal click
             clearSelection();
             selectToken(token);
             lastSelectedIndex = index;
@@ -1995,7 +1995,7 @@
         });
       });
 
-      // 双击ViewDetails
+      // Double click to view details
       fileListBody.addEventListener("dblclick", function (e) {
         const row = e.target.closest("tr");
         if (!row) return;
@@ -2006,24 +2006,24 @@
       });
 
       updateSelectionStatus();
-      // UpdateProxy子菜单
+      // Update proxy submenu
       updateProxySubmenu();
     }
 
-    // 为单Token打开TimezoneSelect器
+    // Open timezone selector for single token
     function openTimezoneSelectorForToken(token, event) {
-      // 阻止事件冒泡，避免触发行Select
+      // Stop event propagation to avoid triggering row selection
       event.stopPropagation();
 
-      // 选中该Token
+      // Select this token
       clearSelection();
       selectToken(token);
 
-      // 打开TimezoneSelect器
+      // Open timezone selector
       openTimezoneSelector();
     }
 
-    // FilterToken
+    // Filter tokens
     function filterTokens() {
       const searchTerm = document
         .getElementById("searchInput")
@@ -2036,10 +2036,10 @@
       const trialMaxValue = document.getElementById("trialMax").value;
       const profileFilter = document.getElementById("profileFilter").value;
       const proxyFilter = document.getElementById("proxyFilter").value;
-      const timezoneFilter = document.getElementById("timezoneFilter").value; // 新增TimezoneFilter
+      const timezoneFilter = document.getElementById("timezoneFilter").value; // Add timezone filter
 
       const filteredTokens = allTokens.filter((tokenArr) => {
-        // 格式: [index, alias, tokenData]
+        // Format: [index, alias, tokenData]
         const [index, alias, tokenData] = tokenArr;
         const user = tokenData.user || {};
         const stripe = tokenData.stripe || {};
@@ -2049,7 +2049,7 @@
         const timezone = tokenData.timezone || "";
         const proxy = tokenData.proxy || "";
 
-        // Searchrecords件
+        // Search condition
         const emailMatch = (user.email || "")
           .toLowerCase()
           .includes(searchTerm);
@@ -2058,14 +2058,14 @@
         const searchMatch =
           searchTerm === "" || emailMatch || tokenMatch || aliasMatch;
 
-        // 会员TypeFilter
+        // Membership type filter
         const membershipType = stripe.membership_type || "";
         let membershipMatch = true;
         if (membershipFilter !== "all") {
           membershipMatch = membershipType === membershipFilter;
         }
 
-        // 使Usage区间Filter
+        // Usage range filter
         let usageMatch = true;
         const currentUsage = premium.num_requests || 0;
         if (usageMinValue !== "") {
@@ -2075,7 +2075,7 @@
           usageMatch = usageMatch && currentUsage <= parseInt(usageMaxValue);
         }
 
-        // 试用期区间Filter
+        // Trial period range filter
         let trialMatch = true;
         const daysRemaining = stripe.days_remaining_on_trial || 0;
         if (trialMinValue !== "") {
@@ -2085,7 +2085,7 @@
           trialMatch = trialMatch && daysRemaining <= parseInt(trialMaxValue);
         }
 
-        // ProfileFilter
+        // Profile filter
         let profileMatch = true;
         if (profileFilter === "has_profile") {
           profileMatch = user && Object.keys(user).length > 0;
@@ -2093,7 +2093,7 @@
           profileMatch = !user || Object.keys(user).length === 0;
         }
 
-        // ProxyFilter
+        // Proxy filter
         let proxyMatch = true;
         if (proxyFilter !== "all") {
           if (proxyFilter === "none") {
@@ -2103,7 +2103,7 @@
           }
         }
 
-        // TimezoneFilter
+        // Timezone filter
         let timezoneMatch = true;
         if (timezoneFilter !== "all") {
           if (timezoneFilter === "none") {
@@ -2126,11 +2126,11 @@
 
       renderTokens(filteredTokens);
 
-      // 在Status栏ShowFilter结果
+      // Show filter results in status bar
       updateStatusBar(filteredTokens.length);
     }
 
-    // UpdateStatus栏
+    // Update status bar
     function updateStatusBar(filteredCount) {
       const total = allTokens.length;
       const selected = selectedTokens.size;
@@ -2138,14 +2138,14 @@
       const totalCount = document.getElementById("totalCount");
 
       if (selectionStatus)
-        selectionStatus.textContent = `已Select: ${selected} items目`;
+        selectionStatus.textContent = `Selected: ${selected} items`;
       if (totalCount) {
-        // 使用!== undefined判断，这样即使filteredCount为0也会正确Show
-        totalCount.textContent = `Total ${filteredCount !== undefined ? filteredCount : total} Token`;
+        // Use !== undefined check so even filteredCount of 0 shows correctly
+        totalCount.textContent = `Total ${filteredCount !== undefined ? filteredCount : total} Tokens`;
       }
     }
 
-    // 格式化会员Type
+    // Format membership type
     function formatMembershipType(type) {
       if (!type) return "-";
       const types = {
@@ -2159,7 +2159,7 @@
       return types[type] || type;
     }
 
-    // SelectToken
+    // Select token
     function selectToken(token, append = false) {
       if (!token) return;
 
@@ -2176,7 +2176,7 @@
       updateSelectionStatus();
     }
 
-    // CancelSelectToken
+    // Deselect token
     function deselectToken(token) {
       if (!token) return;
 
@@ -2189,7 +2189,7 @@
       updateSelectionStatus();
     }
 
-    // 清除所有Select
+    // Clear all selection
     function clearSelection() {
       selectedTokens.clear();
       const rows = document.querySelectorAll("#fileListBody tr.selected");
@@ -2200,7 +2200,7 @@
       updateSelectionStatus();
     }
 
-    // Select所有Token
+    // Select all tokens
     function selectAllTokens() {
       clearSelection();
 
@@ -2214,31 +2214,31 @@
       updateSelectionStatus();
     }
 
-    // UpdateSelectStatus
+    // Update selection status
     function updateSelectionStatus() {
       updateStatusBar();
 
-      // 如果只Select了一Token，UpdateDetails
+      // If only one token selected, update details
       if (selectedTokens.size === 1) {
         updateDetailsPanel([...selectedTokens][0]);
       }
     }
 
-    // ViewTokenDetails
+    // View token details
     function viewDetails() {
       if (selectedTokens.size === 0) return;
 
-      // 如果Select了多Token，只ShowPage一
+      // If multiple tokens selected, only show first one
       const token = [...selectedTokens][0];
       updateDetailsPanel(token);
       toggleDetailsPanel(true);
-      // Close右键菜单
+      // Close context menu
       document.getElementById("contextMenu").style.display = "none";
     }
 
-    // UpdateDetails面板
+    // Update details panel
     function updateDetailsPanel(token) {
-      // 查找token对象 - 格式: [index, alias, tokenData]
+      // Find token object - format: [index, alias, tokenData]
       const tokenArr = allTokens.find((arr) => {
         const [_, __, tokenData] = arr;
         return tokenData.primary_token === token;
@@ -2257,12 +2257,12 @@
         : "-";
 
       document.getElementById("detailsTitle").textContent =
-        user.email || "未知账户";
+        user.email || "Unknown Account";
 
       const content = document.getElementById("detailsContent");
       content.innerHTML = `
         <div class="details-property">
-          <div class="details-property-name">别名</div>
+          <div class="details-property-name">Alias</div>
           <div class="details-property-value">${alias}</div>
         </div>
         <div class="details-property">
@@ -2270,7 +2270,7 @@
           <div class="details-property-value">${tokenData.primary_token}</div>
         </div>
         <div class="details-property">
-          <div class="details-property-name">校验和</div>
+          <div class="details-property-name">Checksum</div>
           <div class="details-property-value">${checksum}</div>
         </div>
         <div class="details-property">
@@ -2290,7 +2290,7 @@
           <div class="details-property-value">${proxy}</div>
         </div>
         <div class="details-property">
-          <div class="details-property-name">会员Type</div>
+          <div class="details-property-name">Membership Type</div>
           <div class="details-property-value">${formatMembershipType(stripe.membership_type)}</div>
         </div>
         <div class="details-property">
@@ -2299,55 +2299,55 @@
         </div>
         <div class="details-property">
           <div class="details-property-name">Trial Remaining</div>
-          <div class="details-property-value">${stripe.days_remaining_on_trial > 0 ? `${stripe.days_remaining_on_trial}days` : "-"}</div>
+          <div class="details-property-value">${stripe.days_remaining_on_trial > 0 ? `${stripe.days_remaining_on_trial} days` : "-"}</div>
         </div>
         <div class="details-property">
           <div class="details-property-name">User ID</div>
           <div class="details-property-value">${user.user_id || "-"}</div>
         </div>
         <div class="details-property">
-          <div class="details-property-name">创建Time</div>
+          <div class="details-property-name">Created At</div>
           <div class="details-property-value">${formatDate(user.created_at) || "-"}</div>
         </div>
       `;
     }
 
-    // 切换Details面板Show
+    // Toggle details panel display
     function toggleDetailsPanel(show) {
       const panel = document.getElementById("detailsPanel");
       if (show) {
         panel.classList.add("open");
-        document.body.style.overflow = "hidden"; // Disable主体page面滚动
+        document.body.style.overflow = "hidden"; // Disable main page scrolling
         detailsPanelOpen = true;
       } else {
         panel.classList.remove("open");
-        document.body.style.overflow = ""; // 恢复主体page面滚动
+        document.body.style.overflow = ""; // Restore main page scrolling
         detailsPanelOpen = false;
       }
     }
 
-    // 格式化Date
+    // Format date
     function formatDate(dateString) {
       if (!dateString) return "-";
       try {
         const date = new Date(dateString);
-        return date.toLocaleString("zh-CN");
+        return date.toLocaleString("en-US");
       } catch (e) {
         return dateString;
       }
     }
 
     /**
-     * 将选中的TokenCopy到剪贴板
-     * 格式：有别名时为 "{alias}::{token},{checksum}"，None别名时为 "{token},{checksum}"
+     * Copy selected tokens to clipboard
+     * Format: with alias "{alias}::{token},{checksum}", without alias "{token},{checksum}"
      */
     async function copyTokenToClipboard() {
       if (selectedTokens.size === 0) {
-        showToast("请先SelectToken", "info");
+        showToast("Please select a token first", "info");
         return;
       }
 
-      // 获取选中的token对象 - 格式: [index, alias, tokenData]
+      // Get selected token objects - format: [index, alias, tokenData]
       const selectedTokenArrs = allTokens.filter((tokenArr) => {
         const [_, __, tokenData] = tokenArr;
         return selectedTokens.has(tokenData.primary_token);
@@ -2360,20 +2360,20 @@
         showMessage: false,
         onSuccess: () =>
           showToast(
-            `已Copy ${selectedTokens.size} Token到剪贴板`,
+            `Copied ${selectedTokens.size} tokens to clipboard`,
             "success",
           ),
-        onError: () => showToast("CopyFailed，请手动Copy", "error"),
+        onError: () => showToast("Copy failed, please copy manually", "error"),
       });
 
-      // Close右键菜单
+      // Close context menu
       document.getElementById("contextMenu").style.display = "none";
     }
 
     /**
-     * 格式化单Token对象为Copy格式
-     * @param {Array} tokenArr - Token数组 [index, alias, tokenData]
-     * @returns {string} 格式化后的字符串
+     * Format single token object for copy
+     * @param {Array} tokenArr - Token array [index, alias, tokenData]
+     * @returns {string} Formatted string
      */
     function formatTokenForCopy(tokenArr) {
       const [index, alias, tokenData] = tokenArr;
@@ -2386,16 +2386,16 @@
       return alias
         ? `${alias}::${token}${checksumPart}`
         : `${token}${checksumPart}`;
-    } // Delete选中的Token
+    } // Delete selected tokens
     function deleteSelectedTokens(singleToken) {
-      // 如果提供了单Token，则只Delete该Token
+      // If single token provided, only delete that token
       if (singleToken) {
         tokensToDelete = [singleToken];
       } else {
         tokensToDelete = [...selectedTokens];
 
         if (tokensToDelete.length === 0) {
-          showToast("请先Select要Delete的Token", "info");
+          showToast("Please select tokens to delete first", "info");
           return;
         }
       }
@@ -2403,29 +2403,29 @@
       const count = tokensToDelete.length;
       document.getElementById("confirmMessage").textContent =
         count > 1
-          ? `OK要Delete选中的 ${count} Token吗？`
-          : "OK要Delete选中的Token吗？";
+          ? `Are you sure you want to delete ${count} selected tokens?`
+          : "Are you sure you want to delete the selected token?";
 
       showModal("confirmModal");
 
-      // Close右键菜单
+      // Close context menu
       document.getElementById("contextMenu").style.display = "none";
     }
 
-    // ConfirmDeleteToken
+    // Confirm delete tokens
     async function confirmDeleteTokens() {
       if (tokensToDelete.length === 0) return;
 
       closeModal("confirmModal");
-      showToast("正在DeleteToken...", "info");
+      showToast("Deleting tokens...", "info");
 
-      // 将token转换为alias - 格式: [index, alias, tokenData]
+      // Convert token to alias - format: [index, alias, tokenData]
       const aliasesToDelete = tokensToDelete.map((token) => {
         const tokenArr = allTokens.find((arr) => {
           const [_, __, tokenData] = arr;
           return tokenData.primary_token === token;
         });
-        return tokenArr ? tokenArr[1] : token; // tokenArr[1] Yes alias
+        return tokenArr ? tokenArr[1] : token; // tokenArr[1] is alias
       });
 
       const data = await makeAuthenticatedRequest("/tokens/del", {
@@ -2438,40 +2438,40 @@
       if (data) {
         const failedCount = data.failed_tokens?.length || 0;
         const successCount = aliasesToDelete.length - failedCount;
-        const message = `DeleteSuccess: ${successCount} Token${failedCount ? `，Failed: ${failedCount} ` : ""}`;
+        const message = `Delete successful: ${successCount} tokens${failedCount ? `, Failed: ${failedCount}` : ""}`;
 
         showToast(message, "success");
         clearSelection();
         getTokenInfo();
       } else {
-        showToast("DeleteFailed", "error");
+        showToast("Delete failed", "error");
       }
 
       tokensToDelete = [];
     }
 
-    // Refresh选中Token的Profile
+    // Refresh selected tokens' profiles
     async function refreshSelectedProfiles() {
       if (selectedTokens.size === 0) {
-        showToast("请先SelectToken", "info");
+        showToast("Please select a token first", "info");
         return;
       }
 
-      // 将token转换为alias - 格式: [index, alias, tokenData]
+      // Convert token to alias - format: [index, alias, tokenData]
       const aliasesToRefresh = [...selectedTokens].map((token) => {
         const tokenArr = allTokens.find((arr) => {
           const [_, __, tokenData] = arr;
           return tokenData.primary_token === token;
         });
-        return tokenArr ? tokenArr[1] : token; // tokenArr[1] Yes alias
+        return tokenArr ? tokenArr[1] : token; // tokenArr[1] is alias
       });
 
       showToast(
-        `正在Refresh ${aliasesToRefresh.length} Token的Profile...`,
+        `Refreshing profiles for ${aliasesToRefresh.length} tokens...`,
         "info",
       );
 
-      // Close右键菜单
+      // Close context menu
       document.getElementById("contextMenu").style.display = "none";
 
       const data = await makeAuthenticatedRequest("/tokens/profile/update", {
@@ -2479,35 +2479,35 @@
       });
 
       if (data) {
-        showToast(`Refresh完成: ${data.message}`, "success");
+        showToast(`Refresh complete: ${data.message}`, "success");
         getTokenInfo();
       } else {
-        showToast("RefreshFailed", "error");
+        showToast("Refresh failed", "error");
       }
     }
 
-    // Refresh选中Token的ConfigurationVersion
+    // Refresh selected tokens' config versions
     async function refreshSelectedConfigVersions() {
       if (selectedTokens.size === 0) {
-        showToast("请先SelectToken", "info");
+        showToast("Please select a token first", "info");
         return;
       }
 
-      // 将token转换为alias - 格式: [index, alias, tokenData]
+      // Convert token to alias - format: [index, alias, tokenData]
       const aliasesToRefresh = [...selectedTokens].map((token) => {
         const tokenArr = allTokens.find((arr) => {
           const [_, __, tokenData] = arr;
           return tokenData.primary_token === token;
         });
-        return tokenArr ? tokenArr[1] : token; // tokenArr[1] Yes alias
+        return tokenArr ? tokenArr[1] : token; // tokenArr[1] is alias
       });
 
       showToast(
-        `正在Refresh ${aliasesToRefresh.length} Token的Config Version...`,
+        `Refreshing config versions for ${aliasesToRefresh.length} tokens...`,
         "info",
       );
 
-      // Close右键菜单
+      // Close context menu
       document.getElementById("contextMenu").style.display = "none";
 
       const data = await makeAuthenticatedRequest(
@@ -2518,36 +2518,36 @@
       );
 
       if (data) {
-        showToast(`Refresh完成: ${data.message}`, "success");
+        showToast(`Refresh complete: ${data.message}`, "success");
         getTokenInfo();
       } else {
-        showToast("RefreshFailed", "error");
+        showToast("Refresh failed", "error");
       }
     }
 
-    // 批量AddToken
+    // Batch add tokens
     function addTokens() {
       showModal("addTokensModal");
     }
 
     /**
-     * AddTokenConfirm处理
-     * - 验证输入
-     * - 解析Token列表
-     * - 提交Request
-     * - UpdateUIStatus
+     * Add token confirm handler
+     * - Validate input
+     * - Parse token list
+     * - Submit request
+     * - Update UI status
      */
     async function confirmAddTokens() {
       const tokensInput = document.getElementById("addTokensInput").value;
       const status = document.getElementById("addTokensStatus").value;
 
       if (!tokensInput) {
-        showToast("请输入要Add的Token", "warning");
+        showToast("Please enter tokens to add", "warning");
         return;
       }
 
       closeModal("addTokensModal");
-      showToast("正在AddToken...", "info");
+      showToast("Adding tokens...", "info");
 
       const tokenList = tokensInput
         .split("\n")
@@ -2563,24 +2563,24 @@
       });
 
       if (data) {
-        showToast(`AddSuccess: ${data.message}`, "success");
+        showToast(`Add successful: ${data.message}`, "success");
         document.getElementById("addTokensInput").value = "";
         getTokenInfo();
       } else {
-        showToast("AddFailed", "error");
+        showToast("Add failed", "error");
       }
     }
 
     /**
-     * 解析Token行
-     * 支持格式:
+     * Parse token line
+     * Supported formats:
      * - alias::token,checksum
      * - alias%3A%3Atoken,checksum
      * - token,checksum
      * - alias::token
      * - alias%3A%3Atoken
      * - token
-     * @param {string} line 非空输入行
+     * @param {string} line Non-empty input line
      * @returns {{alias: string|null, token: string, checksum: string|null}}
      */
     function parseTokenLine(line) {
@@ -2604,7 +2604,7 @@
       return { alias, token, checksum };
     }
 
-    // ExportToken列表
+    // Export token list
     function exportTokens() {
       const jsonData = JSON.stringify(allTokens, null, 2);
       const blob = new Blob([jsonData], { type: "application/json" });
@@ -2618,20 +2618,20 @@
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      showToast("Token列表已Export", "success");
+      showToast("Token list exported", "success");
     }
 
-    // ImportToken列表
+    // Import token list
     function importTokens() {
       showModal("importModal");
     }
 
-    // ConfirmImport
+    // Confirm import
     async function confirmImport() {
       const fileInput = document.getElementById("importFile");
 
       if (!fileInput.files || fileInput.files.length === 0) {
-        showToast("请Select要Import的文件", "warning");
+        showToast("Please select a file to import", "warning");
         return;
       }
 
@@ -2643,39 +2643,39 @@
           const tokensJson = JSON.parse(e.target.result);
 
           if (!Array.isArray(tokensJson)) {
-            throw new Error("Import的数据格式不正确，应为数组");
+            throw new Error("Imported data format is incorrect, should be an array");
           }
 
-          // 处理数据格式转换：从 [number, string, tokenData] 转换为 [string, tokenData]
-          // Delete数组的Page一items number，保留 alias 和 tokenData
+          // Handle data format conversion: from [number, string, tokenData] to [string, tokenData]
+          // Remove first item number from array, keep alias and tokenData
           const processedTokens = tokensJson.map((tokenArr) => {
             if (Array.isArray(tokenArr) && tokenArr.length >= 3) {
-              // DeletePage一items number，保留 alias 和 tokenData
+              // Remove first item number, keep alias and tokenData
               return [tokenArr[1], tokenArr[2]];
             } else if (Array.isArray(tokenArr) && tokenArr.length === 2) {
-              // 如果已经Yes正确格式，直接返回
+              // If already correct format, return directly
               return tokenArr;
             } else {
-              throw new Error(`None效的Token数据格式，期望数组长度为2或3，实际长度为${Array.isArray(tokenArr) ? tokenArr.length : '非数组'}`);
+              throw new Error(`Invalid token data format, expected array length 2 or 3, actual length is ${Array.isArray(tokenArr) ? tokenArr.length : 'not array'}`);
             }
           });
 
           closeModal("importModal");
-          showToast("正在ImportToken...", "info");
+          showToast("Importing tokens...", "info");
 
           const data = await makeAuthenticatedRequest("/tokens/set", {
             body: JSON.stringify(processedTokens),
           });
 
           if (data) {
-            showToast("Token列表ImportSuccess", "success");
+            showToast("Token list imported successfully", "success");
             fileInput.value = "";
             getTokenInfo();
           } else {
-            showToast("ImportFailed，Service器未返回ValidResponse", "error");
+            showToast("Import failed, server did not return valid response", "error");
           }
         } catch (error) {
-          showToast("ImportFailed: " + error.message, "error");
+          showToast("Import failed: " + error.message, "error");
         }
       };
 
@@ -2684,13 +2684,13 @@
 
     // Generate Key
     function generateKey(token, checksum) {
-      // 如果未提供token，则使用选中的token
+      // If token not provided, use selected token
       if (!token && selectedTokens.size === 0) {
-        showToast("请先SelectToken", "info");
+        showToast("Please select a token first", "info");
         return;
       }
 
-      const tokenToUse = token || [...selectedTokens][0]; // 查找token的checksum - 格式: [index, alias, tokenData]
+      const tokenToUse = token || [...selectedTokens][0]; // Find token's checksum - format: [index, alias, tokenData]
       let checksumToUse = checksum;
       if (!checksumToUse) {
         const tokenArr = allTokens.find((arr) => {
@@ -2707,7 +2707,7 @@
 
       document.getElementById("keyToken").textContent = tokenToUse;
 
-      // Reset表单
+      // Reset form
       document.getElementById("disableVision").value = "";
       document.getElementById("enableSlowPool").value = "";
       document.getElementById("usageCheckType").value = "";
@@ -2715,52 +2715,52 @@
       document.getElementById("keyContent").textContent = "";
       document.getElementById("keyResult").style.display = "none";
 
-      // UpdateProxySelect下拉框
+      // Update proxy select dropdown
       updateProxySelect();
 
       showModal("keyModal");
 
-      // Close右键菜单
+      // Close context menu
       document.getElementById("contextMenu").style.display = "none";
     }
 
-    // Generate Key提交
+    // Generate Key submit
     async function generateKeySubmit() {
-      const token = document.getElementById("keyToken").textContent; // 查找token对象 - 格式: [index, alias, tokenData]
+      const token = document.getElementById("keyToken").textContent; // Find token object - format: [index, alias, tokenData]
       const tokenArr = allTokens.find((arr) => {
         const [_, __, tokenData] = arr;
         return tokenData.primary_token === token;
       });
 
       if (!token || !tokenArr) {
-        showToast("缺少Token", "error");
+        showToast("Missing token", "error");
         return;
       }
 
       const [_, __, tokenData] = tokenArr;
 
-      // 验证必需字段
+      // Validate required fields
       if (
         !tokenData.checksum ||
         !tokenData.checksum.first ||
         !tokenData.checksum.second
       ) {
-        showToast("Token缺少校验和信息，None法Generate Key", "error");
+        showToast("Token missing checksum info, cannot generate key", "error");
         return;
       }
 
       if (!tokenData.client_key) {
-        showToast("Token缺少客户端密钥，None法Generate Key", "error");
+        showToast("Token missing client key, cannot generate key", "error");
         return;
       }
 
       if (!tokenData.config_version) {
-        showToast("Token缺少ConfigurationVersion，None法Generate Key", "error");
+        showToast("Token missing config version, cannot generate key", "error");
         return;
       }
 
       if (!tokenData.session_id) {
-        showToast("Token缺少会话ID，None法Generate Key", "error");
+        showToast("Token missing session ID, cannot generate key", "error");
         return;
       }
 
@@ -2772,7 +2772,7 @@
       ).value;
       const proxyName = document.getElementById("proxySelect").value;
 
-      // 构建Request体
+      // Build request body
       const requestBody = {
         token: tokenData.primary_token,
         checksum: {
@@ -2784,7 +2784,7 @@
         session_id: tokenData.session_id,
       };
 
-      // Add可选参数
+      // Add optional parameters
       if (disableVision) {
         requestBody.disable_vision = disableVision === "true";
       }
@@ -2795,23 +2795,23 @@
         requestBody.include_web_references = includeWebReferences === "true";
       }
 
-      // 如果Select了特定Proxy，则使用Select的Proxy
+      // If specific proxy selected, use selected proxy
       if (proxyName) {
         requestBody.proxy_name = proxyName;
       } else {
-        // No则使用Token的bundle中Settings的Proxy
+        // Otherwise use proxy set in token's bundle
         const tokenProxyName = tokenData.proxy || "";
         if (tokenProxyName) {
           requestBody.proxy_name = tokenProxyName;
         }
       }
 
-      // TimezoneSettings
+      // Timezone settings
       if (tokenData.timezone) {
         requestBody.timezone = tokenData.timezone;
       }
 
-      // GCPP HostSettings
+      // GCPP Host settings
       if (tokenData.gcpp_host) {
         requestBody.gcpp_host = tokenData.gcpp_host;
       }
@@ -2841,42 +2841,42 @@
           document.getElementById("keyContent").textContent =
             response.keys[0];
           document.getElementById("keyResult").style.display = "block";
-          showToast("Key已生成，点击Copy", "success");
+          showToast("Key generated, click to copy", "success");
         } else {
           showToast(
-            "Generate KeyFailed: " + (response.error || "未知Error"),
+            "Generate key failed: " + (response.error || "Unknown error"),
             "error",
           );
         }
       } catch (error) {
-        showToast("Generate KeyFailed: " + error.message, "error");
+        showToast("Generate key failed: " + error.message, "error");
       }
     }
 
-    // Copy生成的Key
+    // Copy generated key
     async function copyGeneratedKey() {
       const key = document.getElementById("keyContent").textContent;
       await copyToClipboard(key, {
         showMessage: false,
-        successMessage: "Key已Copy到剪贴板",
-        errorMessage: "KeyCopyFailed，请手动Copy",
-        onSuccess: () => showToast("Key已Copy到剪贴板", "success"),
-        onError: () => showToast("KeyCopyFailed，请手动Copy", "error"),
+        successMessage: "Key copied to clipboard",
+        errorMessage: "Key copy failed, please copy manually",
+        onSuccess: () => showToast("Key copied to clipboard", "success"),
+        onError: () => showToast("Key copy failed, please copy manually", "error"),
         sourceElement: document.getElementById("keyResult"),
       });
     }
-    // 获取模型列表
+    // Get model list
     async function getModels() {
       const data = await (await fetch("/health")).json();
       if (data && data.models) {
         availableModels = data.models;
 
-        // 填充模型列表
+        // Populate model list
         renderModelList();
       }
     }
 
-    // 渲染模型列表
+    // Render model list
     function renderModelList() {
       const container = document.getElementById("modelListContainer");
 
@@ -2892,7 +2892,7 @@
         .join("");
     }
 
-    // 切换模型列表Show
+    // Toggle model list display
     function toggleModelList() {
       const usageCheckType = document.getElementById("usageCheckType").value;
       const container = document.getElementById("modelListContainer");
@@ -2904,7 +2904,7 @@
       }
     }
 
-    // Show对话框
+    // Show dialog
     function showModal(modalId) {
       const modal = document.getElementById(modalId);
       const backdrop = document.getElementById(`${modalId}-backdrop`);
@@ -2912,15 +2912,15 @@
       if (modal && backdrop) {
         modal.style.display = "block";
         backdrop.style.display = "block";
-        document.body.style.overflow = "hidden"; // Disable主体page面滚动
+        document.body.style.overflow = "hidden"; // Disable main page scrolling
       }
     }
 
-    // Close对话框
+    // Close dialog
     function closeModal(modalId) {
       const modal = document.getElementById(modalId);
       const backdrop = document.getElementById(`${modalId}-backdrop`);
-      document.body.style.overflow = ""; // 恢复主体page面滚动
+      document.body.style.overflow = ""; // Restore main page scrolling
 
       if (modal && backdrop) {
         modal.style.display = "none";
@@ -2928,11 +2928,11 @@
       }
     }
 
-    // Close所有对话框
+    // Close all dialogs
     function closeAllModals() {
       const modals = document.querySelectorAll(".modal");
       const backdrops = document.querySelectorAll(".modal-backdrop");
-      document.body.style.overflow = ""; // 恢复主体page面滚动
+      document.body.style.overflow = ""; // Restore main page scrolling
 
       modals.forEach((modal) => {
         modal.style.display = "none";
@@ -2943,26 +2943,26 @@
       });
     }
 
-    // 获取Proxy列表
+    // Get proxy list
     async function getProxies() {
       try {
         const data = await makeAuthenticatedRequest("/proxies/get");
         if (data) {
-          // 从Proxy对象中提取ProxyName列表
+          // Extract proxy name list from proxy object
           proxyList = Object.keys(data.proxies || {});
           currentProxy = data.general_proxy || "";
           return true;
         }
       } catch (error) {
-        console.error("获取Proxy列表Failed:", error);
+        console.error("Failed to get proxy list:", error);
       }
       return false;
     }
 
-    // Show通知消息
-    // Show通知消息优化Version
+    // Show notification message
+    // Show notification message optimized version
     function showToast(message, type = "info", duration = 3000) {
-      // 获取或创建通知容器
+      // Get or create notification container
       let container = document.getElementById("toast-container");
       if (!container) {
         container = document.createElement("div");
@@ -2971,35 +2971,35 @@
         document.body.appendChild(container);
       }
 
-      // 创建新的通知元素
+      // Create new notification element
       const toast = document.createElement("div");
       toast.className = `toast ${type}`;
 
-      // Add文本容器
+      // Add text container
       toast.innerHTML = `<div class="toast-content">${message}</div>`;
 
-      // Add到容器
+      // Add to container
       container.appendChild(toast);
 
-      // 强制一次重排
+      // Force a reflow
       void toast.offsetWidth;
 
-      // Show通知，使用requestAnimationFrame确保平滑过渡
+      // Show notification, use requestAnimationFrame for smooth transition
       requestAnimationFrame(() => {
         toast.classList.add("show");
       });
 
-      // Settings自动移除
+      // Set auto remove
       setTimeout(() => {
         toast.classList.remove("show");
 
-        // 通知消失动画完成后移除元素
+        // Remove element after notification fade animation completes
         setTimeout(() => {
           if (container.contains(toast)) {
             container.removeChild(toast);
           }
 
-          // 如果没有More通知，移除容器
+          // If no more notifications, remove container
           if (container.children.length === 0) {
             if (document.body.contains(container)) {
               document.body.removeChild(container);
@@ -3008,11 +3008,11 @@
         }, 400);
       }, duration);
 
-      // 限制MaxShowCount，如果超过则移除最早的
-      const maxToasts = 5; // Max同时Show的通知数
+      // Limit max display count, remove oldest if exceeded
+      const maxToasts = 5; // Max notifications to show simultaneously
       const toasts = container.querySelectorAll(".toast");
       if (toasts.length > maxToasts) {
-        const oldestToast = toasts[0]; // 最早的通知
+        const oldestToast = toasts[0]; // Oldest notification
         oldestToast.classList.remove("show");
         setTimeout(() => {
           if (container.contains(oldestToast)) {
@@ -3022,12 +3022,12 @@
       }
     }
 
-    // 打开ProxySelect器
+    // Open proxy selector
     function openProxySelector(displayName, token, event) {
-      // 阻止事件冒泡，避免触发行Select
+      // Stop event propagation to avoid triggering row selection
       event.stopPropagation();
 
-      // 查找token对象 - 格式: [index, alias, tokenData]
+      // Find token object - format: [index, alias, tokenData]
       const tokenArr = allTokens.find((arr) => {
         const [_, __, tokenData] = arr;
         return tokenData.primary_token === token;
@@ -3038,30 +3038,30 @@
 
       currentEditingToken = token;
 
-      // Show当前token信息
+      // Show current token info
       document.getElementById("currentTokenDisplay").textContent =
         displayName;
 
-      // 填充Proxy下拉框
+      // Populate proxy dropdown
       const proxySelect = document.getElementById("proxySelectDropdown");
 
-      // Clear现有选items（保留Page一"Unspecified"选items）
+      // Clear existing options (keep first "Unspecified" option)
       while (proxySelect.options.length > 1) {
         proxySelect.remove(1);
       }
 
-      // 使用公Total方法获取Proxy使用统计
+      // Use common method to get proxy usage stats
       const proxyUsage = getProxyUsageStats();
 
-      // 获取当前选中的Proxy
+      // Get currently selected proxy
       const currentProxy = tokenData.proxy || "";
 
-      // AddProxy选items
+      // Add proxy options
       proxyList.forEach((proxy) => {
         const option = document.createElement("option");
         option.value = proxy;
 
-        // 如果Yes当前token使用的Proxy，加粗Show
+        // If this is the current token's proxy, show bold
         if (proxy === currentProxy) {
           option.innerHTML = `<strong>${proxy}</strong> (${proxyUsage[proxy] || 0})`;
         } else {
@@ -3071,14 +3071,14 @@
         proxySelect.appendChild(option);
       });
 
-      // Settings当前选中的Proxy
+      // Set currently selected proxy
       proxySelect.value = currentProxy;
 
-      // Show模态框
+      // Show modal
       showModal("proxySelectModal");
     }
 
-    // SaveProxySelect
+    // Save proxy selection
     async function saveProxySelection() {
       if (!currentEditingToken) return;
 
@@ -3088,35 +3088,35 @@
         "proxySelectDropdown",
       ).value;
 
-      // 获取token的别名 - 格式: [index, alias, tokenData]
+      // Get token's alias - format: [index, alias, tokenData]
       const tokenArr = allTokens.find((arr) => {
         const [_, __, tokenData] = arr;
         return tokenData.primary_token === currentEditingToken;
       });
-      const alias = tokenArr ? tokenArr[1] : currentEditingToken; // tokenArr[1] Yes alias
+      const alias = tokenArr ? tokenArr[1] : currentEditingToken; // tokenArr[1] is alias
 
-      showToast("正在UpdateProxySettings...", "info");
+      showToast("Updating proxy settings...", "info");
 
       try {
         const data = await makeAuthenticatedRequest("/tokens/proxy/set", {
           body: JSON.stringify({
             aliases: [alias],
-            proxy: selectedProxy || null, // 空字符串发送null以清除Proxy
+            proxy: selectedProxy || null, // Empty string sends null to clear proxy
           }),
         });
 
         if (data && data.status === "success") {
-          showToast(data.message || "ProxySettingsSuccess", "success");
-          getTokenInfo(); // RefreshToken列表
+          showToast(data.message || "Proxy settings successful", "success");
+          getTokenInfo(); // Refresh token list
         } else {
-          showToast("ProxySettingsFailed", "error");
+          showToast("Proxy settings failed", "error");
         }
       } catch (error) {
-        showToast("ProxySettingsFailed", "error");
+        showToast("Proxy settings failed", "error");
       }
     }
 
-    // 抽取统计Proxy使用Count的公Total方法
+    // Extract common method for counting proxy usage
     function getProxyUsageStats() {
       const proxyUsage = {};
       allTokens.forEach((tokenArr) => {
@@ -3127,16 +3127,16 @@
       return proxyUsage;
     }
 
-    // 修正TimezoneSelect器函数
-    // 打开TimezoneSelect器
+    // Fixed timezone selector function
+    // Open timezone selector
     function openTimezoneSelector() {
       if (selectedTokens.size === 0) {
-        showToast("请先SelectToken", "info");
+        showToast("Please select a token first", "info");
         return;
       }
 
-      // Settings当前正在Edit的token
-      currentEditingToken = [...selectedTokens][0]; // 查找token对象 - 格式: [index, alias, tokenData]
+      // Set currently editing token
+      currentEditingToken = [...selectedTokens][0]; // Find token object - format: [index, alias, tokenData]
       const tokenArr = allTokens.find((arr) => {
         const [_, __, tokenData] = arr;
         return tokenData.primary_token === currentEditingToken;
@@ -3146,55 +3146,55 @@
       const [_, alias, tokenData] = tokenArr;
       const user = tokenData.user || {};
 
-      // 使用邮箱或者token的简短Show
+      // Use email or short token display
       const email = user.email || "";
       const displayName =
         email || currentEditingToken.substring(0, 15) + "...";
 
-      // Show当前选中的TokenCount和账户信息
+      // Show currently selected token count and account info
       let displayText = "";
       if (selectedTokens.size === 1) {
         displayText = displayName;
       } else {
-        displayText = `已Select ${selectedTokens.size} Token`;
+        displayText = `${selectedTokens.size} tokens selected`;
       }
       document.getElementById("timezoneTokenDisplay").textContent =
         displayText;
 
-      // 初始化Timezone列表
+      // Initialize timezone list
       initializeTimezoneList();
 
-      // Settings当前选中的Timezone
+      // Set currently selected timezone
       const currentTimezone = tokenData.timezone || "";
       highlightSelectedTimezone(currentTimezone);
 
-      // Show模态框
+      // Show modal
       showModal("timezoneModal");
 
-      // SettingsSearch框事件
+      // Set search box event
       document
         .getElementById("timezoneSearchInput")
         .addEventListener("input", searchTimezones);
       document.getElementById("timezoneSearchInput").value = "";
 
-      // Close右键菜单
+      // Close context menu
       document.getElementById("contextMenu").style.display = "none";
     }
 
-    // 全局Timezone列表数组
+    // Global timezone list array
     let timezoneList = [];
 
-    // 初始化Timezone列表
+    // Initialize timezone list
     function initializeTimezoneList() {
       try {
-        // 尝试使用Intl.supportedValuesOf获取Timezone列表（现代浏览器支持）
+        // Try using Intl.supportedValuesOf to get timezone list (modern browsers support)
         if (
           typeof Intl !== "undefined" &&
           typeof Intl.supportedValuesOf === "function"
         ) {
           timezoneList = Intl.supportedValuesOf("timeZone");
         } else {
-          // 回退到预定义的常用Timezone列表
+          // Fallback to predefined common timezone list
           timezoneList = [
             "Africa/Abidjan",
             "Africa/Accra",
@@ -3251,23 +3251,23 @@
 
         renderTimezoneList(timezoneList);
       } catch (error) {
-        console.error("获取Timezone列表Failed:", error);
-        showToast("获取Timezone列表Failed", "error");
+        console.error("Failed to get timezone list:", error);
+        showToast("Failed to get timezone list", "error");
       }
     }
 
-    // 渲染Timezone列表
+    // Render timezone list
     function renderTimezoneList(timezones) {
       const container = document.getElementById("timezoneListContainer");
 
-      // Add一"Unspecified"选items
+      // Add an "Unspecified" option
       let html = `
       <div class="timezone-item" data-timezone="" onclick="selectTimezone('')">
         <span>Unspecified</span>
       </div>
     `;
 
-      // Add其他Timezone选items
+      // Add other timezone options
       timezones.forEach((timezone) => {
         html += `
         <div class="timezone-item" data-timezone="${timezone}" onclick="selectTimezone('${timezone}')">
@@ -3278,7 +3278,7 @@
 
       container.innerHTML = html;
 
-      // Add样式
+      // Add styles
       const style = document.createElement("style");
       style.textContent = `
       .timezone-item {
@@ -3301,19 +3301,19 @@
       document.head.appendChild(style);
     }
 
-    // SearchTimezone
+    // Search timezones
     function searchTimezones() {
       const searchTerm = document
         .getElementById("timezoneSearchInput")
         .value.toLowerCase();
 
-      // 如果Search词为空，Show所有Timezone
+      // If search term is empty, show all timezones
       if (!searchTerm) {
         renderTimezoneList(timezoneList);
         return;
       }
 
-      // 过滤匹配的Timezone
+      // Filter matching timezones
       const filteredTimezones = timezoneList.filter((timezone) =>
         timezone.toLowerCase().includes(searchTerm),
       );
@@ -3321,20 +3321,20 @@
       renderTimezoneList(filteredTimezones);
     }
 
-    // SelectTimezone
+    // Select timezone
     let selectedTimezone = "";
     function selectTimezone(timezone) {
       selectedTimezone = timezone;
       highlightSelectedTimezone(timezone);
     }
 
-    // 高亮Show选中的Timezone
+    // Highlight selected timezone
     function highlightSelectedTimezone(timezone) {
-      // 移除所有选中Status
+      // Remove all selected status
       const items = document.querySelectorAll(".timezone-item");
       items.forEach((item) => item.classList.remove("selected"));
 
-      // Add选中Status
+      // Add selected status
       const selectedItem = document.querySelector(
         `.timezone-item[data-timezone="${timezone}"]`,
       );
@@ -3343,23 +3343,23 @@
       }
     }
 
-    // SaveTimezoneSelect
+    // Save timezone selection
     async function saveTimezoneSelection() {
       if (selectedTokens.size === 0) return;
 
       closeModal("timezoneModal");
 
-      // 获取选中token的别名 - 格式: [index, alias, tokenData]
+      // Get selected token aliases - format: [index, alias, tokenData]
       const aliasesToUpdate = [...selectedTokens].map((token) => {
         const tokenArr = allTokens.find((arr) => {
           const [_, __, tokenData] = arr;
           return tokenData.primary_token === token;
         });
-        return tokenArr ? tokenArr[1] : token; // tokenArr[1] Yes alias
+        return tokenArr ? tokenArr[1] : token; // tokenArr[1] is alias
       });
 
       showToast(
-        `正在Update${aliasesToUpdate.length}Token的TimezoneSettings...`,
+        `Updating timezone settings for ${aliasesToUpdate.length} tokens...`,
         "info",
       );
 
@@ -3367,48 +3367,48 @@
         const data = await makeAuthenticatedRequest("/tokens/timezone/set", {
           body: JSON.stringify({
             aliases: aliasesToUpdate,
-            timezone: selectedTimezone || null, // 空字符串发送null以清除Timezone
+            timezone: selectedTimezone || null, // Empty string sends null to clear timezone
           }),
         });
 
         if (data && data.status === "success") {
-          showToast(data.message || "TimezoneSettingsSuccess", "success");
-          getTokenInfo(); // RefreshToken列表
+          showToast(data.message || "Timezone settings successful", "success");
+          getTokenInfo(); // Refresh token list
         } else {
-          showToast("TimezoneSettingsFailed", "error");
+          showToast("Timezone settings failed", "error");
         }
       } catch (error) {
-        showToast("TimezoneSettingsFailed", "error");
-        console.error("SettingsTimezone出错:", error);
+        showToast("Timezone settings failed", "error");
+        console.error("Error setting timezone:", error);
       }
     }
 
-    // AddUpdateTimezoneFilter下拉框功能
+    // Add update timezone filter dropdown function
     function updateTimezoneFilter() {
       const timezoneFilterSelect = document.getElementById("timezoneFilter");
 
-      // 保持Page一和Page二选items（AllTimezone和Unspecified Timezone）
+      // Keep first and second options (All Timezones and Unspecified Timezone)
       while (timezoneFilterSelect.options.length > 2) {
         timezoneFilterSelect.remove(2);
       }
 
-      // 获取所有使用的Timezone并统计Count
+      // Get all used timezones and count
       const timezoneUsage = {};
       allTokens.forEach((tokenArr) => {
         const [_, __, tokenData] = tokenArr;
         const timezone = tokenData.timezone || "";
         if (timezone) {
-          // 只统计非空Timezone
+          // Only count non-empty timezones
           timezoneUsage[timezone] = (timezoneUsage[timezone] || 0) + 1;
         }
       });
 
-      // 按使UsageSortTimezone
+      // Sort timezones by usage
       const sortedTimezones = Object.keys(timezoneUsage).sort(
         (a, b) => timezoneUsage[b] - timezoneUsage[a],
       );
 
-      // AddTimezone选items
+      // Add timezone options
       sortedTimezones.forEach((timezone) => {
         const option = document.createElement("option");
         option.value = timezone;
@@ -3417,23 +3417,23 @@
       });
     }
 
-    // SettingsTokenStatus
+    // Set token status
     async function setTokenStatus(status) {
       if (selectedTokens.size === 0) {
-        showToast("请先SelectToken", "info");
+        showToast("Please select a token first", "info");
         return;
       }
 
-      // 将token转换为alias - 格式: [index, alias, tokenData]
+      // Convert token to alias - format: [index, alias, tokenData]
       const aliasesToUpdate = [...selectedTokens].map((token) => {
         const tokenArr = allTokens.find((arr) => {
           const [_, __, tokenData] = arr;
           return tokenData.primary_token === token;
         });
-        return tokenArr ? tokenArr[1] : token; // tokenArr[1] Yes alias
+        return tokenArr ? tokenArr[1] : token; // tokenArr[1] is alias
       });
 
-      showToast("正在UpdateTokenStatus...", "info");
+      showToast("Updating token status...", "info");
 
       try {
         const result = await makeAuthenticatedRequest("/tokens/status/set", {
@@ -3444,42 +3444,42 @@
         });
 
         if (result && result.status === "success") {
-          showToast(result.message || "StatusUpdateSuccess", "success");
-          getTokenInfo(); // RefreshToken列表
+          showToast(result.message || "Status update successful", "success");
+          getTokenInfo(); // Refresh token list
         } else {
-          // Show详细的Error信息
+          // Show detailed error message
           const errorMessage =
-            result?.error || result?.message || "StatusUpdateFailed";
+            result?.error || result?.message || "Status update failed";
           showToast(errorMessage, "error");
         }
       } catch (error) {
-        // Show详细的Error信息
+        // Show detailed error message
         const errorMessage =
           error.response?.data?.message ||
           error.response?.data?.error ||
           error.message;
-        showToast(`StatusUpdateFailed: ${errorMessage}`, "error");
+        showToast(`Status update failed: ${errorMessage}`, "error");
       }
 
-      // Close上下文菜单
+      // Close context menu
       document.getElementById("contextMenu").style.display = "none";
-      // UpdateStatus子菜单
+      // Update status submenu
       updateStatusSubmenu();
     }
 
-    // UpdateStatus子菜单
+    // Update status submenu
     function updateStatusSubmenu() {
       const submenu = document.getElementById("statusSubmenu");
       if (!submenu) return;
 
-      // 获取选中的token对象 - 格式: [index, alias, tokenData]
+      // Get selected token objects - format: [index, alias, tokenData]
       const selectedTokenArrs = allTokens.filter((tokenArr) => {
         const [_, __, tokenData] = tokenArr;
         return selectedTokens.has(tokenData.primary_token);
       });
       const selectionSize = selectedTokenArrs.length;
 
-      // 计算选中items的Status统计
+      // Calculate selected items status stats
       const selectedStatusStats = {
         enabled: 0,
         disabled: 0,
@@ -3488,70 +3488,70 @@
       selectedTokenArrs.forEach((tokenArr) => {
         const [_, __, tokenData] = tokenArr;
         const status = !tokenData.status.enabled ? "disabled" : "enabled";
-        selectedStatusStats[status]++; // 增加对应Status的计数
+        selectedStatusStats[status]++; // Increment corresponding status count
       });
 
-      // Update "Enable" 选items
+      // Update "Enable" option
       const enabledItem = submenu.querySelector(
         '.context-menu-item[onclick="setTokenStatus(\\"enabled\\")"]',
       );
       if (enabledItem) {
         const enabledCountSpan = enabledItem.querySelector(".status-count");
         if (enabledCountSpan) {
-          // Show选中items中Enable的Count
+          // Show enabled count in selected items
           enabledCountSpan.textContent = selectedStatusStats["enabled"];
         }
-        // 检查YesNo所有选中的 Token 都处于EnableStatus
+        // Check if all selected tokens are in enabled status
         const isEnabledActive =
           selectionSize > 0 &&
           selectedStatusStats["enabled"] === selectionSize;
-        enabledItem.classList.toggle("active", isEnabledActive); // Settings选中标记
+        enabledItem.classList.toggle("active", isEnabledActive); // Set selected mark
       }
 
-      // Update "Disable" 选items
+      // Update "Disable" option
       const disabledItem = submenu.querySelector(
         '.context-menu-item[onclick="setTokenStatus(\\"disabled\\")"]',
       );
       if (disabledItem) {
         const disabledCountSpan = disabledItem.querySelector(".status-count");
         if (disabledCountSpan) {
-          // Show选中items中Disable的Count
+          // Show disabled count in selected items
           disabledCountSpan.textContent = selectedStatusStats["disabled"];
         }
-        // 检查YesNo所有选中的 Token 都处于DisableStatus
+        // Check if all selected tokens are in disabled status
         const isDisabledActive =
           selectionSize > 0 &&
           selectedStatusStats["disabled"] === selectionSize;
-        disabledItem.classList.toggle("active", isDisabledActive); // Settings选中标记
+        disabledItem.classList.toggle("active", isDisabledActive); // Set selected mark
       }
 
-      // Add has-submenu 类以便Show箭头
+      // Add has-submenu class to show arrow
       const statusMenuEl = document.querySelector(".status-menu");
       if (statusMenuEl) {
         statusMenuEl.classList.add("has-submenu");
       }
     }
 
-    // RenameToken
+    // Rename token
     function renameToken() {
       if (selectedTokens.size === 0) {
-        showToast("请先SelectToken", "info");
+        showToast("Please select a token first", "info");
         return;
       }
 
       if (selectedTokens.size > 1) {
-        showToast("一次只能Rename一Token", "info");
+        showToast("Can only rename one token at a time", "info");
         return;
       }
 
       const token = [...selectedTokens][0];
       startRenaming(token);
 
-      // Close右键菜单
+      // Close context menu
       document.getElementById("contextMenu").style.display = "none";
     }
 
-    // StartRename
+    // Start renaming
     function startRenaming(token) {
       const row = document.querySelector(`tr[data-token="${token}"]`);
       if (!row) return;
@@ -3559,7 +3559,7 @@
       const tokenCell = row.querySelector("td:first-child");
       if (!tokenCell) return;
 
-      // 获取当前别名 - 格式: [index, alias, tokenData]
+      // Get current alias - format: [index, alias, tokenData]
       const tokenArr = allTokens.find((arr) => {
         const [_, __, tokenData] = arr;
         return tokenData.primary_token === token;
@@ -3571,39 +3571,39 @@
       const displayName =
         currentAlias || user.email || token.substring(0, 15) + "...";
 
-      // Save原始内容
+      // Save original content
       const originalContent = tokenCell.innerHTML;
 
-      // 创建输入框
+      // Create input box
       const input = document.createElement("input");
       input.type = "text";
       input.className = "inline-edit";
       input.value = currentAlias || "";
-      input.placeholder = user.email || "输入别名";
+      input.placeholder = user.email || "Enter alias";
 
-      // Clear单元格并Add输入框
+      // Clear cell and add input box
       tokenCell.innerHTML = "";
       tokenCell.appendChild(input);
 
-      // 聚焦并选中文本
+      // Focus and select text
       input.focus();
       input.select();
 
-      // SaveEdit
+      // Save edit
       const saveEdit = async () => {
         const newAlias = input.value.trim();
 
-        // 恢复原始内容
+        // Restore original content
         tokenCell.innerHTML = originalContent;
 
-        // 如果别名没有变化，直接返回
+        // If alias hasn't changed, return directly
         if (newAlias === currentAlias) {
           return;
         }
 
-        // 调用APIUpdate别名
+        // Call API to update alias
         try {
-          showToast("正在Update别名...", "info");
+          showToast("Updating alias...", "info");
 
           const requestBody = {};
           requestBody[currentAlias || token] = newAlias;
@@ -3613,22 +3613,22 @@
           });
 
           if (data && data.status === "success") {
-            showToast("别名UpdateSuccess", "success");
-            getTokenInfo(); // RefreshToken列表
+            showToast("Alias update successful", "success");
+            getTokenInfo(); // Refresh token list
           } else {
-            showToast("别名UpdateFailed", "error");
+            showToast("Alias update failed", "error");
           }
         } catch (error) {
-          showToast("别名UpdateFailed: " + error.message, "error");
+          showToast("Alias update failed: " + error.message, "error");
         }
       };
 
-      // CancelEdit
+      // Cancel edit
       const cancelEdit = () => {
         tokenCell.innerHTML = originalContent;
       };
 
-      // 监听键盘事件
+      // Listen for keyboard events
       input.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
           e.preventDefault();
@@ -3639,29 +3639,29 @@
         }
       });
 
-      // 失去焦点时Save
+      // Save on blur
       input.addEventListener("blur", saveEdit);
     }
 
-    // Refresh选中的Token
+    // Refresh selected tokens
     async function upgradeSelectedTokens() {
       if (selectedTokens.size === 0) {
-        showToast("请先Select要Refresh的Token", "info");
+        showToast("Please select tokens to refresh first", "info");
         return;
       }
 
-      // 将token转换为alias - 格式: [index, alias, tokenData]
+      // Convert token to alias - format: [index, alias, tokenData]
       const aliasesToUpgrade = [...selectedTokens].map((token) => {
         const tokenArr = allTokens.find((arr) => {
           const [_, __, tokenData] = arr;
           return tokenData.primary_token === token;
         });
-        return tokenArr ? tokenArr[1] : token; // tokenArr[1] Yes alias
+        return tokenArr ? tokenArr[1] : token; // tokenArr[1] is alias
       });
 
-      showToast(`正在Refresh ${aliasesToUpgrade.length} Token...`, "info");
+      showToast(`Refreshing ${aliasesToUpgrade.length} tokens...`, "info");
 
-      // Close右键菜单
+      // Close context menu
       document.getElementById("contextMenu").style.display = "none";
 
       try {
@@ -3670,11 +3670,11 @@
         });
 
         if (data && data.status === "success") {
-          showToast(data.message || "RefreshSuccess", "success");
+          showToast(data.message || "Refresh successful", "success");
           getTokenInfo();
         } else {
           showToast(
-            "RefreshFailed: " + (data.message || data.error || "未知Error"),
+            "Refresh failed: " + (data.message || data.error || "Unknown error"),
             "error",
           );
         }
