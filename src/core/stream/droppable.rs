@@ -6,14 +6,14 @@ use core::{
 use futures_core::stream::Stream;
 use tokio::sync::Notify;
 
-/// 可通过外部信号控制 drop 的 Stream 包装器
+/// Stream wrapper that can be controlled to drop via external signal
 pub struct DroppableStream<S> {
     stream: Option<S>,
     notify: Arc<Notify>,
     dropped: bool,
 }
 
-/// 用于触发 Stream drop 的控制句柄
+/// Control handle for triggering Stream drop
 #[derive(Clone)]
 #[repr(transparent)]
 pub struct DropHandle {
@@ -23,7 +23,7 @@ pub struct DropHandle {
 impl<S> DroppableStream<S>
 where S: Stream + Unpin
 {
-    /// 创建新的可控制 Stream 和其控制句柄
+    /// Create new controllable Stream and its control handle
     pub fn new(stream: S) -> (Self, DropHandle) {
         let notify = Arc::new(Notify::new());
 
@@ -42,12 +42,12 @@ where S: Stream + Unpin
     fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
         let this = self.get_mut();
 
-        // 如果已经处理过 drop，直接返回
+        // If already processed drop, return directly
         if this.dropped {
             return Poll::Ready(None);
         }
 
-        // 检查是否有 drop 通知
+        // Check if there's a drop notification
         let notified = this.notify.notified();
         futures_util::pin_mut!(notified);
 
@@ -57,7 +57,7 @@ where S: Stream + Unpin
             return Poll::Ready(None);
         }
 
-        // 轮询内部 stream
+        // Poll internal stream
         if let Some(ref mut stream) = this.stream {
             Pin::new(stream).poll_next(cx)
         } else {
@@ -67,6 +67,6 @@ where S: Stream + Unpin
 }
 
 impl DropHandle {
-    /// 触发关联 Stream 的 drop
+    /// Trigger associated Stream drop
     pub fn drop_stream(self) { self.notify.notify_one(); }
 }

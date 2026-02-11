@@ -1,9 +1,9 @@
 use ::prost::Message;
 
-/// 表示可以被Protobuf编解码并可创建默认实例的消息类型
+/// Represents a message type that can be encoded/decoded with Protobuf and can create default instances
 pub trait ProtobufMessage: Message + Default {}
 
-// /// 为所有同时实现Message和Default的类型自动实现ProtobufMessage
+// /// Automatically implement ProtobufMessage for all types that implement both Message and Default
 // impl<T: Message + Default> ProtobufMessage for T {}
 
 macro_rules! impl_protobuf_message {
