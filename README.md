@@ -1243,28 +1243,28 @@ All endpoints return a unified error format when an error occurs:
 
 #### Field Description
 
-| Field                            | Type   | Description                                                  |
-|----------------------------------|--------|--------------------------------------------------------------|
-| `status`                         | string | Service status: "success", "warning", "error"                |
-| `service.name`                   | string | Service name                                                 |
-| `service.version`                | string | Service version                                              |
-| `service.is_debug`               | bool   | Whether in debug mode                                        |
-| `service.build.version`          | number | Build version number (only when preview feature is enabled)  |
-| `service.build.timestamp`        | string | Build timestamp                                              |
-| `service.build.is_prerelease`    | bool   | Whether it's a prerelease version                            |
-| `runtime.started_at`             | string | Service start time                                           |
-| `runtime.uptime_seconds`         | number | Uptime (seconds)                                             |
-| `runtime.requests.total`         | number | Total requests                                               |
-| `runtime.requests.active`        | number | Current active requests                                      |
-| `runtime.requests.errors`        | number | Error requests                                               |
-| `system.memory.used_bytes`       | number | Used memory (bytes)                                          |
-| `system.memory.used_percentage`  | number | Memory usage (%)                                             |
-| `system.memory.available_bytes`  | number | Available memory (bytes, optional)                           |
-| `system.cpu.usage_percentage`    | number | CPU usage (%)                                                |
-| `system.cpu.load_average`        | array  | System load [1min, 5min, 15min]                              |
-| `capabilities.models`            | array  | Supported model list                                         |
-| `capabilities.endpoints`         | array  | Available API endpoints                                      |
-| `capabilities.features`          | array  | Supported features                                           |
+| Field                           | Type   | Description                                                 |
+|---------------------------------|--------|-------------------------------------------------------------|
+| `status`                        | string | Service status: "success", "warning", "error"               |
+| `service.name`                  | string | Service name                                                |
+| `service.version`               | string | Service version                                             |
+| `service.is_debug`              | bool   | Whether in debug mode                                       |
+| `service.build.version`         | number | Build version number (only when preview feature is enabled) |
+| `service.build.timestamp`       | string | Build timestamp                                             |
+| `service.build.is_prerelease`   | bool   | Whether it's a prerelease version                           |
+| `runtime.started_at`            | string | Service start time                                          |
+| `runtime.uptime_seconds`        | number | Uptime (seconds)                                            |
+| `runtime.requests.total`        | number | Total requests                                              |
+| `runtime.requests.active`       | number | Current active requests                                     |
+| `runtime.requests.errors`       | number | Error requests                                              |
+| `system.memory.used_bytes`      | number | Used memory (bytes)                                         |
+| `system.memory.used_percentage` | number | Memory usage (%)                                            |
+| `system.memory.available_bytes` | number | Available memory (bytes, optional)                          |
+| `system.cpu.usage_percentage`   | number | CPU usage (%)                                               |
+| `system.cpu.load_average`       | array  | System load [1min, 5min, 15min]                             |
+| `capabilities.models`           | array  | Supported model list                                        |
+| `capabilities.endpoints`        | array  | Available API endpoints                                     |
+| `capabilities.features`         | array  | Supported features                                          |
 
 ### Other Endpoints
 
