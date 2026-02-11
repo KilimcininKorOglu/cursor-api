@@ -14,21 +14,21 @@ use interned::Str;
 
 crate::define_typed_constants! {
     &'static str => {
-        /// 图片功能禁用错误消息
+        /// Image feature disabled error message
         ERR_VISION_DISABLED = "Vision feature is disabled",
-        /// Base64 图片限制错误消息
+        /// Base64 image limit error message
         ERR_BASE64_ONLY = "Only base64 encoded images are supported",
-        /// Base64 解码失败错误消息
+        /// Base64 decode failed error message
         ERR_BASE64_DECODE_FAILED = "Invalid base64 encoded image",
-        /// HTTP 请求失败错误消息
+        /// HTTP request failed error message
         ERR_REQUEST_FAILED = "Cannot access the image URL",
-        /// 响应读取失败错误消息
+        /// Response read failed error message
         ERR_RESPONSE_READ_FAILED = "Failed to download image from URL",
-        /// 不支持的图片格式错误消息
+        /// Unsupported image format error message
         ERR_UNSUPPORTED_IMAGE_FORMAT = "Unsupported image format, only PNG, JPEG, WebP and non-animated GIF are supported",
-        /// 不支持动态 GIF
+        /// Animated GIF not supported
         ERR_UNSUPPORTED_ANIMATED_GIF = "Animated GIF is not supported",
-        /// 消息超过大小限制错误消息
+        /// Message exceeds size limit error message
         ERR_EXCEED_SIZE_LIMIT = ExceedSizeLimit::message(),
     }
 }

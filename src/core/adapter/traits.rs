@@ -59,16 +59,16 @@ pub(super) trait Adapter: Sized + 'static {
     fn _process_base64_image(
         params: &<Self::ImageParams as ImageParams>::Base64ImageParams,
     ) -> Result<(Vec<u8>, image::ImageFormat), AdapterError>;
-    /// 处理 base64 编码的图片
+    /// Process base64 encoded images
     fn process_base64_image(
         params: &<Self::ImageParams as ImageParams>::Base64ImageParams,
     ) -> Result<(bytes::Bytes, Option<image_proto::Dimension>), AdapterError> {
         let (data, format) = Self::_process_base64_image(params)?;
-        // 检查是否为动态 GIF
+        // Check if it's an animated GIF
         if format == image::ImageFormat::Gif && is_animated_gif(&data) {
             return Err(AdapterError::UnsupportedAnimatedGif);
         }
-        // 获取图片尺寸
+        // Get image dimensions
         let dimensions = image::load_from_memory_with_format(&data, format)
             .ok()
             .and_then(|img| img.try_into().ok());

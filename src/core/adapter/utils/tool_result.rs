@@ -69,7 +69,7 @@ impl ToolResultBuilder {
             len += self.content.len().saturating_sub(1) * 2;
         }
 
-        // 给转义字符预留12.5%
+        // Reserve 12.5% for escape characters
         len + (len >> 3)
     }
 
