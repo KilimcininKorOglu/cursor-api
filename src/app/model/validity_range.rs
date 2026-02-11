@@ -1,28 +1,28 @@
-//! 提供时间Have效期范围的数据结构andRelated操作
+//! Provides data structures and related operations for time validity ranges
 
 use std::num::ParseIntError;
 
-/// 表示一个Have效期范围，以两个u32值表示起始andEnd时间。
+/// Represents a validity range, with two u32 values representing start and end times.
 ///
-/// 该结构体Use透明内存布局，通过[u32; 2]实现8字节Size。
-/// Support从字符串解析，比如"60"表示60-60的范围，"3600-86400"表示3600到86400的闭区间。
+/// This struct uses transparent memory layout, implementing 8-byte size through [u32; 2].
+/// Supports parsing from strings, e.g., "60" represents range 60-60, "3600-86400" represents closed interval from 3600 to 86400.
 #[repr(transparent)]
 pub struct ValidityRange {
-    range: [u32; 2], // range[0]Tostart，range[1]Toend
+    range: [u32; 2], // range[0] is start, range[1] is end
 }
 
-// 验证内存布局约束
-const _: [u8; 8] = [0; ::core::mem::size_of::<ValidityRange>()]; // EnsureSizeTo8字节
+// Verify memory layout constraints
+const _: [u8; 8] = [0; ::core::mem::size_of::<ValidityRange>()]; // Ensure size is 8 bytes
 
 impl ValidityRange {
-    /// 创建NewHave效期范围实例
+    /// Create a new validity range instance
     ///
-    /// # 参数
+    /// # Parameters
     ///
-    /// * `start` - 范围的起始值
-    /// * `end` - 范围的End值
+    /// * `start` - Start value of the range
+    /// * `end` - End value of the range
     ///
-    /// # 示例
+    /// # Example
     ///
     /// ```
     /// let range = ValidityRange::new(60, 3600);
@@ -34,25 +34,25 @@ impl ValidityRange {
         }
     }
 
-    /// Get范围的起始值
+    /// Get the start value of the range
     #[inline(always)]
     pub const fn start(&self) -> u32 { self.range[0] }
 
-    /// Get范围的End值
+    /// Get the end value of the range
     #[inline(always)]
     pub const fn end(&self) -> u32 { self.range[1] }
 
-    /// Check给定值Whether在Have效期范围内
+    /// Check if a given value is within the validity range
     ///
-    /// # 参数
+    /// # Parameters
     ///
-    /// * `value` - 待Check的值
+    /// * `value` - Value to check
     ///
-    /// # 返回值
+    /// # Return value
     ///
-    /// If值在范围内（包括边界值）返回true，否则返回false
+    /// Returns true if value is within range (including boundary values), otherwise returns false
     ///
-    /// # 示例
+    /// # Example
     ///
     /// ```
     /// let range = ValidityRange::new(60, 3600);
@@ -67,21 +67,21 @@ impl ValidityRange {
         value >= self.start() && value <= self.end()
     }
 
-    /// 从字符串解析Have效期范围
+    /// Parse validity range from string
     ///
-    /// Support两种Format：
-    /// - "N" 表示N-N的单点范围
-    /// - "N-M" 表示从N到M的范围
+    /// Supports two formats:
+    /// - "N" represents single-point range N-N
+    /// - "N-M" represents range from N to M
     ///
-    /// # 参数
+    /// # Parameters
     ///
-    /// * `s` - 要解析的字符串
+    /// * `s` - String to parse
     ///
-    /// # 返回值
+    /// # Return value
     ///
-    /// 成功解析返回`Ok(ValidityRange)`，Failed返回包含ErrorType的`Err`
+    /// Returns `Ok(ValidityRange)` on successful parse, `Err` with error type on failure
     ///
-    /// # 示例
+    /// # Example
     ///
     /// ```
     /// let range1 = ValidityRange::from_str("60").unwrap();
@@ -99,17 +99,17 @@ impl ValidityRange {
 
             Ok(ValidityRange::new(start, end))
         } else {
-            // Format: "value" (表示value-value)
+            // Format: "value" (represents value-value)
             let value = s.parse::<u32>()?;
             Ok(ValidityRange::new(value, value))
         }
     }
 }
 
-/// 实现Display特性，用于Format化输出
+/// Implement Display trait for formatting output
 ///
-/// 对于相同的起始andEnd值，只显示一个数字；
-/// 对于不同的值，显示To"start-end"Format。
+/// For same start and end values, display only one number;
+/// For different values, display as "start-end" format.
 impl std::fmt::Display for ValidityRange {
     #[inline]
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -124,7 +124,7 @@ impl std::fmt::Display for ValidityRange {
     }
 }
 
-/// 实现Debug特性，提供更详细的Format化输出
+/// Implement Debug trait, provide more detailed formatting output
 impl std::fmt::Debug for ValidityRange {
     #[inline]
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -132,9 +132,9 @@ impl std::fmt::Debug for ValidityRange {
     }
 }
 
-/// 实现FromStr特性，Support从字符串解析
+/// Implement FromStr trait, support parsing from string
 ///
-/// 这使得可以直接Use`str.parse()`方法解析字符串ToValidityRange
+/// This allows directly using `str.parse()` method to parse string to ValidityRange
 impl std::str::FromStr for ValidityRange {
     type Err = ParseIntError;
 
@@ -142,7 +142,7 @@ impl std::str::FromStr for ValidityRange {
     fn from_str(s: &str) -> Result<Self, Self::Err> { ValidityRange::from_str(s) }
 }
 
-/// 单元测试
+/// Unit tests
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -70,7 +70,7 @@ impl Hash {
             buf[i * 2 + 1] = HEX_CHARS[(byte & 0x0f) as usize];
         }
 
-        // SAFETY: 输出都是Have效的 ASCII 字符
+        // SAFETY: output is all valid ASCII characters
         unsafe { ::core::str::from_utf8_unchecked_mut(buf) }
     }
 }

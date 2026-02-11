@@ -72,7 +72,7 @@ impl PlatformType {
     }
 }
 
-/// User-Agent 后缀
+/// User-Agent suffix
 pub const UA_SUFFIX: &'static str = " Chrome/138.0.7204.251 Electron/37.7.0 Safari/537.36";
 
 // const UA_SUFFIX_LEN: usize = " Chrome/138.0.7204.251 Electron/37.7.0 Safari/537.36".len();
@@ -110,7 +110,7 @@ impl Platform {
     pub const fn as_header_value(&self) -> http::header::HeaderValue {
         unsafe { HeaderValue::from_static(self.string).into() }
     }
-    /// User-Agent Prefix
+    /// User-Agent prefix
     pub const fn ua_prefix(&self) -> &'static str { self.ua_prefix }
     // const fn ua_suffix(&self) -> &'static str {
     //     use core::slice::SliceIndex as _;

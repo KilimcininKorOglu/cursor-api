@@ -7,7 +7,7 @@ use crate::{
 };
 use serde::Deserialize;
 
-// 定义Type常Amount
+// Define type constants
 crate::define_typed_constants! {
     &'static str => {
         TYPE_NONE = "none",
@@ -16,11 +16,6 @@ crate::define_typed_constants! {
         TYPE_ALL = "all",
         TYPE_EVERYTHING = "everything",
         TYPE_LIST = "list",
-
-        // FIELD_TYPE = "type",
-        // FIELD_CONTENT = "content",
-
-        // STRUCT_NAME = "UsageCheck",
     }
 }
 
@@ -76,7 +71,7 @@ impl UsageCheck {
         }
     }
 
-    // 辅助方法：GetType字符串
+    // Helper method: get type string
     // #[inline]
     // fn type_str(&self) -> &'static str {
     //     match self {
