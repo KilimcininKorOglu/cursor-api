@@ -488,7 +488,7 @@ impl StreamDecoder {
         }
         // let count = self.counter.fetch_add(1, Ordering::SeqCst);
         // if let Some(text) = utils::string_from_utf8(msg_data) {
-        // crate::debug!("JSON消息 [hex: {}]: {}", hex::encode(msg_data), text);
+        // crate::debug!("JSON message [hex: {}]: {}", hex::encode(msg_data), text);
         // crate::debug!("{count}: {text:?}");
         if let Ok(error) = CursorError::from_slice(msg_data) {
             // crate::debug!("received: {error:#?}");
