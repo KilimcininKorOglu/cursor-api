@@ -23,13 +23,13 @@ use alloc::borrow::Cow;
 //     pub fn decode(&mut self, data: &[u8]) -> Result<Option<DecodedMessage<T>>, DecoderError> {
 //         self.buf.extend_from_slice(data);
 
-//         // 首先尝试按带头部的格式处理
+//         // First try to process in format with header
 //         if self.buf.len() >= 5 && self.buf[0] <= 1 {
-//             // 检查头部
+//             // Check header
 //             let is_compressed = data[0] == 1;
 //             let msg_len = u32::from_be_bytes([data[1], data[2], data[3], data[4]]) as usize;
 
-//             // 如果数据完整，按带头部格式处理
+//             // If data is complete, process in format with header
 //             if self.buf.len() == 5 + msg_len {
 //                 self.buf.advance(5);
 
@@ -50,13 +50,13 @@ use alloc::borrow::Cow;
 //             }
 //         }
 
-//         // 如果不是带头部的格式，尝试直接处理数据
-//         // 首先尝试解压（可能是压缩的直接数据）
+//         // If not in format with header, try to process data directly
+//         // First try to decompress (may be compressed direct data)
 //         if let Some(decompressed) = decompress_gzip(&self.buf) {
 //             self.buf = decompressed.as_slice().into();
 //         };
 
-//         // 尝试解析
+//         // Try to parse
 //         if let Ok(msg) = T::decode(&self.buf[..]) {
 //             self.buf.clear();
 //             Ok(Some(DecodedMessage::Protobuf(msg)))
@@ -70,13 +70,13 @@ use alloc::borrow::Cow;
 // }
 
 pub fn decode<T: ProtobufMessage>(data: &[u8]) -> Result<DecodedMessage<T>, DecoderError> {
-    // 首先尝试按带头部的格式处理
+    // First try to process in format with header
     if data.len() >= 5 && data[0] <= 1 {
-        // 检查头部
+        // Check header
         let is_compressed = data[0] == 1;
         let msg_len = u32::from_be_bytes([data[1], data[2], data[3], data[4]]) as usize;
 
-        // 如果数据完整，按带头部格式处理
+        // If data is complete, process in format with header
         if data.len() == 5 + msg_len {
             let payload = &data[5..];
 
@@ -97,7 +97,7 @@ pub fn decode<T: ProtobufMessage>(data: &[u8]) -> Result<DecodedMessage<T>, Deco
         }
     }
 
-    // 尝试解析
+    // Try to parse
     if let Ok(msg) = T::decode(data) {
         Ok(DecodedMessage::Protobuf(msg))
     } else if let Some(text) = super::utils::string_from_utf8(data) {

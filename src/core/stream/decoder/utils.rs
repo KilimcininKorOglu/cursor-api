@@ -36,12 +36,12 @@ impl StringFrom for Cow<'_, [u8]> {
 //     impl Sealed for super::Cow<'_, [u8]> {}
 // }
 
-/// 检查JSON片段中第一个分隔符后是否有空格
+/// Check if there's a space after the first delimiter in JSON fragment
 ///
-/// # 规则
-/// - 查找第一个不在字符串内的 `:` 或 `,`
-/// - 检查其后是否紧跟空格 (0x20)
-/// - 不验证JSON格式正确性
+/// # Rules
+/// - Find first `:` or `,` not inside string
+/// - Check if immediately followed by space (0x20)
+/// - Do not validate JSON format correctness
 ///
 /// # Examples
 /// ```
@@ -58,7 +58,7 @@ pub const fn has_space_after_separator(json: &[u8]) -> bool {
 
         if in_string {
             if byte == b'\\' {
-                // 跳过转义字符（避免 \" 误判为字符串结束）
+                // Skip escape characters (avoid \" being mistaken for string end)
                 i += 2;
                 continue;
             }
@@ -69,7 +69,7 @@ pub const fn has_space_after_separator(json: &[u8]) -> bool {
             match byte {
                 b'"' => in_string = true,
                 b':' | b',' => {
-                    // 找到分隔符，检查下一个字节
+                    // Found delimiter, check next byte
                     return i + 1 < json.len() && json[i + 1] == b' ';
                 }
                 _ => {}

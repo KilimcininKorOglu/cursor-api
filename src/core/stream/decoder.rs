@@ -48,20 +48,20 @@ pub struct ToolCall {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum StreamMessage {
-    // 调试
+    // Debug
     // Debug(String),
-    // 网络引用
+    // Web references
     WebReference(Vec<WebReference>),
-    // 内容开始标志
+    // Content start marker
     #[cfg(test)]
     ContentStart,
-    // 思考
+    // Thinking
     Thinking(Thinking),
-    // 消息内容
+    // Message content
     Content(String),
-    // 工具调用
+    // Tool call
     ToolCall(ToolCall),
-    // 流结束标志
+    // Stream end marker
     StreamEnd,
 }
 
@@ -76,9 +76,9 @@ impl StreamMessage {
 
                 use crate::common::utils::string_builder::StringBuilder;
 
-                // 计算需要添加的字符串部分数量
-                // 每个web引用需要8个部分：序号、"[", 标题、"](", URL、")<", chunk、换行符
-                // 再加上头部"WebReferences:\n"和末尾的额外换行符，共两个部分
+                // Calculate number of string parts to add
+                // Each web reference needs 8 parts: number, "[", title, "](", URL, ")<", chunk, newline
+                // Plus "WebReferences:\n" header and extra newline at end, total 2 parts
                 // let parts_count = refs.len() * 8 + 2;
 
                 let mut string = String::with_capacity(refs.len() * 48).append("WebReferences:\n");
@@ -121,22 +121,22 @@ impl StreamMessage {
 struct Context {
     raw_args_len: usize,
     processed: u32,
-    // 调试使用
+    // Debug use
     // counter: u32,
 }
 
 pub struct StreamDecoder {
-    // 主要数据缓冲区 (32字节)
+    // Main data buffer (32 bytes)
     buffer: Buffer,
-    // 结果相关 (24字节 + 24字节 + 24字节)
+    // Result related (24 bytes + 24 bytes + 24 bytes)
     first_result: Option<Vec<StreamMessage>>,
     content_delays: Option<(String, Vec<(u32, f32)>)>,
     thinking_content: Option<String>,
-    // 计数器和时间 (8字节 + 8字节)
+    // Counter and time (8 bytes + 8 bytes)
     context: Context,
     empty_stream_count: usize,
     last_content_time: Instant,
-    // 状态标志 (1字节 + 1字节 + 1字节)
+    // Status flags (1 byte + 1 byte + 1 byte)
     first_result_ready: bool,
     first_result_taken: bool,
     has_seen_content: bool,
@@ -169,7 +169,7 @@ impl StreamDecoder {
     #[inline]
     pub fn reset_empty_stream_count(&mut self) {
         if self.empty_stream_count > 0 {
-            // crate::debug!("重置连续空流计数，之前的计数为: {}", self.empty_stream_count);
+            // crate::debug!("Reset continuous empty stream count, previous count was: {}", self.empty_stream_count);
             self.empty_stream_count = 0;
         }
     }
@@ -222,11 +222,11 @@ impl StreamDecoder {
         } {
             self.empty_stream_count += 1;
             let arg = if self.buffer.is_empty() {
-                format_args!("为空")
+                format_args!("empty")
             } else {
                 format_args!(": {}", hex::encode(&self.buffer))
             };
-            crate::debug!("数据长度小于5字节，当前数据{arg}");
+            crate::debug!("Data length less than 5 bytes, current data{arg}");
             return Err(StreamError::EmptyStream);
         }
 
@@ -332,8 +332,8 @@ impl StreamDecoder {
             0 => Ok(Self::handle_text_message(msg_data, ctx)),
             1 => Self::handle_json_message(msg_data),
             _ => {
-                eprintln!("收到未知消息类型: {}，请尝试联系开发者以获取支持", raw_msg.r#type);
-                crate::debug!("消息类型: {}，消息内容: {}", raw_msg.r#type, hex::encode(msg_data));
+                eprintln!("Received unknown message type: {}, please contact developer for support", raw_msg.r#type);
+                crate::debug!("Message type: {}, message content: {}", raw_msg.r#type, hex::encode(msg_data));
                 Ok(None)
             }
         };
@@ -372,14 +372,14 @@ impl StreamDecoder {
 
                             match raw_args_len.cmp(&ctx.raw_args_len) {
                                 Ordering::Greater => {
-                                    // 有新增数据，提取增量部分
+                                    // New data added, extract incremental part
                                     let args = unsafe {
                                         response.raw_args.get_unchecked(ctx.raw_args_len..)
                                     };
 
                                     if args.len() > INCREMENTAL_COPY_THRESHOLD {
                                         __cold_path!();
-                                        // 大块数据：原地移动避免重新分配
+                                        // Large data: move in place to avoid reallocation
                                         let mut raw_args = response.raw_args;
                                         let count = raw_args_len - ctx.raw_args_len;
 
@@ -394,7 +394,7 @@ impl StreamDecoder {
                                         }
                                         result = Some(raw_args);
                                     } else {
-                                        // 小块数据：直接克隆更快
+                                        // Small data: direct clone is faster
                                         result = Some(args.to_owned());
                                     }
 
@@ -402,7 +402,7 @@ impl StreamDecoder {
                                 }
 
                                 Ordering::Equal => {
-                                    // 无新数据，跳过此次处理
+                                    // No new data, skip this processing
                                     return None;
                                 }
 
@@ -562,7 +562,7 @@ mod tests {
                             }
                         }
                         // StreamMessage::Debug(prompt) => {
-                        //     println!("调试信息: {prompt}");
+                        //     println!("Debug信息: {prompt}");
                         // }
                         StreamMessage::ContentStart => {
                             println!("流开始");
@@ -633,7 +633,7 @@ mod tests {
                                 }
                             }
                             // StreamMessage::Debug(prompt) => {
-                            //     println!("调试信息 [hex: {hex_str}]: {prompt}");
+                            //     println!("Debug信息 [hex: {hex_str}]: {prompt}");
                             // }
                             StreamMessage::ContentStart => {
                                 println!("流开始 [hex: {hex_str}]");

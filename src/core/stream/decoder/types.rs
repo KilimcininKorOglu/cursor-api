@@ -64,7 +64,7 @@ pub enum DecodedMessage<T: ProtobufMessage> {
 
 // #[derive(Debug, PartialEq)]
 pub enum DecoderError {
-    // 上游服务传递的错误
+    // Error passed from upstream service
     // ChatError(String),
     // DataLengthLessThan5,
     // EmptyStream,

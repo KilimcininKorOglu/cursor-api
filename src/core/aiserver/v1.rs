@@ -103,7 +103,7 @@ impl ErrorDetails {
     /// 返回错误类型的 snake_case 字符串表示。
     ///
     /// 此方法将错误变体映射到其 snake_case 字符串名称，
-    /// 用于日志记录、调试或 API 响应。
+    /// 用于日志记录、Debug或 API 响应。
     ///
     /// 返回值：
     ///   - &'static str: 错误类型的 snake_case 名称。

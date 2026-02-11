@@ -18,10 +18,10 @@ use tokio::{
 
 // --- 全局配置 ---
 
-/// 控制调试模式的开关，从环境变量 "DEBUG" 读取，默认为 true
+/// 控制Debug模式的开关，从环境变量 "DEBUG" 读取，默认为 true
 pub static DEBUG: ManuallyInit<bool> = ManuallyInit::new();
 
-/// 调试日志文件的路径，从环境变量 "DEBUG_LOG_FILE" 读取，默认为 "debug.log"
+/// Debug日志文件的路径，从环境变量 "DEBUG_LOG_FILE" 读取，默认为 "debug.log"
 static DEBUG_LOG_FILE: ManuallyInit<Cow<'static, str>> = ManuallyInit::new();
 
 /// 全局日志文件句柄
@@ -35,7 +35,7 @@ pub fn init() {
     DEBUG.init(parse_from_env("DEBUG", true));
     crate::common::model::health::init_service_info();
 
-    // 如果不启用调试，不初始化日志文件
+    // 如果不启用Debug，不初始化日志文件
     if !*DEBUG {
         return;
     }
@@ -252,7 +252,7 @@ async fn flush_byte_buffer(buffer: &mut Vec<u8>) {
 
 // --- 公开接口 ---
 
-/// 提交调试日志到异步处理队列
+/// 提交Debug日志到异步处理队列
 ///
 /// # 参数
 /// * `seq` - 日志序列号
@@ -268,7 +268,7 @@ fn submit_debug_log(seq: u64, content: String) {
     });
 }
 
-/// 记录调试日志的宏
+/// 记录Debug日志的宏
 ///
 /// 仅当 DEBUG 开启时记录日志，异步发送到日志处理任务
 #[macro_export]
@@ -304,7 +304,7 @@ pub async fn flush_all_debug_logs() {
         if let Err(err) = state.shutdown_tx.send(true)
             && *DEBUG
         {
-            println!("日志系统调试：发送关闭信号失败（可能写入任务已提前结束）：{err}");
+            println!("日志系统Debug：发送关闭信号失败（可能写入任务已提前结束）：{err}");
         }
 
         // 提取后台任务句柄
@@ -333,9 +333,9 @@ pub async fn flush_all_debug_logs() {
                 }
             }
         } else if *DEBUG {
-            __println!("日志系统调试：未找到活动写入任务句柄，可能已关闭。");
+            __println!("日志系统Debug：未找到活动写入任务句柄，可能已关闭。");
         }
     } else if *DEBUG {
-        __println!("日志系统调试：日志系统未初始化，无需关闭。");
+        __println!("日志系统Debug：日志系统未初始化，无需关闭。");
     }
 }
