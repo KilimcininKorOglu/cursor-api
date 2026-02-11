@@ -8,7 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const MarkdownItAnchor = require('markdown-it-anchor');
 
-// 配置选项
+// Configuration options
 const options = {
   collapseWhitespace: true,
   removeComments: true,
@@ -22,12 +22,12 @@ const options = {
   processScripts: ['application/json'],
 };
 
-// CSS 压缩选项
+// CSS minification options
 const cssOptions = {
   level: 2
 };
 
-// 生成 Markdown HTML 模板
+// Generate Markdown HTML template
 function generateMarkdownHtml(title, markdownContent, md) {
   return `
 <!DOCTYPE html>
@@ -120,7 +120,7 @@ function generateMarkdownHtml(title, markdownContent, md) {
   `;
 }
 
-// 处理文件
+// Process file
 async function minifyFile(inputPath, outputPath) {
   try {
     let ext = path.extname(inputPath).toLowerCase();
@@ -128,7 +128,7 @@ async function minifyFile(inputPath, outputPath) {
     let content = fs.readFileSync(inputPath, 'utf8');
     let minified;
 
-    // 处理 Markdown 文件
+    // Process Markdown files
     if (ext === '.md') {
       const md = new MarkdownIt({
         html: true,
@@ -138,17 +138,17 @@ async function minifyFile(inputPath, outputPath) {
         slugify: (s) => String(s).trim().toLowerCase().replace(/\s+/g, '-').replace(/[^\w\u4e00-\u9fa5\-]/g, '')
       });
 
-      // 根据文件名确定标题
+      // Determine title from filename
       const baseName = path.basename(inputPath, '.md');
       const title = baseName.charAt(0).toUpperCase() + baseName.slice(1).toLowerCase();
 
-      // 读取 Markdown 内容
+      // Read Markdown content
       const markdownPath = inputPath.toLowerCase().endsWith('.md')
         ? inputPath
         : path.join(__dirname, '..', baseName + '.md');
       const markdownContent = fs.readFileSync(markdownPath, 'utf8');
 
-      // 生成 HTML
+      // Generate HTML
       content = generateMarkdownHtml(title, markdownContent, md);
       ext = '.html';
     }
@@ -190,9 +190,9 @@ async function minifyFile(inputPath, outputPath) {
   }
 }
 
-// 主函数
+// Main function
 async function main() {
-  // 获取命令行参数，跳过前两个参数（node和脚本路径）
+  // Get command line arguments, skip first two (node and script path)
   const files = process.argv.slice(2);
 
   if (files.length === 0) {
@@ -206,13 +206,13 @@ async function main() {
     let inputPath;
     let outputPath;
 
-    // 处理 Markdown 文件
+    // Process Markdown files
     if (file.toLowerCase().endsWith('.md')) {
       const baseName = path.basename(file, '.md').toLowerCase();
       inputPath = path.join(__dirname, '..', file);
       outputPath = path.join(staticDir, `${baseName}.min.html`);
     } else {
-      // 处理其他静态文件
+      // Process other static files
       inputPath = path.join(staticDir, file);
       const ext = path.extname(file);
       outputPath = path.join(
