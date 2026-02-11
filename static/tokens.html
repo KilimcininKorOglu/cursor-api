@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/x-icon" href="data:image/x-icon;," />
@@ -571,7 +572,7 @@
         visibility 0.2s;
     }
 
-    .proxy-menu:hover > .proxy-submenu {
+    .proxy-menu:hover>.proxy-submenu {
       opacity: 1;
       visibility: visible;
     }
@@ -733,10 +734,12 @@
       0% {
         transform: scale(1);
       }
+
       50% {
         transform: scale(1.05);
         background-color: var(--primary-color-alpha);
       }
+
       100% {
         transform: scale(1);
       }
@@ -855,11 +858,7 @@
   <div class="file-system">
     <div class="toolbar">
       <div class="search-box">
-        <input
-          type="text"
-          id="searchInput"
-          placeholder="搜索Token或账户..."
-        />
+        <input type="text" id="searchInput" placeholder="搜索Token或账户..." />
       </div>
     </div>
 
@@ -879,15 +878,12 @@
           <!-- 动态生成的文件列表 -->
         </tbody>
       </table>
-      <div
-        id="emptyState"
-        style="
+      <div id="emptyState" style="
           display: none;
           padding: 40px;
           text-align: center;
           color: var(--text-secondary);
-        "
-      >
+        ">
         <div style="font-size: 48px; margin-bottom: 16px">📁</div>
         <h3>没有找到Token</h3>
         <p>请添加Token或更改筛选条件</p>
@@ -1003,16 +999,13 @@
     <div class="modal-body">
       <div class="form-group">
         <label>Token:</label>
-        <div
-          id="keyToken"
-          style="
+        <div id="keyToken" style="
             word-break: break-all;
             background: var(--disabled-bg);
             padding: 8px;
             border-radius: var(--border-radius);
             margin-bottom: 10px;
-          "
-        ></div>
+          "></div>
       </div>
       <div class="form-group">
         <label>图片处理能力:</label>
@@ -1039,16 +1032,12 @@
           <option value="all">所有</option>
           <option value="custom">自定义</option>
         </select>
-        <div
-          id="modelListContainer"
-          class="model-list"
-          style="
+        <div id="modelListContainer" class="model-list" style="
             display: none;
             max-height: 150px;
             overflow-y: auto;
             margin-top: 8px;
-          "
-        >
+          ">
           <!-- 动态填充模型列表 -->
         </div>
       </div>
@@ -1067,12 +1056,7 @@
           <option value="false">禁用</option>
         </select>
       </div>
-      <div
-        class="key-result"
-        id="keyResult"
-        style="display: none"
-        onclick="copyGeneratedKey()"
-      >
+      <div class="key-result" id="keyResult" style="display: none" onclick="copyGeneratedKey()">
         <div class="key-content" id="keyContent"></div>
       </div>
     </div>
@@ -1114,11 +1098,7 @@
     <div class="modal-body">
       <div class="form-group">
         <label>添加Token:</label>
-        <textarea
-          id="addTokensInput"
-          placeholder="每行输入一个token，格式为token或token,checksum"
-          rows="8"
-        ></textarea>
+        <textarea id="addTokensInput" placeholder="每行输入一个token，格式为token或token,checksum" rows="8"></textarea>
       </div>
       <div class="form-group">
         <label>Token状态:</label>
@@ -1171,16 +1151,13 @@
     <div class="modal-body">
       <div class="form-group">
         <label>令牌:</label>
-        <div
-          id="currentTokenDisplay"
-          style="
+        <div id="currentTokenDisplay" style="
             word-break: break-all;
             background: var(--disabled-bg);
             padding: 8px;
             border-radius: var(--border-radius);
             margin-bottom: 10px;
-          "
-        ></div>
+          "></div>
       </div>
       <div class="form-group">
         <label>代理列表:</label>
@@ -1213,38 +1190,27 @@
     <div class="modal-body">
       <div class="form-group">
         <label>令牌:</label>
-        <div
-          id="timezoneTokenDisplay"
-          style="
+        <div id="timezoneTokenDisplay" style="
             word-break: break-all;
             background: var(--disabled-bg);
             padding: 8px;
             border-radius: var(--border-radius);
             margin-bottom: 10px;
-          "
-        ></div>
+          "></div>
       </div>
       <div class="form-group">
         <label>搜索时区:</label>
-        <input
-          type="text"
-          id="timezoneSearchInput"
-          placeholder="输入关键词搜索时区..."
-          style="width: 100%"
-        />
+        <input type="text" id="timezoneSearchInput" placeholder="输入关键词搜索时区..." style="width: 100%" />
       </div>
       <div class="form-group">
         <label>时区列表:</label>
-        <div
-          id="timezoneListContainer"
-          style="
+        <div id="timezoneListContainer" style="
             max-height: 300px;
             overflow-y: auto;
             margin-top: 8px;
             border: 1px solid var(--border-color);
             border-radius: var(--border-radius);
-          "
-        >
+          ">
           <!-- 时区列表将在这里动态生成 -->
         </div>
       </div>
@@ -3722,4 +3688,5 @@
     }
   </script>
 </body>
+
 </html>

@@ -8,12 +8,22 @@
         "/": {
             "type": "empty",
             "status": 307,
-            "headers": [["Location", "/health"]]
+            "headers": [
+                [
+                    "Location",
+                    "/health"
+                ]
+            ]
         },
         "/about": {
             "type": "empty",
             "status": 307,
-            "headers": [["Location", "/readme"]]
+            "headers": [
+                [
+                    "Location",
+                    "/readme"
+                ]
+            ]
         },
         "/tokens": "tokens.min.html",
         "/proxies": "proxies.min.html",

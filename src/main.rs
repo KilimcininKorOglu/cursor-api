@@ -292,7 +292,6 @@ async fn run() {
                         .to_std()
                 ))
                 .format(parse_from_env("DURATION_FORMAT", common::utils::duration_fmt::DurationFormat::Random))
-                .language(parse_from_env("DURATION_LANGUAGE", common::utils::duration_fmt::Language::Random))
             );
             common::time::print_project_age();
             common::time::print_build_age();

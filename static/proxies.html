@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/x-icon" href="data:image/x-icon;," />
@@ -228,6 +229,7 @@
         opacity: 0;
         transform: scale(0.95);
       }
+
       to {
         opacity: 1;
         transform: scale(1);
@@ -354,6 +356,7 @@
         opacity: 0;
         transform: translateY(-10px);
       }
+
       to {
         opacity: 1;
         transform: translateY(0);
@@ -427,6 +430,7 @@
       from {
         opacity: 0;
       }
+
       to {
         opacity: 1;
       }
@@ -512,6 +516,7 @@
       0% {
         background-color: var(--border-color);
       }
+
       100% {
         background-color: var(--disabled-bg);
       }
@@ -591,12 +596,7 @@
   <div class="container">
     <div class="form-group">
       <label for="authToken">认证令牌:</label>
-      <input
-        type="password"
-        id="authToken"
-        placeholder="输入 AUTH_TOKEN"
-        aria-label="认证令牌"
-      />
+      <input type="password" id="authToken" placeholder="输入 AUTH_TOKEN" aria-label="认证令牌" />
     </div>
   </div>
 
@@ -606,24 +606,12 @@
       <div class="filter-group">
         <label for="proxyTypeFilter">代理类型:</label>
         <div class="multiselect" id="proxyTypeFilter">
-          <div
-            class="multiselect-dropdown"
-            role="button"
-            tabindex="0"
-            aria-haspopup="listbox"
-            aria-expanded="false"
-          >
+          <div class="multiselect-dropdown" role="button" tabindex="0" aria-haspopup="listbox" aria-expanded="false">
             <div class="selected-options" id="selectedProxyTypes">
-              <span class="selected-options-placeholder"
-                >请选择代理类型...</span
-              >
+              <span class="selected-options-placeholder">请选择代理类型...</span>
             </div>
           </div>
-          <div
-            class="multiselect-options"
-            role="listbox"
-            aria-multiselectable="true"
-          >
+          <div class="multiselect-options" role="listbox" aria-multiselectable="true">
             <div class="multiselect-option" role="option" data-value="non">
               <input type="checkbox" id="type-non" value="non" checked />
               <label for="type-non">不使用代理</label>
@@ -641,34 +629,15 @@
               <label for="type-https">HTTPS</label>
             </div>
             <div class="multiselect-option" role="option" data-value="socks4">
-              <input
-                type="checkbox"
-                id="type-socks4"
-                value="socks4"
-                checked
-              />
+              <input type="checkbox" id="type-socks4" value="socks4" checked />
               <label for="type-socks4">SOCKS4</label>
             </div>
             <div class="multiselect-option" role="option" data-value="socks5">
-              <input
-                type="checkbox"
-                id="type-socks5"
-                value="socks5"
-                checked
-              />
+              <input type="checkbox" id="type-socks5" value="socks5" checked />
               <label for="type-socks5">SOCKS5</label>
             </div>
-            <div
-              class="multiselect-option"
-              role="option"
-              data-value="socks5h"
-            >
-              <input
-                type="checkbox"
-                id="type-socks5h"
-                value="socks5h"
-                checked
-              />
+            <div class="multiselect-option" role="option" data-value="socks5h">
+              <input type="checkbox" id="type-socks5h" value="socks5h" checked />
               <label for="type-socks5h">SOCKS5H</label>
             </div>
           </div>
@@ -677,37 +646,17 @@
       <div class="filter-group">
         <label class="visually-hidden">操作按钮</label>
         <div class="button-group">
-          <button
-            id="refreshBtn"
-            onclick="getProxyInfo()"
-            class="primary"
-            title="刷新代理列表 (F5)"
-          >
+          <button id="refreshBtn" onclick="getProxyInfo()" class="primary" title="刷新代理列表 (F5)">
             <span>刷新列表</span>
             <span class="context-menu-shortcut">F5</span>
           </button>
-          <button
-            id="addProxyBtn"
-            onclick="showAddProxyModal()"
-            class="secondary"
-            title="添加新代理"
-          >
+          <button id="addProxyBtn" onclick="showAddProxyModal()" class="secondary" title="添加新代理">
             添加代理
           </button>
-          <button
-            id="exportBtn"
-            onclick="exportProxies()"
-            class="secondary"
-            title="导出代理配置"
-          >
+          <button id="exportBtn" onclick="exportProxies()" class="secondary" title="导出代理配置">
             导出配置
           </button>
-          <button
-            id="importBtn"
-            onclick="showImportModal()"
-            class="secondary"
-            title="导入代理配置"
-          >
+          <button id="importBtn" onclick="showImportModal()" class="secondary" title="导入代理配置">
             导入配置
           </button>
         </div>
@@ -720,18 +669,8 @@
     <div class="toolbar">
       <div class="search-box">
         <span class="search-icon">🔍</span>
-        <input
-          type="text"
-          id="searchInput"
-          placeholder="搜索代理名称..."
-          aria-label="搜索代理"
-        />
-        <button
-          class="clear-search"
-          id="clearSearch"
-          onclick="clearSearchInput()"
-          aria-label="清除搜索"
-        >
+        <input type="text" id="searchInput" placeholder="搜索代理名称..." aria-label="搜索代理" />
+        <button class="clear-search" id="clearSearch" onclick="clearSearchInput()" aria-label="清除搜索">
           ✕
         </button>
       </div>
@@ -775,68 +714,34 @@
 
   <!-- 右键菜单 -->
   <div id="contextMenu" class="context-menu" role="menu">
-    <div
-      class="context-menu-item"
-      onclick="setAsGeneral()"
-      role="menuitem"
-      tabindex="0"
-    >
+    <div class="context-menu-item" onclick="setAsGeneral()" role="menuitem" tabindex="0">
       <span>设为通用代理</span>
       <span class="context-menu-shortcut">Ctrl+G</span>
     </div>
-    <div
-      class="context-menu-item"
-      onclick="copyProxyUrl()"
-      role="menuitem"
-      tabindex="0"
-    >
+    <div class="context-menu-item" onclick="copyProxyUrl()" role="menuitem" tabindex="0">
       <span>复制代理地址</span>
       <span class="context-menu-shortcut">Ctrl+C</span>
     </div>
     <div class="context-menu-divider" role="separator"></div>
-    <div
-      class="context-menu-item"
-      onclick="deleteSelectedProxies()"
-      role="menuitem"
-      tabindex="0"
-    >
+    <div class="context-menu-item" onclick="deleteSelectedProxies()" role="menuitem" tabindex="0">
       <span>删除</span>
       <span class="context-menu-shortcut">Delete</span>
     </div>
   </div>
 
   <!-- 添加代理对话框 -->
-  <div
-    class="modal-backdrop"
-    id="addProxyModal-backdrop"
-    onclick="closeModal('addProxyModal')"
-  ></div>
-  <div
-    class="modal"
-    id="addProxyModal"
-    role="dialog"
-    aria-labelledby="addProxyTitle"
-    aria-modal="true"
-  >
+  <div class="modal-backdrop" id="addProxyModal-backdrop" onclick="closeModal('addProxyModal')"></div>
+  <div class="modal" id="addProxyModal" role="dialog" aria-labelledby="addProxyTitle" aria-modal="true">
     <div class="modal-header">
       <h3 id="addProxyTitle">添加代理</h3>
-      <button
-        class="modal-close"
-        onclick="closeModal('addProxyModal')"
-        aria-label="关闭对话框"
-      >
+      <button class="modal-close" onclick="closeModal('addProxyModal')" aria-label="关闭对话框">
         ×
       </button>
     </div>
     <div class="modal-body">
       <div class="form-group">
         <label for="proxyName">代理名称:</label>
-        <input
-          type="text"
-          id="proxyName"
-          placeholder="输入代理名称"
-          required
-        />
+        <input type="text" id="proxyName" placeholder="输入代理名称" required />
       </div>
       <div class="form-group">
         <label for="proxyType">代理类型:</label>
@@ -848,11 +753,7 @@
       </div>
       <div class="form-group" id="proxyUrlGroup">
         <label for="proxyUrl">代理地址:</label>
-        <input
-          type="text"
-          id="proxyUrl"
-          placeholder="例如: http://localhost:7890"
-        />
+        <input type="text" id="proxyUrl" placeholder="例如: http://localhost:7890" />
         <div class="help-text">
           支持的格式: http://localhost:7890,
           socks5://username:password@localhost:1080
@@ -868,25 +769,11 @@
   </div>
 
   <!-- 确认删除对话框 -->
-  <div
-    class="modal-backdrop"
-    id="confirmModal-backdrop"
-    onclick="closeModal('confirmModal')"
-  ></div>
-  <div
-    class="modal"
-    id="confirmModal"
-    role="dialog"
-    aria-labelledby="confirmTitle"
-    aria-modal="true"
-  >
+  <div class="modal-backdrop" id="confirmModal-backdrop" onclick="closeModal('confirmModal')"></div>
+  <div class="modal" id="confirmModal" role="dialog" aria-labelledby="confirmTitle" aria-modal="true">
     <div class="modal-header">
       <h3 id="confirmTitle">确认删除</h3>
-      <button
-        class="modal-close"
-        onclick="closeModal('confirmModal')"
-        aria-label="关闭对话框"
-      >
+      <button class="modal-close" onclick="closeModal('confirmModal')" aria-label="关闭对话框">
         ×
       </button>
     </div>
@@ -902,62 +789,35 @@
   </div>
 
   <!-- 导入对话框 -->
-  <div
-    class="modal-backdrop"
-    id="importModal-backdrop"
-    onclick="closeModal('importModal')"
-  ></div>
-  <div
-    class="modal"
-    id="importModal"
-    role="dialog"
-    aria-labelledby="importTitle"
-    aria-modal="true"
-  >
+  <div class="modal-backdrop" id="importModal-backdrop" onclick="closeModal('importModal')"></div>
+  <div class="modal" id="importModal" role="dialog" aria-labelledby="importTitle" aria-modal="true">
     <div class="modal-header">
       <h3 id="importTitle">导入代理配置</h3>
-      <button
-        class="modal-close"
-        onclick="closeModal('importModal')"
-        aria-label="关闭对话框"
-      >
+      <button class="modal-close" onclick="closeModal('importModal')" aria-label="关闭对话框">
         ×
       </button>
     </div>
     <div class="modal-body">
       <div class="form-group">
         <label for="importFile">选择JSON文件:</label>
-        <input
-          type="file"
-          id="importFile"
-          accept=".json"
-          onchange="previewImportFile()"
-        />
+        <input type="file" id="importFile" accept=".json" onchange="previewImportFile()" />
       </div>
       <div id="importPreview" style="display: none; margin-top: 16px">
         <h4>文件预览:</h4>
-        <pre
-          id="importPreviewContent"
-          style="
+        <pre id="importPreviewContent" style="
             background: var(--disabled-bg);
             padding: 12px;
             border-radius: 4px;
             overflow: auto;
             max-height: 200px;
-          "
-        ></pre>
+          "></pre>
       </div>
     </div>
     <div class="modal-footer">
       <button onclick="closeModal('importModal')" class="secondary">
         取消
       </button>
-      <button
-        id="confirmImportBtn"
-        onclick="confirmImport()"
-        class="primary"
-        disabled
-      >
+      <button id="confirmImportBtn" onclick="confirmImport()" class="primary" disabled>
         导入
       </button>
     </div>
@@ -2011,4 +1871,5 @@
     }
   </script>
 </body>
+
 </html>

@@ -123,7 +123,7 @@ input[type="checkbox"] {
   appearance: auto;
 }
 
-input[type="checkbox"] + label {
+input[type="checkbox"]+label {
   cursor: pointer;
   color: var(--text-primary);
   user-select: none;

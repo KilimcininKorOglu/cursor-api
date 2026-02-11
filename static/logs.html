@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/x-icon" href="data:image/x-icon;," />
@@ -666,38 +667,23 @@
           </div>
         </div>
         <div style="margin-top: 10px">
-          <label
-            style="
+          <label style="
               display: block;
               margin-bottom: 5px;
               font-size: 13px;
               color: var(--text-secondary);
-            "
-            >快速选择</label
-          >
+            ">快速选择</label>
           <div class="button-group" style="justify-content: flex-start">
-            <button
-              onclick="setTimeRange('1h')"
-              style="padding: 6px 12px; font-size: 14px"
-            >
+            <button onclick="setTimeRange('1h')" style="padding: 6px 12px; font-size: 14px">
               最近1小时
             </button>
-            <button
-              onclick="setTimeRange('24h')"
-              style="padding: 6px 12px; font-size: 14px"
-            >
+            <button onclick="setTimeRange('24h')" style="padding: 6px 12px; font-size: 14px">
               最近24小时
             </button>
-            <button
-              onclick="setTimeRange('7d')"
-              style="padding: 6px 12px; font-size: 14px"
-            >
+            <button onclick="setTimeRange('7d')" style="padding: 6px 12px; font-size: 14px">
               最近7天
             </button>
-            <button
-              onclick="setTimeRange('30d')"
-              style="padding: 6px 12px; font-size: 14px"
-            >
+            <button onclick="setTimeRange('30d')" style="padding: 6px 12px; font-size: 14px">
               最近30天
             </button>
           </div>
@@ -739,19 +725,11 @@
           </div>
           <div class="filter-group">
             <label for="includeModels">包含模型</label>
-            <input
-              type="text"
-              id="includeModels"
-              placeholder="逗号分隔，如: gpt-4,claude"
-            />
+            <input type="text" id="includeModels" placeholder="逗号分隔，如: gpt-4,claude" />
           </div>
           <div class="filter-group">
             <label for="excludeModels">排除模型</label>
-            <input
-              type="text"
-              id="excludeModels"
-              placeholder="逗号分隔，如: gpt-3.5,dall-e"
-            />
+            <input type="text" id="excludeModels" placeholder="逗号分隔，如: gpt-3.5,dall-e" />
           </div>
         </div>
       </div>
@@ -763,39 +741,17 @@
           <div class="filter-group">
             <label>耗时范围（秒）</label>
             <div class="range-input">
-              <input
-                type="number"
-                id="minTotalTime"
-                placeholder="最小"
-                step="0.1"
-                min="0"
-              />
+              <input type="number" id="minTotalTime" placeholder="最小" step="0.1" min="0" />
               <span>~</span>
-              <input
-                type="number"
-                id="maxTotalTime"
-                placeholder="最大"
-                step="0.1"
-                min="0"
-              />
+              <input type="number" id="maxTotalTime" placeholder="最大" step="0.1" min="0" />
             </div>
           </div>
           <div class="filter-group">
             <label>Tokens范围</label>
             <div class="range-input">
-              <input
-                type="number"
-                id="minTokens"
-                placeholder="最小"
-                min="0"
-              />
+              <input type="number" id="minTokens" placeholder="最小" min="0" />
               <span>~</span>
-              <input
-                type="number"
-                id="maxTokens"
-                placeholder="最大"
-                min="0"
-              />
+              <input type="number" id="maxTokens" placeholder="最大" min="0" />
             </div>
           </div>
         </div>
@@ -939,14 +895,7 @@
     <div class="pagination-container">
       <div class="pagination-info">
         共 <span id="totalRecords">0</span> 条记录， 每页
-        <input
-          type="number"
-          id="customPageSize"
-          class="page-input"
-          min="5"
-          max="100"
-          value="20"
-        />
+        <input type="number" id="customPageSize" class="page-input" min="5" max="100" value="20" />
         条
         <button class="page-go-btn" onclick="changePageSize()">应用</button>
       </div>
@@ -960,13 +909,7 @@
         </button>
         <div class="page-jumper">
           跳转到第
-          <input
-            type="number"
-            id="pageNumberInput"
-            class="page-input"
-            min="1"
-            value="1"
-          />
+          <input type="number" id="pageNumberInput" class="page-input" min="1" value="1" />
           页
           <button class="page-go-btn" onclick="jumpToPage()">GO</button>
         </div>
@@ -1083,7 +1026,9 @@
   </div>
 
   <!-- 引入Chart.js -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.0/chart.umd.min.js" integrity="sha512-Y51n9mtKTVBh3Jbx5pZSJNDDMyY+yGe77DGtBPzRlgsf/YLCh13kSZ3JmfHGzYFCmOndraf0sQgfM654b7dJ3w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.0/chart.umd.min.js"
+    integrity="sha512-Y51n9mtKTVBh3Jbx5pZSJNDDMyY+yGe77DGtBPzRlgsf/YLCh13kSZ3JmfHGzYFCmOndraf0sQgfM654b7dJ3w=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
   <script>
     // 全局变量
@@ -1139,9 +1084,8 @@
 
       // 处理checksum
       if (tokenInfo.checksum) {
-        document.getElementById("modalChecksum").textContent = `${
-          tokenInfo.checksum.first || "-"
-        } / ${tokenInfo.checksum.second || "-"}`;
+        document.getElementById("modalChecksum").textContent = `${tokenInfo.checksum.first || "-"
+          } / ${tokenInfo.checksum.second || "-"}`;
       } else {
         document.getElementById("modalChecksum").textContent = "-";
       }
@@ -1493,24 +1437,22 @@
     <td>${new Date(log.timestamp).toLocaleString()}</td>
     <td>${log.model}</td>
     <td><div class="token-info-tooltip"><button class="info-button" onclick='showTokenModal(${JSON.stringify(
-      log.token_info,
-    )})'>查看详情<div class="tooltip-content">${formatSimpleTokenInfo(
-      log.token_info,
-    )}</div></button></div></td>
-    <td>${
-      log.chain
-        ? `<div class="token-info-tooltip prompt-preview"><button class="info-button view-conversation" ${allAttributes}>查看对话<div class="tooltip-content">${formatDialogPreview(
-            JSON.stringify(log.chain.prompt || ""),
-          )}</div></button></div>`
-        : "-"
-    }</td>
+            log.token_info,
+          )})'>查看详情<div class="tooltip-content">${formatSimpleTokenInfo(
+            log.token_info,
+          )}</div></button></div></td>
+    <td>${log.chain
+              ? `<div class="token-info-tooltip prompt-preview"><button class="info-button view-conversation" ${allAttributes}>查看对话<div class="tooltip-content">${formatDialogPreview(
+                JSON.stringify(log.chain.prompt || ""),
+              )}</div></button></div>`
+              : "-"
+            }</td>
     <td>${formatTiming(log.timing.total)}</td>
     <td>${formatUsage(log.chain?.usage)}</td>
     <td>${log.stream ? "是" : "否"}</td>
     <td>${log.status}</td>
-    <td>${
-      typeof log.error === "string" ? log.error : (log.error?.error ?? "-")
-    }</td>
+    <td>${typeof log.error === "string" ? log.error : (log.error?.error ?? "-")
+            }</td>
   </tr>`;
         })
         .join("");
@@ -1552,13 +1494,12 @@
           assistant: "助手",
         };
 
-        return `<div class="message-meta">最后一条消息 (${
-          roleLabels[lastMessage.role] || lastMessage.role
-        }):</div><div class="last-message">${lastMessage.content
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/\n/g, "<br>")}</div>`;
+        return `<div class="message-meta">最后一条消息 (${roleLabels[lastMessage.role] || lastMessage.role
+          }):</div><div class="last-message">${lastMessage.content
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/\n/g, "<br>")}</div>`;
       } catch (e) {
         console.error("预览对话内容失败:", e);
         return "无法解析对话内容";
@@ -1584,9 +1525,8 @@
       nextPageBtn.disabled = !hasMorePages;
 
       // 更新当前页显示
-      currentPageSpan.textContent = `第 ${
-        currentPageIndex + 1
-      } 页 / 共 ${totalPages} 页`;
+      currentPageSpan.textContent = `第 ${currentPageIndex + 1
+        } 页 / 共 ${totalPages} 页`;
 
       // 同步输入框数值
       pageNumberInput.value = currentPageIndex + 1;
@@ -2284,9 +2224,8 @@
             <td>${index + 1}</td>
             <td>${escapeHtmlAndControlChars(chunkText)}</td>
             <td>${deltaTime.toFixed(3)}</td>
-            <td>${isFinite(rate) ? rate.toFixed(1) : "N/A"} (平均: ${
-              isFinite(avgRate) ? avgRate.toFixed(1) : "N/A"
-            })</td>
+            <td>${isFinite(rate) ? rate.toFixed(1) : "N/A"} (平均: ${isFinite(avgRate) ? avgRate.toFixed(1) : "N/A"
+              })</td>
           `;
             delaysTableBody.appendChild(row);
 
@@ -2526,4 +2465,5 @@
     }
   </script>
 </body>
+
 </html>

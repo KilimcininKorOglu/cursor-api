@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/x-icon" href="data:image/x-icon;," />
@@ -66,7 +67,8 @@
       font-weight: 500;
       cursor: pointer;
       transition: all 0.2s ease;
-      border-radius: 0; /* 覆盖全局 button 样式 */
+      border-radius: 0;
+      /* 覆盖全局 button 样式 */
     }
 
     .editor-tab:hover {
@@ -109,8 +111,14 @@
     }
 
     @media (prefers-color-scheme: dark) {
-      .editor-tabs { background: rgba(255, 255, 255, 0.05); }
-      .code-textarea { background: #1e1e1e; color: #d4d4d4; }
+      .editor-tabs {
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .code-textarea {
+        background: #1e1e1e;
+        color: #d4d4d4;
+      }
     }
 
     /* 
@@ -126,13 +134,27 @@
     }
 
     @media (prefers-color-scheme: dark) {
-      .hash-badge { background: rgba(255, 255, 255, 0.1); }
+      .hash-badge {
+        background: rgba(255, 255, 255, 0.1);
+      }
     }
 
-    .mt-sm { margin-top: 0.5rem; }
-    .mt-md { margin-top: 1.25rem; }
-    .icon-spin { display: inline-block; margin-right: 4px; }
-    .text-italic { font-style: italic; }
+    .mt-sm {
+      margin-top: 0.5rem;
+    }
+
+    .mt-md {
+      margin-top: 1.25rem;
+    }
+
+    .icon-spin {
+      display: inline-block;
+      margin-right: 4px;
+    }
+
+    .text-italic {
+      font-style: italic;
+    }
   </style>
 </head>
 
@@ -491,4 +513,5 @@
 
   </script>
 </body>
+
 </html>

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/x-icon" href="data:image/x-icon;," />
@@ -345,12 +346,7 @@
         <label>
           认证密钥 (AUTH_TOKEN)
         </label>
-        <input
-          type="password"
-          id="authToken"
-          placeholder="用于认证API调用的密钥（可选）"
-          autocomplete="off"
-        />
+        <input type="password" id="authToken" placeholder="用于认证API调用的密钥（可选）" autocomplete="off" />
         <div class="input-hint">此密钥用于认证对构建Key服务的访问（可选字段）</div>
       </div>
     </div>
@@ -366,12 +362,7 @@
             令牌 (Token)
             <span class="required-mark">*</span>
           </label>
-          <input
-            type="text"
-            id="token"
-            placeholder="输入 JWT 格式的令牌"
-            autocomplete="off"
-          />
+          <input type="text" id="token" placeholder="输入 JWT 格式的令牌" autocomplete="off" />
           <div class="input-hint">JWT 格式的认证令牌</div>
         </div>
 
@@ -380,14 +371,8 @@
             校验和 - First
             <span class="required-mark">*</span>
           </label>
-          <input
-            type="text"
-            id="checksumFirst"
-            placeholder="64位 Hex 编码字符串"
-            pattern="^[0-9a-fA-F]{64}$"
-            maxlength="64"
-            autocomplete="off"
-          />
+          <input type="text" id="checksumFirst" placeholder="64位 Hex 编码字符串" pattern="^[0-9a-fA-F]{64}$" maxlength="64"
+            autocomplete="off" />
           <div class="input-hint">64个十六进制字符（0-9, a-f, A-F）</div>
         </div>
 
@@ -396,14 +381,8 @@
             校验和 - Second
             <span class="required-mark">*</span>
           </label>
-          <input
-            type="text"
-            id="checksumSecond"
-            placeholder="64位 Hex 编码字符串"
-            pattern="^[0-9a-fA-F]{64}$"
-            maxlength="64"
-            autocomplete="off"
-          />
+          <input type="text" id="checksumSecond" placeholder="64位 Hex 编码字符串" pattern="^[0-9a-fA-F]{64}$" maxlength="64"
+            autocomplete="off" />
           <div class="input-hint">64个十六进制字符（0-9, a-f, A-F）</div>
         </div>
 
@@ -412,14 +391,8 @@
             客户端密钥 (Client Key)
             <span class="required-mark">*</span>
           </label>
-          <input
-            type="text"
-            id="clientKey"
-            placeholder="64位 Hex 编码字符串"
-            pattern="^[0-9a-fA-F]{64}$"
-            maxlength="64"
-            autocomplete="off"
-          />
+          <input type="text" id="clientKey" placeholder="64位 Hex 编码字符串" pattern="^[0-9a-fA-F]{64}$" maxlength="64"
+            autocomplete="off" />
           <div class="input-hint">64个十六进制字符（0-9, a-f, A-F）</div>
         </div>
       </div>
@@ -437,19 +410,11 @@
             <span class="required-mark">*</span>
           </label>
           <div style="display: flex; gap: 10px; align-items: flex-start;">
-            <input
-              type="text"
-              id="configVersion"
-              placeholder="UUID 格式，如：550e8400-e29b-41d4-a716-446655440000"
+            <input type="text" id="configVersion" placeholder="UUID 格式，如：550e8400-e29b-41d4-a716-446655440000"
               pattern="^[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{12}$"
-              style="flex: 1;"
-            />
-            <button 
-              type="button" 
-              id="fetchConfigVersionButton" 
-              onclick="fetchConfigVersion()"
-              style="padding: 8px 16px; font-size: 14px; white-space: nowrap;"
-            >
+              style="flex: 1;" />
+            <button type="button" id="fetchConfigVersionButton" onclick="fetchConfigVersion()"
+              style="padding: 8px 16px; font-size: 14px; white-space: nowrap;">
               获取
             </button>
           </div>
@@ -461,12 +426,8 @@
             会话 ID (Session ID)
             <span class="required-mark">*</span>
           </label>
-          <input
-            type="text"
-            id="sessionId"
-            placeholder="UUID 格式，如：550e8400-e29b-41d4-a716-446655440000"
-            pattern="^[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{12}$"
-          />
+          <input type="text" id="sessionId" placeholder="UUID 格式，如：550e8400-e29b-41d4-a716-446655440000"
+            pattern="^[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{12}$" />
           <div class="input-hint">标准 UUID 格式</div>
         </div>
 
@@ -488,27 +449,16 @@
 
         <div class="form-group">
           <label>代理名称 (Proxy Name)</label>
-          <input
-            type="text"
-            id="proxyName"
-            placeholder="输入代理名称（可选）"
-          />
+          <input type="text" id="proxyName" placeholder="输入代理名称（可选）" />
           <div class="input-hint">指定要使用的代理</div>
         </div>
 
         <div class="form-group">
           <label>时区 (Timezone)</label>
           <div class="timezone-selector">
-            <input
-              type="text"
-              id="timezone"
-              class="timezone-search"
-              placeholder="搜索时区，如：Shanghai、Beijing、Tokyo（可选）"
-              autocomplete="off"
-              onkeyup="filterTimezones(this.value)"
-              onfocus="showTimezoneDropdown()"
-              onblur="hideTimezoneDropdown(event)"
-            />
+            <input type="text" id="timezone" class="timezone-search" placeholder="搜索时区，如：Shanghai、Beijing、Tokyo（可选）"
+              autocomplete="off" onkeyup="filterTimezones(this.value)" onfocus="showTimezoneDropdown()"
+              onblur="hideTimezoneDropdown(event)" />
             <div id="timezoneDropdown" class="timezone-dropdown">
               <!-- 动态生成的时区列表 -->
             </div>
@@ -592,13 +542,11 @@
         </div>
 
         <div id="modelListContainer" class="model-list" style="display: none">
-          <div
-            style="
+          <div style="
               padding: 10px;
               text-align: center;
               color: var(--text-secondary);
-            "
-          >
+            ">
             加载模型列表中...
           </div>
         </div>
@@ -1665,4 +1613,5 @@
     });
   </script>
 </body>
+
 </html>

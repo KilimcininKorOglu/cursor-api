@@ -173,20 +173,6 @@ impl ParseFromEnv for duration_fmt::DurationFormat {
         })
     }
 }
-impl ParseFromEnv for duration_fmt::Language {
-    fn parse_from_env(key: &str) -> Option<Self::Result> {
-        let s = <&'static str as ParseFromEnv>::parse_from_env(key)?;
-        Some(match &*s {
-            "english" => Self::English,
-            "chinese" => Self::Chinese,
-            "japanese" => Self::Japanese,
-            "spanish" => Self::Spanish,
-            "german" => Self::German,
-            "random" => Self::Random,
-            _ => return None,
-        })
-    }
-}
 
 #[inline]
 pub fn parse_from_env<T: ParseFromEnv>(key: &str, default: T) -> T::Result {
