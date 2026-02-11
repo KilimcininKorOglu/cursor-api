@@ -34,17 +34,17 @@ pub struct GetLogsParams {
 
 // Define commands sent to log actor
 pub enum LogCommand {
-    // Get日志
+    // Get logs
     GetLogs {
         params: GetLogsParams,
         tx: oneshot::Sender<(u64, Vec<RequestLog>)>,
     },
-    // AddOne日志
+    // Add one log
     AddLog {
         log: Box<RequestLog>,
         token: ExtToken,
     },
-    // Get下一个日志ID
+    // Get next log ID
     GetNextLogId {
         tx: oneshot::Sender<u64>,
     },
@@ -59,7 +59,7 @@ pub enum LogCommand {
     CloneToSave {
         tx: oneshot::Sender<super::LogManagerHelper>,
     },
-    // Update指定ID的日志
+    // Update log with specified ID
     UpdateLog {
         id: u64,
         ops: LogUpdate,

@@ -3,7 +3,7 @@ use core::sync::atomic::{AtomicU64, Ordering};
 // Base64 URL_SAFE_NO_PAD encoding table
 const B64_ENCODE: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
-// 全局Cache的时间戳头
+// Global cached timestamp header
 static TIMESTAMP_HEADER: AtomicU64 = AtomicU64::new(0);
 
 #[inline(always)]
@@ -56,7 +56,7 @@ const fn encode_chunk(input: &[u8; 3], output: &mut [u8; 4]) {
     output[3] = B64_ENCODE[(b2 & 0x3F) as usize];
 }
 
-// 从千秒创建
+// Create from kilo-seconds
 #[inline]
 const fn new(kilo_seconds: u64) -> u64 {
     let mut timestamp_bytes = [
@@ -72,11 +72,11 @@ const fn new(kilo_seconds: u64) -> u64 {
     u64::from_ne_bytes(encode_base64(&timestamp_bytes))
 }
 
-// Get全局指针
+// Get global pointer
 #[inline(always)]
 pub fn read() -> [u8; 8] { TIMESTAMP_HEADER.load(Ordering::Relaxed).to_ne_bytes() }
 
-// Use指定千秒更新全局原子变Amount
+// Update global atomic variable with specified kilo-seconds
 #[inline]
 pub fn update_global_with(kilo_seconds: u64) {
     TIMESTAMP_HEADER.store(new(kilo_seconds), Ordering::Relaxed)

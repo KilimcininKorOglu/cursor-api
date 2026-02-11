@@ -246,7 +246,7 @@ impl From<crate::common::model::userinfo::TokenUsage> for ChainUsage {
 //         let mut remaining = input.as_str();
 
 //         while !remaining.is_empty() {
-//             // CheckWhether以任一Start标记开头，并确定相应的End标记
+//             // Check whether starting with any start tag and determine corresponding end tag
 //             let (role, end_tag, content) =
 //                 if let Some(r) = remaining.strip_prefix("<|BEGIN_SYSTEM|>\n") {
 //                     (Role::System, "\n<|END_SYSTEM|>\n", r)
@@ -258,20 +258,20 @@ impl From<crate::common::model::userinfo::TokenUsage> for ChainUsage {
 //                     return Self::Origin(input);
 //                 };
 
-//             // UpdateremainingTo去除Prefix后的Content
+//             // Update remaining to content after removing prefix
 //             remaining = content;
 
-//             // 查找End标记
+//             // Find end tag
 //             if let Some((content_part, after_end)) = remaining.split_once(end_tag) {
-//                 // 提取Content
+//                 // Extract content
 //                 let content =
 //                     PromptContent(crate::leak::intern_arc(content_part.trim_leading_newlines()));
 //                 messages.push(PromptMessage { role, content });
 
-//                 // 移动到End标记之后
+//                 // Move to after end tag
 //                 remaining = after_end;
 
-//                 // 跳过Message之间的额外换行符
+//                 // Skip extra newlines between messages
 //                 if remaining.as_bytes().first().copied() == Some(b'\n') {
 //                     remaining = unsafe { remaining.get_unchecked(1..) };
 //                 }
@@ -385,7 +385,7 @@ impl ExtToken {
         }
     }
 
-    /// Get适用于此 token 的 HTTP 客户端
+    /// Get HTTP client applicable for this token
     #[inline]
     pub fn get_client(&self) -> Client { get_client_or_general(self.proxy.as_deref()) }
 
@@ -395,7 +395,7 @@ impl ExtToken {
         move || get_client_or_general(proxy.as_deref())
     }
 
-    /// Get此 token 关联的时区
+    /// Get timezone associated with this token
     #[inline]
     fn timezone(&self) -> chrono_tz::Tz {
         if let Some(tz) = self.timezone { tz } else { *super::lazy::GENERAL_TIMEZONE }
@@ -406,17 +406,17 @@ impl ExtToken {
         if let Some(gh) = self.gcpp_host { gh } else { *super::lazy::GENERAL_GCPP_HOST }
     }
 
-    /// Return关联的时区名称
+    /// Return associated timezone name
     #[inline]
     pub fn timezone_name(&self) -> &'static str { self.timezone().name() }
 
-    /// Return关联的时区名称的头部值
+    /// Return associated timezone name as header value
     #[inline]
     pub fn timezone_as_header_value(&self) -> http::HeaderValue {
         unsafe { crate::common::model::HeaderValue::from_static(self.timezone_name()).into() }
     }
 
-    /// GetCurrent时区的Current时间
+    /// Get current time in current timezone
     #[inline]
     pub fn now(&self) -> chrono::DateTime<chrono_tz::Tz> {
         use chrono::TimeZone as _;
@@ -521,7 +521,7 @@ impl<'a> UnextTokenRef<'a> {
     }
 }
 
-// 用于存储 token 信息
+// Used to store token information
 #[derive(Clone, Serialize, Deserialize)]
 pub struct TokenInfo {
     #[serde(flatten)]
@@ -716,7 +716,7 @@ impl Serialize for TokensAddResponse {
     }
 }
 
-// TokensUpdateRequest 结构体
+// TokensUpdateRequest struct
 pub type TokensUpdateRequest = Vec<(String, TokenInfo)>;
 
 #[derive(Deserialize)]
@@ -769,7 +769,7 @@ impl TokensMergeRequestTokenInfo {
     }
 }
 
-// TokensDeleteRequest 结构体
+// TokensDeleteRequest struct
 #[derive(Deserialize)]
 pub struct TokensDeleteRequest {
     #[serde(default)]
@@ -778,7 +778,7 @@ pub struct TokensDeleteRequest {
     pub include_failed_tokens: bool,
 }
 
-// TokensDeleteResponse 结构体
+// TokensDeleteResponse struct
 #[derive(Serialize)]
 pub struct TokensDeleteResponse {
     pub status: ApiStatus,

@@ -196,7 +196,7 @@ const fn decode_hex_hash(hex_bytes: &[u8; 64]) -> Option<Hash> {
         let high = HEX_TABLE[hi as usize];
         let low = HEX_TABLE[lo as usize];
 
-        // CheckWhetherToHave效的十六进制字符
+        // Check whether they are valid hexadecimal characters
         if high == 0xFF || low == 0xFF {
             return None;
         }

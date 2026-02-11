@@ -3,9 +3,9 @@ use core::num::NonZeroUsize;
 /// Request log limit enumeration
 #[derive(Debug, Clone, Copy)]
 pub enum LogsLimit {
-    /// Disabled日志记录
+    /// Logging disabled
     Disabled,
-    /// HaveLimit的日志记录，参数To最大日志数Amount
+    /// Logging with limit, parameter is maximum log count
     Limited(NonZeroUsize),
 }
 
@@ -18,11 +18,11 @@ impl LogsLimit {
         }
     }
 
-    /// CheckWhetherNeed保存日志
+    /// Check whether need to save logs
     #[inline(always)]
     pub fn should_log(&self) -> bool { !matches!(self, Self::Disabled) }
 
-    /// Get日志Limit
+    /// Get log limit
     #[inline(always)]
     pub fn get_limit(self) -> usize {
         match self {

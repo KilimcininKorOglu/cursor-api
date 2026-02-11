@@ -21,15 +21,15 @@ impl AppState {
         let (log_manager_result, token_manager_result, proxies_result) =
             tokio::join!(LogManager::load(), TokenManager::load(), Proxies::load());
 
-        // Get结果，HandleError
+        // Get results, handle errors
         let log_manager = log_manager_result?;
         let token_manager = token_manager_result?;
 
-        // Handle代理
+        // Handle proxies
         let proxies = proxies_result.unwrap_or_default();
         proxies.init();
 
-        // 计算初始Statistics信息
+        // Calculate initial statistics information
         let error_count = log_manager.error_count();
         let total_count = log_manager.total_count();
 
@@ -43,36 +43,36 @@ impl AppState {
         })
     }
 
-    /// 增加总Request计数
+    /// Increment total request count
     #[inline(always)]
     pub fn increment_total(&self) { self.total_requests.fetch_add(1, Ordering::Relaxed); }
 
-    /// 增加活跃Request计数
+    /// Increment active request count
     #[inline(always)]
     pub fn increment_active(&self) { self.active_requests.fetch_add(1, Ordering::Relaxed); }
 
-    /// 减少活跃Request计数
+    /// Decrement active request count
     #[inline(always)]
     pub fn decrement_active(&self) { self.active_requests.fetch_sub(1, Ordering::Relaxed); }
 
-    /// 增加ErrorRequest计数
+    /// Increment error request count
     #[inline(always)]
     pub fn increment_error(&self) { self.error_requests.fetch_add(1, Ordering::Relaxed); }
 
-    /// GetTokenManager的读锁
+    /// Get read lock of token manager
     #[inline]
     pub async fn token_manager_read(&self) -> tokio::sync::RwLockReadGuard<'_, TokenManager> {
         self.token_manager.read().await
     }
 
-    /// GetTokenManager的写锁
+    /// Get write lock of token manager
     #[inline]
     pub async fn token_manager_write(&self) -> tokio::sync::RwLockWriteGuard<'_, TokenManager> {
         self.token_manager.write().await
     }
 
     pub async fn save(&self) -> Result<(), Box<dyn core::error::Error + Send + Sync + 'static>> {
-        // Parallel保存日志、令牌and代理
+        // Save logs, tokens and proxies in parallel
         let (log_result, tokens_result, proxies_result) =
             tokio::join!(LogManager::save(), self.save_tokens(), Proxies::save());
 
@@ -86,6 +86,6 @@ impl AppState {
         self.token_manager.read().await.save().await
     }
 
-    /// Updatetoken manager中的client key
+    /// Update client key in token manager
     pub async fn update_client_key(&self) { self.token_manager.write().await.update_client_key() }
 }

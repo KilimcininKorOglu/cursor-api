@@ -22,44 +22,44 @@ impl std::fmt::Display for TokenError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(match self {
             TokenError::AliasExists => "Alias already exists",
-            TokenError::InvalidId => "无效的Token ID",
+            TokenError::InvalidId => "Invalid Token ID",
         })
     }
 }
 
 impl core::error::Error for TokenError {}
 
-/// 高性能Token管理器
+/// High-performance Token manager
 ///
-/// 设计特点：
-/// - **零拷贝查询**：所Have查询方法返回引用，避免clone
-/// - **紧凑存储**：Vec<Option<T>>密集布局，Cache友好
-/// - **O(1)操作**：通过HashMap+Vec实现常数时间增删改查
-/// - **ID重用**：FIFO队列管理Empty闲ID，减少内存碎片
-///   - 优先重用最早释放的ID，提高cache locality
-///   - Vec不会无限增长，删除后的槽位会被新token复用
-/// - **多索引**：SupportID/别名/TokenKey三种查询方式
-/// - **无锁设计**：单线程优化，避免同步开销
+/// Design features:
+/// - **Zero-copy query**: All query methods return references, avoid clone
+/// - **Compact storage**: Vec<Option<T>> dense layout, cache friendly
+/// - **O(1) operations**: Constant time CRUD through HashMap+Vec
+/// - **ID reuse**: FIFO queue manages free IDs, reduce memory fragmentation
+///   - Prioritize reusing earliest released IDs, improve cache locality
+///   - Vec won't grow infinitely, deleted slots will be reused by new tokens
+/// - **Multi-index**: Support ID/alias/TokenKey three query methods
+/// - **Lock-free design**: Single-threaded optimization, avoid synchronization overhead
 ///
-/// Data结构不变性：
-/// - `tokens`, `id_to_alias` 长度始终相同
-/// - `id_map`, `alias_map` 中的id值始终 < tokens.len()
-/// - `id_map`, `alias_map` 中的id指向的 `tokens[id]` 必To Some
-/// - `free_ids` 中的id必 < tokens.len() 且 `tokens[id]` To None
+/// Data structure invariants:
+/// - `tokens`, `id_to_alias` always have same length
+/// - id values in `id_map`, `alias_map` are always < tokens.len()
+/// - id in `id_map`, `alias_map` pointing to `tokens[id]` must be Some
+/// - id in `free_ids` must be < tokens.len() and `tokens[id]` is None
 ///
-/// Performance关键路径AlreadyUseunsafe消除边界Check
+/// Performance critical paths use unsafe to eliminate bounds checking
 pub struct TokenManager {
-    /// 主存储：ID -> TokenInfo，UseOptionSupport删除后的Empty槽位
+    /// Main storage: ID -> TokenInfo, use Option to support empty slots after deletion
     tokens: Vec<Option<TokenInfo>>,
-    /// TokenKey -> ID映射，用于通过tokenContent查找
+    /// TokenKey -> ID mapping, for lookup by token content
     id_map: HashMap<TokenKey, usize>,
-    /// 别名 -> ID映射，用于用户友好的查找
+    /// Alias -> ID mapping, for user-friendly lookup
     alias_map: HashMap<Alias, usize>,
-    /// ID -> 别名反向索引，与tokens同步维护
+    /// ID -> Alias reverse index, maintained in sync with tokens
     id_to_alias: Vec<Option<Alias>>,
-    /// 可重用的ID队列（FIFO），优先重用最早释放的ID
+    /// Reusable ID queue (FIFO), prioritize reusing earliest released IDs
     free_ids: VecDeque<usize>,
-    /// Round-robin token选择队列
+    /// Round-robin token selection queue
     queue: TokenQueue,
 }
 
@@ -72,7 +72,7 @@ impl TokenManager {
             id_map: HashMap::with_capacity_and_hasher(capacity, r.clone()),
             alias_map: HashMap::with_capacity_and_hasher(capacity, r),
             id_to_alias: Vec::with_capacity(capacity),
-            free_ids: VecDeque::with_capacity(capacity / 10), // Assumption10%的删除率
+            free_ids: VecDeque::with_capacity(capacity / 10), // Assume 10% deletion rate
             queue: TokenQueue::with_capacity(capacity),
         }
     }
@@ -83,7 +83,7 @@ impl TokenManager {
         token_info: TokenInfo,
         alias: S,
     ) -> Result<usize, TokenError> {
-        // Handle未命名Or冲突的别名，自动生成唯一别名
+        // Handle unnamed or conflicting aliases, auto-generate unique alias
         let mut alias: Cow<'_, str> = alias.into();
         if alias == UNNAMED || alias.starts_with(UNNAMED_PATTERN) {
             let id = self.free_ids.front().copied().unwrap_or(self.tokens.len());
@@ -94,7 +94,7 @@ impl TokenManager {
             return Err(TokenError::AliasExists);
         }
 
-        // ID分配策略：优先重用Empty闲ID（FIFO顺序），否则扩展vec
+        // ID allocation strategy: prioritize reusing free IDs (FIFO order), otherwise extend vec
         let id = if let Some(reused_id) = self.free_ids.pop_front() {
             reused_id
         } else {
@@ -108,30 +108,30 @@ impl TokenManager {
         self.id_map.insert(key, id);
         self.queue.push(key, id);
 
-        // SAFETY: id要么是reused_id（来自free_ids，必定<len），要么是Justpush后的新索引
+        // SAFETY: id is either reused_id (from free_ids, must be <len), or new index just pushed
         unsafe { *self.tokens.get_unchecked_mut(id) = Some(token_info) };
 
         let alias = Alias::new(alias);
         self.alias_map.insert(alias.clone(), id);
 
-        // SAFETY: 同上，idHave效且id_to_alias与tokens长度同步
+        // SAFETY: same as above, id is valid and id_to_alias syncs length with tokens
         unsafe { *self.id_to_alias.get_unchecked_mut(id) = Some(alias) };
 
         Ok(id)
     }
 
     #[cfg(not(feature = "horizon"))]
-    /// 热路径：通过ID查询Token
+    /// Hot path: query Token by ID
     #[inline]
     pub fn get_by_id(&self, id: usize) -> Option<&TokenInfo> {
         self.tokens.get(id).and_then(|o| o.as_ref())
     }
 
-    /// 热路径：通过别名查询Token
+    /// Hot path: query Token by alias
     #[inline]
     pub fn get_by_alias(&self, alias: &str) -> Option<&TokenInfo> {
         let &id = self.alias_map.get(alias)?;
-        // SAFETY: alias_map中的id由add/remove维护，保证<tokens.len()且对应Some
+        // SAFETY: id in alias_map is maintained by add/remove, guaranteed <tokens.len() and corresponding Some
         Some(unsafe { self.tokens.get_unchecked(id).as_ref().unwrap_unchecked() })
     }
 
@@ -139,7 +139,7 @@ impl TokenManager {
     pub fn remove(&mut self, id: usize) -> Option<TokenInfo> {
         let token_info = self.tokens.get_mut(id)?.take()?;
 
-        // 清理所Have索引
+        // Clean up all indexes
         let key = token_info.bundle.primary_token.key();
         self.id_map.remove(&key);
         #[cfg(not(feature = "horizon"))]
@@ -147,13 +147,13 @@ impl TokenManager {
         #[cfg(feature = "horizon")]
         self.queue.remove(&key, &self.tokens);
 
-        // SAFETY: 能走到这里说明id<len且Some，id_to_alias同步长度，必Have对应别名
+        // SAFETY: reaching here means id<len and Some, id_to_alias syncs length, must have corresponding alias
         unsafe {
             let alias = self.id_to_alias.get_unchecked_mut(id).take().unwrap_unchecked();
             self.alias_map.remove(&alias);
         }
 
-        // 将ID加入Empty闲队列末尾，等待重用
+        // Add ID to end of free queue, waiting for reuse
         self.free_ids.push_back(id);
         Some(token_info)
     }
@@ -176,7 +176,7 @@ impl TokenManager {
             return Err(TokenError::AliasExists);
         }
 
-        // SAFETY: 前面AlreadyCheckidHave效且Some
+        // SAFETY: already checked id is valid and Some above
         unsafe {
             let old_alias = self.id_to_alias.get_unchecked_mut(id).take().unwrap_unchecked();
             self.alias_map.remove(&old_alias);
@@ -185,7 +185,7 @@ impl TokenManager {
         let alias = Alias::new(alias);
         self.alias_map.insert(alias.clone(), id);
 
-        // SAFETY: id仍然Have效
+        // SAFETY: id is still valid
         unsafe { *self.id_to_alias.get_unchecked_mut(id) = Some(alias) };
 
         Ok(())
@@ -209,7 +209,7 @@ impl TokenManager {
 
     #[inline(never)]
     pub fn list(&self) -> Vec<(usize, Alias, TokenInfo)> {
-        // SAFETY: enumerate保证id<len，filter_map只HandleSome分支，id_to_alias同步维护
+        // SAFETY: enumerate guarantees id<len, filter_map only handles Some branch, id_to_alias maintained in sync
         unsafe {
             self.tokens
                 .iter()
@@ -224,7 +224,7 @@ impl TokenManager {
         }
     }
 
-    /// Update所Havetoken的客户端密钥，用于安全性刷新
+    /// Update client key of all tokens, for security refresh
     #[inline(always)]
     pub fn update_client_key(&mut self) {
         for token_info in self.tokens.iter_mut().flatten() {
@@ -235,7 +235,7 @@ impl TokenManager {
 
     #[inline(never)]
     pub async fn save(&self) -> Result<(), Box<dyn core::error::Error + Send + Sync + 'static>> {
-        // SAFETY: enumerate保证id<len，filter_map只HandleSome，id_to_alias同步维护
+        // SAFETY: enumerate guarantees id<len, filter_map only handles Some, id_to_alias maintained in sync
         let helpers: Vec<TokenInfoHelper> = unsafe {
             self.tokens
                 .iter()
@@ -257,7 +257,7 @@ impl TokenManager {
 
         let bytes = ::rkyv::to_bytes::<::rkyv::rancor::Error>(&helpers)?;
         if bytes.len() > usize::MAX >> 1 {
-            return Err("令牌数据过大".into());
+            return Err("Token data too large".into());
         }
 
         let file = OpenOptions::new()
@@ -287,14 +287,14 @@ impl TokenManager {
         };
 
         if file.metadata().await?.len() > usize::MAX as u64 {
-            return Err("令牌文件过大".into());
+            return Err("Token file too large".into());
         }
 
         let mmap = unsafe { Mmap::map(&file)? };
         let helpers = unsafe {
             ::rkyv::from_bytes_unchecked::<Vec<TokenInfoHelper>, ::rkyv::rancor::Error>(&mmap)
         }
-        .map_err(|_| "加载令牌Failed")?;
+        .map_err(|_| "Load tokens failed")?;
         let mut manager = Self::new(helpers.len());
 
         for helper in helpers {
@@ -313,13 +313,13 @@ pub struct TokensWriter<'w> {
 }
 
 impl<'w> TokensWriter<'w> {
-    // SAFETY: 调用者必须保证id < tokens.len()且tokens[id].is_some()
+    // SAFETY: caller must guarantee id < tokens.len() and tokens[id].is_some()
     #[inline]
     pub unsafe fn get_unchecked_mut(self, id: usize) -> &'w mut TokenInfo {
         unsafe { self.tokens.get_unchecked_mut(id).as_mut().unwrap_unchecked() }
     }
 
-    // SAFETY: 调用者必须保证id < tokens.len()且tokens[id].is_some()
+    // SAFETY: caller must guarantee id < tokens.len() and tokens[id].is_some()
     #[inline]
     pub unsafe fn into_token_writer(self, id: usize) -> TokenWriter<'w> {
         let token =
@@ -333,12 +333,12 @@ impl<'w> TokensWriter<'w> {
     }
 }
 
-/// Token写入器，通过Drop自动同步key变化
+/// Token writer, automatically syncs key changes through Drop
 ///
-/// Use场景：当Need修改token的key时，通过此TypeEnsure：
-/// 1. 修改Completed后自动更新id_map
-/// 2. 修改Completed后自动更新queue中的key
-/// 3. 防止忘记手动同步导致的索引不一致
+/// Use case: when need to modify token's key, use this type to ensure:
+/// 1. Automatically update id_map after modification completes
+/// 2. Automatically update key in queue after modification completes
+/// 3. Prevent index inconsistency caused by forgetting manual sync
 pub struct TokenWriter<'w> {
     pub key: TokenKey,
     token: &'w mut ExtToken,
@@ -360,10 +360,10 @@ impl Drop for TokenWriter<'_> {
         use core::hint::{assert_unchecked, unreachable_unchecked};
         let key = self.token.primary_token.key();
 
-        // 检测keyWhether变化，变化则更新所Have索引
+        // Detect whether key changed, if changed then update all indexes
         if key != self.key {
-            // SAFETY: TokenWriter只能通过into_token_writer创建，那时token必存在
-            // self.key是创建时的token key，必在id_map中
+            // SAFETY: TokenWriter can only be created through into_token_writer, token must exist at that time
+            // self.key is the token key at creation time, must be in id_map
             unsafe {
                 let i = if let hashbrown::hash_map::EntryRef::Occupied(entry) = self.id_map.entry_ref(&self.key) {
                     entry.remove()
@@ -377,13 +377,13 @@ impl Drop for TokenWriter<'_> {
     }
 }
 
-/// 生成未命名token的Default别名
-/// Format：UNNAMED_PATTERN + ID（如"unnamed_42"）
+/// Generate default alias for unnamed token
+/// Format: UNNAMED_PATTERN + ID (e.g. "unnamed_42")
 #[inline]
 fn generate_unnamed_alias(id: usize) -> String {
-    // 预分配容Amount：pattern长度 + 6位数字
-    // 6位数字可表示0-999999，覆盖百万级token
-    // 超过百万时String会自动扩容（额外一次realloc）
+    // Pre-allocate capacity: pattern length + 6 digits
+    // 6 digits can represent 0-999999, covering million-level tokens
+    // When exceeding million, String will auto-expand (one extra realloc)
     const CAPACITY: usize = UNNAMED_PATTERN.len() + 6;
     let mut s = String::with_capacity(CAPACITY);
     s.push_str(UNNAMED_PATTERN);
@@ -393,12 +393,12 @@ fn generate_unnamed_alias(id: usize) -> String {
     } else {
         let start = s.len();
         let mut n = id;
-        // 倒序push数字，Last反转
+        // Push digits in reverse order, finally reverse
         while n > 0 {
             s.push((b'0' + (n % 10) as u8) as char);
             n /= 10;
         }
-        // SAFETY: 只push了ASCII数字，UTF-8Have效
+        // SAFETY: only pushed ASCII digits, UTF-8 valid
         unsafe { s[start..].as_bytes_mut().reverse() };
     }
 

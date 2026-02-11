@@ -64,7 +64,7 @@ impl LogManager {
         let manager = unsafe {
             ::rkyv::from_bytes_unchecked::<super::LogManagerHelper, rkyv::rancor::Error>(&mmap)
         }
-        .map_err(|_| "加载日志Failed")?;
+        .map_err(|_| "Load logs failed")?;
 
         Ok(manager.into())
     }
@@ -86,7 +86,7 @@ impl LogManager {
             .await?;
 
         if bytes.len() > usize::MAX >> 1 {
-            return Err("日志数据过大".into());
+            return Err("Log data too large".into());
         }
 
         file.set_len(bytes.len() as u64).await?;
@@ -97,13 +97,13 @@ impl LogManager {
         Ok(())
     }
 
-    /// GetError日志数Amount
+    /// Get error log count
     #[inline]
     pub fn error_count(&self) -> u64 {
         self.logs.iter().filter(|log| log.status as u8 != 1).count() as u64
     }
 
-    /// Get日志总数
+    /// Get total log count
     #[inline]
     pub fn total_count(&self) -> u64 { self.logs.len() as u64 }
 }
@@ -307,7 +307,7 @@ fn handle_command(mgr: &mut LogManager, cmd: LogCommand) -> bool {
                             }
                         }
                         Entry::Vacant(e) => {
-                            crate::debug!("[LOG] 数据不一致: {:?}", e.into_key())
+                            crate::debug!("[LOG] Data inconsistency: {:?}", e.into_key())
                         }
                     };
                 }

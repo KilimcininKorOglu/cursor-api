@@ -69,11 +69,11 @@ impl Randomness {
             buf[pos + 1] = HEX_CHARS[(byte & 0x0F) as usize];
         }
 
-        // InsertSeparator
+        // Insert separator
         buf[8] = b'-';
         buf[13] = b'-';
 
-        // SAFETY: buf 只包含Have效的 ASCII 字符
+        // SAFETY: buf only contains valid ASCII characters
         unsafe { core::str::from_utf8_unchecked_mut(buf) }
     }
 }
@@ -239,13 +239,13 @@ impl<'de> ::serde::Deserialize<'de> for Subject {
     }
 }
 
-/// User标识符，Support两种Format的高效ID系统
+/// User identifier, efficient ID system supporting two formats
 ///
-/// 采用向前兼容设计，通过Check高32位区分Format：
-/// - 旧Format：24字符十六进制，高32位To0
-/// - 新Format：`user_` + 26字符ULID，充分利用128位Empty间
+/// Uses forward-compatible design, distinguishes format by checking high 32 bits:
+/// - Legacy format: 24-character hexadecimal, high 32 bits are 0
+/// - New format: `user_` + 26-character ULID, fully utilizing 128-bit space
 ///
-/// ULID时间戳特性Ensure新Format高32位非零，实现无歧义Format识别。
+/// ULID timestamp feature ensures new format high 32 bits are non-zero, achieving unambiguous format recognition.
 #[derive(
     Clone, Copy, PartialEq, Eq, Hash, ::rkyv::Archive, ::rkyv::Serialize, ::rkyv::Deserialize,
 )]
@@ -256,33 +256,33 @@ pub struct UserId([u8; 16]);
 impl UserId {
     const PREFIX: &'static str = "user_";
 
-    // ==================== 公开API：构造与Convert ====================
+    // ==================== Public API: Construction and Conversion ====================
 
-    /// 从 u128 构造
+    /// Construct from u128
     #[inline]
     pub const fn from_u128(value: u128) -> Self { Self(value.to_ne_bytes()) }
 
-    /// ConvertTo u128
+    /// Convert to u128
     #[inline]
     pub const fn as_u128(self) -> u128 { u128::from_ne_bytes(self.0) }
 
-    /// 从字节数组构造
+    /// Construct from byte array
     #[inline]
     pub const fn from_bytes(bytes: [u8; 16]) -> Self { Self(bytes) }
 
-    /// ConvertTo字节数组
+    /// Convert to byte array
     #[inline]
     pub const fn to_bytes(self) -> [u8; 16] { self.0 }
 
-    // ==================== Format检测与字符串Convert ====================
+    // ==================== Format detection and string conversion ====================
 
-    /// CheckWhetherTo旧FormatID（高32位To0）
+    /// Check whether it is legacy format ID (high 32 bits are 0)
     #[inline]
     pub const fn is_legacy(&self) -> bool {
-        // Memory layout (little-endian): [低32位][次低32位][次高32位][最高32位]
-        //                     index:         [0]      [1]       [2]       [3]
-        // Memory layout (big-endian):    [最高32位][次高32位][次低32位][低32位]
-        //                     index:         [0]       [1]       [2]      [3]
+        // Memory layout (little-endian): [low 32 bits][next low 32 bits][next high 32 bits][highest 32 bits]
+        //                     index:         [0]           [1]              [2]               [3]
+        // Memory layout (big-endian):    [highest 32 bits][next high 32 bits][next low 32 bits][low 32 bits]
+        //                     index:         [0]               [1]               [2]             [3]
         let parts = unsafe { core::mem::transmute::<[u8; 16], [u32; 4]>(self.0) };
 
         #[cfg(target_endian = "little")]
@@ -293,21 +293,21 @@ impl UserId {
         parts[HIGH_INDEX] == 0
     }
 
-    /// 高性能字符串Convert，旧Format24字符，新Format31字符
+    /// High-performance string conversion, legacy format 24 characters, new format 31 characters
     #[allow(clippy::wrong_self_convention)]
     #[inline]
     pub fn to_str<'buf>(&self, buf: &'buf mut [u8; 31]) -> &'buf mut str {
         if self.is_legacy() {
-            // 旧Format：24字符 hex，从 bytes[4..16] Encode
+            // Legacy format: 24-character hex, encode from bytes[4..16]
             for (i, &byte) in self.0[4..].iter().enumerate() {
                 buf[i * 2] = HEX_CHARS[(byte >> 4) as usize];
                 buf[i * 2 + 1] = HEX_CHARS[(byte & 0x0f) as usize];
             }
 
-            // SAFETY: HEX_CHARS Ensure输出是Have效 ASCII
+            // SAFETY: HEX_CHARS ensures output is valid ASCII
             unsafe { core::str::from_utf8_unchecked_mut(&mut buf[..24]) }
         } else {
-            // 新Format：user_ + 26字符 ULID
+            // New format: user_ + 26-character ULID
             unsafe {
                 core::ptr::copy_nonoverlapping(Self::PREFIX.as_ptr(), buf.as_mut_ptr(), 5);
                 ulid::to_str(self.as_u128(), &mut *(buf.as_mut_ptr().add(5) as *mut [u8; 26]));
@@ -430,13 +430,13 @@ impl fmt::Display for TokenError {
 
 #[derive(Clone, Copy)]
 pub struct RawToken {
-    /// User标识符
+    /// User identifier
     pub subject: Subject,
     /// Signature
     pub signature: [u8; 32],
-    /// 持续时间
+    /// Duration
     pub duration: Duration,
-    /// 随机字符串
+    /// Random string
     pub randomness: Randomness,
     /// Session
     pub is_session: bool,
@@ -537,7 +537,7 @@ impl FromStr for RawToken {
     type Err = TokenError;
 
     fn from_str(token: &str) -> Result<Self, Self::Err> {
-        // 1. 分割并验证tokenFormat
+        // 1. Split and validate token format
         let parts = token.strip_prefix(HEADER_B64).ok_or(TokenError::InvalidHeader)?;
 
         let (payload_b64, signature_b64) =
@@ -547,7 +547,7 @@ impl FromStr for RawToken {
             return Err(TokenError::InvalidSignatureLength);
         }
 
-        // 2. Decodepayloadandsignature
+        // 2. Decode payload and signature
         let payload =
             URL_SAFE_NO_PAD.decode_to_vec(payload_b64).map_err(|_| TokenError::InvalidBase64)?;
 
@@ -556,7 +556,7 @@ impl FromStr for RawToken {
             .decode(signature_b64.as_bytes(), Out::from_uninit_slice(signature.as_bytes_mut()))
             .map_err(|_| TokenError::InvalidBase64)?;
 
-        // 3. 解析payload
+        // 3. Parse payload
         let payload: TokenPayload = serde_json::from_slice(&payload).map_err(|e| {
             let e: io::Error = e.into();
             match e.downcast::<SubjectError>() {
@@ -568,7 +568,7 @@ impl FromStr for RawToken {
             }
         })?;
 
-        // 4. 构造RawToken
+        // 4. Construct RawToken
         Ok(Self {
             subject: payload.sub,
             duration: Duration { start: payload.time.0, end: payload.exp },

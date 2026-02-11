@@ -15,13 +15,13 @@ use crate::app::constant::{
 #[serde(tag = "type", content = "value")]
 #[serde(rename_all = "snake_case")]
 pub enum PageContent {
-    Default,           // Default行To
-    NotFound,          // 404页面
-    Redirect(String),  // 重定向到指定URL
-    PlainText(String), // 纯TextContent
-    Html(String),      // HTMLContent
-    Css(String),       // CssContent
-    Js(String),        // JsContent
+    Default,           // Default behavior
+    NotFound,          // 404 page
+    Redirect(String),  // Redirect to specified URL
+    PlainText(String), // Plain text content
+    Html(String),      // HTML content
+    Css(String),       // CSS content
+    Js(String),        // JavaScript content
 }
 
 impl const Default for PageContent {
@@ -32,7 +32,7 @@ impl const Default for PageContent {
 }
 
 impl PageContent {
-    /// 根据ContentType生成Response，接受Default行To闭包
+    /// Generate response based on content type, accept default behavior closure
     pub fn into_response<F>(self, default_handler: F) -> Response
     where
         F: FnOnce() -> Result<Response<Body>, http::Error>,
