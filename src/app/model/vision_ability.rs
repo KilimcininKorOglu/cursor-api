@@ -9,12 +9,12 @@ pub enum VisionAbility {
 }
 
 impl VisionAbility {
-    /// 主要的字符串表示
+    /// Primary string representation
     const NONE: &'static str = "none";
     const BASE64: &'static str = "base64";
     const ALL: &'static str = "all";
 
-    /// 别名
+    /// Aliases
     const NONE_ALIAS: &'static str = "disabled";
     const BASE64_ALIAS: &'static str = "base64-only";
     const ALL_ALIAS: &'static str = "base64-http";
@@ -33,7 +33,7 @@ impl VisionAbility {
     #[inline(always)]
     pub fn is_none(self) -> bool { matches!(self, VisionAbility::None) }
 
-    /// Get枚举的主要字符串表示
+    /// Get primary string representation of enum
     #[inline]
     pub const fn as_str(self) -> &'static str {
         match self {
