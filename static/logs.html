@@ -5,12 +5,12 @@
   <meta charset="UTF-8" />
   <link rel="icon" type="image/x-icon" href="data:image/x-icon;," />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Request日志View</title>
+  <title>Request Log Viewer</title>
   <!-- Include shared styles -->
   <link rel="stylesheet" href="/static/shared-styles.css" />
   <script src="/static/shared.js"></script>
   <style>
-    /* Filter面板样式 */
+    /* Filter panel styles */
     .filter-panel {
       background: var(--card-background);
       padding: 20px;
@@ -93,7 +93,7 @@
       margin-top: 20px;
     }
 
-    /* 创建正确的堆叠上下文 */
+    /* Create correct stacking context */
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -279,7 +279,7 @@
       background-color: #f44336;
     }
 
-    /* Token 信息和Conversation预览的通用样式 */
+    /* Token info and conversation preview common styles */
     .token-info-tooltip {
       position: relative;
       display: inline-block;
@@ -358,7 +358,7 @@
       padding: 20px;
     }
 
-    /* Conversation预览特定样式 */
+    /* Conversation preview specific styles */
     .prompt-preview .tooltip-content {
       width: 320px;
       max-height: 200px;
@@ -398,7 +398,7 @@
       background-color: var(--card-background);
     }
 
-    /* 优化表格样式 */
+    /* Optimized table styles */
     .table-container {
       border-radius: var(--border-radius);
       overflow: hidden;
@@ -486,7 +486,7 @@
       color: white;
     }
 
-    /* 图表样式 */
+    /* Chart styles */
     .chart-container {
       background: var(--card-background);
       padding: 20px;
@@ -496,7 +496,7 @@
       height: 300px;
     }
 
-    /* Add菜单切换样式 */
+    /* Add menu toggle styles */
     .tab-menu {
       display: flex;
       margin-bottom: 15px;
@@ -596,7 +596,7 @@
       border-color: var(--primary-color);
     }
 
-    /* Response式样式 */
+    /* Responsive styles */
     @media (max-width: 768px) {
       .filter-grid {
         grid-template-columns: 1fr;
@@ -643,7 +643,7 @@
 </head>
 
 <body>
-  <h1>Request日志View</h1>
+  <h1>Request Log Viewer</h1>
 
   <div class="container">
     <div class="form-group">
@@ -651,7 +651,7 @@
       <input type="password" id="authToken" placeholder="Enter AUTH_TOKEN" />
     </div>
 
-    <!-- 新的Filter面板 -->
+    <!-- New filter panel -->
     <div class="filter-panel">
       <!-- TimeRangeFilter -->
       <div class="filter-section">
@@ -672,7 +672,7 @@
               margin-bottom: 5px;
               font-size: 13px;
               color: var(--text-secondary);
-            ">快速Select</label>
+            ">Quick Select</label>
           <div class="button-group" style="justify-content: flex-start">
             <button onclick="setTimeRange('1h')" style="padding: 6px 12px; font-size: 14px">
               Last 1 Hour
@@ -690,56 +690,56 @@
         </div>
       </div>
 
-      <!-- UserFilter -->
+      <!-- User filter -->
       <div class="filter-section">
-        <h3>👤 UserFilter</h3>
+        <h3>👤 User Filter</h3>
         <div class="filter-grid">
           <div class="filter-group">
-            <label for="userId">UserID</label>
-            <input type="text" id="userId" placeholder="精确匹配UserID" />
+            <label for="userId">User ID</label>
+            <input type="text" id="userId" placeholder="Exact match User ID" />
           </div>
           <div class="filter-group">
             <label for="email">Email</label>
             <input type="text" id="email" placeholder="Supports partial match" />
           </div>
           <div class="filter-group">
-            <label for="membershipType">会员Type</label>
+            <label for="membershipType">Membership Type</label>
             <select id="membershipType">
               <option value="">All</option>
               <option value="free">Free</option>
               <option value="free_trial">Trial</option>
-              <option value="pro">专业版</option>
-              <option value="enterprise">企业版</option>
+              <option value="pro">Pro</option>
+              <option value="enterprise">Enterprise</option>
             </select>
           </div>
         </div>
       </div>
 
-      <!-- ModelFilter -->
+      <!-- Model filter -->
       <div class="filter-section">
-        <h3>🤖 ModelFilter</h3>
+        <h3>🤖 Model Filter</h3>
         <div class="filter-grid">
           <div class="filter-group">
-            <label for="model">ModelName</label>
+            <label for="model">Model Name</label>
             <input type="text" id="model" placeholder="Supports partial match" />
           </div>
           <div class="filter-group">
             <label for="includeModels">Include Models</label>
-            <input type="text" id="includeModels" placeholder="comma separated，如: gpt-4,claude" />
+            <input type="text" id="includeModels" placeholder="Comma separated, e.g.: gpt-4,claude" />
           </div>
           <div class="filter-group">
             <label for="excludeModels">Exclude Models</label>
-            <input type="text" id="excludeModels" placeholder="comma separated，如: gpt-3.5,dall-e" />
+            <input type="text" id="excludeModels" placeholder="Comma separated, e.g.: gpt-3.5,dall-e" />
           </div>
         </div>
       </div>
 
-      <!-- 性能Filter -->
+      <!-- Performance filter -->
       <div class="filter-section">
-        <h3>📊 性能Filter</h3>
+        <h3>📊 Performance Filter</h3>
         <div class="filter-grid">
           <div class="filter-group">
-            <label>耗时Range（seconds）</label>
+            <label>Duration Range (seconds)</label>
             <div class="range-input">
               <input type="number" id="minTotalTime" placeholder="Min" step="0.1" min="0" />
               <span>~</span>
@@ -747,7 +747,7 @@
             </div>
           </div>
           <div class="filter-group">
-            <label>TokensRange</label>
+            <label>Tokens Range</label>
             <div class="range-input">
               <input type="number" id="minTokens" placeholder="Min" min="0" />
               <span>~</span>
@@ -757,9 +757,9 @@
         </div>
       </div>
 
-      <!-- 其他选items -->
+      <!-- Other options -->
       <div class="filter-section">
-        <h3>🔧 其他选items</h3>
+        <h3>🔧 Other Options</h3>
         <div class="filter-grid">
           <div class="filter-group">
             <label for="status">Status</label>
@@ -771,7 +771,7 @@
             </select>
           </div>
           <div class="filter-group">
-            <label for="stream">StreamResponse</label>
+            <label for="stream">Stream Response</label>
             <select id="stream">
               <option value="">All</option>
               <option value="true">Yes</option>
@@ -779,7 +779,7 @@
             </select>
           </div>
           <div class="filter-group">
-            <label for="hasError">包含Error</label>
+            <label for="hasError">Has Error</label>
             <select id="hasError">
               <option value="">All</option>
               <option value="true">Yes</option>
@@ -803,14 +803,14 @@
             </select>
           </div>
           <div class="filter-group">
-            <label for="reverse">Sort方式</label>
+            <label for="reverse">Sort Order</label>
             <select id="reverse">
               <option value="false">Oldest First</option>
               <option value="true" selected>Newest First</option>
             </select>
           </div>
           <div class="filter-group">
-            <label for="pageSize">每pageShow</label>
+            <label for="pageSize">Per Page</label>
             <select id="pageSize">
               <option value="10">10 records</option>
               <option value="20" selected>20 records</option>
@@ -819,29 +819,29 @@
             </select>
           </div>
           <div class="filter-group">
-            <label for="errorText">Error信息</label>
+            <label for="errorText">Error Message</label>
             <input type="text" id="errorText" placeholder="Supports partial match" />
           </div>
         </div>
       </div>
 
-      <!-- FilterActions按钮 -->
+      <!-- Filter action buttons -->
       <div class="filter-actions">
         <button onclick="resetFilters()">Reset</button>
-        <button onclick="applyFilters()">ApplyFilter</button>
+        <button onclick="applyFilters()">Apply Filter</button>
       </div>
     </div>
 
     <div class="refresh-container">
       <div class="button-group">
-        <button onclick="fetchLogs()">Refresh日志</button>
+        <button onclick="fetchLogs()">Refresh Logs</button>
         <button onclick="exportLogs()" style="margin-left: 10px">
-          Export数据
+          Export Data
         </button>
       </div>
       <div class="auto-refresh">
         <input type="checkbox" id="autoRefresh" checked />
-        <label for="autoRefresh">自动Refresh (60seconds)</label>
+        <label for="autoRefresh">Auto Refresh (60 seconds)</label>
       </div>
     </div>
   </div>
@@ -849,24 +849,24 @@
   <div class="container">
     <div class="stats-grid">
       <div class="stat-card">
-        <h4>总Request数</h4>
+        <h4>Total Requests</h4>
         <div id="totalRequests" class="stat-value">-</div>
       </div>
       <div class="stat-card">
-        <h4>SuccessRequest</h4>
+        <h4>Successful Requests</h4>
         <div id="successRequests" class="stat-value">-</div>
       </div>
       <div class="stat-card">
-        <h4>FailedRequest</h4>
+        <h4>Failed Requests</h4>
         <div id="failureRequests" class="stat-value">-</div>
       </div>
       <div class="stat-card">
-        <h4>最后Update</h4>
+        <h4>Last Update</h4>
         <div id="lastUpdate" class="stat-value">-</div>
       </div>
     </div>
 
-    <!-- Add图表容器 -->
+    <!-- Add chart container -->
     <div class="chart-container">
       <canvas id="requestsChart"></canvas>
     </div>
@@ -884,40 +884,39 @@
             <th>Input/Output</th>
             <th>Stream</th>
             <th>Status</th>
-            <th>Error信息</th>
+            <th>Error Message</th>
           </tr>
         </thead>
         <tbody id="logsBody"></tbody>
       </table>
     </div>
 
-    <!-- 分page控件 -->
+    <!-- Pagination controls -->
     <div class="pagination-container">
       <div class="pagination-info">
-        Total <span id="totalRecords">0</span> recordsrecords， 每page
+        Total <span id="totalRecords">0</span> records, per page
         <input type="number" id="customPageSize" class="page-input" min="5" max="100" value="20" />
         records
         <button class="page-go-btn" onclick="changePageSize()">Apply</button>
       </div>
       <div class="pagination-controls">
         <button id="prevPage" onclick="changePage(-1)" disabled>
-          &laquo; 上一page
+          &laquo; Previous
         </button>
-        <span id="currentPage">Page 1 page</span>
+        <span id="currentPage">Page 1</span>
         <button id="nextPage" onclick="changePage(1)" disabled>
-          下一page &raquo;
+          Next &raquo;
         </button>
         <div class="page-jumper">
-          Go to到Page
+          Go to page
           <input type="number" id="pageNumberInput" class="page-input" min="1" value="1" />
-          page
           <button class="page-go-btn" onclick="jumpToPage()">GO</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- TokenDetails模态框 -->
+  <!-- Token details modal -->
   <div id="tokenModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -986,13 +985,13 @@
     </div>
   </div>
 
-  <!-- ConversationDetails模态框 -->
+  <!-- Conversation details modal -->
   <div id="conversationModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3>ConversationDetails</h3>
+        <h3>Conversation Details</h3>
         <div class="tab-menu">
-          <button id="tab-prompt" class="tab-button active">ConversationContent</button>
+          <button id="tab-prompt" class="tab-button active">Conversation Content</button>
           <button id="tab-think" class="tab-button">Thinking Process</button>
           <button id="tab-delays" class="tab-button">Delay Analysis</button>
         </div>
@@ -1013,7 +1012,7 @@
                 <tr>
                   <th>ID</th>
                   <th>Text Block</th>
-                  <th>延迟Time(s)</th>
+                  <th>Delay Time(s)</th>
                   <th>Rate(chars/seconds)</th>
                 </tr>
               </thead>
@@ -1025,13 +1024,13 @@
     </div>
   </div>
 
-  <!-- 引入Chart.js -->
+  <!-- Include Chart.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.0/chart.umd.min.js"
     integrity="sha512-Y51n9mtKTVBh3Jbx5pZSJNDDMyY+yGe77DGtBPzRlgsf/YLCh13kSZ3JmfHGzYFCmOndraf0sQgfM654b7dJ3w=="
     crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
   <script>
-    // 全局变量
+    // Global variables
     let currentPageIndex = 0;
     let pageSize = 20;
     let totalRecords = 0;
@@ -1039,16 +1038,16 @@
     let refreshInterval = null;
     let requestsChart = null;
 
-    // 初始化变量
+    // Initialize variables
     let currentTokenDetails = {};
 
-    // Token Info缓存
+    // Token info cache
     let tokenInfoCache = {};
-    let allTokensLoaded = false; // 标记YesNo已加载所有token信息
+    let allTokensLoaded = false; // Flag whether all token info has been loaded
 
-    // Update统计信息
+    // Update statistics
     function updateStats(data) {
-      // 计算各种统计
+      // Calculate various statistics
       const totalRequests = data.total || 0;
       const successRequests = data.logs.filter(
         (log) => log.status === "success",
@@ -1057,7 +1056,7 @@
         (log) => log.status === "failure",
       ).length;
 
-      // Update统计卡片
+      // Update statistics cards
       document.getElementById("totalRequests").textContent =
         totalRequests.toLocaleString();
       document.getElementById("successRequests").textContent =
@@ -1068,21 +1067,21 @@
         new Date().toLocaleTimeString("zh-CN");
     }
 
-    // ShowTokenDetails模态框
+    // Show token details modal
     async function showTokenModal(tokenInfo) {
       const modal = document.getElementById("tokenModal");
 
-      // 如果有key，优先从缓存获取详细信息
+      // If key exists, get detailed info from cache first
       if (tokenInfo.key && tokenInfoCache[tokenInfo.key]) {
-        // 使用缓存的数据
+        // Use cached data
         tokenInfo = { ...tokenInfo, ...tokenInfoCache[tokenInfo.key] };
       }
 
-      // Settings基础信息
+      // Set basic info
       document.getElementById("modalToken").textContent =
         tokenInfo.primary_token || "-";
 
-      // 处理checksum
+      // Handle checksum
       if (tokenInfo.checksum) {
         document.getElementById("modalChecksum").textContent = `${tokenInfo.checksum.first || "-"
           } / ${tokenInfo.checksum.second || "-"}`;
@@ -1090,7 +1089,7 @@
         document.getElementById("modalChecksum").textContent = "-";
       }
 
-      // Settings其他字段
+      // Set other fields
       document.getElementById("modalClientKey").textContent =
         tokenInfo.client_key || "-";
       document.getElementById("modalConfigVersion").textContent =
@@ -1102,7 +1101,7 @@
       document.getElementById("modalTimezone").textContent =
         tokenInfo.timezone || "-";
 
-      // 处理User信息
+      // Handle user info
       if (tokenInfo.user) {
         document.getElementById("modalEmail").textContent =
           tokenInfo.user.email || "-";
@@ -1118,7 +1117,7 @@
         document.getElementById("modalUpdatedAt").textContent = "-";
       }
 
-      // 处理Stripe信息
+      // Handle Stripe info
       if (tokenInfo.stripe) {
         document.getElementById("modalMemberType").textContent =
           formatMembershipType(tokenInfo.stripe.membership_type);
@@ -1126,7 +1125,7 @@
           tokenInfo.stripe.payment_id || "-";
         document.getElementById("modalTrialDays").textContent =
           tokenInfo.stripe.days_remaining_on_trial > 0
-            ? `${tokenInfo.stripe.days_remaining_on_trial}天`
+            ? `${tokenInfo.stripe.days_remaining_on_trial} days`
             : "-";
       } else {
         document.getElementById("modalMemberType").textContent = "-";
@@ -1134,7 +1133,7 @@
         document.getElementById("modalTrialDays").textContent = "-";
       }
 
-      // 处理Usage信息
+      // Handle usage info
       const container = document.getElementById("usageProgressContainer");
       container.innerHTML = "";
 
@@ -1181,11 +1180,11 @@
       modal.style.display = "block";
     }
 
-    // 格式化简单Token Info用于tooltip
+    // Format simple token info for tooltip
     function formatSimpleTokenInfo(tokenInfo) {
-      if (!tokenInfo) return "NoneToken Info";
+      if (!tokenInfo) return "No Token Info";
 
-      // 如果有key，优先从缓存获取完整信息
+      // If key exists, get full info from cache first
       let fullTokenInfo = tokenInfo;
       if (tokenInfo.key && tokenInfoCache[tokenInfo.key]) {
         fullTokenInfo = { ...tokenInfo, ...tokenInfoCache[tokenInfo.key] };
@@ -1200,13 +1199,13 @@
       if (fullTokenInfo.user) {
         rows.push(["Email", fullTokenInfo.user.email || "-"]);
         if (fullTokenInfo.user.name) {
-          rows.push(["User名", fullTokenInfo.user.name]);
+          rows.push(["Username", fullTokenInfo.user.name]);
         }
       }
 
       if (fullTokenInfo.stripe) {
         rows.push([
-          "会员Type",
+          "Membership Type",
           formatMembershipType(fullTokenInfo.stripe.membership_type),
         ]);
       }
@@ -1216,11 +1215,11 @@
         const usage = premium.max_requests
           ? `${premium.num_requests}/${premium.max_requests}`
           : `${premium.num_requests}`;
-        rows.push(["Premium使用", usage]);
+        rows.push(["Premium Usage", usage]);
       }
 
       if (rows.length === 0) {
-        return "None详细信息";
+        return "No detailed info";
       }
 
       return rows
@@ -1231,7 +1230,7 @@
         .join("");
     }
 
-    // SettingsTimeRange快速Select
+    // Set time range quick select
     function setTimeRange(range) {
       const now = new Date();
       const toDate = now.toISOString().slice(0, 16); // YYYY-MM-DDTHH:mm
@@ -1263,7 +1262,7 @@
       document.getElementById("fromDate").value = fromDate;
       document.getElementById("toDate").value = toDate;
 
-      // 自动ApplyFilter
+      // Auto apply filter
       applyFilters();
     }
 
@@ -1275,7 +1274,7 @@
           labels: [],
           datasets: [
             {
-              label: "每小时Request数",
+              label: "Requests per hour",
               data: [],
               borderColor: "rgb(75, 192, 192)",
               tension: 0.1,
@@ -1297,25 +1296,25 @@
           plugins: {
             title: {
               display: true,
-              text: "24小时Request统计",
+              text: "24-hour request statistics",
             },
           },
         },
       });
     }
 
-    // Update图表数据
+    // Update chart data
     function updateChart(data) {
       if (!requestsChart) {
         initChart();
       }
 
-      // 按小时统计RequestCount
+      // Count requests by hour
       const hourlyStats = new Map();
       const now = new Date();
       const past24Hours = new Date(now - 24 * 60 * 60 * 1000);
 
-      // 初始化24小时的Time段
+      // Initialize 24-hour time periods
       for (let i = 0; i < 24; i++) {
         const hour = new Date(now - i * 60 * 60 * 1000);
         const hourKey = hour.toLocaleString("zh-CN", {
@@ -1326,7 +1325,7 @@
         hourlyStats.set(hourKey, 0);
       }
 
-      // 统计每小时的Request数
+      // Count requests per hour
       data.logs.forEach((log) => {
         const logTime = new Date(log.timestamp);
         if (logTime >= past24Hours) {
@@ -1341,7 +1340,7 @@
         }
       });
 
-      // 转换为图表数据
+      // Convert to chart data
       const sortedHours = Array.from(hourlyStats.keys()).reverse();
       const counts = sortedHours.map((hour) => hourlyStats.get(hour));
 
@@ -1355,12 +1354,12 @@
       updateStats(data);
       updateChart(data);
 
-      // Update总records数和分page信息
+      // Update total records and pagination info
       totalRecords = data.total;
       document.getElementById("totalRecords").textContent = totalRecords;
       updatePaginationControls();
 
-      // 收集所有的token keys
+      // Collect all token keys
       const tokenKeys = new Set();
       data.logs.forEach((log) => {
         if (log.token_info && log.token_info.key) {
@@ -1368,17 +1367,17 @@
         }
       });
 
-      // 如果还没有加载过所有token信息，则加载并等待完成
+      // If all token info hasn't been loaded yet, load and wait for completion
       if (!allTokensLoaded && tokenKeys.size > 0) {
         await loadAllTokenInfo(Array.from(tokenKeys));
       }
 
       tbody.innerHTML = data.logs
         .map((log) => {
-          // 准备数据属性
+          // Prepare data attributes
           let attributes = {};
 
-          // 处理 prompt 属性
+          // Handle prompt attribute
           if (log.chain && typeof log.chain.prompt === "string") {
             try {
               const promptJson = JSON.stringify(log.chain.prompt);
@@ -1393,7 +1392,7 @@
             }
           }
 
-          // 处理 think 属性
+          // Handle think attribute
           if (log.chain && typeof log.chain.think === "string") {
             try {
               const thinkJson = JSON.stringify(log.chain.think);
@@ -1408,7 +1407,7 @@
             }
           }
 
-          // 处理 delays 属性
+          // Handle delays attribute
           if (
             log.chain &&
             Array.isArray(log.chain.delays) &&
@@ -1429,7 +1428,7 @@
             }
           }
 
-          // 组合所有属性
+          // Combine all attributes
           const allAttributes = Object.values(attributes).join(" ");
 
           return `<tr>
@@ -1438,11 +1437,11 @@
     <td>${log.model}</td>
     <td><div class="token-info-tooltip"><button class="info-button" onclick='showTokenModal(${JSON.stringify(
             log.token_info,
-          )})'>ViewDetails<div class="tooltip-content">${formatSimpleTokenInfo(
+          )})'>View Details<div class="tooltip-content">${formatSimpleTokenInfo(
             log.token_info,
           )}</div></button></div></td>
     <td>${log.chain
-              ? `<div class="token-info-tooltip prompt-preview"><button class="info-button view-conversation" ${allAttributes}>ViewConversation<div class="tooltip-content">${formatDialogPreview(
+              ? `<div class="token-info-tooltip prompt-preview"><button class="info-button view-conversation" ${allAttributes}>View Conversation<div class="tooltip-content">${formatDialogPreview(
                 JSON.stringify(log.chain.prompt || ""),
               )}</div></button></div>`
               : "-"
@@ -1457,7 +1456,7 @@
         })
         .join("");
 
-      // Add事件监听器
+      // Add event listeners
       tbody.querySelectorAll(".view-conversation").forEach((button) => {
         button.addEventListener("click", function () {
           const prompt = this.hasAttribute("data-prompt")
@@ -1483,30 +1482,30 @@
       try {
         const messages = parsePrompt(promptStr);
         if (!messages || messages.length === 0) {
-          return "NoneConversationContent";
+          return "No conversation content";
         }
 
-        // 获取最后一records消息
+        // Get the last message
         const lastMessage = messages[messages.length - 1];
         const roleLabels = {
           system: "System",
           user: "User",
-          assistant: "助手",
+          assistant: "Assistant",
         };
 
-        return `<div class="message-meta">最后一records消息 (${roleLabels[lastMessage.role] || lastMessage.role
+        return `<div class="message-meta">Last message (${roleLabels[lastMessage.role] || lastMessage.role
           }):</div><div class="last-message">${lastMessage.content
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;")
             .replace(/\n/g, "<br>")}</div>`;
       } catch (e) {
-        console.error("预览ConversationContentFailed:", e);
-        return "None法解析ConversationContent";
+        console.error("Preview conversation content failed:", e);
+        return "Unable to parse conversation content";
       }
     }
 
-    // Update分page控件Status
+    // Update pagination controls status
     function updatePaginationControls() {
       const prevPageBtn = document.getElementById("prevPage");
       const nextPageBtn = document.getElementById("nextPage");
@@ -1514,27 +1513,27 @@
       const pageNumberInput = document.getElementById("pageNumberInput");
       const customPageSize = document.getElementById("customPageSize");
 
-      // 计算总page数
+      // Calculate total pages
       const totalPages = Math.ceil(totalRecords / pageSize) || 1;
 
-      // Disable或Enable上一page按钮
+      // Disable or enable previous page button
       prevPageBtn.disabled = currentPageIndex <= 0;
 
-      // Disable或Enable下一page按钮（如果当前pageYes最后一page或没有足够的records）
+      // Disable or enable next page button (if current page is last page or not enough records)
       const hasMorePages = (currentPageIndex + 1) * pageSize < totalRecords;
       nextPageBtn.disabled = !hasMorePages;
 
-      // Update当前pageShow
+      // Update current page display
       currentPageSpan.textContent = `Page ${currentPageIndex + 1
-        } page / Total ${totalPages} page`;
+        } / Total ${totalPages} pages`;
 
-      // 同步Input框数值
+      // Sync input values
       pageNumberInput.value = currentPageIndex + 1;
       pageNumberInput.max = totalPages;
       customPageSize.value = pageSize;
     }
 
-    // 切换page码
+    // Change page
     function changePage(delta) {
       currentPageIndex += delta;
       if (currentPageIndex < 0) currentPageIndex = 0;
@@ -1542,20 +1541,20 @@
       fetchLogs();
     }
 
-    // Go to到指定page
+    // Jump to specified page
     function jumpToPage() {
       const pageNumberInput = document.getElementById("pageNumberInput");
       const pageNumber = parseInt(pageNumberInput.value);
       const totalPages = Math.ceil(totalRecords / pageSize) || 1;
 
       if (isNaN(pageNumber) || pageNumber < 1) {
-        showGlobalMessage("请InputValid的page码", true);
+        showGlobalMessage("Please enter a valid page number", true);
         pageNumberInput.value = currentPageIndex + 1;
         return;
       }
 
       if (pageNumber > totalPages) {
-        showGlobalMessage(`page码超出Range，Maxpage码为 ${totalPages}`, true);
+        showGlobalMessage(`Page number out of range, max page is ${totalPages}`, true);
         pageNumberInput.value = totalPages;
         return;
       }
@@ -1564,24 +1563,24 @@
       fetchLogs();
     }
 
-    // 更改每pageShowCount
+    // Change per page display count
     function changePageSize() {
       const customPageSize = document.getElementById("customPageSize");
       const newPageSize = parseInt(customPageSize.value);
 
       if (isNaN(newPageSize) || newPageSize < 5 || newPageSize > 100) {
-        showGlobalMessage("每pageShowCount必须在5-100之间", true);
+        showGlobalMessage("Per page count must be between 5-100", true);
         customPageSize.value = pageSize;
         return;
       }
 
-      // Reset到Page一page并使用新的pageSize
+      // Reset to first page and use new page size
       currentPageIndex = 0;
       pageSize = newPageSize;
       fetchLogs();
     }
 
-    // 获取TimeRangeFilter
+    // Get time range filter
     function getTimeRangeFilter() {
       const fromDate = document.getElementById("fromDate").value;
       const toDate = document.getElementById("toDate").value;
@@ -1589,7 +1588,7 @@
       const filter = {};
 
       if (fromDate) {
-        // 转换为RFC3339格式
+        // Convert to RFC3339 format
         filter.from_date = new Date(fromDate).toISOString();
       }
 
@@ -1600,7 +1599,7 @@
       return filter;
     }
 
-    // 获取UserFilter
+    // Get user filter
     function getUserFilter() {
       const filter = {};
 
@@ -1616,7 +1615,7 @@
       return filter;
     }
 
-    // 获取ModelFilter
+    // Get model filter
     function getModelFilter() {
       const filter = {};
 
@@ -1646,7 +1645,7 @@
       return filter;
     }
 
-    // 获取性能Filter
+    // Get performance filter
     function getPerformanceFilter() {
       const filter = {};
 
@@ -1669,7 +1668,7 @@
       return filter;
     }
 
-    // 获取其他Filter
+    // Get other filters
     function getOtherFilters() {
       const filter = {};
 
@@ -1694,26 +1693,26 @@
       return filter;
     }
 
-    // ApplyFilterrecords件
+    // Apply filter conditions
     function applyFilters() {
-      // Reset到Page一page
+      // Reset to first page
       currentPageIndex = 0;
 
-      // Update每pageShowCount
+      // Update per page count
       const pageSizeSelect = document.getElementById("pageSize");
       if (pageSizeSelect) {
         pageSize = parseInt(pageSizeSelect.value);
-        // 同步CustomInput框
+        // Sync custom input
         document.getElementById("customPageSize").value = pageSize;
       }
 
-      // 获取Filter后的数据
+      // Get filtered data
       fetchLogs();
     }
 
-    // ResetFilterrecords件
+    // Reset filter conditions
     function resetFilters() {
-      // Reset所有Input框
+      // Reset all input fields
       document.getElementById("fromDate").value = "";
       document.getElementById("toDate").value = "";
       document.getElementById("userId").value = "";
@@ -1735,50 +1734,50 @@
       document.getElementById("pageSize").value = "20";
       document.getElementById("errorText").value = "";
 
-      // Resetpage码
+      // Reset page number
       currentPageIndex = 0;
       pageSize = 20;
 
-      // Refresh数据
+      // Refresh data
       fetchLogs();
     }
 
     async function fetchLogs() {
-      // 构建查询参数
+      // Build query parameters
       const query = {
-        // 分page参数
+        // Pagination parameters
         limit: pageSize,
         offset: currentPageIndex * pageSize,
         reverse: document.getElementById("reverse").value === "true",
 
-        // TimeRange
+        // Time range
         ...getTimeRangeFilter(),
 
-        // UserFilter
+        // User filter
         ...getUserFilter(),
 
-        // ModelFilter
+        // Model filter
         ...getModelFilter(),
 
-        // 性能Filter
+        // Performance filter
         ...getPerformanceFilter(),
 
-        // 其他Filter
+        // Other filters
         ...getOtherFilters(),
       };
 
-      // 发送Request到新的API端点
+      // Send request to new API endpoint
       const data = await makeAuthenticatedRequest("/logs/get", {
         body: JSON.stringify({ query }),
       });
 
       if (data) {
         updateTable(data);
-        showGlobalMessage("日志获取Success");
+        showGlobalMessage("Logs fetched successfully");
       }
     }
 
-    // 获取Token详细信息
+    // Get token details
     async function fetchTokenDetails(tokens) {
       const data = await makeAuthenticatedRequest("/logs/tokens/get", {
         body: JSON.stringify(tokens),
@@ -1791,55 +1790,55 @@
       return null;
     }
 
-    // 批量加载所有Token Info到缓存
+    // Batch load all token info to cache
     async function loadAllTokenInfo(tokenKeys) {
       if (tokenKeys.length === 0) return;
 
-      console.log(`Loading ${tokenKeys.length} token的详细信息...`);
+      console.log(`Loading ${tokenKeys.length} token details...`);
 
       try {
         const detailsData = await fetchTokenDetails(tokenKeys);
         if (detailsData) {
-          // 将所有token信息存入缓存
+          // Store all token info in cache
           Object.entries(detailsData).forEach(([key, info]) => {
             tokenInfoCache[key] = info;
           });
 
           allTokensLoaded = true;
           console.log(
-            `Success加载 ${Object.keys(detailsData).length} token的详细信息`,
+            `Successfully loaded ${Object.keys(detailsData).length} token details`,
           );
           showGlobalMessage(
             `Cached ${Object.keys(detailsData).length} Token Info`,
           );
         }
       } catch (error) {
-        console.error("加载Token InfoFailed:", error);
+        console.error("Load token info failed:", error);
       }
     }
 
-    // Export日志数据
+    // Export log data
     async function exportLogs() {
-      // 获取当前Filterrecords件下的所有数据
+      // Get all data under current filter conditions
       const query = {
-        // 不限制Count，Export所有数据
+        // No limit, export all data
         limit: 10000,
         offset: 0,
         reverse: document.getElementById("reverse").value === "true",
 
-        // TimeRange
+        // Time range
         ...getTimeRangeFilter(),
 
-        // UserFilter
+        // User filter
         ...getUserFilter(),
 
-        // ModelFilter
+        // Model filter
         ...getModelFilter(),
 
-        // 性能Filter
+        // Performance filter
         ...getPerformanceFilter(),
 
-        // 其他Filter
+        // Other filters
         ...getOtherFilters(),
       };
 
@@ -1849,10 +1848,10 @@
       });
 
       if (data) {
-        // 创建CSV格式的数据
+        // Create CSV format data
         const csvContent = createCSVFromLogs(data.logs);
 
-        // 下载CSV文件
+        // Download CSV file
         const blob = new Blob([csvContent], {
           type: "text/csv;charset=utf-8;",
         });
@@ -1865,25 +1864,25 @@
         link.click();
         document.body.removeChild(link);
 
-        showGlobalMessage(`SuccessExport ${data.logs.length} records日志records`);
+        showGlobalMessage(`Successfully exported ${data.logs.length} log records`);
       }
     }
 
-    // 创建CSVContent
+    // Create CSV content
     function createCSVFromLogs(logs) {
       const headers = [
         "ID",
         "Time",
         "Model",
         "Token Key",
-        "UserEmail",
-        "会员Type",
-        "耗时(seconds)",
-        "InputTokens",
-        "OutputTokens",
+        "User Email",
+        "Membership Type",
+        "Duration(seconds)",
+        "Input Tokens",
+        "Output Tokens",
         "Stream",
         "Status",
-        "Error信息",
+        "Error Message",
       ];
 
       const rows = logs.map((log) => {
@@ -1908,7 +1907,7 @@
         ];
       });
 
-      // 转换为CSV格式
+      // Convert to CSV format
       const csvRows = [headers, ...rows].map((row) =>
         row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","),
       );
@@ -1916,7 +1915,7 @@
       return csvRows.join("\n");
     }
 
-    // 自动Refresh控制
+    // Auto refresh control
     document
       .getElementById("autoRefresh")
       .addEventListener("change", function (e) {
@@ -1927,13 +1926,13 @@
         }
       });
 
-    // page面加载完成后自动获取日志
+    // Auto fetch logs after page load
     document.addEventListener("DOMContentLoaded", () => {
       const authToken = getAuthToken();
       if (authToken) {
         document.getElementById("authToken").value = authToken;
 
-        // SettingsDefaultpage大小
+        // Set default page size
         pageSize = parseInt(
           document.getElementById("pageSize").value || "20",
         );
@@ -1941,10 +1940,10 @@
 
         fetchLogs();
       }
-      // 启动自动Refresh
+      // Start auto refresh
       refreshInterval = setInterval(fetchLogs, 60000);
 
-      // Addpage码Input框回车键支持
+      // Add page number input enter key support
       document
         .getElementById("pageNumberInput")
         .addEventListener("keyup", function (event) {
@@ -1953,7 +1952,7 @@
           }
         });
 
-      // Addpage面大小Input框回车键支持
+      // Add page size input enter key support
       document
         .getElementById("customPageSize")
         .addEventListener("keyup", function (event) {
@@ -1963,17 +1962,17 @@
         });
     });
 
-    // 初始化 token 处理
+    // Initialize token handling
     initializeTokenHandling("authToken");
 
-    // Add清理逻辑
+    // Add cleanup logic
     window.addEventListener("beforeunload", () => {
       if (refreshInterval) {
         clearInterval(refreshInterval);
       }
     });
 
-    // Add模态框Close逻辑
+    // Add modal close logic
     document.querySelectorAll(".modal .close").forEach((closeBtn) => {
       closeBtn.onclick = function () {
         this.closest(".modal").style.display = "none";
@@ -1987,18 +1986,18 @@
     };
 
     /**
-     * 解析ConversationContent
-     * @param {string} promptStr - 原始promptchars串
-     * @returns {Array<{role: string, content: string}>} 解析后的Conversation数组
+     * Parse conversation content
+     * @param {string} promptStr - Original prompt string
+     * @returns {Array<{role: string, content: string}>} Parsed conversation array
      */
     function parsePrompt(promptStr) {
       if (!promptStr) return [];
 
-      // 尝试解析JSON格式的prompt
+      // Try to parse JSON format prompt
       try {
         const parsed = JSON.parse(promptStr);
 
-        // 如果Yes已解析的格式
+        // If already parsed format
         if (Array.isArray(parsed)) {
           return parsed.map((msg) => ({
             role: msg.role,
@@ -2006,7 +2005,7 @@
           }));
         }
       } catch (e) {
-        // 如果解析JSONFailed，说明Yes原始chars串格式，使用原来的解析逻辑
+        // If JSON parsing failed, it's raw string format, use original parsing logic
       }
 
       const messages = [];
@@ -2023,18 +2022,18 @@
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
 
-        // 检查YesNoYesRole标记行
+        // Check if it's a role marker line
         let foundRole = false;
         for (const [marker, role] of Object.entries(roleMap)) {
           if (line.includes(marker)) {
-            // Save之前的消息（如果有）
+            // Save previous message (if any)
             if (currentRole && currentContent.trim()) {
               messages.push({
                 role: currentRole,
                 content: currentContent.trim(),
               });
             }
-            // Settings新Role
+            // Set new role
             currentRole = role;
             currentContent = "";
             foundRole = true;
@@ -2042,13 +2041,13 @@
           }
         }
 
-        // 如果不YesRole标记行且不YesEND标记行，则Add到当前Content
+        // If not a role marker line and not an END marker line, add to current content
         if (!foundRole && !line.includes("END_")) {
           currentContent += line + "\n";
         }
       }
 
-      // Add最后一records消息
+      // Add last message
       if (currentRole && currentContent.trim()) {
         messages.push({
           role: currentRole,
@@ -2060,7 +2059,7 @@
     }
 
     function escapeHtml(content) {
-      // 先转义HTML特殊chars
+      // First escape HTML special chars
       const escaped = content
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
@@ -2071,7 +2070,7 @@
     }
 
     function escapeHtmlAndControlChars(content) {
-      // 先转义HTML特殊chars
+      // First escape HTML special chars
       let escaped = content
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
@@ -2079,7 +2078,7 @@
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
 
-      // 然后转义控制chars
+      // Then escape control chars
       escaped = escaped
         .replace(/\\/g, "\\\\")
         .replace(/\n/g, "\\n")
@@ -2090,19 +2089,19 @@
     }
 
     /**
-     * 格式化ConversationContent为HTML表格
-     * @param {Array<{role: string, content: string}>} messages - Conversation消息数组
-     * @returns {string} HTML表格chars串
+     * Format conversation content to HTML table
+     * @param {Array<{role: string, content: string}>} messages - Conversation message array
+     * @returns {string} HTML table string
      */
     function formatPromptToTable(messages) {
       if (!messages || messages.length === 0) {
-        return "<p>NoneConversationContent</p>";
+        return "<p>No conversation content</p>";
       }
 
       const roleLabels = {
         system: "System",
         user: "User",
-        assistant: "助手",
+        assistant: "Assistant",
       };
 
       return `<table class="message-table"><thead><tr><th>Role</th><th>Content</th></tr></thead><tbody>${messages
@@ -2116,10 +2115,10 @@
     }
 
     /**
-     * ShowConversationDetails弹窗
-     * @param {string} promptStr - ConversationTipchars串
-     * @param {string} thinkStr - Thinking Processchars串
-     * @param {Array} delaysTuple - 延迟数据数组
+     * Show conversation details popup
+     * @param {string} promptStr - Conversation prompt string
+     * @param {string} thinkStr - Thinking process string
+     * @param {Array} delaysTuple - Delay data array
      */
     function showConversationModal(promptStr, thinkStr, delaysTuple) {
       try {
@@ -2150,25 +2149,25 @@
           return;
         }
 
-        // 处理 Prompt
+        // Handle Prompt
         try {
           const messages = parsePrompt(promptStr);
           dialogContent.innerHTML = formatPromptToTable(messages);
         } catch (e) {
-          console.error("解析 Prompt 数据Failed:", e);
-          dialogContent.innerHTML = "<p>None法加载ConversationContent。</p>";
+          console.error("Parse prompt data failed:", e);
+          dialogContent.innerHTML = "<p>Unable to load conversation content.</p>";
         }
 
-        // 处理Thinking Process
+        // Handle thinking process
         if (thinkStr && typeof thinkStr === "string") {
           document.getElementById("thinkText").textContent = thinkStr;
           tabThink.style.display = "";
         } else {
-          document.getElementById("thinkText").textContent = "NoneThinking Process";
+          document.getElementById("thinkText").textContent = "No thinking process";
           tabThink.style.display = "none";
         }
 
-        // 处理 Delays
+        // Handle delays
         delaysTableBody.innerHTML = "";
         delayChartContainer.innerHTML = '<canvas id="delayChart"></canvas>';
 
@@ -2240,13 +2239,13 @@
           tabDelays.style.display = "";
         } else {
           delaysTableBody.innerHTML =
-            '<tr><td colspan="4">None延迟数据</td></tr>';
+            '<tr><td colspan="4">No delay data</td></tr>';
           delayChartContainer.innerHTML =
-            '<div style="text-align: center; padding: 20px;">None延迟数据可供分析</div>';
+            '<div style="text-align: center; padding: 20px;">No delay data available for analysis</div>';
           tabDelays.style.display = "none";
         }
 
-        // Settings标签page
+        // Set tab pages
         tabPrompt.onclick = () => setActiveTab("prompt");
         tabThink.onclick = () => setActiveTab("think");
         tabDelays.onclick = () => setActiveTab("delays");
@@ -2254,13 +2253,13 @@
         setActiveTab("prompt");
         modal.style.display = "block";
       } catch (e) {
-        console.error("ShowConversationDetailsFailed:", e);
+        console.error("Show conversation details failed:", e);
       }
     }
 
     /**
-     * Settings当前活动标签page
-     * @param {string} tabName - 标签pageName ('prompt' 或 'delays')
+     * Set current active tab page
+     * @param {string} tabName - Tab page name ('prompt' or 'delays')
      */
     function setActiveTab(tabName) {
       const dialogContent = document.getElementById("dialogContent");
@@ -2307,22 +2306,22 @@
     }
 
     /**
-     * 初始化延迟图表
-     * @param {Array<{time: number, chars: number, text: string}>} chartDataPoints - 包含累计Time和chars数以及块文本的数据点数组
+     * Initialize delay chart
+     * @param {Array<{time: number, chars: number, text: string}>} chartDataPoints - Data points array containing cumulative time, char count and block text
      */
     function initDelayChart(chartDataPoints) {
       if (!chartDataPoints || chartDataPoints.length <= 1) {
         const container = document.querySelector(".delay-chart-container");
         if (container) {
           container.innerHTML =
-            '<div style="text-align: center; padding: 20px;">延迟数据不足，None法绘制图表</div>';
+            '<div style="text-align: center; padding: 20px;">Insufficient delay data, unable to draw chart</div>';
         }
         return;
       }
 
       const ctx = document.getElementById("delayChart");
       if (!ctx) {
-        console.error("找不到图表canvas元素");
+        console.error("Cannot find chart canvas element");
         return;
       }
 
@@ -2357,7 +2356,7 @@
         data: {
           datasets: [
             {
-              label: "累计Outputchars数",
+              label: "Cumulative output chars",
               data: sampledPoints.map((point) => ({
                 x: point.time,
                 y: point.chars,
@@ -2377,7 +2376,7 @@
           plugins: {
             title: {
               display: true,
-              text: "charsOutput进度",
+              text: "Character output progress",
             },
             tooltip: {
               callbacks: {
@@ -2386,7 +2385,7 @@
                   if (pointIndex < sampledPoints.length) {
                     return `Duration: ${sampledPoints[pointIndex].time.toFixed(
                       1,
-                    )}seconds`;
+                    )} seconds`;
                   }
                   return "";
                 },
@@ -2413,10 +2412,10 @@
                     const chunkText = point.text || "";
 
                     return [
-                      `累计chars: ${point.chars}`,
-                      `AverageRate: ${avgRate} chars/seconds`,
-                      `当前块Rate: ${currentRate} chars/seconds`,
-                      `当前块文本: ${escapeHtmlAndControlChars(
+                      `Cumulative chars: ${point.chars}`,
+                      `Average rate: ${avgRate} chars/second`,
+                      `Current block rate: ${currentRate} chars/second`,
+                      `Current block text: ${escapeHtmlAndControlChars(
                         chunkText.length > 50
                           ? chunkText.substring(0, 50) + "..."
                           : chunkText,
@@ -2433,7 +2432,7 @@
               beginAtZero: true,
               title: {
                 display: true,
-                text: "累计chars数",
+                text: "Cumulative chars",
               },
             },
             x: {
@@ -2441,7 +2440,7 @@
               beginAtZero: true,
               title: {
                 display: true,
-                text: "累计Duration（seconds）",
+                text: "Cumulative duration (seconds)",
               },
               ticks: {
                 callback: function (value) {
@@ -2455,9 +2454,9 @@
     }
 
     /**
-     * 格式化Usage信息
-     * @param {Object} usage - Usage对象 { input: number, output: number }
-     * @returns {string} 格式化后的chars串
+     * Format usage info
+     * @param {Object} usage - Usage object { input: number, output: number }
+     * @returns {string} Formatted string
      */
     function formatUsage(usage) {
       if (!usage) return "-";
