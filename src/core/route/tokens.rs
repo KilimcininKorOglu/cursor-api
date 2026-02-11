@@ -760,15 +760,15 @@ pub async fn handle_merge_tokens(
         ));
     }
 
-    // 获取token manager的写锁
+    // Get write lock on token manager
     let mut token_manager = state.token_manager_write().await;
 
-    // 应用merge
+    // Apply merge
     let mut updated_count = 0u32;
     let mut failed_count = 0u32;
 
     for (alias, token_info) in request {
-        // 验证token是否在token_manager中存在
+        // Verify token exists in token_manager
         if token_info.has_some()
             && let Some(mut writer) = token_manager
                 .alias_map()
@@ -810,7 +810,7 @@ pub async fn handle_merge_tokens(
         }
     }
 
-    // 保存更改
+    // Save changes
     if updated_count > 0 && token_manager.save().await.is_err() {
         return Err((
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -827,11 +827,11 @@ pub async fn handle_merge_tokens(
         status: ApiStatus::Success,
         message: Cow::Owned(
             [
-                "已合并",
+                "Merged ",
                 itoa::Buffer::new().format(updated_count),
-                "个令牌, ",
+                " tokens, ",
                 itoa::Buffer::new().format(failed_count),
-                "个令牌合并失败",
+                " token merge failed",
             ]
             .concat(),
         ),

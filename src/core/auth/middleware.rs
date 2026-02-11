@@ -14,7 +14,7 @@ use crate::app::lazy::AUTH_TOKEN;
 use crate::app::model::{AppState, DateTime, QueueType};
 use crate::core::config::KeyConfigBuilder;
 
-// 管理员认证中间件函数
+// Admin authentication middleware function
 pub async fn admin_auth_middleware(request: Request<Body>, next: Next) -> Response {
     if let Some(token) = request
         .headers()

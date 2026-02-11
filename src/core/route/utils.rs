@@ -67,6 +67,6 @@ pub async fn handle_ntp_sync_once() -> axum::Json<NtpSyncResult> {
                 .store(delta_nanos, core::sync::atomic::Ordering::Relaxed);
             NtpSyncResult::Delta(format!("{}ms", delta_nanos / 1_000_000))
         }
-        Err(e) => NtpSyncResult::Error(format!("NTP同步失败: {e}")),
+        Err(e) => NtpSyncResult::Error(format!("NTP sync failed: {e}")),
     })
 }

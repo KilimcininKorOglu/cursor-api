@@ -66,9 +66,9 @@ pub(super) fn get_environment_info(
     }
 }
 
-/// 统一的 token 获取函数
+/// Unified token retrieval function
 ///
-/// 从 HTTP headers 中提取并验证认证 token，返回对应的 ExtToken
+/// Extract and verify authentication token from HTTP headers, return corresponding ExtToken
 pub(super) async fn get_token_bundle(
     state: &AppState,
     auth_token: &str,
@@ -76,7 +76,7 @@ pub(super) async fn get_token_bundle(
     normal_queue: QueueType,
     key_config: Option<&mut KeyConfigBuilder>,
 ) -> TokenBundleResult {
-    // 管理员 Token
+    // Admin Token
     if let Some(part) = auth_token.strip_prefix(&**AUTH_TOKEN) {
         let token_manager = state.token_manager.read().await;
 
@@ -96,19 +96,19 @@ pub(super) async fn get_token_bundle(
 
         return Ok((bundle, true));
     } else
-    // 共享 Token
+    // Shared Token
     if AppConfig::is_share() && AppConfig::share_token_eq(auth_token) {
         let token_manager = state.token_manager.read().await;
         let bundle = token_manager.select(normal_queue).ok_or(AuthError::NoAvailableTokens)?;
         return Ok((bundle, true));
     } else
-    // 普通用户 Token
+    // Regular user Token
     if let Some(key) = TokenKey::from_string(auth_token) {
         if let Some(bundle) = log_manager::get_token(key).await {
             return Ok((bundle, false));
         }
     } else
-    // 动态密钥
+    // Dynamic key
     if AppConfig::is_dynamic_key_enabled() {
         if let Some(mut parsed_config) = parse_dynamic_token(auth_token) {
             if let Some(config) = key_config {
