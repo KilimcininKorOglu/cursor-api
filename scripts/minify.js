@@ -96,7 +96,7 @@ function generateMarkdownHtml(title, markdownContent, md) {
         a {
             color: #58a6ff;
         }
-        /* 标题链接样式 */
+        /* Header anchor styles */
         h1:hover .header-anchor,
         h2:hover .header-anchor,
         h3:hover .header-anchor,

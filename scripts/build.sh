@@ -1,16 +1,16 @@
 #!/bin/bash
 set -euo pipefail
 
-# 颜色输出函数
+# Color output functions
 info() { echo -e "\033[1;34m[INFO]\033[0m $*"; }
 warn() { echo -e "\033[1;33m[WARN]\033[0m $*"; }
 error() { echo -e "\033[1;31m[ERROR]\033[0m $*" >&2; exit 1; }
 
-# 检查必要的工具
+# Check required tools
 check_requirements() {
     local missing_tools=()
 
-    # 基础工具检查
+    # Basic tool check
     for tool in cargo protoc npm node; do
         if ! command -v "$tool" &>/dev/null; then
             missing_tools+=("$tool")
@@ -18,54 +18,54 @@ check_requirements() {
     done
 
     if [[ ${#missing_tools[@]} -gt 0 ]]; then
-        error "缺少必要工具: ${missing_tools[*]}"
+        error "Missing required tools: ${missing_tools[*]}"
     fi
 }
 
-# 解析参数
+# Parse arguments
 USE_STATIC=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
         --static) USE_STATIC=true ;;
         --help) show_help; exit 0 ;;
-        *) error "未知参数: $1" ;;
+        *) error "Unknown argument: $1" ;;
     esac
     shift
 done
 
-# 帮助信息
+# Help message
 show_help() {
     cat << EOF
-用法: $(basename "$0") [选项]
+Usage: $(basename "$0") [options]
 
-选项:
-  --static        使用静态链接（默认动态链接）
-  --help          显示此帮助信息
+Options:
+  --static        Use static linking (default is dynamic linking)
+  --help          Show this help message
 
-不带参数时只编译当前平台
+Without arguments, only compiles for current platform
 EOF
 }
 
-# 并行构建函数
+# Parallel build function
 build_target() {
     local target=$1
     local extension=""
     local rustflags="${2:-}"
 
-    info "正在构建 $target..."
+    info "Building $target..."
 
-    # 确定文件后缀
+    # Determine file extension
     [[ $target == *"windows"* ]] && extension=".exe"
 
-    # 构建
+    # Build
     if [[ $target != "$CURRENT_TARGET" ]]; then
         env RUSTFLAGS="$rustflags" cargo build --target "$target" --release
     else
         env RUSTFLAGS="$rustflags" cargo build --release
     fi
 
-    # 移动编译产物到 release 目录
+    # Move build artifacts to release directory
     local binary_name="cursor-api"
     [[ $USE_STATIC == true ]] && binary_name+="-static"
 
@@ -78,21 +78,21 @@ build_target() {
 
     if [[ -f "$binary_path" ]]; then
         cp "$binary_path" "release/${binary_name}-$target$extension"
-        info "完成构建 $target"
+        info "Completed building $target"
     else
-        warn "构建产物未找到: $target"
-        warn "查找路径: $binary_path"
-        warn "当前目录内容:"
+        warn "Build artifact not found: $target"
+        warn "Search path: $binary_path"
+        warn "Current directory contents:"
         ls -R target/
         return 1
     fi
 }
 
-# 获取 CPU 架构和操作系统
+# Get CPU architecture and operating system
 ARCH=$(uname -m | sed 's/^aarch64\|arm64$/aarch64/;s/^x86_64\|x86-64\|x64\|amd64$/x86_64/')
 OS=$(uname -s)
 
-# 确定当前系统的目标平台
+# Determine current system's target platform
 get_target() {
     local arch=$1
     local os=$2
@@ -107,43 +107,43 @@ get_target() {
             ;;
         "MINGW"*|"MSYS"*|"CYGWIN"*|"Windows_NT") echo "${arch}-pc-windows-msvc" ;;
         "FreeBSD") echo "${arch}-unknown-freebsd" ;;
-        *) error "不支持的系统: $os" ;;
+        *) error "Unsupported system: $os" ;;
     esac
 }
 
-# 设置当前目标平台
+# Set current target platform
 CURRENT_TARGET=$(get_target "$ARCH" "$OS")
 
-# 检查是否成功获取目标平台
-[ -z "$CURRENT_TARGET" ] && error "无法确定当前系统的目标平台"
+# Check if target platform was successfully determined
+[ -z "$CURRENT_TARGET" ] && error "Unable to determine current system's target platform"
 
-# 获取系统对应的所有目标
+# Get all targets for the system
 get_targets() {
     case "$1" in
         "linux")
-            # Linux 只构建当前架构
+            # Linux only builds current architecture
             echo "$CURRENT_TARGET"
             ;;
         "freebsd")
-            # FreeBSD 只构建当前架构
+            # FreeBSD only builds current architecture
             echo "$CURRENT_TARGET"
             ;;
         "windows")
-            # Windows 只构建当前架构
+            # Windows only builds current architecture
             echo "$CURRENT_TARGET"
             ;;
         "macos")
-            # macOS 构建所有 macOS 目标
+            # macOS builds all macOS targets
             echo "x86_64-apple-darwin aarch64-apple-darwin"
             ;;
-        *) error "不支持的系统组: $1" ;;
+        *) error "Unsupported system group: $1" ;;
     esac
 }
 
-# 检查依赖
+# Check dependencies
 check_requirements
 
-# 确定要构建的目标
+# Determine targets to build
 case "$OS" in
     Darwin) 
         TARGETS=($(get_targets "macos"))
@@ -157,33 +157,33 @@ case "$OS" in
     MINGW*|MSYS*|CYGWIN*|Windows_NT)
         TARGETS=($(get_targets "windows"))
         ;;
-    *) error "不支持的系统: $OS" ;;
+    *) error "Unsupported system: $OS" ;;
 esac
 
-# 创建 release 目录
+# Create release directory
 mkdir -p release
 
-# 设置静态链接标志
+# Set static linking flags
 RUSTFLAGS="-C link-arg=-s"
 [[ $USE_STATIC == true ]] && RUSTFLAGS="-C target-feature=+crt-static -C link-arg=-s"
 
-# 并行构建所有目标
-info "开始构建..."
+# Build all targets in parallel
+info "Starting build..."
 for target in "${TARGETS[@]}"; do
     build_target "$target" "$RUSTFLAGS" &
 done
 
-# 等待所有构建完成
+# Wait for all builds to complete
 wait
 
-# 为 macOS 平台创建通用二进制
+# Create universal binary for macOS platform
 if [[ "$OS" == "Darwin" ]] && [[ ${#TARGETS[@]} -gt 1 ]]; then
     binary_suffix=""
     [[ $USE_STATIC == true ]] && binary_suffix="-static"
 
     if [[ -f "release/cursor-api${binary_suffix}-x86_64-apple-darwin" ]] && \
        [[ -f "release/cursor-api${binary_suffix}-aarch64-apple-darwin" ]]; then
-        info "创建 macOS 通用二进制..."
+        info "Creating macOS universal binary..."
         lipo -create \
             "release/cursor-api${binary_suffix}-x86_64-apple-darwin" \
             "release/cursor-api${binary_suffix}-aarch64-apple-darwin" \
@@ -191,4 +191,4 @@ if [[ "$OS" == "Darwin" ]] && [[ ${#TARGETS[@]} -gt 1 ]]; then
     fi
 fi
 
-info "构建完成！"
+info "Build completed!"
