@@ -1,10 +1,10 @@
-//! StreamCpp 协议转换器
+//! StreamCpp protocol converter
 //!
-//! 将 protobuf 的 StreamCppResponse 转换为结构化事件流。
+//! Convert protobuf StreamCppResponse to structured event stream.
 //!
-//! 核心特性：
-//! - 单个 protobuf 消息可能生成多个事件（并行检查）
-//! - ModelInfo/RangeReplace 与 Text 互斥（协议层语义）
+//! Core features:
+//! - A single protobuf message may generate multiple events (parallel checking)
+//! - ModelInfo/RangeReplace and Text are mutually exclusive (protocol-level semantics)
 
 use crate::core::{
     aiserver::v1::StreamCppResponse,
@@ -58,7 +58,7 @@ pub enum StreamMessage {
         #[serde(skip_serializing_if = "Option::is_none")]
         server_timing: Option<String>,
     },
-    // Suggestion 未在 JS 实现中处理，保留但不生成
+    // Suggestion not handled in JS implementation, kept but not generated
     // #[deprecated]
     // Suggestion { start_line: i32, confidence: i32 },
     Error {
@@ -150,9 +150,9 @@ impl StreamDecoder {
                     }
                 }
                 _ => {
-                    eprintln!("收到未知消息类型: {}", raw_msg.r#type);
+                    eprintln!("Received unknown message type: {}", raw_msg.r#type);
                     crate::debug!(
-                        "消息类型: {}, 内容: {}",
+                        "Message type: {}, content: {}",
                         raw_msg.r#type,
                         hex::encode(raw_msg.data)
                     );
@@ -169,7 +169,7 @@ impl Default for StreamDecoder {
     fn default() -> Self { Self::new() }
 }
 
-/// 将单个 protobuf 消息转换为事件
+/// Convert a single protobuf message to events
 fn process_protobuf_message(events: &mut Vec<StreamMessage>, response: StreamCppResponse) {
     let mut is_plain_text = true;
 
@@ -242,7 +242,7 @@ fn process_protobuf_message(events: &mut Vec<StreamMessage>, response: StreamCpp
         });
     }
 
-    // Suggestion: 未在 JS 实现中使用，不生成
+    // Suggestion: not used in JS implementation, not generated
     // if let (Some(start_line), Some(confidence)) =
     //     (response.suggestion_start_line, response.suggestion_confidence)
     // {
