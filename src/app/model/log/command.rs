@@ -39,7 +39,7 @@ pub enum LogCommand {
         params: GetLogsParams,
         tx: oneshot::Sender<(u64, Vec<RequestLog>)>,
     },
-    // 添加One日志
+    // AddOne日志
     AddLog {
         log: Box<RequestLog>,
         token: ExtToken,
@@ -59,7 +59,7 @@ pub enum LogCommand {
     CloneToSave {
         tx: oneshot::Sender<super::LogManagerHelper>,
     },
-    // 更新指定ID的日志
+    // Update指定ID的日志
     UpdateLog {
         id: u64,
         ops: LogUpdate,

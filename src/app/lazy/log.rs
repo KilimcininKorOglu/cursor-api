@@ -27,7 +27,7 @@ static DEBUG_LOG_FILE: ManuallyInit<Cow<'static, str>> = ManuallyInit::new();
 /// 全局日志文件句柄
 static LOG_FILE: ManuallyInit<Mutex<File>> = ManuallyInit::new();
 
-/// 初始化日志系统配置
+/// Initialize日志系统配置
 ///
 /// 必须在程序启动时调用一次（Use日志前）
 #[forbid(unused)]
@@ -42,7 +42,7 @@ pub fn init() {
 
     DEBUG_LOG_FILE.init(parse_from_env("DEBUG_LOG_FILE", "debug.log"));
 
-    // 同步打开日志文件
+    // Sync打开日志文件
     let file = std::fs::OpenOptions::new()
         .create(true)
         .append(true)
@@ -75,7 +75,7 @@ fn next_log_seq() -> u64 { LOG_SEQUENCE.fetch_add(1, Ordering::Relaxed) }
 /// 全局单例的日志系统状态，Use OnceCell Ensure只初始化一次
 static LOGGER_STATE: OnceCell<LoggerState> = OnceCell::const_new();
 
-/// 日志系统的状态结构，包含Send通道、关闭信号and后台任务句柄
+/// Log系统的状态结构，包含Send通道、关闭信号and后台任务句柄
 pub struct LoggerState {
     /// 用于Send日志Message的无界通道Send端
     pub sender: UnboundedSender<LogMessage>,
@@ -89,17 +89,17 @@ pub struct LoggerState {
 ///
 /// If日志系统尚未初始化，会创建所需的通道and后台任务
 ///
-/// 返回日志系统状态的引用
+/// Return日志系统状态的引用
 pub fn ensure_logger_initialized() -> impl Future<Output = &'static LoggerState> {
     LOGGER_STATE.get_or_init(|| async {
-        // 创建用于传递日志Message的无界通道
+        // Create用于传递日志Message的无界通道
         let (sender, mut receiver) = mpsc::unbounded_channel::<LogMessage>();
-        // 创建用于Send关闭信号的 watch 通道
+        // Create用于Send关闭信号的 watch 通道
         let (shutdown_tx, mut shutdown_rx) = watch::channel(false);
 
         // 启动后台写入任务
         let writer_handle = tokio::spawn(async move {
-            // 配置常Amount
+            // Configuration常Amount
             const BUFFER_CAPACITY: usize = 65536; // 64KB
             const MAX_PENDING_MESSAGES: usize = 1000;
             const OUT_OF_ORDER_THRESHOLD: u64 = 100;
@@ -140,7 +140,7 @@ pub fn ensure_logger_initialized() -> impl Future<Output = &'static LoggerState>
                             buffer.push(b'\n');
                             next_seq += 1;
 
-                            // 缓冲区达到容Amount时刷新
+                            // Buffer区达到容Amount时刷新
                             if buffer.len() >= BUFFER_CAPACITY {
                                 flush_byte_buffer(&mut buffer).await;
                                 interval.reset();
@@ -236,7 +236,7 @@ async fn flush_byte_buffer(buffer: &mut Vec<u8>) {
     // Get日志文件的互斥锁
     let mut file_guard = LOG_FILE.lock().await;
 
-    // 写入数据
+    // Write数据
     if let Err(err) = file_guard.write_all(buffer).await {
         eprintln!("日志系统Error：写入日志数据Failed。Error：{err}");
         buffer.clear();
@@ -291,7 +291,7 @@ pub fn debug_log(args: core::fmt::Arguments<'_>) {
     submit_debug_log(seq, msg);
 }
 
-/// 程序End前调用，Ensure所Have缓冲日志写入文件
+/// ProgramEnd前调用，Ensure所Have缓冲日志写入文件
 ///
 /// Send关闭信号，等待后台写入任务Completed
 pub async fn flush_all_debug_logs() {

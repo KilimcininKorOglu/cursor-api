@@ -496,7 +496,7 @@ impl FrontendLoader {
 
 static ROUTE_REGISTRY: ManuallyInit<HashSet<&'static str>> = ManuallyInit::new();
 
-/// 初始化前端资源系统
+/// Initialize前端资源系统
 ///
 /// # 环境变Amount
 /// - `FRONTEND_PATH`: 前端资源路径（目录Or .zip 文件，Default: "frontend.zip"）
@@ -579,7 +579,7 @@ fn print_metadata(registry: &RouteRegistry) {
 }
 
 // ============================================================================
-// 测试
+// Test
 // ============================================================================
 
 #[cfg(test)]

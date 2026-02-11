@@ -19,7 +19,7 @@ crate::define_typed_constants! {
     &'static str => {
         /// Default的客户端版本号
         DEFAULT_CLIENT_VERSION = "2.0.0",
-        /// 环境变Amount名：Cursor 客户端版本
+        /// Environment变Amount名：Cursor 客户端版本
         ENV_CURSOR_CLIENT_VERSION = "CURSOR_CLIENT_VERSION",
         /// Chrome 版本信息
         CHROME_VERSION_INFO = " Chrome/138.0.7204.251 Electron/37.7.0 Safari/537.36",
@@ -38,21 +38,21 @@ crate::define_typed_constants! {
     }
 
     usize => {
-        /// 版本字符串最小长度
+        /// Version字符串最小长度
         VERSION_MIN_LENGTH = 5,
-        /// 版本字符串最大长度
+        /// Version字符串最大长度
         VERSION_MAX_LENGTH = 32,
     }
 
     u8 => {
-        /// 版本号中每个部分的最大数字位数
+        /// Version号中每个部分的最大数字位数
         VERSION_PART_MAX_DIGITS = 4,
-        /// 版本号中期望的点号数Amount
+        /// Version号中期望的点号数Amount
         VERSION_DOT_COUNT = 2,
     }
 }
 
-/// 客户端版本的 HeaderValue
+/// Client版本的 HeaderValue
 static CLIENT_VERSION: ManuallyInit<http::header::HeaderValue> = ManuallyInit::new();
 
 /// Cursor User-Agent 的 HeaderValue
@@ -83,7 +83,7 @@ pub fn header_value_ua_cursor_latest() -> http::header::HeaderValue {
     HEADER_VALUE_UA_CURSOR_LATEST.get().clone()
 }
 
-/// 初始化 Cursor 的版本信息
+/// Initialize Cursor 的版本信息
 ///
 /// # Safety
 ///
@@ -97,7 +97,7 @@ pub fn initialize_cursor_version() {
     let version =
         crate::common::utils::parse_from_env(ENV_CURSOR_CLIENT_VERSION, DEFAULT_CLIENT_VERSION);
 
-    // 验证版本Format
+    // Verification版本Format
     validate_version_string(&version);
 
     let version_header = match http::header::HeaderValue::from_str(&version) {
@@ -177,7 +177,7 @@ pub const fn is_valid_version_format(version: &str) -> bool {
     dot_count == VERSION_DOT_COUNT && digit_count > 0
 }
 
-/// 验证并Warning无效的版本字符串
+/// Verification并Warning无效的版本字符串
 ///
 /// If版本字符串不符合Format，打印Warning信息但不终止程序
 #[inline]

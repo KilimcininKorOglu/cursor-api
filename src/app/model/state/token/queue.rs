@@ -51,7 +51,7 @@ impl TokenHealth {
 }
 
 #[cfg(not(feature = "horizon"))]
-/// 队列内部Use的复合键，将TokenKeyandmanager索引绑定
+/// Queue内部Use的复合键，将TokenKeyandmanager索引绑定
 /// 作Tohint加速查找：Iftoken未被修改，index可以直接定位
 #[derive(PartialEq, Eq, Hash, Clone, Copy)]
 pub struct TokenManagerKey {
@@ -79,7 +79,7 @@ impl TokenManagerKey {
     }
 }
 
-/// 队列优先级Type，决定token选择顺序
+/// Queue优先级Type，决定token选择顺序
 /// 数值越小优先级越高
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(usize)]

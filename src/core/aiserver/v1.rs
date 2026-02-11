@@ -10,7 +10,7 @@ impl ErrorDetails {
     /// 此方法根据Error的性质，将内部ErrorType映射到标准的 HTTP 状态码，
     /// 遵循 RESTful API 最佳实践。
     ///
-    /// 返回值：
+    /// Return value：
     ///   - u16: 与Error对应的 HTTP 状态码。
     pub fn status_code(error: i32) -> NonZeroU16 {
         use error_details::Error;
@@ -100,12 +100,12 @@ impl ErrorDetails {
         unsafe { NonZeroU16::new_unchecked(code) }
     }
 
-    /// 返回ErrorType的 snake_case 字符串表示。
+    /// ReturnErrorType的 snake_case 字符串表示。
     ///
     /// 此方法将Error变体映射到其 snake_case 字符串名称，
     /// 用于日志记录、DebugOr API Response。
     ///
-    /// 返回值：
+    /// Return value：
     ///   - &'static str: ErrorType的 snake_case 名称。
     pub fn r#type(error: i32) -> &'static str {
         use error_details::Error;

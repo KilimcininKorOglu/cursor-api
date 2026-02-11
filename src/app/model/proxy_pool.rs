@@ -19,13 +19,13 @@ use proxy_url::ProxyUrl;
 type HashMap<K, V> = hashbrown::HashMap<K, V, ahash::RandomState>;
 type HashSet<K> = hashbrown::HashSet<K, ahash::RandomState>;
 
-// 代理值常Amount
+// Proxy值常Amount
 const NON_PROXY: &str = "non";
 const SYS_PROXY: &str = "sys";
 
-/// 创建Default的代理配置
+/// CreateDefault的代理配置
 ///
-/// 包含一个系统代理配置
+/// Package含一个系统代理配置
 #[inline]
 pub fn default_proxies() -> HashMap<Str, SingleProxy> {
     HashMap::from_iter([(SYS_PROXY.into(), SingleProxy::Sys)])
@@ -40,7 +40,7 @@ static GENERAL_NAME: ManuallyInit<ArcSwap<Str>> = ManuallyInit::new();
 // /// Get图像代理名称
 // static FETCH_IMAGE_NAME: ArcSwapOption<String> = ArcSwapOption::const_empty();
 
-/// 代理配置到客户端实例的映射
+/// Proxy配置到客户端实例的映射
 ///
 /// CacheAlready创建的客户端，避免重复创建相同配置的客户端
 static CLIENTS: ManuallyInit<ArcSwap<HashMap<SingleProxy, Client>>> = ManuallyInit::new();
@@ -57,7 +57,7 @@ static GENERAL_CLIENT: ManuallyInit<ArcSwapAny<Client>> = ManuallyInit::new();
 //     core::intrinsics::transmute_unchecked::<ArcSwapOption<()>, _>(ArcSwapOption::const_empty())
 // };
 
-/// 代理配置管理器
+/// Proxy配置管理器
 ///
 /// 负责管理所Have代理配置及其对应的客户端
 #[derive(Clone, Deserialize, Serialize, Archive, RkyvDeserialize, RkyvSerialize)]
@@ -73,9 +73,9 @@ impl Default for Proxies {
 }
 
 impl Proxies {
-    /// 初始化全局代理系统
+    /// Initialize全局代理系统
     ///
-    /// 验证配置的完整性并创建所Have必要的客户端
+    /// Verification配置的完整性并创建所Have必要的客户端
     #[inline]
     pub fn init(mut self) {
         // Ensure至少HaveDefault代理
@@ -99,7 +99,7 @@ impl Proxies {
             proxy.insert_to(&mut clients);
         }
 
-        // 初始化全局静态变Amount
+        // Initialize全局静态变Amount
         // Safety: 前面的逻辑AlreadyEnsure general 存在于 proxies 中，
         // 且所Have proxies 中的代理都Have对应的客户端
         GENERAL_CLIENT.init(ArcSwapAny::from(
@@ -110,14 +110,14 @@ impl Proxies {
         GENERAL_NAME.init(ArcSwap::from_pointee(self.general));
     }
 
-    /// 更新全局代理配置（不更新客户端池）
+    /// Update全局代理配置（不更新客户端池）
     #[inline]
     pub fn update_global(self) {
         proxies().store(Arc::new(self.proxies));
         general_name().store(Arc::new(self.general));
     }
 
-    /// 更新全局代理池
+    /// Update全局代理池
     ///
     /// 智能更新客户端池：
     /// - 移除不再Use的客户端
@@ -157,7 +157,7 @@ impl Proxies {
             }
         }
 
-        // 更新全局状态
+        // Update全局状态
         self::clients().store(Arc::new(clients));
         self::general_name().store(general_name);
         set_general();
@@ -214,7 +214,7 @@ impl Proxies {
         }
     }
 
-    /// 更新全局代理池并保存配置
+    /// Update全局代理池并保存配置
     #[inline]
     pub async fn update_and_save() -> Result<(), Box<dyn core::error::Error + Send + Sync + 'static>>
     {
@@ -339,7 +339,7 @@ pub fn get_client(name: &str) -> Client {
         }
     }
 
-    // 返回通用客户端
+    // Return通用客户端
     get_general_client()
 }
 
@@ -363,9 +363,9 @@ pub fn get_fetch_image_client() -> Client {
     get_general_client()
 }
 
-/// 更新通用客户端引用
+/// Update通用客户端引用
 ///
-/// 前置条件：general_name 必须存在于 proxies 中，
+/// Precondition：general_name 必须存在于 proxies 中，
 /// 且对应的代理必须存在于 clients 中
 #[inline]
 fn set_general() {

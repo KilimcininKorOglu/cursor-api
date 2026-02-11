@@ -476,7 +476,7 @@ mod tests {
 
     #[test]
     fn test_clone_functionality() {
-        // 测试 Clone 在 Borrowed 状态下的正确性
+        // Test Clone 在 Borrowed 状态下的正确性
         let builder1 = StringBuilder::with_capacity(2)
             .append("Hello")
             .append(" World");
@@ -492,7 +492,7 @@ mod tests {
 
     #[test]
     fn test_clone_mixed_state() {
-        // 测试 Clone 在 Mixed 状态下的正确性
+        // Test Clone 在 Mixed 状态下的正确性
         let builder1 = StringBuilder::with_capacity(3)
             .append("Hello")
             .append(String::from(" World"))

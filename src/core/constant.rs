@@ -490,7 +490,7 @@ impl Models {
             }
         }
 
-        // 更新数据and时间戳
+        // Update数据and时间戳
         let find_ids = HashMap::from_iter(new_models.iter().enumerate().map(|(i, m)| (m.id(), i)));
 
         INSTANCE.store(Arc::new(Models {

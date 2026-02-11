@@ -17,7 +17,7 @@ pub struct AppState {
 
 impl AppState {
     pub async fn load() -> Result<Self, Box<dyn core::error::Error + Send + Sync + 'static>> {
-        // 并行加载日志、令牌and代理
+        // Parallel加载日志、令牌and代理
         let (log_manager_result, token_manager_result, proxies_result) =
             tokio::join!(LogManager::load(), TokenManager::load(), Proxies::load());
 
@@ -72,7 +72,7 @@ impl AppState {
     }
 
     pub async fn save(&self) -> Result<(), Box<dyn core::error::Error + Send + Sync + 'static>> {
-        // 并行保存日志、令牌and代理
+        // Parallel保存日志、令牌and代理
         let (log_result, tokens_result, proxies_result) =
             tokio::join!(LogManager::save(), self.save_tokens(), Proxies::save());
 
@@ -86,6 +86,6 @@ impl AppState {
         self.token_manager.read().await.save().await
     }
 
-    /// 更新token manager中的client key
+    /// Updatetoken manager中的client key
     pub async fn update_client_key(&self) { self.token_manager.write().await.update_client_key() }
 }

@@ -41,13 +41,13 @@ impl core::error::Error for TokenError {}
 /// - **多索引**：SupportID/别名/TokenKey三种查询方式
 /// - **无锁设计**：单线程优化，避免同步开销
 ///
-/// 数据结构不变性：
+/// Data结构不变性：
 /// - `tokens`, `id_to_alias` 长度始终相同
 /// - `id_map`, `alias_map` 中的id值始终 < tokens.len()
 /// - `id_map`, `alias_map` 中的id指向的 `tokens[id]` 必To Some
 /// - `free_ids` 中的id必 < tokens.len() 且 `tokens[id]` To None
 ///
-/// 性能关键路径AlreadyUseunsafe消除边界Check
+/// Performance关键路径AlreadyUseunsafe消除边界Check
 pub struct TokenManager {
     /// 主存储：ID -> TokenInfo，UseOptionSupport删除后的Empty槽位
     tokens: Vec<Option<TokenInfo>>,
@@ -72,7 +72,7 @@ impl TokenManager {
             id_map: HashMap::with_capacity_and_hasher(capacity, r.clone()),
             alias_map: HashMap::with_capacity_and_hasher(capacity, r),
             id_to_alias: Vec::with_capacity(capacity),
-            free_ids: VecDeque::with_capacity(capacity / 10), // 假设10%的删除率
+            free_ids: VecDeque::with_capacity(capacity / 10), // Assumption10%的删除率
             queue: TokenQueue::with_capacity(capacity),
         }
     }
@@ -224,7 +224,7 @@ impl TokenManager {
         }
     }
 
-    /// 更新所Havetoken的客户端密钥，用于安全性刷新
+    /// Update所Havetoken的客户端密钥，用于安全性刷新
     #[inline(always)]
     pub fn update_client_key(&mut self) {
         for token_info in self.tokens.iter_mut().flatten() {

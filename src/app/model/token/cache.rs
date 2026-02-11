@@ -24,7 +24,7 @@ use scc::HashMap;
 )]
 #[rkyv(derive(PartialEq, Eq, Hash))]
 pub struct TokenKey {
-    /// 用户唯一标识
+    /// User唯一标识
     pub user_id: UserId,
     /// 随机数部分，用于保证 Token 的唯一性
     pub randomness: Randomness,
@@ -174,7 +174,7 @@ impl TokenInner {
     unsafe fn write_with_string(ptr: NonNull<Self>, raw: RawToken, string: &str) {
         let inner = ptr.as_ptr();
 
-        // 写入结构体Field
+        // Write结构体Field
         (*inner).raw = raw;
         (*inner).count = AtomicUsize::new(1);
         (*inner).string_len = string.len();
@@ -214,7 +214,7 @@ impl Clone for Token {
     }
 }
 
-/// 线程安全的内部指针包装
+/// Thread安全的内部指针包装
 #[derive(Clone, Copy)]
 #[repr(transparent)]
 struct ThreadSafePtr(NonNull<TokenInner>);
@@ -230,7 +230,7 @@ static TOKEN_MAP: ManuallyInit<HashMap<TokenKey, ThreadSafePtr, ahash::RandomSta
 pub fn __init() { TOKEN_MAP.init(HashMap::with_capacity_and_hasher(64, ahash::RandomState::new())) }
 
 impl Token {
-    /// 创建Or复用 Token 实例
+    /// CreateOr复用 Token 实例
     ///
     /// IfCache中Already存在相同的 TokenKey 且 RawToken 相同，则复用；
     /// 否则创建新实例（May会覆盖旧的）。
@@ -254,7 +254,7 @@ impl Token {
                 let &ThreadSafePtr(ptr) = entry.get();
                 unsafe {
                     let inner = ptr.as_ref();
-                    // 验证 RawToken Whether完全匹配（key 相同不代表 raw 相同）
+                    // Verification RawToken Whether完全匹配（key 相同不代表 raw 相同）
                     if inner.raw == raw {
                         let count = inner.count.fetch_add(1, Ordering::Relaxed);
                         // 防止引用计数溢出（理论上不May，但作To安全Check）

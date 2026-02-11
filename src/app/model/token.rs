@@ -239,7 +239,7 @@ impl<'de> ::serde::Deserialize<'de> for Subject {
     }
 }
 
-/// 用户标识符，Support两种Format的高效ID系统
+/// User标识符，Support两种Format的高效ID系统
 ///
 /// 采用向前兼容设计，通过Check高32位区分Format：
 /// - 旧Format：24字符十六进制，高32位To0
@@ -430,15 +430,15 @@ impl fmt::Display for TokenError {
 
 #[derive(Clone, Copy)]
 pub struct RawToken {
-    /// 用户标识符
+    /// User标识符
     pub subject: Subject,
-    /// 签名
+    /// Signature
     pub signature: [u8; 32],
     /// 持续时间
     pub duration: Duration,
     /// 随机字符串
     pub randomness: Randomness,
-    /// 会话
+    /// Session
     pub is_session: bool,
 }
 

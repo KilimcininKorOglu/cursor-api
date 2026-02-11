@@ -48,7 +48,7 @@ impl FromStr for ProxyUrl {
     /// 这保证了后续 `to_proxy` 方法的安全性。
     #[inline]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        // 验证URL的Have效性
+        // VerificationURL的Have效性
         Proxy::all(s)?;
         Ok(Self(Str::new(s)))
     }

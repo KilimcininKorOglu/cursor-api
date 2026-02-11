@@ -56,7 +56,7 @@ struct LogManagerHelper {
     tokens: HashMap<TokenKey, ExtTokenHelper>,
 }
 
-/// 日志管理器，负责Handle日志andtoken的集中管理
+/// Log管理器，负责Handle日志andtoken的集中管理
 pub struct LogManager {
     logs: VecDeque<RequestLog>,
     tokens: HashMap<TokenKey, ExtToken>,
@@ -65,7 +65,7 @@ pub struct LogManager {
 }
 
 impl LogManager {
-    /// 创建New日志管理器
+    /// CreateNew日志管理器
     #[inline]
     pub fn new(logs_limit: RequestLogsLimit) -> Self {
         Self {
@@ -182,14 +182,14 @@ impl LogManager {
             }
         }
 
-        // 添加新token（If提供且不存在If）
+        // Add新token（If提供且不存在If）
         // debug_assert_eq!(token_key, log_token_key, "token key 与日志中的不匹配");
         self.insert_token(log_token_key, ext_token);
 
         // 增加新日志的token引用计数
         self.increment_token_ref(log_token_key);
 
-        // 添加日志
+        // Add日志
         self.logs.push_back(log);
     }
 

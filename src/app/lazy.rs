@@ -152,7 +152,7 @@ macro_rules! def_cursor_api_url {
             $(
                 $(
                     paste::paste! {
-                        // 初始化私HaveURL
+                        // Initialize私HaveURL
                         {
                             let host = if unsafe { USE_PRI_REVERSE_PROXY } {
                                 &PRI_REVERSE_PROXY_HOST
@@ -166,7 +166,7 @@ macro_rules! def_cursor_api_url {
                             [<PRI_ $name:upper>].init(unsafe { Url::parse(&url).unwrap_unchecked() });
                         }
 
-                        // 初始化公共URL
+                        // Initialize公共URL
                         {
                             let host = if unsafe { USE_PUB_REVERSE_PROXY } {
                                 &PUB_REVERSE_PROXY_HOST

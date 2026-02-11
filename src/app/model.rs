@@ -258,7 +258,7 @@ impl From<crate::common::model::userinfo::TokenUsage> for ChainUsage {
 //                     return Self::Origin(input);
 //                 };
 
-//             // 更新remainingTo去除Prefix后的Content
+//             // UpdateremainingTo去除Prefix后的Content
 //             remaining = content;
 
 //             // 查找End标记
@@ -406,11 +406,11 @@ impl ExtToken {
         if let Some(gh) = self.gcpp_host { gh } else { *super::lazy::GENERAL_GCPP_HOST }
     }
 
-    /// 返回关联的时区名称
+    /// Return关联的时区名称
     #[inline]
     pub fn timezone_name(&self) -> &'static str { self.timezone().name() }
 
-    /// 返回关联的时区名称的头部值
+    /// Return关联的时区名称的头部值
     #[inline]
     pub fn timezone_as_header_value(&self) -> http::HeaderValue {
         unsafe { crate::common::model::HeaderValue::from_static(self.timezone_name()).into() }

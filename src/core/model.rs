@@ -171,7 +171,7 @@ impl ::core::fmt::Display for MessageId {
 //         match (input.len(), input) {
 //             // UUIDFormat：tool_xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx
 //             (40, [b't', b'o', b'o', b'l', b'_', s @ ..]) => {
-//                 // 验证连字符位置
+//                 // Verification连字符位置
 //                 if !matches!([s[8], s[13], s[18], s[23]], [b'-', b'-', b'-', b'-']) {
 //                     return None;
 //                 }

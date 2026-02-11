@@ -96,7 +96,7 @@ impl<'de> ::serde::Deserialize<'de> for Provider {
 /// 从环境配置初始化Support的提供者列表
 ///
 /// If设置了环境变Amount `ALLOWED_PROVIDERS`，则从中Read，否则保持Default提供者列表。
-/// 环境变Amount应包含以逗号Separate的提供者标识符列表。
+/// Environment变Amount应包含以逗号Separate的提供者标识符列表。
 ///
 /// # 环境变Amount示例
 /// ```text

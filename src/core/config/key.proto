@@ -4,28 +4,28 @@ package key;
 
 // 动态配置的 API KEY
 message KeyConfig {
-  // 认证令牌信息
+  // Authentication令牌信息
   message TokenInfo {
     message Token {
       string provider = 1;
-      bytes sub_id = 2;               // 用户ID([u8; 16])
+      bytes sub_id = 2;               // UserID([u8; 16])
       bytes randomness = 3;           // 随机字符串([u8; 8])
       int64 start = 4;                // 生成时间（Unix 时间戳）
       int64 end = 5;                  // 过期时间（Unix 时间戳）
-      bytes signature = 6;            // 签名([u8; 32])
+      bytes signature = 6;            // Signature([u8; 32])
       bool is_session = 7;            // 是否为会话令牌
     }
-    Token token = 1;                  // 令牌
+    Token token = 1;                  // Token
     bytes checksum = 2;               // 校验和([u8; 64])
-    bytes client_key = 3;             // 客户端标识
-    optional bytes config_version = 4;// 配置版本
-    bytes session_id = 5;             // 会话ID
-    optional string proxy_name = 11;  // 代理名称
+    bytes client_key = 3;             // Client标识
+    optional bytes config_version = 4;// Configuration版本
+    bytes session_id = 5;             // SessionID
+    optional string proxy_name = 11;  // Proxy名称
     optional string timezone = 12;    // 时区
     optional int32  gcpp_host = 13;   // 代码补全
   }
 
-  // 认证令牌（必需）
+  // Authentication令牌（必需）
   TokenInfo token_info = 1;
 
   // 密码SHA256哈希值
@@ -37,19 +37,19 @@ message KeyConfig {
   // 是否启用慢速池
   optional bool enable_slow_pool = 4;
 
-  // 包含网络引用
+  // Package含网络引用
   optional bool include_web_references = 5;
 
   // 使用量检查模型规则
   message UsageCheckModel {
-    // 检查类型
+    // Check类型
     enum Type {
       TYPE_DEFAULT = 0;     // 未指定
       TYPE_DISABLED = 1;    // 禁用
       TYPE_ALL = 2;         // 全部
       TYPE_CUSTOM = 3;      // 自定义列表
     }
-    Type type = 1;          // 检查类型
+    Type type = 1;          // Check类型
     repeated string model_ids = 2; // 模型 ID 列表，当 type 为 TYPE_CUSTOM 时生效
   }
   // 使用量检查模型规则
