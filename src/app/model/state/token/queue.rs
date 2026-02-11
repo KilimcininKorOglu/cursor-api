@@ -52,12 +52,12 @@ impl TokenHealth {
 
 #[cfg(not(feature = "horizon"))]
 /// Composite key used internally in queue, binding token key and manager index
-/// 作Tohint加速查找：Iftoken未被修改，index可以直接定位
+/// As a hint to speed up lookup: if token is not modified, index can directly locate it
 #[derive(PartialEq, Eq, Hash, Clone, Copy)]
 pub struct TokenManagerKey {
     user_id: UserId,
     randomness: Randomness,
-    index: usize, // token在manager.tokens中的位置（hint）
+    index: usize, // position of token in manager.tokens (hint)
 }
 
 #[cfg(not(feature = "horizon"))]
@@ -165,9 +165,9 @@ impl TokenQueue {
         // Vec::remove会将后续元素前移，Need更新它们在map中的索引
         let removed = self.vec.remove(vec_index);
 
-        // Use指针迭代避免重复的bounds checking
-        // SAFETY: vec_index来自map且Alreadyremove一个元素，后续元素索引Tovec_index..len
-        // 这些元素的token_key在map中必然存在（由push/set_key保证）
+        // Use pointer iteration to avoid repeated bounds checking
+        // SAFETY: vec_index comes from map and already removed one element, subsequent element indices are vec_index..len
+        // The token_key of these elements must exist in map (guaranteed by push/set_key)
         unsafe {
             let base = self.vec.as_mut_ptr().add(vec_index);
             for i in 0..(self.vec.len() - vec_index) {
@@ -187,9 +187,9 @@ impl TokenQueue {
     ) -> Option<usize> {
         let vec_index = self.map.remove(token_key)?;
 
-        // 调整所Have队列的head指针：Ifhead在被删除元素之后，Need前移一位
-        // 这保证了remove后指针仍然指向正确的相对位置
-        // SAFETY: QueueType是repr(usize)枚举，值域To0..4，QUEUE_HEADS长度To4
+        // Adjust head pointers of all queues: if head is after the deleted element, need to move forward by one
+        // This ensures that after remove, the pointer still points to the correct relative position
+        // SAFETY: QueueType is repr(usize) enum, value range is 0..4, QUEUE_HEADS length is 4
         unsafe {
             for i in 0..4 {
                 let head = QUEUE_HEADS.get_unchecked(i);
@@ -200,12 +200,12 @@ impl TokenQueue {
             }
         }
 
-        // Vec::remove会将后续元素前移，Need更新它们在map中的索引
+        // Vec::remove will move subsequent elements forward, need to update their indices in map
         let removed = self.vec.remove(vec_index);
 
-        // Use指针迭代避免重复的bounds checking
-        // SAFETY: vec_index来自map且Alreadyremove一个元素，后续元素索引Tovec_index..len
-        // 这些元素的token_key在map中必然存在（由push/set_key保证）
+        // Use pointer iteration to avoid repeated bounds checking
+        // SAFETY: vec_index comes from map and already removed one element, subsequent element indices are vec_index..len
+        // The token_key of these elements must exist in map (guaranteed by push/set_key)
         unsafe {
             let base = self.vec.as_mut_ptr().add(vec_index);
             for i in 0..(self.vec.len() - vec_index) {
