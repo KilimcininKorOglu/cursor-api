@@ -31,7 +31,7 @@ pub fn init_endpoints(paths: HashSet<&'static str>) {
 }
 
 pub async fn handle_health(State(state): State<Arc<AppState>>) -> Json<HealthCheckResponse> {
-    // 将系统信息采集移到阻塞线程池
+    // Move system info collection to blocking thread pool
     let system = tokio::task::spawn_blocking(collect_system_stats).await.ok();
 
     Json(HealthCheckResponse {
@@ -63,7 +63,7 @@ pub async fn handle_health(State(state): State<Arc<AppState>>) -> Json<HealthChe
     })
 }
 
-/// 采集系统统计信息（阻塞操作）
+/// Collect system statistics (blocking operation)
 fn collect_system_stats() -> SystemStats {
     let mut sys = System::new_with_specifics(
         RefreshKind::nothing()
@@ -71,29 +71,29 @@ fn collect_system_stats() -> SystemStats {
             .with_cpu(CpuRefreshKind::everything()),
     );
 
-    // CPU 使用率需要等待采样间隔
+    // CPU usage requires waiting for sampling interval
     std::thread::sleep(sysinfo::MINIMUM_CPU_UPDATE_INTERVAL);
 
-    // 刷新系统信息
+    // Refresh system information
     sys.refresh_memory();
     sys.refresh_cpu_usage();
 
     let pid = std::process::id();
     let process = sys.process(Pid::from_u32(pid));
 
-    // 获取程序内存使用量和系统总内存
+    // Get program memory usage and total system memory
     let memory_used = process.map(|p| p.memory()).unwrap_or(0);
     let total_memory = sys.total_memory();
     let available_memory = sys.available_memory();
 
-    // 计算内存使用比例(百分比)
+    // Calculate memory usage percentage
     let memory_percentage =
         if total_memory > 0 { (memory_used as f32 / total_memory as f32) * 100.0 } else { 0.0 };
 
-    // 获取 CPU 使用率
+    // Get CPU usage
     let cpu_usage = sys.global_cpu_usage();
 
-    // 获取负载平均值
+    // Get load average
     let load_avg = {
         let load = System::load_average();
         [load.one, load.five, load.fifteen]

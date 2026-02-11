@@ -22,7 +22,7 @@ pub async fn handle_config_example() -> Response {
     )
 }
 
-// // 配置页面处理函数
+// // Config page handler function
 // pub async fn handle_config_page() -> Response {
 //     AppConfig::get_page_content(ROUTE_CONFIG_PATH).unwrap_or_default().into_response(|| {
 //         Response::builder()
