@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 
 <head>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/x-icon" href="data:image/x-icon;," />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>构建 Key</title>
-  <!-- 引入共享样式 -->
+  <title>Build Key</title>
+  <!-- Include shared styles -->
   <link rel="stylesheet" href="/static/shared-styles.css" />
   <script src="/static/shared.js"></script>
   <style>
-    /* 表单分组样式 */
+    /* Form section styles */
     .form-section {
       margin-bottom: 30px;
       padding: 20px;
@@ -35,20 +35,20 @@
       font-size: 14px;
     }
 
-    /* 必填字段标记 */
+    /* Required field marker */
     .required-mark {
       color: var(--error-color);
       margin-left: 4px;
     }
 
-    /* 输入提示样式 */
+    /* Input hint styles */
     .input-hint {
       font-size: 12px;
       color: var(--text-secondary);
       margin-top: 4px;
     }
 
-    /* Key 结果展示样式 */
+    /* Key result display styles */
     .key-result {
       background: var(--card-background);
       border-radius: var(--border-radius);
@@ -130,7 +130,7 @@
       border-color: var(--success-color);
     }
 
-    /* 模型选择器样式 */
+    /* Model selector styles */
     .model-list {
       max-height: 200px;
       overflow-y: auto;
@@ -167,7 +167,7 @@
       user-select: none;
     }
 
-    /* 折叠面板样式 */
+    /* Collapsible panel styles */
     .collapsible {
       cursor: pointer;
       user-select: none;
@@ -194,7 +194,7 @@
       display: none;
     }
 
-    /* 输入验证样式 */
+    /* Input validation styles */
     input.invalid {
       border-color: var(--error-color);
     }
@@ -203,7 +203,7 @@
       border-color: var(--success-color);
     }
 
-    /* 快捷操作按钮 */
+    /* Quick action buttons */
     .quick-actions {
       display: flex;
       gap: 10px;
@@ -227,7 +227,7 @@
       color: var(--primary-color);
     }
 
-    /* 时区选择器样式 */
+    /* Timezone selector styles */
     .timezone-selector {
       position: relative;
     }
@@ -293,7 +293,7 @@
       color: var(--text-secondary);
     }
 
-    /* 响应式布局优化 */
+    /* Responsive layout optimization */
     @media (max-width: 768px) {
       .form-section {
         padding: 15px;
@@ -323,222 +323,222 @@
 </head>
 
 <body>
-  <h1>Key 构建器</h1>
+  <h1>Key Builder</h1>
 
   <div class="container">
-    <!-- 快捷操作 -->
+    <!-- Quick actions -->
     <div class="quick-actions">
       <button class="quick-action-button" onclick="loadFromCache()">
-        恢复上次数据
+        Restore Last Data
       </button>
       <button class="quick-action-button" onclick="clearForm()">
-        清空表单
+        Clear Form
       </button>
     </div>
 
-    <!-- API认证密钥 -->
+    <!-- APIAuthentication Key -->
     <div class="form-section">
-      <h3>API 认证</h3>
+      <h3>API Authentication</h3>
       <p class="form-section-description">
-        输入用于调用构建Key服务的认证密钥
+        Enter the authentication key for calling the Build Key service
       </p>
       <div class="form-group">
         <label>
-          认证密钥 (AUTH_TOKEN)
+          Authentication Key (AUTH_TOKEN)
         </label>
-        <input type="password" id="authToken" placeholder="用于认证API调用的密钥（可选）" autocomplete="off" />
-        <div class="input-hint">此密钥用于认证对构建Key服务的访问（可选字段）</div>
+        <input type="password" id="authToken" placeholder="Key for authenticating API calls (optional)" autocomplete="off" />
+        <div class="input-hint">This key is used to authenticate access to the Build Key service (optional field)</div>
       </div>
     </div>
 
-    <!-- 认证信息 -->
+    <!-- Authentication Info -->
     <div class="form-section">
-      <h3 class="collapsible" onclick="toggleSection(this)">认证信息</h3>
+      <h3 class="collapsible" onclick="toggleSection(this)">Authentication Info</h3>
       <div class="collapsible-content">
-        <p class="form-section-description">输入认证所需的令牌和校验信息</p>
+        <p class="form-section-description">Enter the token and checksum information required for authentication</p>
 
         <div class="form-group">
           <label>
-            令牌 (Token)
+            Token (Token)
             <span class="required-mark">*</span>
           </label>
-          <input type="text" id="token" placeholder="输入 JWT 格式的令牌" autocomplete="off" />
-          <div class="input-hint">JWT 格式的认证令牌</div>
+          <input type="text" id="token" placeholder="Enter JWT format token" autocomplete="off" />
+          <div class="input-hint">JWT format authentication token</div>
         </div>
 
         <div class="form-group">
           <label>
-            校验和 - First
+            Checksum - First
             <span class="required-mark">*</span>
           </label>
-          <input type="text" id="checksumFirst" placeholder="64位 Hex 编码字符串" pattern="^[0-9a-fA-F]{64}$" maxlength="64"
+          <input type="text" id="checksumFirst" placeholder="64-bit Hex encoded string" pattern="^[0-9a-fA-F]{64}$" maxlength="64"
             autocomplete="off" />
-          <div class="input-hint">64个十六进制字符（0-9, a-f, A-F）</div>
+          <div class="input-hint">64 hexadecimal characters (0-9, a-f, A-F)</div>
         </div>
 
         <div class="form-group">
           <label>
-            校验和 - Second
+            Checksum - Second
             <span class="required-mark">*</span>
           </label>
-          <input type="text" id="checksumSecond" placeholder="64位 Hex 编码字符串" pattern="^[0-9a-fA-F]{64}$" maxlength="64"
+          <input type="text" id="checksumSecond" placeholder="64-bit Hex encoded string" pattern="^[0-9a-fA-F]{64}$" maxlength="64"
             autocomplete="off" />
-          <div class="input-hint">64个十六进制字符（0-9, a-f, A-F）</div>
+          <div class="input-hint">64 hexadecimal characters (0-9, a-f, A-F)</div>
         </div>
 
         <div class="form-group">
           <label>
-            客户端密钥 (Client Key)
+            Client Key (Client Key)
             <span class="required-mark">*</span>
           </label>
-          <input type="text" id="clientKey" placeholder="64位 Hex 编码字符串" pattern="^[0-9a-fA-F]{64}$" maxlength="64"
+          <input type="text" id="clientKey" placeholder="64-bit Hex encoded string" pattern="^[0-9a-fA-F]{64}$" maxlength="64"
             autocomplete="off" />
-          <div class="input-hint">64个十六进制字符（0-9, a-f, A-F）</div>
+          <div class="input-hint">64 hexadecimal characters (0-9, a-f, A-F)</div>
         </div>
       </div>
     </div>
 
-    <!-- 配置信息 -->
+    <!-- Configuration Info -->
     <div class="form-section">
-      <h3 class="collapsible" onclick="toggleSection(this)">配置信息</h3>
+      <h3 class="collapsible" onclick="toggleSection(this)">Configuration Info</h3>
       <div class="collapsible-content">
-        <p class="form-section-description">设置配置版本和会话标识</p>
+        <p class="form-section-description">Set configuration version and session ID</p>
 
         <div class="form-group">
           <label>
-            配置版本 (Config Version)
+            Config Version (Config Version)
             <span class="required-mark">*</span>
           </label>
           <div style="display: flex; gap: 10px; align-items: flex-start;">
-            <input type="text" id="configVersion" placeholder="UUID 格式，如：550e8400-e29b-41d4-a716-446655440000"
+            <input type="text" id="configVersion" placeholder="UUID format, e.g.: 550e8400-e29b-41d4-a716-446655440000"
               pattern="^[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{12}$"
               style="flex: 1;" />
             <button type="button" id="fetchConfigVersionButton" onclick="fetchConfigVersion()"
               style="padding: 8px 16px; font-size: 14px; white-space: nowrap;">
-              获取
+              Get
             </button>
           </div>
-          <div class="input-hint">标准 UUID 格式，先填写其他项后最后再点击"获取"按钮获取</div>
+          <div class="input-hint">Standard UUID format, fill in other fields first then click "Get" button</div>
         </div>
 
         <div class="form-group">
           <label>
-            会话 ID (Session ID)
+            Session ID (Session ID)
             <span class="required-mark">*</span>
           </label>
-          <input type="text" id="sessionId" placeholder="UUID 格式，如：550e8400-e29b-41d4-a716-446655440000"
+          <input type="text" id="sessionId" placeholder="UUID format, e.g.: 550e8400-e29b-41d4-a716-446655440000"
             pattern="^[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{12}$" />
-          <div class="input-hint">标准 UUID 格式</div>
+          <div class="input-hint">Standard UUID format</div>
         </div>
 
         <div class="form-group">
-          <label>密钥 (Secret)</label>
-          <input type="text" id="secret" placeholder="可选字段" />
-          <div class="input-hint">可选，通常不需要填写</div>
+          <label>Secret (Secret)</label>
+          <input type="text" id="secret" placeholder="Optional field" />
+          <div class="input-hint">Optional, usually not required</div>
         </div>
       </div>
     </div>
 
-    <!-- 代理和区域设置 -->
+    <!-- Proxy and Region Settings -->
     <div class="form-section">
       <h3 class="collapsible collapsed" onclick="toggleSection(this)">
-        代理和区域设置
+        Proxy and Region Settings
       </h3>
       <div class="collapsible-content collapsed">
-        <p class="form-section-description">配置代理、时区和代码补全区域</p>
+        <p class="form-section-description">Configure proxy, timezone and code completion region</p>
 
         <div class="form-group">
-          <label>代理名称 (Proxy Name)</label>
-          <input type="text" id="proxyName" placeholder="输入代理名称（可选）" />
-          <div class="input-hint">指定要使用的代理</div>
+          <label>Proxy Name (Proxy Name)</label>
+          <input type="text" id="proxyName" placeholder="Enter proxy name (optional)" />
+          <div class="input-hint">Specify the proxy to use</div>
         </div>
 
         <div class="form-group">
-          <label>时区 (Timezone)</label>
+          <label>Timezone (Timezone)</label>
           <div class="timezone-selector">
-            <input type="text" id="timezone" class="timezone-search" placeholder="搜索时区，如：Shanghai、Beijing、Tokyo（可选）"
+            <input type="text" id="timezone" class="timezone-search" placeholder="Search timezone, e.g.: Shanghai, Beijing, Tokyo (optional)"
               autocomplete="off" onkeyup="filterTimezones(this.value)" onfocus="showTimezoneDropdown()"
               onblur="hideTimezoneDropdown(event)" />
             <div id="timezoneDropdown" class="timezone-dropdown">
-              <!-- 动态生成的时区列表 -->
+              <!-- Dynamically generated timezone list -->
             </div>
           </div>
           <div class="input-hint">
-            输入城市名或时区名称进行搜索，或从列表中选择
+            Enter city name or timezone name to search, or select from list
           </div>
         </div>
 
         <div class="form-group">
-          <label>代码补全区域 (GCPP Host)</label>
+          <label>Code Completion Region (GCPP Host)</label>
           <select id="gcppHost">
-            <option value="">跟随全局设置</option>
-            <option value="Asia">亚洲 (Asia)</option>
-            <option value="EU">欧洲 (EU)</option>
-            <option value="US">美国 (US)</option>
+            <option value="">Follow Global Settings</option>
+            <option value="Asia">Asia (Asia)</option>
+            <option value="EU">Europe (EU)</option>
+            <option value="US">US (US)</option>
           </select>
-          <div class="input-hint">选择最近的服务器区域以获得更好的延迟</div>
+          <div class="input-hint">Select the nearest server region for better latency</div>
         </div>
       </div>
     </div>
 
-    <!-- 功能开关 -->
+    <!-- Feature Toggles -->
     <div class="form-section">
       <h3 class="collapsible collapsed" onclick="toggleSection(this)">
-        功能开关
+        Feature Toggles
       </h3>
       <div class="collapsible-content collapsed">
-        <p class="form-section-description">控制各项功能的启用状态</p>
+        <p class="form-section-description">Control the enable status of various features</p>
 
         <div class="form-group">
-          <label>图片处理能力 (Vision)</label>
+          <label>Vision Capability (Vision)</label>
           <select id="disableVision">
-            <option value="">跟随全局设置</option>
-            <option value="false">启用</option>
-            <option value="true">禁用</option>
+            <option value="">Follow Global Settings</option>
+            <option value="false">Enable</option>
+            <option value="true">Disable</option>
           </select>
-          <div class="input-hint">控制是否启用图片识别功能</div>
+          <div class="input-hint">Control whether to enable image recognition</div>
         </div>
 
         <div class="form-group">
-          <label>慢速池 (Slow Pool)</label>
+          <label>Slow Pool (Slow Pool)</label>
           <select id="enableSlowPool">
-            <option value="">跟随全局设置</option>
-            <option value="true">启用</option>
-            <option value="false">禁用</option>
+            <option value="">Follow Global Settings</option>
+            <option value="true">Enable</option>
+            <option value="false">Disable</option>
           </select>
-          <div class="input-hint">启用后可能获得更稳定但响应较慢的服务</div>
+          <div class="input-hint">May get more stable but slower service when enabled</div>
         </div>
 
         <div class="form-group">
-          <label>网络引用 (Web References)</label>
+          <label>Web References (Web References)</label>
           <select id="includeWebReferences">
-            <option value="">跟随全局设置</option>
-            <option value="true">包含</option>
-            <option value="false">不包含</option>
+            <option value="">Follow Global Settings</option>
+            <option value="true">Include</option>
+            <option value="false">Exclude</option>
           </select>
-          <div class="input-hint">是否在响应中包含网络引用信息</div>
+          <div class="input-hint">Whether to include web reference information in response</div>
         </div>
       </div>
     </div>
 
-    <!-- 使用量检查配置 -->
+    <!-- Usage Check Configuration -->
     <div class="form-section">
       <h3 class="collapsible collapsed" onclick="toggleSection(this)">
-        使用量检查配置
+        Usage Check Configuration
       </h3>
       <div class="collapsible-content collapsed">
-        <p class="form-section-description">配置模型使用量检查规则</p>
+        <p class="form-section-description">Configure model usage check rules</p>
 
         <div class="form-group">
-          <label>检查规则</label>
+          <label>Check Rules</label>
           <select id="usageCheckType" onchange="toggleModelList()">
-            <option value="">跟随全局设置</option>
-            <option value="default">使用默认规则</option>
-            <option value="disabled">禁用检查</option>
-            <option value="all">检查所有模型</option>
-            <option value="custom">自定义模型列表</option>
+            <option value="">Follow Global Settings</option>
+            <option value="default">Use Default Rules</option>
+            <option value="disabled">Disable check</option>
+            <option value="all">Check All Models</option>
+            <option value="custom">Custom Model List</option>
           </select>
-          <div class="input-hint">选择如何检查模型使用量</div>
+          <div class="input-hint">Select how to check model usage</div>
         </div>
 
         <div id="modelListContainer" class="model-list" style="display: none">
@@ -547,234 +547,234 @@
               text-align: center;
               color: var(--text-secondary);
             ">
-            加载模型列表中...
+            Loading model list...
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 操作按钮 -->
+    <!-- Action buttons -->
     <div class="button-group">
-      <button onclick="buildKey()" id="buildButton">构建 Key</button>
-      <button onclick="clearForm()" class="secondary">清空表单</button>
+      <button onclick="buildKey()" id="buildButton">Build Key</button>
+      <button onclick="clearForm()" class="secondary">Clear Form</button>
     </div>
   </div>
 
-  <!-- Key 结果展示 -->
+  <!-- Key result display -->
   <div id="keyResult" class="key-result" style="display: none">
     <div class="key-result-header">
-      <h3>生成的 Key</h3>
-      <button class="secondary" onclick="hideKeyResult()">关闭</button>
+      <h3>Generated Key</h3>
+      <button class="secondary" onclick="hideKeyResult()">Close</button>
     </div>
     <div class="key-result-content" id="keyContent">
-      <!-- 动态生成的内容 -->
+      <!-- Dynamically generated content -->
     </div>
   </div>
 
   <script>
-    // 配置常量
+    // Configuration constants
     const CONFIG = {
       HEX_PATTERN: /^[0-9a-fA-F]{64}$/,
       UUID_PATTERN:
         /^[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{12}$/,
       CACHE_KEY: "buildKeyFormData",
-      CACHE_EXPIRY: 7 * 24 * 60 * 60 * 1000, // 7天
+      CACHE_EXPIRY: 7 * 24 * 60 * 60 * 1000, // 7 days
     };
 
-    // 可用模型列表
+    // Available model list
     let availableModels = [];
 
-    // 时区数据
+    // Timezone data
     const TIMEZONES = [
-      // 亚洲主要城市
+      // Major Asian cities
       {
         name: "Asia/Shanghai",
-        display: "上海",
+        display: "Shanghai",
         offset: "+08:00",
-        keywords: ["shanghai", "上海", "china", "中国"],
+        keywords: ["shanghai", "Shanghai", "china", "China"],
       },
       {
         name: "Asia/Beijing",
-        display: "北京",
+        display: "Beijing",
         offset: "+08:00",
-        keywords: ["beijing", "北京", "peking"],
+        keywords: ["beijing", "Beijing", "peking"],
       },
       {
         name: "Asia/Hong_Kong",
-        display: "香港",
+        display: "Hong Kong",
         offset: "+08:00",
-        keywords: ["hongkong", "hong kong", "香港", "hk"],
+        keywords: ["hongkong", "hong kong", "Hong Kong", "hk"],
       },
       {
         name: "Asia/Taipei",
-        display: "台北",
+        display: "Taipei",
         offset: "+08:00",
-        keywords: ["taipei", "台北", "taiwan", "台湾"],
+        keywords: ["taipei", "Taipei", "taiwan", "Taiwan"],
       },
       {
         name: "Asia/Singapore",
-        display: "新加坡",
+        display: "Singapore",
         offset: "+08:00",
-        keywords: ["singapore", "新加坡", "sg"],
+        keywords: ["singapore", "Singapore", "sg"],
       },
       {
         name: "Asia/Tokyo",
-        display: "东京",
+        display: "Tokyo",
         offset: "+09:00",
-        keywords: ["tokyo", "东京", "japan", "日本"],
+        keywords: ["tokyo", "Tokyo", "japan", "Japan"],
       },
       {
         name: "Asia/Seoul",
-        display: "首尔",
+        display: "Seoul",
         offset: "+09:00",
-        keywords: ["seoul", "首尔", "korea", "韩国"],
+        keywords: ["seoul", "Seoul", "korea", "Korea"],
       },
       {
         name: "Asia/Bangkok",
-        display: "曼谷",
+        display: "Bangkok",
         offset: "+07:00",
-        keywords: ["bangkok", "曼谷", "thailand", "泰国"],
+        keywords: ["bangkok", "Bangkok", "thailand", "Thailand"],
       },
       {
         name: "Asia/Jakarta",
-        display: "雅加达",
+        display: "Jakarta",
         offset: "+07:00",
-        keywords: ["jakarta", "雅加达", "indonesia", "印尼"],
+        keywords: ["jakarta", "Jakarta", "indonesia", "Indonesia"],
       },
       {
         name: "Asia/Kolkata",
-        display: "加尔各答",
+        display: "Kolkata",
         offset: "+05:30",
-        keywords: ["kolkata", "calcutta", "加尔各答", "india", "印度"],
+        keywords: ["kolkata", "calcutta", "Kolkata", "india", "India"],
       },
       {
         name: "Asia/Dubai",
-        display: "迪拜",
+        display: "Dubai",
         offset: "+04:00",
-        keywords: ["dubai", "迪拜", "uae", "阿联酋"],
+        keywords: ["dubai", "Dubai", "uae", "UAE"],
       },
 
-      // 欧洲主要城市
+      // Major European cities
       {
         name: "Europe/London",
-        display: "伦敦",
+        display: "London",
         offset: "+00:00",
-        keywords: ["london", "伦敦", "uk", "英国", "britain"],
+        keywords: ["london", "London", "uk", "UK", "britain"],
       },
       {
         name: "Europe/Paris",
-        display: "巴黎",
+        display: "Paris",
         offset: "+01:00",
-        keywords: ["paris", "巴黎", "france", "法国"],
+        keywords: ["paris", "Paris", "france", "France"],
       },
       {
         name: "Europe/Berlin",
-        display: "柏林",
+        display: "Berlin",
         offset: "+01:00",
-        keywords: ["berlin", "柏林", "germany", "德国"],
+        keywords: ["berlin", "Berlin", "germany", "Germany"],
       },
       {
         name: "Europe/Madrid",
-        display: "马德里",
+        display: "Madrid",
         offset: "+01:00",
-        keywords: ["madrid", "马德里", "spain", "西班牙"],
+        keywords: ["madrid", "Madrid", "spain", "Spain"],
       },
       {
         name: "Europe/Rome",
-        display: "罗马",
+        display: "Rome",
         offset: "+01:00",
-        keywords: ["rome", "罗马", "italy", "意大利"],
+        keywords: ["rome", "Rome", "italy", "Italy"],
       },
       {
         name: "Europe/Moscow",
-        display: "莫斯科",
+        display: "Moscow",
         offset: "+03:00",
-        keywords: ["moscow", "莫斯科", "russia", "俄罗斯"],
+        keywords: ["moscow", "Moscow", "russia", "Russia"],
       },
       {
         name: "Europe/Amsterdam",
-        display: "阿姆斯特丹",
+        display: "Amsterdam",
         offset: "+01:00",
-        keywords: ["amsterdam", "阿姆斯特丹", "netherlands", "荷兰"],
+        keywords: ["amsterdam", "Amsterdam", "netherlands", "Netherlands"],
       },
       {
         name: "Europe/Zurich",
-        display: "苏黎世",
+        display: "Zurich",
         offset: "+01:00",
-        keywords: ["zurich", "苏黎世", "switzerland", "瑞士"],
+        keywords: ["zurich", "Zurich", "switzerland", "Switzerland"],
       },
 
-      // 美洲主要城市
+      // Major American cities
       {
         name: "America/New_York",
-        display: "纽约",
+        display: "New York",
         offset: "-05:00",
-        keywords: ["new york", "newyork", "纽约", "ny", "eastern"],
+        keywords: ["new york", "newyork", "New York", "ny", "eastern"],
       },
       {
         name: "America/Los_Angeles",
-        display: "洛杉矶",
+        display: "Los Angeles",
         offset: "-08:00",
-        keywords: ["los angeles", "la", "洛杉矶", "pacific"],
+        keywords: ["los angeles", "la", "Los Angeles", "pacific"],
       },
       {
         name: "America/Chicago",
-        display: "芝加哥",
+        display: "Chicago",
         offset: "-06:00",
-        keywords: ["chicago", "芝加哥", "central"],
+        keywords: ["chicago", "Chicago", "central"],
       },
       {
         name: "America/Toronto",
-        display: "多伦多",
+        display: "Toronto",
         offset: "-05:00",
-        keywords: ["toronto", "多伦多", "canada", "加拿大"],
+        keywords: ["toronto", "Toronto", "canada", "Canada"],
       },
       {
         name: "America/Vancouver",
-        display: "温哥华",
+        display: "Vancouver",
         offset: "-08:00",
-        keywords: ["vancouver", "温哥华"],
+        keywords: ["vancouver", "Vancouver"],
       },
       {
         name: "America/Mexico_City",
-        display: "墨西哥城",
+        display: "Mexico City",
         offset: "-06:00",
-        keywords: ["mexico city", "墨西哥城", "mexico", "墨西哥"],
+        keywords: ["mexico city", "Mexico City", "mexico", "Mexico"],
       },
       {
         name: "America/Sao_Paulo",
-        display: "圣保罗",
+        display: "Sao Paulo",
         offset: "-03:00",
-        keywords: ["sao paulo", "圣保罗", "brazil", "巴西"],
+        keywords: ["sao paulo", "Sao Paulo", "brazil", "Brazil"],
       },
       {
         name: "America/Buenos_Aires",
-        display: "布宜诺斯艾利斯",
+        display: "Buenos Aires",
         offset: "-03:00",
-        keywords: ["buenos aires", "布宜诺斯艾利斯", "argentina", "阿根廷"],
+        keywords: ["buenos aires", "Buenos Aires", "argentina", "Argentina"],
       },
 
-      // 大洋洲
+      // Oceania
       {
         name: "Australia/Sydney",
-        display: "悉尼",
+        display: "Sydney",
         offset: "+10:00",
-        keywords: ["sydney", "悉尼", "australia", "澳大利亚"],
+        keywords: ["sydney", "Sydney", "australia", "Australia"],
       },
       {
         name: "Australia/Melbourne",
-        display: "墨尔本",
+        display: "Melbourne",
         offset: "+10:00",
-        keywords: ["melbourne", "墨尔本"],
+        keywords: ["melbourne", "Melbourne"],
       },
       {
         name: "Pacific/Auckland",
-        display: "奥克兰",
+        display: "Auckland",
         offset: "+12:00",
-        keywords: ["auckland", "奥克兰", "new zealand", "新西兰"],
+        keywords: ["auckland", "Auckland", "new zealand", "New Zealand"],
       },
 
-      // 其他重要时区
+      // Other important timezones
       {
         name: "UTC",
         display: "UTC",
@@ -783,85 +783,85 @@
       },
       {
         name: "Asia/Chongqing",
-        display: "重庆",
+        display: "Chongqing",
         offset: "+08:00",
-        keywords: ["chongqing", "重庆"],
+        keywords: ["chongqing", "Chongqing"],
       },
       {
         name: "Asia/Shenzhen",
-        display: "深圳",
+        display: "Shenzhen",
         offset: "+08:00",
-        keywords: ["shenzhen", "深圳"],
+        keywords: ["shenzhen", "Shenzhen"],
       },
       {
         name: "Asia/Guangzhou",
-        display: "广州",
+        display: "Guangzhou",
         offset: "+08:00",
-        keywords: ["guangzhou", "广州", "canton"],
+        keywords: ["guangzhou", "Guangzhou", "canton"],
       },
       {
         name: "Asia/Hangzhou",
-        display: "杭州",
+        display: "Hangzhou",
         offset: "+08:00",
-        keywords: ["hangzhou", "杭州"],
+        keywords: ["hangzhou", "Hangzhou"],
       },
       {
         name: "Asia/Chengdu",
-        display: "成都",
+        display: "Chengdu",
         offset: "+08:00",
-        keywords: ["chengdu", "成都"],
+        keywords: ["chengdu", "Chengdu"],
       },
       {
         name: "Asia/Wuhan",
-        display: "武汉",
+        display: "Wuhan",
         offset: "+08:00",
-        keywords: ["wuhan", "武汉"],
+        keywords: ["wuhan", "Wuhan"],
       },
       {
         name: "Asia/Harbin",
-        display: "哈尔滨",
+        display: "Harbin",
         offset: "+08:00",
-        keywords: ["harbin", "哈尔滨"],
+        keywords: ["harbin", "Harbin"],
       },
       {
         name: "Asia/Urumqi",
-        display: "乌鲁木齐",
+        display: "Urumqi",
         offset: "+06:00",
-        keywords: ["urumqi", "乌鲁木齐", "xinjiang", "新疆"],
+        keywords: ["urumqi", "Urumqi", "xinjiang", "Xinjiang"],
       },
     ];
 
-    // 时区下拉框是否应该保持显示
+    // Whether timezone dropdown should stay open
     let keepTimezoneDropdownOpen = false;
 
     /**
-     * 初始化页面
+     * Initialize page
      */
     async function initializePage() {
-      // 初始化认证Token处理
+      // Initialize auth token handling
       initializeTokenHandling("authToken");
 
-      // 加载模型列表
+      // Load model list
       await loadModels();
 
-      // 初始化时区选择器
+      // Initialize timezone selector
       initializeTimezoneSelector();
 
-      // 尝试从缓存恢复数据
+      // Try to restore data from cache
       const cached = getCachedFormData();
       if (cached) {
-        showGlobalMessage("已恢复上次的表单数据", false, 2000);
+        showGlobalMessage("Restored last form data", false, 2000);
       }
 
-      // 添加输入验证
+      // Add input validation
       setupInputValidation();
 
-      // 自动保存表单数据
+      // Auto save form data
       setupAutoSave();
     }
 
     /**
-     * 加载可用模型列表
+     * Load available model list
      */
     async function loadModels() {
       try {
@@ -870,18 +870,18 @@
         availableModels = data.data.map((model) => model.id);
         updateModelList();
       } catch (error) {
-        console.error("获取模型列表失败:", error);
+        console.error("Failed to get model list:", error);
       }
     }
 
     /**
-     * 更新模型列表UI
+     * Update model list UI
      */
     function updateModelList() {
       const container = document.getElementById("modelListContainer");
       if (availableModels.length === 0) {
         container.innerHTML =
-          '<div style="padding: 10px; text-align: center; color: var(--text-secondary);">暂无可用模型</div>';
+          '<div style="padding: 10px; text-align: center; color: var(--text-secondary);">No available models</div>';
         return;
       }
 
@@ -898,7 +898,7 @@
     }
 
     /**
-     * 切换模型列表显示
+     * Toggle model list display
      */
     function toggleModelList() {
       const type = document.getElementById("usageCheckType").value;
@@ -907,7 +907,7 @@
     }
 
     /**
-     * 切换折叠面板
+     * Toggle collapsible panel
      */
     function toggleSection(element) {
       element.classList.toggle("collapsed");
@@ -916,10 +916,10 @@
     }
 
     /**
-     * 设置输入验证
+     * Setup input validation
      */
     function setupInputValidation() {
-      // Hex 字段验证
+      // Hex field validation
       ["checksumFirst", "checksumSecond", "clientKey"].forEach((id) => {
         const input = document.getElementById(id);
         input.addEventListener("input", function () {
@@ -927,7 +927,7 @@
         });
       });
 
-      // UUID 字段验证
+      // UUID field validation
       ["configVersion", "sessionId"].forEach((id) => {
         const input = document.getElementById(id);
         input.addEventListener("input", function () {
@@ -937,7 +937,7 @@
     }
 
     /**
-     * 验证 Hex 输入
+     * Validate Hex input
      */
     function validateHexInput(input) {
       const value = input.value.trim();
@@ -956,7 +956,7 @@
     }
 
     /**
-     * 验证 UUID 输入
+     * Validate UUID input
      */
     function validateUUIDInput(input) {
       const value = input.value.trim();
@@ -975,7 +975,7 @@
     }
 
     /**
-     * 设置自动保存
+     * Setup auto save
      */
     function setupAutoSave() {
       const inputs = document.querySelectorAll("input, select");
@@ -985,7 +985,7 @@
     }
 
     /**
-     * 保存表单数据到本地存储
+     * Save form data to local storage
      */
     function saveFormData() {
       const formData = {
@@ -1017,7 +1017,7 @@
     }
 
     /**
-     * 从缓存恢复表单数据
+     * Restore form data from cache
      */
     function getCachedFormData() {
       try {
@@ -1026,16 +1026,16 @@
 
         const { data, timestamp } = JSON.parse(cached);
 
-        // 检查是否过期
+        // Check if expired
         if (Date.now() - timestamp > CONFIG.CACHE_EXPIRY) {
           localStorage.removeItem(CONFIG.CACHE_KEY);
           return null;
         }
 
-        // 恢复表单数据
+        // Restore form data
         Object.keys(data).forEach((key) => {
           if (key === "selectedModels") {
-            // 恢复选中的模型
+            // Restore selected models
             data[key].forEach((modelId) => {
               const checkbox = document.getElementById(`model_${modelId}`);
               if (checkbox) checkbox.checked = true;
@@ -1048,25 +1048,25 @@
 
         return data;
       } catch (error) {
-        console.error("恢复缓存数据失败:", error);
+        console.error("Failed to restore cached data:", error);
         return null;
       }
     }
 
     /**
-     * 从缓存加载数据
+     * Load data from cache
      */
     function loadFromCache() {
       const cached = getCachedFormData();
       if (cached) {
-        showGlobalMessage("已恢复表单数据");
+        showGlobalMessage("Restored form data");
       } else {
-        showGlobalMessage("没有找到缓存的数据", true);
+        showGlobalMessage("No cached data found", true);
       }
     }
 
     /**
-     * 获取选中的模型
+     * Get selected models
      */
     function getSelectedModels() {
       return Array.from(
@@ -1075,25 +1075,25 @@
     }
 
     /**
-     * 通用的API请求函数，选择使用makeAuthenticatedRequest或fetch
+     * Generic API request function, choose to use makeAuthenticatedRequest or fetch
      */
     async function makeApiRequest(url, requestData) {
       const authToken = document.getElementById("authToken").value.trim();
 
       if (authToken) {
-        // 如果有认证密钥，使用 makeAuthenticatedRequest 函数
+        // If hasAuthentication Key，use makeAuthenticatedRequest function
         const result = await makeAuthenticatedRequest(url, {
           body: JSON.stringify(requestData),
         });
 
         if (!result) {
-          // makeAuthenticatedRequest 已经显示了错误信息
+          // makeAuthenticatedRequest already showed error message
           return null;
         }
 
         return result;
       } else {
-        // 如果没有认证密钥，直接使用 fetch
+        // If no authentication key, directly use fetch
         const response = await fetch(url, {
           method: "POST",
           headers: {
@@ -1104,7 +1104,7 @@
 
         if (!response.ok) {
           const errorText = await response.text();
-          showGlobalMessage(`请求失败: ${response.status} ${errorText}`, true);
+          showGlobalMessage(`Request failed: ${response.status} ${errorText}`, true);
           return null;
         }
 
@@ -1113,34 +1113,34 @@
     }
 
     /**
-     * 获取配置版本
+     * GetConfig Version
      */
     async function fetchConfigVersion() {
-      // 验证必填字段
+      // Validate required fields
       const requiredFields = {
-        token: "令牌",
-        checksumFirst: "校验和 First",
-        checksumSecond: "校验和 Second",
-        clientKey: "客户端密钥",
-        sessionId: "会话 ID",
+        token: "Token",
+        checksumFirst: "Checksum First",
+        checksumSecond: "Checksum Second",
+        clientKey: "Client Key",
+        sessionId: "Session ID",
       };
 
       for (const [field, name] of Object.entries(requiredFields)) {
         const value = document.getElementById(field).value.trim();
         if (!value) {
-          showGlobalMessage(`请填写${name}`, true);
+          showGlobalMessage(`Please fill in${name}`, true);
           document.getElementById(field).focus();
           return;
         }
       }
 
-      // 验证格式
+      // Validate format
       if (
         !CONFIG.HEX_PATTERN.test(
           document.getElementById("checksumFirst").value,
         )
       ) {
-        showGlobalMessage("校验和 First 格式不正确", true);
+        showGlobalMessage("Checksum First Format incorrect", true);
         return;
       }
 
@@ -1149,25 +1149,25 @@
           document.getElementById("checksumSecond").value,
         )
       ) {
-        showGlobalMessage("校验和 Second 格式不正确", true);
+        showGlobalMessage("Checksum Second Format incorrect", true);
         return;
       }
 
       if (
         !CONFIG.HEX_PATTERN.test(document.getElementById("clientKey").value)
       ) {
-        showGlobalMessage("客户端密钥格式不正确", true);
+        showGlobalMessage("Client KeyFormat incorrect", true);
         return;
       }
 
       if (
         !CONFIG.UUID_PATTERN.test(document.getElementById("sessionId").value)
       ) {
-        showGlobalMessage("会话 ID 格式不正确", true);
+        showGlobalMessage("Session ID Format incorrect", true);
         return;
       }
 
-      // 构建请求数据
+      // Build request data
       const requestData = {
         token: document.getElementById("token").value,
         checksum: {
@@ -1181,77 +1181,77 @@
         gcpp_host: document.getElementById("gcppHost").value || undefined,
       };
 
-      // 移除 undefined 值
+      // Remove undefined values
       Object.keys(requestData).forEach((key) => {
         if (requestData[key] === undefined) {
           delete requestData[key];
         }
       });
 
-      // 禁用按钮
+      // Disablebutton
       const fetchButton = document.getElementById("fetchConfigVersionButton");
       fetchButton.disabled = true;
-      fetchButton.textContent = "获取中...";
+      fetchButton.textContent = "GetChinese...";
 
       try {
         const result = await makeApiRequest("/config-version", requestData);
 
         if (result && result.config_version) {
           document.getElementById("configVersion").value = result.config_version;
-          showGlobalMessage("配置版本获取成功");
+          showGlobalMessage("Config version retrieved successfully");
 
-          // 获取成功后禁用按钮
+          // Disable button after successful retrieval
           fetchButton.disabled = true;
-          fetchButton.textContent = "已获取";
+          fetchButton.textContent = "Retrieved";
 
-          // 保存表单数据
+          // Save form data
           saveFormData();
         } else if (result && result.error) {
-          showGlobalMessage("获取失败: " + result.error, true);
+          showGlobalMessage("Get failed: " + result.error, true);
           fetchButton.disabled = false;
-          fetchButton.textContent = "获取";
+          fetchButton.textContent = "Get";
         } else {
-          showGlobalMessage("未知错误", true);
+          showGlobalMessage("Unknown error", true);
           fetchButton.disabled = false;
-          fetchButton.textContent = "获取";
+          fetchButton.textContent = "Get";
         }
       } catch (error) {
-        showGlobalMessage("请求失败: " + error.message, true);
+        showGlobalMessage("Request failed: " + error.message, true);
         fetchButton.disabled = false;
-        fetchButton.textContent = "获取";
+        fetchButton.textContent = "Get";
       }
     }
 
     /**
-     * 构建 Key
+     * Build Key
      */
     async function buildKey() {
-      // 验证必填字段
+      // Validate required fields
       const requiredFields = {
-        token: "令牌",
-        checksumFirst: "校验和 First",
-        checksumSecond: "校验和 Second",
-        clientKey: "客户端密钥",
-        configVersion: "配置版本",
-        sessionId: "会话 ID",
+        token: "Token",
+        checksumFirst: "Checksum First",
+        checksumSecond: "Checksum Second",
+        clientKey: "Client Key",
+        configVersion: "Config Version",
+        sessionId: "Session ID",
       };
 
       for (const [field, name] of Object.entries(requiredFields)) {
         const value = document.getElementById(field).value.trim();
         if (!value) {
-          showGlobalMessage(`请填写${name}`, true);
+          showGlobalMessage(`Please fill in${name}`, true);
           document.getElementById(field).focus();
           return;
         }
       }
 
-      // 验证格式
+      // Validate format
       if (
         !CONFIG.HEX_PATTERN.test(
           document.getElementById("checksumFirst").value,
         )
       ) {
-        showGlobalMessage("校验和 First 格式不正确", true);
+        showGlobalMessage("Checksum First Format incorrect", true);
         return;
       }
 
@@ -1260,14 +1260,14 @@
           document.getElementById("checksumSecond").value,
         )
       ) {
-        showGlobalMessage("校验和 Second 格式不正确", true);
+        showGlobalMessage("Checksum Second Format incorrect", true);
         return;
       }
 
       if (
         !CONFIG.HEX_PATTERN.test(document.getElementById("clientKey").value)
       ) {
-        showGlobalMessage("客户端密钥格式不正确", true);
+        showGlobalMessage("Client KeyFormat incorrect", true);
         return;
       }
 
@@ -1276,18 +1276,18 @@
           document.getElementById("configVersion").value,
         )
       ) {
-        showGlobalMessage("配置版本格式不正确", true);
+        showGlobalMessage("Config VersionFormat incorrect", true);
         return;
       }
 
       if (
         !CONFIG.UUID_PATTERN.test(document.getElementById("sessionId").value)
       ) {
-        showGlobalMessage("会话 ID 格式不正确", true);
+        showGlobalMessage("Session ID Format incorrect", true);
         return;
       }
 
-      // 构建请求数据
+      // Build request data
       const usageCheckType = document.getElementById("usageCheckType").value;
       let usageCheckModels = undefined;
 
@@ -1296,7 +1296,7 @@
         if (usageCheckType === "custom") {
           const modelIds = getSelectedModels().join(",");
           if (!modelIds) {
-            showGlobalMessage("请至少选择一个模型", true);
+            showGlobalMessage("Please select at least one model", true);
             return;
           }
           usageCheckModels.model_ids = modelIds;
@@ -1331,48 +1331,48 @@
         usage_check_models: usageCheckModels,
       };
 
-      // 移除 undefined 值
+      // Remove undefined values
       Object.keys(requestData).forEach((key) => {
         if (requestData[key] === undefined) {
           delete requestData[key];
         }
       });
 
-      // 禁用按钮
+      // Disablebutton
       const buildButton = document.getElementById("buildButton");
       buildButton.disabled = true;
-      buildButton.textContent = "构建中...";
+      buildButton.textContent = "Building...";
 
       try {
         const result = await makeApiRequest("/build-key", requestData);
 
         if (result && result.keys && result.keys.length > 0) {
           displayKeys(result.keys);
-          showGlobalMessage("Key 构建成功");
+          showGlobalMessage("Key built successfully");
 
-          // 保存表单数据
+          // Save form data
           saveFormData();
         } else if (result && result.error) {
-          showGlobalMessage("构建失败: " + result.error, true);
+          showGlobalMessage("Build failed: " + result.error, true);
         } else {
-          showGlobalMessage("未知错误", true);
+          showGlobalMessage("Unknown error", true);
         }
       } catch (error) {
-        showGlobalMessage("请求失败: " + error.message, true);
+        showGlobalMessage("Request failed: " + error.message, true);
       } finally {
         buildButton.disabled = false;
-        buildButton.textContent = "构建 Key";
+        buildButton.textContent = "Build Key";
       }
     }
 
     /**
-     * 显示生成的 Keys
+     * displayGenerated Keys
      */
     function displayKeys(keys) {
       const keyResult = document.getElementById("keyResult");
       const keyContent = document.getElementById("keyContent");
 
-      const keyLabels = ["完整 Key", "Base64 编码 Key", "数字 Key"];
+      const keyLabels = ["Full Key", "Base64 Encoded Key", "Numeric Key"];
 
       keyContent.innerHTML = keys
         .map(
@@ -1380,7 +1380,7 @@
       <div class="key-item">
         <div class="key-label">${keyLabels[index] || `Key ${index + 1}`}</div>
         <div class="key-value" id="key-${index}">${key}</div>
-        <button class="copy-button" onclick="copyKey('key-${index}', this)">复制</button>
+        <button class="copy-button" onclick="copyKey('key-${index}', this)">Copy</button>
       </div>
     `,
         )
@@ -1388,40 +1388,40 @@
 
       keyResult.style.display = "block";
 
-      // 滚动到结果区域
+      // Scroll to result area
       keyResult.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
 
     /**
-     * 复制 Key
+     * Copy Key
      */
     async function copyKey(keyId, button) {
       const keyElement = document.getElementById(keyId);
       const keyText = keyElement.textContent;
 
-      // 使用共享的复制方法
+      // Use shared copy method
       await copyToClipboard(keyText, {
-        successMessage: "Key 已复制到剪贴板",
-        errorMessage: "复制失败，请手动复制",
+        successMessage: "Key copied to clipboard",
+        errorMessage: "Copyfailed，please manuallyCopy",
         sourceElement: button,
         onSuccess: () => {
-          // 按钮状态已由 copyToClipboard 处理
+          // Button state handled by copyToClipboard
         },
       });
     }
 
     /**
-     * 隐藏 Key 结果
+     * Hide key result
      */
     function hideKeyResult() {
       document.getElementById("keyResult").style.display = "none";
     }
 
     /**
-     * 清空表单
+     * Clear Form
      */
     function clearForm() {
-      // 清空所有输入框
+      // Clear all input fields
       const inputs = document.querySelectorAll("input, select");
       inputs.forEach((input) => {
         if (input.type === "checkbox") {
@@ -1429,34 +1429,34 @@
         } else {
           input.value = "";
         }
-        // 移除验证样式
+        // Remove validation styles
         input.classList.remove("valid", "invalid");
       });
 
-      // 重置获取配置版本按钮状态
+      // Reset get config version button state
       const fetchButton = document.getElementById("fetchConfigVersionButton");
       if (fetchButton) {
         fetchButton.disabled = false;
-        fetchButton.textContent = "获取";
+        fetchButton.textContent = "Get";
       }
 
-      // 隐藏结果区域
+      // Hide result area
       hideKeyResult();
 
-      // 清除缓存
+      // Clear cache
       localStorage.removeItem(CONFIG.CACHE_KEY);
 
-      showGlobalMessage("表单已清空");
+      showGlobalMessage("Form cleared");
     }
 
     /**
-     * 初始化时区选择器
+     * Initialize timezone selector
      */
     function initializeTimezoneSelector() {
-      // 初始化时渲染所有时区
+      // Render all timezones on init
       renderTimezones();
 
-      // 添加全局点击事件监听
+      // Add global click event listener
       document.addEventListener("click", function (e) {
         const dropdown = document.getElementById("timezoneDropdown");
         const input = document.getElementById("timezone");
@@ -1468,36 +1468,36 @@
     }
 
     /**
-     * 渲染时区列表
+     * Render timezone list
      */
     function renderTimezones(filter = "") {
       const dropdown = document.getElementById("timezoneDropdown");
       const normalizedFilter = filter.toLowerCase();
 
-      // 过滤时区
+      // Filter timezones
       const filteredTimezones = TIMEZONES.filter((tz) => {
         if (!filter) return true;
 
-        // 检查时区名称
+        // Check timezone name
         if (tz.name.toLowerCase().includes(normalizedFilter)) return true;
 
-        // 检查显示名称
+        // Check display name
         if (tz.display.toLowerCase().includes(normalizedFilter)) return true;
 
-        // 检查关键词
+        // Check keywords
         return tz.keywords.some((keyword) =>
           keyword.toLowerCase().includes(normalizedFilter),
         );
       });
 
-      // 如果没有匹配项
+      // If no matches
       if (filteredTimezones.length === 0) {
         dropdown.innerHTML =
-          '<div class="timezone-no-results">没有找到匹配的时区</div>';
+          '<div class="timezone-no-results">No matchingTimezone</div>';
         return;
       }
 
-      // 渲染时区列表
+      // Render timezone list
       dropdown.innerHTML = filteredTimezones
         .map((tz) => {
           const currentValue = document.getElementById("timezone").value;
@@ -1516,13 +1516,13 @@
     }
 
     /**
-     * 显示时区下拉框
+     * Show timezone dropdown
      */
     function showTimezoneDropdown() {
       const dropdown = document.getElementById("timezoneDropdown");
       dropdown.classList.add("show");
 
-      // 如果输入框为空，显示所有时区
+      // If input is empty, show all timezones
       const input = document.getElementById("timezone");
       if (!input.value) {
         renderTimezones();
@@ -1530,10 +1530,10 @@
     }
 
     /**
-     * 隐藏时区下拉框
+     * Hide timezone dropdown
      */
     function hideTimezoneDropdown(event) {
-      // 使用 setTimeout 确保在点击事件之后执行
+      // Use setTimeout to ensure execution after click event
       setTimeout(() => {
         if (!keepTimezoneDropdownOpen) {
           const dropdown = document.getElementById("timezoneDropdown");
@@ -1544,38 +1544,38 @@
     }
 
     /**
-     * 过滤时区
+     * Filter timezones
      */
     function filterTimezones(value) {
       renderTimezones(value);
     }
 
     /**
-     * 选择时区
+     * Select timezone
      */
     function selectTimezone(timezone) {
       keepTimezoneDropdownOpen = true;
       const input = document.getElementById("timezone");
       input.value = timezone;
 
-      // 触发 change 事件以保存数据
+      // Trigger change event to save data
       input.dispatchEvent(new Event("change"));
 
-      // 隐藏下拉框
+      // Hide dropdown
       setTimeout(() => {
         const dropdown = document.getElementById("timezoneDropdown");
         dropdown.classList.remove("show");
       }, 100);
 
-      // showGlobalMessage(`已选择时区: ${timezone}`);
+      // showGlobalMessage(`AlreadySelect timezone: ${timezone}`);
     }
 
     /**
-     * 自动检测时区（已弃用，保留以兼容）
+     * Auto detect timezone (deprecated, kept for compatibility)
      */
     function detectTimezone() {
       try {
-        // 尝试使用 Intl API 获取时区
+        // Try to get timezone using Intl API
         if (
           Intl &&
           Intl.DateTimeFormat &&
@@ -1583,31 +1583,31 @@
         ) {
           const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
           if (timezone) {
-            // 查找匹配的时区
+            // Find matching timezone
             const matchedTimezone = TIMEZONES.find(
               (tz) => tz.name === timezone,
             );
             if (matchedTimezone) {
               selectTimezone(timezone);
             } else {
-              // 如果不在列表中，直接设置
+              // If not in list, set directly
               document.getElementById("timezone").value = timezone;
-              showGlobalMessage(`已检测到时区: ${timezone}`);
+              showGlobalMessage(`Timezone detected: ${timezone}`);
               saveFormData();
             }
             return;
           }
         }
       } catch (error) {
-        console.error("时区检测失败:", error);
+        console.error("Timezone detection failed:", error);
       }
 
-      // 如果 Intl API 不可用或失败，提示用户手动输入
-      showGlobalMessage("无法自动检测时区，请从列表中选择", true);
+      // If Intl API unavailable or failed, prompt user to input manually
+      showGlobalMessage("Cannot auto detect timezone, please select from list", true);
       document.getElementById("timezone").focus();
     }
 
-    // 页面加载时初始化
+    // Initialize on page load
     document.addEventListener("DOMContentLoaded", () => {
       initializePage();
     });

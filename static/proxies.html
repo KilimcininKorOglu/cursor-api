@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 
 <head>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/x-icon" href="data:image/x-icon;," />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>代理信息管理</title>
-  <!-- 引入共享样式 -->
+  <title>代理信息Management</title>
+  <!-- Include shared styles -->
   <link rel="stylesheet" href="/static/shared-styles.css" />
   <script src="/static/shared.js"></script>
   <style>
@@ -156,7 +156,7 @@
       color: var(--primary-color);
     }
 
-    /* 代理类型图标 */
+    /* 代理Type图标 */
     .proxy-icon {
       display: inline-flex;
       align-items: center;
@@ -167,7 +167,7 @@
       font-size: 16px;
     }
 
-    /* 空状态样式 */
+    /* 空Status样式 */
     .empty-state {
       display: flex;
       flex-direction: column;
@@ -193,7 +193,7 @@
       margin: 0 0 24px 0;
     }
 
-    /* 状态栏 */
+    /* Status栏 */
     .status-bar {
       padding: 8px 16px;
       background: var(--card-background);
@@ -275,7 +275,7 @@
       opacity: 0.7;
     }
 
-    /* 筛选面板 */
+    /* Filter面板 */
     .filter-panel {
       padding: 16px;
       background: var(--card-background);
@@ -527,7 +527,7 @@
       margin-bottom: 1px;
     }
 
-    /* 响应式设计 */
+    /* Response式设计 */
     @media (max-width: 768px) {
       .filter-row {
         flex-direction: column;
@@ -591,34 +591,34 @@
 </head>
 
 <body>
-  <h1>代理信息管理</h1>
+  <h1>代理信息Management</h1>
 
   <div class="container">
     <div class="form-group">
-      <label for="authToken">认证令牌:</label>
-      <input type="password" id="authToken" placeholder="输入 AUTH_TOKEN" aria-label="认证令牌" />
+      <label for="authToken">Authentication Token:</label>
+      <input type="password" id="authToken" placeholder="Enter AUTH_TOKEN" aria-label="Authentication Token" />
     </div>
   </div>
 
-  <!-- 筛选面板 -->
+  <!-- Filter面板 -->
   <div class="filter-panel">
     <div class="filter-row">
       <div class="filter-group">
-        <label for="proxyTypeFilter">代理类型:</label>
+        <label for="proxyTypeFilter">代理Type:</label>
         <div class="multiselect" id="proxyTypeFilter">
           <div class="multiselect-dropdown" role="button" tabindex="0" aria-haspopup="listbox" aria-expanded="false">
             <div class="selected-options" id="selectedProxyTypes">
-              <span class="selected-options-placeholder">请选择代理类型...</span>
+              <span class="selected-options-placeholder">请Select代理Type...</span>
             </div>
           </div>
           <div class="multiselect-options" role="listbox" aria-multiselectable="true">
             <div class="multiselect-option" role="option" data-value="non">
               <input type="checkbox" id="type-non" value="non" checked />
-              <label for="type-non">不使用代理</label>
+              <label for="type-non">No Proxy</label>
             </div>
             <div class="multiselect-option" role="option" data-value="sys">
               <input type="checkbox" id="type-sys" value="sys" checked />
-              <label for="type-sys">系统代理</label>
+              <label for="type-sys">System代理</label>
             </div>
             <div class="multiselect-option" role="option" data-value="http">
               <input type="checkbox" id="type-http" value="http" checked />
@@ -644,20 +644,20 @@
         </div>
       </div>
       <div class="filter-group">
-        <label class="visually-hidden">操作按钮</label>
+        <label class="visually-hidden">Actions按钮</label>
         <div class="button-group">
-          <button id="refreshBtn" onclick="getProxyInfo()" class="primary" title="刷新代理列表 (F5)">
-            <span>刷新列表</span>
+          <button id="refreshBtn" onclick="getProxyInfo()" class="primary" title="Refresh代理列表 (F5)">
+            <span>Refresh List</span>
             <span class="context-menu-shortcut">F5</span>
           </button>
-          <button id="addProxyBtn" onclick="showAddProxyModal()" class="secondary" title="添加新代理">
-            添加代理
+          <button id="addProxyBtn" onclick="showAddProxyModal()" class="secondary" title="Add新代理">
+            Add代理
           </button>
-          <button id="exportBtn" onclick="exportProxies()" class="secondary" title="导出代理配置">
-            导出配置
+          <button id="exportBtn" onclick="exportProxies()" class="secondary" title="Export代理Configuration">
+            ExportConfiguration
           </button>
-          <button id="importBtn" onclick="showImportModal()" class="secondary" title="导入代理配置">
-            导入配置
+          <button id="importBtn" onclick="showImportModal()" class="secondary" title="Import代理Configuration">
+            ImportConfiguration
           </button>
         </div>
       </div>
@@ -669,8 +669,8 @@
     <div class="toolbar">
       <div class="search-box">
         <span class="search-icon">🔍</span>
-        <input type="text" id="searchInput" placeholder="搜索代理名称..." aria-label="搜索代理" />
-        <button class="clear-search" id="clearSearch" onclick="clearSearchInput()" aria-label="清除搜索">
+        <input type="text" id="searchInput" placeholder="Search代理Name..." aria-label="Search代理" />
+        <button class="clear-search" id="clearSearch" onclick="clearSearchInput()" aria-label="清除Search">
           ✕
         </button>
       </div>
@@ -680,9 +680,9 @@
       <table class="proxy-table" role="table">
         <thead>
           <tr role="row">
-            <th role="columnheader" style="width: 30%">代理名称</th>
-            <th role="columnheader" style="width: 25%">代理类型</th>
-            <th role="columnheader" style="width: 45%">代理地址</th>
+            <th role="columnheader" style="width: 30%">代理Name</th>
+            <th role="columnheader" style="width: 25%">代理Type</th>
+            <th role="columnheader" style="width: 45%">代理Address</th>
           </tr>
         </thead>
         <tbody id="proxyListBody" role="rowgroup">
@@ -691,10 +691,10 @@
       </table>
       <div id="emptyState" class="empty-state" style="display: none">
         <div class="empty-state-icon">🌐</div>
-        <h3>没有找到代理</h3>
-        <p>请添加代理或更改筛选条件</p>
+        <h3>No Proxy Found</h3>
+        <p>请Add代理或更改Filterrecords件</p>
         <button onclick="showAddProxyModal()" class="primary">
-          添加代理
+          Add代理
         </button>
       </div>
       <div id="loadingState" class="skeleton" style="display: none">
@@ -706,8 +706,8 @@
 
     <div class="status-bar">
       <div class="status-info">
-        <span id="selectionStatus">已选择: 0 个</span>
-        <span id="totalCount">共 0 个代理</span>
+        <span id="selectionStatus">已Select: 0 </span>
+        <span id="totalCount">Total 0 代理</span>
       </div>
     </div>
   </div>
@@ -715,95 +715,95 @@
   <!-- 右键菜单 -->
   <div id="contextMenu" class="context-menu" role="menu">
     <div class="context-menu-item" onclick="setAsGeneral()" role="menuitem" tabindex="0">
-      <span>设为通用代理</span>
+      <span>Set as General Proxy</span>
       <span class="context-menu-shortcut">Ctrl+G</span>
     </div>
     <div class="context-menu-item" onclick="copyProxyUrl()" role="menuitem" tabindex="0">
-      <span>复制代理地址</span>
+      <span>Copy代理Address</span>
       <span class="context-menu-shortcut">Ctrl+C</span>
     </div>
     <div class="context-menu-divider" role="separator"></div>
     <div class="context-menu-item" onclick="deleteSelectedProxies()" role="menuitem" tabindex="0">
-      <span>删除</span>
+      <span>Delete</span>
       <span class="context-menu-shortcut">Delete</span>
     </div>
   </div>
 
-  <!-- 添加代理对话框 -->
+  <!-- Add代理对话框 -->
   <div class="modal-backdrop" id="addProxyModal-backdrop" onclick="closeModal('addProxyModal')"></div>
   <div class="modal" id="addProxyModal" role="dialog" aria-labelledby="addProxyTitle" aria-modal="true">
     <div class="modal-header">
-      <h3 id="addProxyTitle">添加代理</h3>
-      <button class="modal-close" onclick="closeModal('addProxyModal')" aria-label="关闭对话框">
+      <h3 id="addProxyTitle">Add代理</h3>
+      <button class="modal-close" onclick="closeModal('addProxyModal')" aria-label="Close对话框">
         ×
       </button>
     </div>
     <div class="modal-body">
       <div class="form-group">
-        <label for="proxyName">代理名称:</label>
-        <input type="text" id="proxyName" placeholder="输入代理名称" required />
+        <label for="proxyName">代理Name:</label>
+        <input type="text" id="proxyName" placeholder="输入代理Name" required />
       </div>
       <div class="form-group">
-        <label for="proxyType">代理类型:</label>
+        <label for="proxyType">代理Type:</label>
         <select id="proxyType" onchange="toggleProxyUrl()">
-          <option value="non">不使用代理</option>
-          <option value="sys">系统代理</option>
-          <option value="custom" selected>自定义代理</option>
+          <option value="non">No Proxy</option>
+          <option value="sys">System代理</option>
+          <option value="custom" selected>Custom代理</option>
         </select>
       </div>
       <div class="form-group" id="proxyUrlGroup">
-        <label for="proxyUrl">代理地址:</label>
-        <input type="text" id="proxyUrl" placeholder="例如: http://localhost:7890" />
+        <label for="proxyUrl">代理Address:</label>
+        <input type="text" id="proxyUrl" placeholder="e.g.: http://localhost:7890" />
         <div class="help-text">
-          支持的格式: http://localhost:7890,
+          Supported formats: http://localhost:7890,
           socks5://username:password@localhost:1080
         </div>
       </div>
     </div>
     <div class="modal-footer">
       <button onclick="closeModal('addProxyModal')" class="secondary">
-        取消
+        Cancel
       </button>
-      <button onclick="confirmAddProxy()" class="primary">添加</button>
+      <button onclick="confirmAddProxy()" class="primary">Add</button>
     </div>
   </div>
 
-  <!-- 确认删除对话框 -->
+  <!-- ConfirmDelete对话框 -->
   <div class="modal-backdrop" id="confirmModal-backdrop" onclick="closeModal('confirmModal')"></div>
   <div class="modal" id="confirmModal" role="dialog" aria-labelledby="confirmTitle" aria-modal="true">
     <div class="modal-header">
-      <h3 id="confirmTitle">确认删除</h3>
-      <button class="modal-close" onclick="closeModal('confirmModal')" aria-label="关闭对话框">
+      <h3 id="confirmTitle">ConfirmDelete</h3>
+      <button class="modal-close" onclick="closeModal('confirmModal')" aria-label="Close对话框">
         ×
       </button>
     </div>
     <div class="modal-body">
-      <p id="confirmMessage">确定要删除选中的代理吗？</p>
+      <p id="confirmMessage">OK要Delete选中的代理吗？</p>
     </div>
     <div class="modal-footer">
       <button onclick="closeModal('confirmModal')" class="secondary">
-        取消
+        Cancel
       </button>
-      <button onclick="confirmDeleteProxies()" class="danger">删除</button>
+      <button onclick="confirmDeleteProxies()" class="danger">Delete</button>
     </div>
   </div>
 
-  <!-- 导入对话框 -->
+  <!-- Import对话框 -->
   <div class="modal-backdrop" id="importModal-backdrop" onclick="closeModal('importModal')"></div>
   <div class="modal" id="importModal" role="dialog" aria-labelledby="importTitle" aria-modal="true">
     <div class="modal-header">
-      <h3 id="importTitle">导入代理配置</h3>
-      <button class="modal-close" onclick="closeModal('importModal')" aria-label="关闭对话框">
+      <h3 id="importTitle">Import代理Configuration</h3>
+      <button class="modal-close" onclick="closeModal('importModal')" aria-label="Close对话框">
         ×
       </button>
     </div>
     <div class="modal-body">
       <div class="form-group">
-        <label for="importFile">选择JSON文件:</label>
+        <label for="importFile">SelectJSON文件:</label>
         <input type="file" id="importFile" accept=".json" onchange="previewImportFile()" />
       </div>
       <div id="importPreview" style="display: none; margin-top: 16px">
-        <h4>文件预览:</h4>
+        <h4>File Preview:</h4>
         <pre id="importPreviewContent" style="
             background: var(--disabled-bg);
             padding: 12px;
@@ -815,10 +815,10 @@
     </div>
     <div class="modal-footer">
       <button onclick="closeModal('importModal')" class="secondary">
-        取消
+        Cancel
       </button>
       <button id="confirmImportBtn" onclick="confirmImport()" class="primary" disabled>
-        导入
+        Import
       </button>
     </div>
   </div>
@@ -842,17 +842,17 @@
       // 获取代理信息
       getProxyInfo();
 
-      // 监听搜索输入（防抖）
+      // 监听Search输入（防抖）
       const searchInput = document.getElementById("searchInput");
       searchInput.addEventListener("input", (e) => {
         clearTimeout(searchDebounceTimer);
         const value = e.target.value;
 
-        // 显示/隐藏清除按钮
+        // Show/Hide清除按钮
         const clearBtn = document.getElementById("clearSearch");
         clearBtn.classList.toggle("show", value.length > 0);
 
-        // 防抖搜索
+        // 防抖Search
         searchDebounceTimer = setTimeout(() => {
           filterProxies();
         }, 300);
@@ -869,10 +869,10 @@
       // 初始化多选下拉框
       initMultiSelect();
 
-      // 设置键盘快捷键
+      // Settings键盘快捷键
       setupKeyboardShortcuts();
 
-      // 设置上下文菜单
+      // Settings上下文菜单
       setupContextMenu();
 
       updateStatusBar();
@@ -883,7 +883,7 @@
       const dropdown = document.querySelector(".multiselect-dropdown");
       const options = document.querySelector(".multiselect-options");
 
-      // 点击下拉框显示/隐藏选项
+      // 点击下拉框Show/Hide选items
       dropdown.addEventListener("click", function (e) {
         e.stopPropagation();
         const isOpen = dropdown.classList.contains("active");
@@ -903,14 +903,14 @@
         }
       });
 
-      // 点击外部关闭下拉框
+      // 点击外部Close下拉框
       document.addEventListener("click", function (e) {
         if (!e.target.closest(".multiselect")) {
           closeMultiSelect();
         }
       });
 
-      // 监听选项点击
+      // 监听选items点击
       const optionDivs = document.querySelectorAll(".multiselect-option");
       optionDivs.forEach((div) => {
         div.addEventListener("click", function (e) {
@@ -928,7 +928,7 @@
         });
       });
 
-      // 初始化已选项
+      // 初始化已选items
       updateSelectedOptions();
     }
 
@@ -942,7 +942,7 @@
       options.classList.add("show");
     }
 
-    // 关闭多选下拉框
+    // Close多选下拉框
     function closeMultiSelect() {
       const dropdown = document.querySelector(".multiselect-dropdown");
       const options = document.querySelector(".multiselect-options");
@@ -952,7 +952,7 @@
       options.classList.remove("show");
     }
 
-    // 更新已选选项显示
+    // Update已选选itemsShow
     function updateSelectedOptions() {
       const selectedContainer = document.getElementById("selectedProxyTypes");
       const checkboxes = document.querySelectorAll(
@@ -961,7 +961,7 @@
 
       if (checkboxes.length === 0) {
         selectedContainer.innerHTML =
-          '<span class="selected-options-placeholder">请选择代理类型...</span>';
+          '<span class="selected-options-placeholder">请Select代理Type...</span>';
         return;
       }
 
@@ -974,7 +974,7 @@
       selectedContainer.innerHTML = html;
     }
 
-    // 清除搜索输入
+    // 清除Search输入
     function clearSearchInput() {
       const searchInput = document.getElementById("searchInput");
       const clearBtn = document.getElementById("clearSearch");
@@ -985,13 +985,13 @@
       searchInput.focus();
     }
 
-    // 检测是Mac还是其他系统
+    // 检测YesMac还Yes其他System
     function isModifierKey(e) {
       const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
       return isMac ? e.metaKey : e.ctrlKey;
     }
 
-    // 设置键盘快捷键
+    // Settings键盘快捷键
     function setupKeyboardShortcuts() {
       document.addEventListener("keydown", function (e) {
         // 忽略输入框中的快捷键
@@ -1035,12 +1035,12 @@
       });
     }
 
-    // 设置上下文菜单
+    // Settings上下文菜单
     function setupContextMenu() {
       const proxyList = document.querySelector(".proxy-list");
       const contextMenu = document.getElementById("contextMenu");
 
-      // 右键点击显示菜单
+      // 右键点击Show菜单
       proxyList.addEventListener("contextmenu", function (e) {
         const row = e.target.closest("tr");
 
@@ -1060,12 +1060,12 @@
         showContextMenu(e.pageX, e.pageY);
       });
 
-      // 点击其他地方关闭菜单
+      // 点击其他地方Close菜单
       document.addEventListener("click", function () {
         closeContextMenu();
       });
 
-      // 阻止右键菜单内部点击导致菜单关闭
+      // 阻止右键菜单内部点击导致菜单Close
       contextMenu.addEventListener("click", function (e) {
         e.stopPropagation();
       });
@@ -1074,7 +1074,7 @@
       setupContextMenuKeyboardNav();
     }
 
-    // 设置右键菜单键盘导航
+    // Settings右键菜单键盘导航
     function setupContextMenuKeyboardNav() {
       const contextMenu = document.getElementById("contextMenu");
       const items = contextMenu.querySelectorAll(
@@ -1108,11 +1108,11 @@
       });
     }
 
-    // 显示右键菜单
+    // Show右键菜单
     function showContextMenu(x, y) {
       const menu = document.getElementById("contextMenu");
 
-      // 先设置在鼠标位置，然后调整避免超出边界
+      // 先Settings在鼠标位置，然后调整避免超出边界
       menu.style.left = x + "px";
       menu.style.top = y + "px";
       menu.style.display = "block";
@@ -1120,7 +1120,7 @@
       // 调整位置以避免超出边界
       positionContextMenu(menu, x, y);
 
-      // 聚焦第一个可用项
+      // 聚焦Page一Availableitems
       const firstItem = menu.querySelector(
         ".context-menu-item:not(.disabled)",
       );
@@ -1129,19 +1129,19 @@
       }
     }
 
-    // 关闭右键菜单
+    // Close右键菜单
     function closeContextMenu() {
       const contextMenu = document.getElementById("contextMenu");
       contextMenu.style.display = "none";
     }
 
-    // 更新右键菜单项状态
+    // Update右键菜单itemsStatus
     function updateContextMenuItems() {
       const selectedCount = selectedProxies.size;
       const items = document.querySelectorAll(".context-menu-item");
 
       items.forEach((item) => {
-        // 根据选择状态启用/禁用菜单项
+        // 根据SelectStatusEnable/Disable菜单items
         if (item.onclick.toString().includes("setAsGeneral")) {
           item.classList.toggle("disabled", selectedCount !== 1);
         }
@@ -1177,7 +1177,7 @@
     // 获取代理信息
     async function getProxyInfo() {
       showLoadingState();
-      showToast("正在加载代理列表...", "info");
+      showToast("Loading代理列表...", "info");
 
       const data = await makeAuthenticatedRequest("/proxies/get");
 
@@ -1187,16 +1187,16 @@
         renderProxies();
         updateStatusBar();
         showToast(
-          `代理列表已更新：共 ${data.proxies_count || 0} 个`,
+          `代理列表已Update：Total ${data.proxies_count || 0} `,
           "success",
         );
       } else {
-        showToast("获取代理列表失败", "error");
+        showToast("获取代理列表Failed", "error");
         hideLoadingState();
       }
     }
 
-    // 显示加载状态
+    // Show加载Status
     function showLoadingState() {
       const loadingState = document.getElementById("loadingState");
       const emptyState = document.getElementById("emptyState");
@@ -1207,7 +1207,7 @@
       proxyListBody.innerHTML = "";
     }
 
-    // 隐藏加载状态
+    // Hide加载Status
     function hideLoadingState() {
       const loadingState = document.getElementById("loadingState");
       loadingState.style.display = "none";
@@ -1248,11 +1248,11 @@
         })
         .join("");
 
-      // 添加点击事件处理
+      // Add点击事件处理
       setupProxyRowEvents();
     }
 
-    // 设置代理行事件
+    // Settings代理行事件
     function setupProxyRowEvents() {
       const rows = document.querySelectorAll("#proxyListBody tr");
       rows.forEach((row) => {
@@ -1260,7 +1260,7 @@
           const name = this.dataset.name;
 
           if (e.shiftKey && selectedProxies.size > 0) {
-            // Shift+点击进行范围选择
+            // Shift+点击进行RangeSelect
             selectRange(name);
           } else if (isModifierKey(e)) {
             // Ctrl/Cmd+点击进行多选
@@ -1280,7 +1280,7 @@
       });
     }
 
-    // 选择范围内的代理
+    // SelectRange内的代理
     function selectRange(endName) {
       const rows = Array.from(document.querySelectorAll("#proxyListBody tr"));
       const lastSelected = Array.from(selectedProxies).pop();
@@ -1303,7 +1303,7 @@
       }
     }
 
-    // 选择所有代理
+    // Select所有代理
     function selectAllProxies() {
       const rows = document.querySelectorAll("#proxyListBody tr");
       rows.forEach((row) => {
@@ -1335,7 +1335,7 @@
       return icons[type] || icons.unknown;
     }
 
-    // 获取代理类型
+    // 获取代理Type
     function getProxyType(value) {
       if (value === "non") return "non";
       if (value === "sys") return "sys";
@@ -1348,11 +1348,11 @@
       }
     }
 
-    // 格式化代理类型
+    // 格式化代理Type
     function formatProxyType(type) {
       const types = {
-        non: "不使用代理",
-        sys: "系统代理",
+        non: "No Proxy",
+        sys: "System代理",
         http: "HTTP",
         https: "HTTPS",
         socks4: "SOCKS4",
@@ -1363,7 +1363,7 @@
       return types[type] || type;
     }
 
-    // 验证代理地址格式
+    // 验证代理Address格式
     function validateProxyUrl(url, type) {
       if (type === "non" || type === "sys") return true;
 
@@ -1379,23 +1379,23 @@
           "socks5h",
         ];
         if (!validProtocols.includes(protocol)) {
-          showToast(`不支持的代理协议: ${protocol}`, "warning");
+          showToast(`Unsupported proxy protocol: ${protocol}`, "warning");
           return false;
         }
 
         if (!proxyUrl.hostname || !proxyUrl.port) {
-          showToast("代理地址必须包含主机名和端口号", "warning");
+          showToast("代理Address必须包含主机名和端口号", "warning");
           return false;
         }
 
         return true;
       } catch (e) {
-        showToast("代理地址格式无效", "warning");
+        showToast("代理Address格式None效", "warning");
         return false;
       }
     }
 
-    // 筛选代理
+    // Filter代理
     function filterProxies() {
       const searchTerm = document
         .getElementById("searchInput")
@@ -1419,7 +1419,7 @@
       updateStatusBar(filteredProxies.length);
     }
 
-    // 渲染筛选后的代理
+    // 渲染Filter后的代理
     function renderFilteredProxies(proxies) {
       const temp = allProxies;
       allProxies = proxies;
@@ -1427,7 +1427,7 @@
       allProxies = temp;
     }
 
-    // 更新状态栏
+    // UpdateStatus栏
     function updateStatusBar(filteredCount) {
       const total = Object.keys(allProxies).length;
       const selected = selectedProxies.size;
@@ -1435,15 +1435,15 @@
       const totalCount = document.getElementById("totalCount");
 
       if (selectionStatus) {
-        selectionStatus.textContent = `已选择: ${selected} 个`;
+        selectionStatus.textContent = `已Select: ${selected} `;
       }
       if (totalCount) {
         const count = filteredCount !== undefined ? filteredCount : total;
-        totalCount.textContent = `共 ${count} 个代理`;
+        totalCount.textContent = `Total ${count} 代理`;
       }
     }
 
-    // 选择代理
+    // Select代理
     function selectProxy(name, append = false) {
       if (!name) return;
 
@@ -1460,7 +1460,7 @@
       updateSelectionStatus();
     }
 
-    // 取消选择代理
+    // CancelSelect代理
     function deselectProxy(name) {
       if (!name) return;
 
@@ -1473,7 +1473,7 @@
       updateSelectionStatus();
     }
 
-    // 清除所有选择
+    // 清除所有Select
     function clearSelection() {
       selectedProxies.clear();
       const rows = document.querySelectorAll("#proxyListBody tr.selected");
@@ -1484,12 +1484,12 @@
       updateSelectionStatus();
     }
 
-    // 更新选择状态
+    // UpdateSelectStatus
     function updateSelectionStatus() {
       updateStatusBar();
     }
 
-    // 显示添加代理对话框
+    // ShowAdd代理对话框
     function showAddProxyModal() {
       document.getElementById("proxyName").value = "";
       document.getElementById("proxyType").value = "custom";
@@ -1497,34 +1497,34 @@
       toggleProxyUrl();
       showModal("addProxyModal");
 
-      // 聚焦第一个输入框
+      // 聚焦Page一输入框
       setTimeout(() => {
         document.getElementById("proxyName").focus();
       }, 200);
     }
 
-    // 切换代理地址输入框显示
+    // 切换代理Address输入框Show
     function toggleProxyUrl() {
       const type = document.getElementById("proxyType").value;
       const urlGroup = document.getElementById("proxyUrlGroup");
       urlGroup.style.display = type === "custom" ? "block" : "none";
     }
 
-    // 确认添加代理
+    // ConfirmAdd代理
     async function confirmAddProxy() {
       const name = document.getElementById("proxyName").value.trim();
       const type = document.getElementById("proxyType").value;
       const url = document.getElementById("proxyUrl").value.trim();
 
       if (!name) {
-        showToast("请输入代理名称", "warning");
+        showToast("请输入代理Name", "warning");
         document.getElementById("proxyName").focus();
         return;
       }
 
       if (type === "custom") {
         if (!url) {
-          showToast("请输入代理地址", "warning");
+          showToast("请输入代理Address", "warning");
           document.getElementById("proxyUrl").focus();
           return;
         }
@@ -1535,7 +1535,7 @@
       }
 
       closeModal("addProxyModal");
-      showToast("正在添加代理...", "info");
+      showToast("正在Add代理...", "info");
 
       const proxy = {
         [name]: type === "non" || type === "sys" ? type : url,
@@ -1548,36 +1548,36 @@
       });
 
       if (data) {
-        showToast(data.message || "添加成功", "success");
+        showToast(data.message || "AddSuccess", "success");
         getProxyInfo();
       } else {
-        showToast("添加代理失败", "error");
+        showToast("Add代理Failed", "error");
       }
     }
 
-    // 删除选中的代理
+    // Delete选中的代理
     function deleteSelectedProxies() {
       if (selectedProxies.size === 0) {
-        showToast("请先选择要删除的代理", "info");
+        showToast("请先Select要Delete的代理", "info");
         return;
       }
 
       proxiesToDelete = [...selectedProxies];
       document.getElementById("confirmMessage").textContent =
         proxiesToDelete.length > 1
-          ? `确定要删除选中的 ${proxiesToDelete.length} 个代理吗？`
-          : "确定要删除选中的代理吗？";
+          ? `OK要Delete选中的 ${proxiesToDelete.length} 代理吗？`
+          : "OK要Delete选中的代理吗？";
 
       closeContextMenu();
       showModal("confirmModal");
     }
 
-    // 确认删除代理
+    // ConfirmDelete代理
     async function confirmDeleteProxies() {
       if (proxiesToDelete.length === 0) return;
 
       closeModal("confirmModal");
-      showToast("正在删除代理...", "info");
+      showToast("正在Delete代理...", "info");
 
       const data = await makeAuthenticatedRequest("/proxies/del", {
         body: JSON.stringify({
@@ -1590,30 +1590,30 @@
         const failedCount = data.failed_names?.length || 0;
         const successCount = proxiesToDelete.length - failedCount;
         const message = failedCount
-          ? `删除成功: ${successCount} 个，失败: ${failedCount} 个`
-          : `成功删除 ${successCount} 个代理`;
+          ? `DeleteSuccess: ${successCount} ，Failed: ${failedCount} `
+          : `SuccessDelete ${successCount} 代理`;
 
         showToast(message, "success");
         clearSelection();
         getProxyInfo();
       } else {
-        showToast("删除代理失败", "error");
+        showToast("Delete代理Failed", "error");
       }
 
       proxiesToDelete = [];
     }
 
-    // 设置为通用代理
+    // Settings为通用代理
     async function setAsGeneral() {
       if (selectedProxies.size !== 1) {
-        showToast("请选择一个代理设为通用代理", "info");
+        showToast("请Select一代理Set as General Proxy", "info");
         return;
       }
 
       closeContextMenu();
 
       const name = [...selectedProxies][0];
-      showToast("正在设置通用代理...", "info");
+      showToast("正在Settings通用代理...", "info");
 
       const data = await makeAuthenticatedRequest("/proxies/set-general", {
         body: JSON.stringify({
@@ -1622,17 +1622,17 @@
       });
 
       if (data) {
-        showToast("通用代理设置成功", "success");
+        showToast("通用代理SettingsSuccess", "success");
         getProxyInfo();
       } else {
-        showToast("设置通用代理失败", "error");
+        showToast("Settings通用代理Failed", "error");
       }
     }
 
-    // 复制代理地址
+    // Copy代理Address
     async function copyProxyUrl() {
       if (selectedProxies.size === 0) {
-        showToast("请先选择代理", "info");
+        showToast("请先Select代理", "info");
         return;
       }
 
@@ -1642,22 +1642,22 @@
       closeContextMenu();
 
       if (typeof value === "string" && value !== "non" && value !== "sys") {
-        // 使用共享的复制方法
+        // 使用Total享的Copy方法
         const success = await copyToClipboard(value, {
-          showMessage: false, // 使用自定义的 toast 消息
+          showMessage: false, // 使用Custom的 toast 消息
           onSuccess: () => {
-            showToast("代理地址已复制到剪贴板", "success");
+            showToast("代理Address已Copy到剪贴板", "success");
           },
           onError: () => {
-            showToast("复制失败，请手动复制", "error");
+            showToast("CopyFailed，请手动Copy", "error");
           },
         });
       } else {
-        showToast("该代理没有可复制的地址", "warning");
+        showToast("该代理没有可Copy的Address", "warning");
       }
     }
 
-    // 导出代理配置
+    // Export代理Configuration
     function exportProxies() {
       const config = {
         proxies: allProxies,
@@ -1676,10 +1676,10 @@
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      showToast("代理配置已导出", "success");
+      showToast("代理Configuration已Export", "success");
     }
 
-    // 显示导入对话框
+    // ShowImport对话框
     function showImportModal() {
       document.getElementById("importFile").value = "";
       document.getElementById("importPreview").style.display = "none";
@@ -1687,7 +1687,7 @@
       showModal("importModal");
     }
 
-    // 预览导入文件
+    // 预览Import文件
     function previewImportFile() {
       const fileInput = document.getElementById("importFile");
       const preview = document.getElementById("importPreview");
@@ -1709,12 +1709,12 @@
 
           // 验证文件格式
           if (!config.proxies || typeof config.proxies !== "object") {
-            throw new Error("无效的配置文件格式");
+            throw new Error("None效的Configuration文件格式");
           }
 
-          // 显示预览
+          // Show预览
           const proxyCount = Object.keys(config.proxies).length;
-          const previewText = `代理数量: ${proxyCount}\n通用代理: ${config.general || "无"}\n\n代理列表:\n${Object.entries(
+          const previewText = `代理Count: ${proxyCount}\n通用代理: ${config.general || "None"}\n\n代理列表:\n${Object.entries(
             config.proxies,
           )
             .slice(0, 10)
@@ -1725,7 +1725,7 @@
           preview.style.display = "block";
           confirmBtn.disabled = false;
         } catch (error) {
-          showToast("文件格式无效: " + error.message, "error");
+          showToast("文件格式None效: " + error.message, "error");
           preview.style.display = "none";
           confirmBtn.disabled = true;
         }
@@ -1734,12 +1734,12 @@
       reader.readAsText(file);
     }
 
-    // 确认导入
+    // ConfirmImport
     async function confirmImport() {
       const fileInput = document.getElementById("importFile");
 
       if (!fileInput.files || fileInput.files.length === 0) {
-        showToast("请选择要导入的文件", "warning");
+        showToast("请Select要Import的文件", "warning");
         return;
       }
 
@@ -1751,28 +1751,28 @@
           const config = JSON.parse(e.target.result);
 
           closeModal("importModal");
-          showToast("正在导入代理配置...", "info");
+          showToast("正在Import代理Configuration...", "info");
 
           const data = await makeAuthenticatedRequest("/proxies/set", {
             body: JSON.stringify(config),
           });
 
           if (data) {
-            showToast("代理配置导入成功", "success");
+            showToast("代理ConfigurationImportSuccess", "success");
             fileInput.value = "";
             getProxyInfo();
           } else {
-            showToast("导入失败", "error");
+            showToast("ImportFailed", "error");
           }
         } catch (error) {
-          showToast("导入失败: " + error.message, "error");
+          showToast("ImportFailed: " + error.message, "error");
         }
       };
 
       reader.readAsText(file);
     }
 
-    // 显示对话框
+    // Show对话框
     function showModal(modalId) {
       const modal = document.getElementById(modalId);
       const backdrop = document.getElementById(`${modalId}-backdrop`);
@@ -1783,7 +1783,7 @@
       }
     }
 
-    // 关闭对话框
+    // Close对话框
     function closeModal(modalId) {
       const modal = document.getElementById(modalId);
       const backdrop = document.getElementById(`${modalId}-backdrop`);
@@ -1794,7 +1794,7 @@
       }
     }
 
-    // 关闭所有对话框
+    // Close所有对话框
     function closeAllModals() {
       const modals = document.querySelectorAll(".modal");
       const backdrops = document.querySelectorAll(".modal-backdrop");
@@ -1808,7 +1808,7 @@
       });
     }
 
-    // 显示通知消息
+    // Show通知消息
     function showToast(message, type = "info", duration = 3000) {
       // 获取或创建通知容器
       let container = document.getElementById("toast-container");
@@ -1823,21 +1823,21 @@
       const toast = document.createElement("div");
       toast.className = `toast ${type}`;
 
-      // 添加文本容器
+      // Add文本容器
       toast.innerHTML = `<div class="toast-content">${message}</div>`;
 
-      // 添加到容器
+      // Add到容器
       container.appendChild(toast);
 
       // 强制一次重排，确保过渡动画生效
       void toast.offsetWidth;
 
-      // 显示通知
+      // Show通知
       requestAnimationFrame(() => {
         toast.classList.add("show");
       });
 
-      // 设置自动移除
+      // Settings自动移除
       setTimeout(() => {
         toast.classList.remove("show");
 
@@ -1847,7 +1847,7 @@
             container.removeChild(toast);
           }
 
-          // 如果没有更多通知，移除容器
+          // 如果没有More通知，移除容器
           if (container.children.length === 0) {
             if (document.body.contains(container)) {
               document.body.removeChild(container);
@@ -1856,7 +1856,7 @@
         }, 400);
       }, duration);
 
-      // 限制最大显示数量
+      // 限制MaxShowCount
       const maxToasts = 5;
       const toasts = container.querySelectorAll(".toast");
       if (toasts.length > maxToasts) {
