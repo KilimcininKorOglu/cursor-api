@@ -356,7 +356,7 @@ impl FrontendLoader {
             }
         }
 
-        // 批AmountRead文件（去重缓存）
+        // 批AmountRead文件（去重Cache）
         let mut file_cache: HashMap<String, Bytes> =
             HashMap::with_capacity_and_hasher(unique_paths.len(), random_state.clone());
 

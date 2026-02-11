@@ -42,7 +42,7 @@ static GENERAL_NAME: ManuallyInit<ArcSwap<Str>> = ManuallyInit::new();
 
 /// 代理配置到客户端实例的映射
 ///
-/// 缓存Already创建的客户端，避免重复创建相同配置的客户端
+/// CacheAlready创建的客户端，避免重复创建相同配置的客户端
 static CLIENTS: ManuallyInit<ArcSwap<HashMap<SingleProxy, Client>>> = ManuallyInit::new();
 
 /// 通用客户端

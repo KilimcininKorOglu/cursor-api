@@ -33,7 +33,7 @@ impl core::error::Error for TokenError {}
 ///
 /// 设计特点：
 /// - **零拷贝查询**：所Have查询方法返回引用，避免clone
-/// - **紧凑存储**：Vec<Option<T>>密集布局，缓存友好
+/// - **紧凑存储**：Vec<Option<T>>密集布局，Cache友好
 /// - **O(1)操作**：通过HashMap+Vec实现常数时间增删改查
 /// - **ID重用**：FIFO队列管理Empty闲ID，减少内存碎片
 ///   - 优先重用最早释放的ID，提高cache locality

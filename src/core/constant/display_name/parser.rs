@@ -14,7 +14,7 @@ pub enum Pattern {
 
     // 日期Related（放括号）
     Date(Cow<'static, str>),  // 2024-04-09 Or 05-28
-    DateMarker(&'static str), // latest, legacy (时间标记)
+    DateMarker(&'static str), // latest, legacy (Time marker)
 
     // 普通词
     Word(&'static str),
@@ -76,7 +76,7 @@ pub fn parse_patterns(tokens: Vec<Token>) -> ParseResult {
 
         // 数字Handle
         if token.meta.is_digit_only {
-            // 单数字版本号合并
+            // 单数字Version number merge
             if token.meta.digit_count == 1 && i + 1 < tokens.len() {
                 let next = &tokens[i + 1];
                 if next.meta.is_digit_only && next.meta.digit_count == 1 {

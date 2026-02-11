@@ -110,7 +110,7 @@ pub fn ensure_logger_initialized() -> impl Future<Output = &'static LoggerState>
             let mut interval = tokio::time::interval(flush_interval);
             interval.tick().await; // 消耗初始 tick
 
-            // 用于缓存乱序到达的Message
+            // 用于Cache乱序到达的Message
             let mut pending_messages = alloc::collections::BTreeMap::new();
             let mut next_seq = 0u64;
 

@@ -442,7 +442,7 @@ impl Models {
         let to_remove: Vec<_> =
             guard.models.iter().filter(|m| !new_ids.contains(&m.id())).collect();
 
-        // 从缓存中移除不再Need的ID
+        // 从Cache中移除不再Need的ID
         let mut ids: Vec<_> = guard
             .ids
             .iter()

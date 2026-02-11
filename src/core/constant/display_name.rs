@@ -12,21 +12,21 @@ pub fn init_display_name_cache() {
     DISPLAY_NAME_CACHE.init(Mutex::new(HashMap::default()))
 }
 
-/// 计算 AI 模型标识符的显示名称。
+/// Calculate display name of AI model identifier。
 ///
 /// # ConvertRules
 ///
-/// 1. **版本号合并**：单数字-单数字 → 小数点版本号（如 `3-5` → `3.5`）
-/// 2. **日期保留**：日期Format在括号中显示
+/// 1. **Version number merge**：Single digit-single digit → decimal version number（如 `3-5` → `3.5`）
+/// 2. **Date retention**：Date format displayed in parentheses
 ///    - `YYYY-MM-DD` Format：`2024-04-09` → `(2024-04-09)`
 ///    - `MM-DD` Format：`03-25` → `(03-25)`  
 ///    - `MMDD` Format：`0528` → `(05-28)`
-/// 3. **时间标记**：`latest` and `legacy` 在括号中显示
-/// 4. **特殊Prefix**：
+/// 3. **Time marker**：`latest` and `legacy` 在括号中显示
+/// 4. **Special prefix**：
 ///    - `gpt` → `GPT`
 ///    - `o1`/`o3`/`o4` → `O1`/`O3`/`O4`
-/// 5. **版本标记**：`v`/`r`/`k` 开头的版本号首字母大写（如 `v3.1` → `V3.1`）
-/// 6. **SeparatorConvert**：其他 `-` 转ToEmpty格，各部分首字母大写
+/// 5. **Version marker**：`v`/`r`/`k` Version number starting with first letter capitalized（如 `v3.1` → `V3.1`）
+/// 6. **Separator convert**：Other `-` convert to empty format, each part first letter capitalized
 ///
 /// # Arguments
 ///
@@ -34,34 +34,34 @@ pub fn init_display_name_cache() {
 ///
 /// # Returns
 ///
-/// * `&'static str` - Format化后的显示名称（缓存）
+/// * `&'static str` - Formatted display name（Cache）
 ///
 /// # Examples
 ///
 /// ```
-/// // 基础Convert
+/// // Basic convert
 /// assert_eq!(calculate_display_name("claude-3-5-sonnet"), "Claude 3.5 Sonnet");
 /// assert_eq!(calculate_display_name("deepseek-v3"), "Deepseek V3");
 ///
-/// // GPT 特殊Handle
+/// // GPT special handle
 /// assert_eq!(calculate_display_name("gpt-4o"), "GPT 4o");
 /// assert_eq!(calculate_display_name("gpt-3.5-turbo"), "GPT 3.5 Turbo");
 ///
-/// // 日期Handle（放入括号）
+/// // Date handle（Put in parentheses）
 /// assert_eq!(calculate_display_name("gpt-4-turbo-2024-04-09"), "GPT 4 Turbo (2024-04-09)");
 /// assert_eq!(calculate_display_name("gemini-2.5-pro-exp-03-25"), "Gemini 2.5 Pro Exp (03-25)");
 /// assert_eq!(calculate_display_name("deepseek-r1-0528"), "Deepseek R1 (05-28)");
 ///
-/// // 时间标记（放入括号）
+/// // Time marker（Put in parentheses）
 /// assert_eq!(calculate_display_name("gemini-2.5-pro-latest"), "Gemini 2.5 Pro (latest)");
 /// assert_eq!(calculate_display_name("claude-4-opus-legacy"), "Claude 4 Opus (legacy)");
 ///
-/// // O 系列
+/// // O series
 /// assert_eq!(calculate_display_name("o3-mini"), "O3 Mini");
 ///
-/// // 边界Case
-/// assert_eq!(calculate_display_name("version-10-beta"), "Version 10 Beta"); // 10 Not单数字
-/// assert_eq!(calculate_display_name("model-1-test-9-case"), "Model 1 Test 9 Case"); // 单数字不相邻
+/// // Boundary case
+/// assert_eq!(calculate_display_name("version-10-beta"), "Version 10 Beta"); // 10 Not single digit
+/// assert_eq!(calculate_display_name("model-1-test-9-case"), "Model 1 Test 9 Case"); // Single digits not adjacent
 /// ```
 pub fn calculate_display_name(identifier: &'static str) -> &'static str {
     if let Some(cached) = DISPLAY_NAME_CACHE.lock().get(identifier) {
@@ -101,11 +101,11 @@ mod tests {
     #[test]
     fn test_parser_output() {
         let test_cases = vec![
-            // 基础测试
+            // Basic test
             "",
             "default",
             "sonic",
-            // GPT 系列
+            // GPT series
             "gpt",
             "gpt-4",
             "gpt-4o",
@@ -113,14 +113,14 @@ mod tests {
             "gpt-4-turbo-2024-04-09",
             "gpt-5-high-fast",
             "gpt-5-mini",
-            // O 系列
+            // O series
             "o1",
             "o3",
             "o3-mini",
             "o3-pro",
             "o4-mini",
             "o1-preview",
-            // Claude 系列
+            // Claude series
             "claude-3-opus",
             "claude-3.5-sonnet",
             "claude-3-5-sonnet",
@@ -131,7 +131,7 @@ mod tests {
             "claude-4-opus-thinking-legacy",
             "claude-3-haiku-200k",
             "claude-3.5-sonnet-200k",
-            // Gemini 系列
+            // Gemini series
             "gemini-2.5-pro",
             "gemini-2.5-flash",
             "gemini-2.5-pro-latest",
@@ -140,37 +140,37 @@ mod tests {
             "gemini-2.0-flash-thinking-exp",
             "gemini-1.5-flash-500k",
             "gemini-2.5-pro-max",
-            // Deepseek 系列
+            // Deepseek series
             "deepseek-v3",
             "deepseek-v3.1",
             "deepseek-r1",
             "deepseek-r1-0528",
-            // Grok 系列
+            // Grok series
             "grok-2",
             "grok-3",
             "grok-3-beta",
             "grok-3-mini",
             "grok-4",
             "grok-4-0709",
-            // 其他模型
+            // Other models
             "cursor-small",
             "cursor-fast",
             "kimi-k2-instruct",
             "accounts/fireworks/models/kimi-k2-instruct",
-            // 版本号测试
+            // Version number test
             "model-3-5",
             "model-3.5",
             "test-1-0",
             "version-10-beta",
             "model-10-5",
             "app-2.5-release",
-            // 日期测试
+            // Date test
             "release-2024-04-09",
             "update-03-25",
             "version-0528",
             "model-123",
             "test-12345",
-            // 边界Case
+            // Boundary case
             "model-1-2-3",
             "model-1-test-9-case",
             "model-fast-experimental-latest",
@@ -180,7 +180,7 @@ mod tests {
             "a--b",
             "3-5",
             "2024",
-            // 复杂组合
+            // Complex combination
             "gpt-4.5-preview",
             "claude-3.5-sonnet-200k",
             "gemini-1-5-flash-500k",

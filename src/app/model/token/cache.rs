@@ -18,7 +18,7 @@ use scc::HashMap;
 
 /// Token 的唯一标识键
 ///
-/// 由用户IDand随机数组成，用于在全局缓存中查找对应的 Token
+/// 由用户IDand随机数组成，用于在全局Cache中查找对应的 Token
 #[derive(
     Debug, PartialEq, Eq, Hash, Clone, Copy, ::rkyv::Archive, ::rkyv::Serialize, ::rkyv::Deserialize,
 )]
@@ -185,9 +185,9 @@ impl TokenInner {
     }
 }
 
-/// 引用计数的 Token，Support全局缓存复用
+/// 引用计数的 Token，Support全局Cache复用
 ///
-/// Token 是不可变的，线程安全的，并且会自动进行缓存管理。
+/// Token 是不可变的，线程安全的，并且会自动进行Cache管理。
 /// 相同的 TokenKey 会复用同一个底层实例。
 #[repr(transparent)]
 pub struct Token {
@@ -222,7 +222,7 @@ struct ThreadSafePtr(NonNull<TokenInner>);
 unsafe impl Send for ThreadSafePtr {}
 unsafe impl Sync for ThreadSafePtr {}
 
-/// 全局 Token 缓存池
+/// 全局 Token Cache池
 static TOKEN_MAP: ManuallyInit<HashMap<TokenKey, ThreadSafePtr, ahash::RandomState>> =
     ManuallyInit::new();
 
@@ -232,11 +232,11 @@ pub fn __init() { TOKEN_MAP.init(HashMap::with_capacity_and_hasher(64, ahash::Ra
 impl Token {
     /// 创建Or复用 Token 实例
     ///
-    /// If缓存中Already存在相同的 TokenKey 且 RawToken 相同，则复用；
+    /// IfCache中Already存在相同的 TokenKey 且 RawToken 相同，则复用；
     /// 否则创建新实例（May会覆盖旧的）。
     ///
     /// # 并发安全性
-    /// - Use read-write lock 保护全局缓存
+    /// - Use read-write lock 保护全局Cache
     /// - 快速路径（read lock）：尝试复用AlreadyHave实例
     /// - 慢速路径（write lock）：双重Check后创建新实例，防止竞态条件
     pub fn new(raw: RawToken, string: Option<String>) -> Self {
@@ -245,7 +245,7 @@ impl Token {
         let key = raw.key();
         let hash;
 
-        // 快速路径：尝试从缓存中查找并增加引用计数
+        // 快速路径：尝试从Cache中查找并增加引用计数
         {
             let cache = TOKEN_MAP.get();
             let builder = cache.raw_entry();
@@ -271,7 +271,7 @@ impl Token {
             }
         }
 
-        // 慢速路径：创建新实例（Need独占访问缓存）
+        // 慢速路径：创建新实例（Need独占访问Cache）
         let cache = TOKEN_MAP.get();
 
         match cache.raw_entry().from_key_hashed_nocheck_sync(hash, &key) {
@@ -312,7 +312,7 @@ impl Token {
                     ptr
                 };
 
-                // 将新实例Insert缓存（持Have write lock，保证线程安全）
+                // 将新实例InsertCache（持Have write lock，保证线程安全）
                 entry.insert(key, ThreadSafePtr(ptr));
 
                 Self { ptr, _pd: PhantomData }
@@ -353,7 +353,7 @@ impl Drop for Token {
             }
 
             // Last一个引用：Need清理资源
-            // Get write lock 以保护缓存操作，同时防止并发的 new() 操作干扰
+            // Get write lock 以保护Cache操作，同时防止并发的 new() 操作干扰
             let cache = TOKEN_MAP.get();
 
             let key = inner.raw.key();
@@ -370,7 +370,7 @@ impl Drop for Token {
                 }
 
                 // 确认是Last一个引用，执行清理：
-                // 1. 从缓存中移除（防止后续 new() 找到Already释放的指针）
+                // 1. 从Cache中移除（防止后续 new() 找到Already释放的指针）
                 e.remove();
 
                 // 2. 释放堆内存（包括 TokenInner and内联的字符串数据）
