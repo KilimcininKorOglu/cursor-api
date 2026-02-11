@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="en">
 
 <head>
   <meta charset="UTF-8">
   <link rel="icon" type="image/x-icon" href="data:image/x-icon;,">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>API 测试工具</title>
+  <title>API Test Tool</title>
   <link rel="stylesheet" href="/static/shared-styles.css">
   <script src="/static/shared.js"></script>
   <style>
-    /* 顶部工具栏样式 */
+    /* Top toolbar styles */
     .header-toolbar {
       display: flex;
       align-items: center;
@@ -76,7 +76,7 @@
       min-height: 32px;
     }
 
-    /* Tab样式 */
+    /* Tab styles */
     .tabs {
       display: flex;
       border-bottom: 2px solid var(--border-color);
@@ -123,7 +123,7 @@
       display: block;
     }
 
-    /* Chat Completions样式 */
+    /* Chat Completions styles */
     .chat-container {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -162,7 +162,7 @@
       min-height: 32px;
     }
 
-    /* Raw模式样式 */
+    /* Raw mode styles */
     .raw-request {
       flex: 1;
       display: flex;
@@ -256,7 +256,7 @@
       margin-left: auto;
     }
 
-    /* Playground模式样式 */
+    /* Playground mode styles */
     .playground-container {
       flex: 1;
       display: flex;
@@ -312,7 +312,7 @@
       margin-right: auto;
     }
 
-    /* Playground模式下的消息样式调整 */
+    /* Playground mode message style adjustments */
     .chat-container.playground-mode .message {
       max-width: 80%;
       min-width: 60px;
@@ -356,7 +356,7 @@
       resize: vertical;
     }
 
-    /* 响应区域样式 */
+    /* Response area styles */
     .response-header {
       display: flex;
       justify-content: space-between;
@@ -413,7 +413,7 @@
       min-height: 100px;
     }
 
-    /* Models Tab样式 */
+    /* Models Tab styles */
     .models-container {
       max-width: 800px;
       margin: 0 auto;
@@ -510,7 +510,7 @@
       color: var(--primary-color);
     }
 
-    /* 搜索框样式 */
+    /* Search box styles */
     .search-box {
       margin-bottom: 16px;
     }
@@ -521,7 +521,7 @@
       font-size: 14px;
     }
 
-    /* 底部状态栏 */
+    /* Bottom status bar */
     .status-bar {
       position: fixed;
       bottom: 0;
@@ -542,7 +542,7 @@
       gap: 20px;
     }
 
-    /* 响应式设计 */
+    /* Responsive design */
     @media (max-width: 968px) {
       .chat-container {
         grid-template-columns: 1fr;
@@ -586,7 +586,7 @@
       }
     }
 
-    /* 加载动画 */
+    /* Loading animation */
     .loading {
       display: inline-block;
       width: 20px;
@@ -603,7 +603,7 @@
       }
     }
 
-    /* 工具提示 */
+    /* Tooltip */
     .tooltip {
       position: relative;
       cursor: help;
@@ -630,7 +630,7 @@
       opacity: 1;
     }
 
-    /* 复制按钮样式 */
+    /* Copy button styles */
     .copy-btn {
       position: absolute;
       top: 8px;
@@ -647,7 +647,7 @@
       opacity: 1;
     }
 
-    /* Token统计样式 */
+    /* Token statistics styles */
     .token-stats {
       padding: 8px 12px;
       background: var(--background-color);
@@ -671,30 +671,30 @@
 </head>
 
 <body>
-  <!-- 顶部工具栏 -->
+  <!-- Top toolbar -->
   <div class="container">
     <div class="header-toolbar">
       <div class="auth-section">
         <label for="authToken" style="margin: 0;">AUTH Token</label>
-        <input type="password" id="authToken" placeholder="请输入 AUTH Token">
+        <input type="password" id="authToken" placeholder="Enter AUTH Token">
       </div>
 
       <div class="server-status">
         <span class="status-indicator" id="statusIndicator"></span>
-        <span id="statusText">检查中...</span>
+        <span id="statusText">Checking...</span>
       </div>
 
       <div class="quick-tools">
-        <button onclick="generateHash()" class="secondary">生成 Hash</button>
-        <button onclick="generateChecksum()" class="secondary">生成 Checksum</button>
-        <button onclick="generateTimestampHeader()" class="secondary">生成 TimestampHeader</button>
+        <button onclick="generateHash()" class="secondary">Generate Hash</button>
+        <button onclick="generateChecksum()" class="secondary">Generate Checksum</button>
+        <button onclick="generateTimestampHeader()" class="secondary">Generate TimestampHeader</button>
       </div>
     </div>
   </div>
 
-  <!-- 主体内容 -->
+  <!-- Main content -->
   <div class="container">
-    <!-- Tab导航 -->
+    <!-- Tab navigation -->
     <div class="tabs">
       <button class="tab active" onclick="switchTab('chat')">Chat Completions</button>
       <button class="tab" onclick="switchTab('models')">Models</button>
@@ -703,22 +703,22 @@
     <!-- Chat Completions Tab -->
     <div id="chatTab" class="tab-content active">
       <div class="mode-switcher">
-        <button class="active" onclick="switchChatMode('raw')">Raw 模式</button>
-        <button onclick="switchChatMode('playground')">Playground 模式</button>
+        <button class="active" onclick="switchChatMode('raw')">Raw Mode</button>
+        <button onclick="switchChatMode('playground')">Playground Mode</button>
       </div>
 
       <div class="chat-container" id="chatContainer">
-        <!-- 左侧：请求配置 -->
+        <!-- Left side: Request configuration -->
         <div class="chat-left">
-          <!-- Raw模式内容 -->
+          <!-- Raw mode content -->
           <div id="rawMode" class="raw-request">
             <div class="model-selector">
-              <label for="modelInput">模型</label>
-              <input type="text" id="modelInput" class="model-input" placeholder="输入或选择模型..." autocomplete="off">
+              <label for="modelInput">Model</label>
+              <input type="text" id="modelInput" class="model-input" placeholder="Enter or select model..." autocomplete="off">
               <div id="modelDropdown" class="model-dropdown"></div>
             </div>
 
-            <label for="requestBody">请求体 (JSON)</label>
+            <label for="requestBody">Request Body (JSON)</label>
             <textarea id="requestBody" class="json-editor" placeholder='{
   "messages": [
     {
@@ -730,70 +730,70 @@
 
             <div class="request-options">
               <div class="stream-toggle">
-                <label for="streamMode">响应模式</label>
+                <label for="streamMode">Response Mode</label>
                 <select id="streamMode">
-                  <option value="normal">普通响应</option>
-                  <option value="stream">流式响应</option>
-                  <option value="stream-usage">流式响应 + Usage</option>
+                  <option value="normal">Normal Response</option>
+                  <option value="stream">Stream Response</option>
+                  <option value="stream-usage">Stream Response + Usage</option>
                 </select>
               </div>
               <button onclick="sendRequest()" id="sendBtn">
-                发送请求
+                Send Request
                 <span class="tooltip" data-tooltip="Ctrl + Enter">⌨</span>
               </button>
               <button class="add-response-btn secondary" onclick="addResponseToRequest()" id="addResponseBtn"
                 style="display: none;">
-                添加响应到请求
+                Add Response to Request
               </button>
             </div>
           </div>
 
-          <!-- Playground模式内容 -->
+          <!-- Playground mode content -->
           <div id="playgroundMode" class="playground-container" style="display: none;">
             <div class="system-prompt">
-              <label for="systemPrompt">系统提示词</label>
-              <textarea id="systemPrompt" placeholder="你是一个有用的助手..."></textarea>
+              <label for="systemPrompt">System Prompt</label>
+              <textarea id="systemPrompt" placeholder="You are a helpful assistant..."></textarea>
             </div>
 
             <div class="conversation-history" id="conversationHistory">
               <div style="text-align: center; color: var(--text-secondary);">
-                对话历史将在这里显示
+                Conversation history will be displayed here
               </div>
             </div>
 
             <div class="user-input-area">
-              <textarea id="userInput" class="user-input" placeholder="输入你的消息..."
+              <textarea id="userInput" class="user-input" placeholder="Enter your message..."
                 onkeydown="handleUserInputKeydown(event)"></textarea>
-              <button onclick="sendPlaygroundMessage()" id="playgroundSendBtn">发送</button>
+              <button onclick="sendPlaygroundMessage()" id="playgroundSendBtn">Send</button>
             </div>
           </div>
         </div>
 
-        <!-- 右侧：响应显示 -->
+        <!-- Right side: Response display -->
         <div class="chat-right">
           <div class="response-header">
             <div class="response-status">
-              <span id="responseStatus">等待请求...</span>
+              <span id="responseStatus">Waiting for request...</span>
               <span class="response-time" id="responseTime"></span>
             </div>
-            <button class="copy-btn secondary" onclick="copyResponse()">复制</button>
+            <button class="copy-btn secondary" onclick="copyResponse()">Copy</button>
           </div>
 
           <div id="responseBody" class="response-body">
             <div style="text-align: center; color: var(--text-secondary); padding: 40px;">
-              响应内容将在这里显示
+              Response content will be displayed here
             </div>
           </div>
 
           <div id="tokenStats" class="token-stats" style="display: none;">
             <div class="token-stat">
-              提示词: <span id="promptTokens">0</span>
+              Prompt: <span id="promptTokens">0</span>
             </div>
             <div class="token-stat">
-              完成: <span id="completionTokens">0</span>
+              Completion: <span id="completionTokens">0</span>
             </div>
             <div class="token-stat">
-              总计: <span id="totalTokens">0</span>
+              Total: <span id="totalTokens">0</span>
             </div>
           </div>
         </div>
@@ -806,39 +806,39 @@
         <div class="models-params">
           <div class="update-data-section">
             <input type="checkbox" id="updateData" onchange="toggleUpdateData()">
-            <label for="updateData">更新数据（需要 AUTH Token）</label>
+            <label for="updateData">Update Data (requires AUTH Token)</label>
           </div>
 
           <div id="paramsSection" class="params-section">
-            <h3>请求参数</h3>
+            <h3>Request Parameters</h3>
             <div class="params-grid">
               <div class="param-item">
                 <input type="checkbox" id="isNightly">
-                <label for="isNightly">包含 Nightly 版本</label>
+                <label for="isNightly">Include Nightly Versions</label>
               </div>
               <div class="param-item">
                 <input type="checkbox" id="includeLongContext">
-                <label for="includeLongContext">包含长上下文模型</label>
+                <label for="includeLongContext">Include Long Context Models</label>
               </div>
               <div class="param-item">
                 <input type="checkbox" id="excludeMaxNamed" checked>
-                <label for="excludeMaxNamed">排除 Max 命名模型</label>
+                <label for="excludeMaxNamed">Exclude Max Named Models</label>
               </div>
             </div>
 
             <div class="additional-models">
-              <label for="additionalModels">额外模型名称（逗号分隔）</label>
+              <label for="additionalModels">Additional Model Names (comma separated)</label>
               <input type="text" id="additionalModels" placeholder="model1, model2, model3">
             </div>
           </div>
 
           <div class="button-group" style="margin-top: 20px;">
-            <button onclick="fetchModels()">获取模型列表</button>
+            <button onclick="fetchModels()">Get Model List</button>
           </div>
         </div>
 
         <div class="search-box">
-          <input type="text" id="modelSearch" placeholder="搜索模型..." oninput="filterModels()">
+          <input type="text" id="modelSearch" placeholder="Search models..." oninput="filterModels()">
         </div>
 
         <div id="modelsTableContainer"></div>
@@ -846,20 +846,20 @@
     </div>
   </div>
 
-  <!-- 底部状态栏 -->
+  <!-- Bottom status bar -->
   <div class="status-bar">
     <div class="status-info">
-      <span id="versionInfo">版本: -</span>
-      <span id="uptimeInfo">运行时间: -</span>
-      <span id="lastRequestTime">最后请求: -</span>
+      <span id="versionInfo">Version: -</span>
+      <span id="uptimeInfo">Uptime: -</span>
+      <span id="lastRequestTime">Last Request: -</span>
     </div>
     <div>
-      <span id="requestCount">总请求数: 0</span>
+      <span id="requestCount">Total Requests: 0</span>
     </div>
   </div>
 
   <script>
-    // 全局变量
+    // Global variables
     let globalModels = [];
     let currentMode = 'raw';
     let currentTab = 'chat';
@@ -870,29 +870,29 @@
     let lastResponseData = null;
     let responseAddedToRequest = false;
 
-    // 初始化
+    // Initialization
     document.addEventListener('DOMContentLoaded', () => {
-      // 初始化Token处理
+      // Initialize Token handling
       initializeTokenHandling('authToken');
 
-      // 检查服务器状态
+      // Check server status
       checkServerHealth();
-      setInterval(checkServerHealth, 300000); // 每5分钟检查一次
+      setInterval(checkServerHealth, 300000); // Check every 5 minutes
 
-      // 初始化模型自动补全
+      // Initialize model autocomplete
       initializeModelAutocomplete();
 
-      // 绑定快捷键
+      // Bind shortcuts
       bindShortcuts();
 
-      // 从localStorage恢复数据
+      // Restore data from localStorage
       restoreSessionData();
 
-      // 初始化JSON编辑器验证
+      // Initialize JSON editor validation
       initializeJsonValidation();
     });
 
-    // 检查服务器健康状态
+    // Check server health status
     async function checkServerHealth() {
       const indicator = document.getElementById('statusIndicator');
       const statusText = document.getElementById('statusText');
@@ -901,7 +901,7 @@
         const token = document.getElementById('authToken').value;
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
-        // 添加超时控制
+        // Add timeout control
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
 
@@ -918,28 +918,28 @@
           indicator.classList.remove('error');
           statusText.textContent = 'Healthy';
 
-          // 更新版本和运行时间，使用可选链(?.)和空值合并(??)来防止错误
-          const version = data.service?.version ?? '未知';
-          document.getElementById('versionInfo').textContent = `版本: ${version}`;
+          // Update version and uptime, using optional chaining(?.) and nullish coalescing(??) to prevent errors
+          const version = data.service?.version ?? 'Unknown';
+          document.getElementById('versionInfo').textContent = `Version: ${version}`;
 
           const uptimeSeconds = data.runtime?.uptime_seconds;
           if (typeof uptimeSeconds === 'number') {
             document.getElementById('uptimeInfo').textContent = formatUptime(uptimeSeconds);
           } else {
-            document.getElementById('uptimeInfo').textContent = '运行时间: 未知';
+            document.getElementById('uptimeInfo').textContent = 'Uptime: Unknown';
           }
 
-          // 更新全局模型列表，如果不存在则默认为空数组
+          // Update global model list, default to empty array if not exists
           globalModels = data.capabilities?.models || [];
           updateModelDropdown();
 
-          // 更新请求统计，安全地访问嵌套属性
+          // Update request statistics, safely access nested properties
           const totalRequests = data.runtime?.requests?.total;
           if (typeof totalRequests === 'number') {
             document.getElementById('requestCount').textContent =
-              `总请求数: ${totalRequests}`;
+              `Total Requests: ${totalRequests}`;
           } else {
-            document.getElementById('requestCount').textContent = '总请求数: 未知';
+            document.getElementById('requestCount').textContent = 'Total Requests: Unknown';
           }
         } else {
           throw new Error('Server not healthy');
@@ -952,49 +952,49 @@
       }
     }
 
-    // 格式化运行时间
+    // Format uptime
     function formatUptime(seconds) {
       const days = Math.floor(seconds / 86400);
       const hours = Math.floor((seconds % 86400) / 3600);
       const minutes = Math.floor((seconds % 3600) / 60);
 
       if (days > 0) {
-        return `运行时间: ${days}天 ${hours}时 ${minutes}分`;
+        return `Uptime: ${days}d ${hours}h ${minutes}m`;
       } else if (hours > 0) {
-        return `运行时间: ${hours}时 ${minutes}分`;
+        return `Uptime: ${hours}h ${minutes}m`;
       } else {
-        return `运行时间: ${minutes}分`;
+        return `Uptime: ${minutes}m`;
       }
     }
 
-    // Tab切换
+    // Tab switch
     function switchTab(tab) {
       currentTab = tab;
 
-      // 更新Tab样式
+      // Update Tab styles
       document.querySelectorAll('.tab').forEach(t => {
         t.classList.remove('active');
       });
       event.target.classList.add('active');
 
-      // 切换内容
+      // Switch content
       document.querySelectorAll('.tab-content').forEach(content => {
         content.classList.remove('active');
       });
       document.getElementById(`${tab}Tab`).classList.add('active');
     }
 
-    // Chat模式切换
+    // Chat mode switch
     function switchChatMode(mode) {
       currentMode = mode;
 
-      // 更新按钮样式
+      // Update button styles
       document.querySelectorAll('.mode-switcher button').forEach(btn => {
         btn.classList.remove('active');
       });
       event.target.classList.add('active');
 
-      // 切换内容
+      // Switch content
       const chatContainer = document.getElementById('chatContainer');
       if (mode === 'raw') {
         document.getElementById('rawMode').style.display = 'flex';
@@ -1007,11 +1007,11 @@
         updateConversationDisplay();
       }
 
-      // 同步数据
+      // Sync data
       syncModeData();
     }
 
-    // 初始化模型自动补全
+    // Initialize model autocomplete
     function initializeModelAutocomplete() {
       const modelInput = document.getElementById('modelInput');
       const dropdown = document.getElementById('modelDropdown');
@@ -1025,7 +1025,7 @@
         updateModelDropdown(modelInput.value.toLowerCase());
       });
 
-      // 点击其他地方关闭下拉框
+      // Close dropdown when clicking elsewhere
       document.addEventListener('click', (e) => {
         if (!e.target.closest('.model-selector')) {
           dropdown.classList.remove('show');
@@ -1033,7 +1033,7 @@
       });
     }
 
-    // 更新模型下拉列表
+    // Update model dropdown list
     function updateModelDropdown(filter = '') {
       const dropdown = document.getElementById('modelDropdown');
       dropdown.innerHTML = '';
@@ -1058,12 +1058,12 @@
       dropdown.classList.add('show');
     }
 
-    // 选择模型
+    // Select model
     function selectModel(model) {
       document.getElementById('modelInput').value = model;
       document.getElementById('modelDropdown').classList.remove('show');
 
-      // 如果在Raw模式，更新请求体中的模型
+      // If in Raw mode, update model in request body
       if (currentMode === 'raw') {
         try {
           const requestBody = document.getElementById('requestBody');
@@ -1071,16 +1071,16 @@
           json.model = model;
           requestBody.value = JSON.stringify(json, null, 2);
         } catch (e) {
-          // 忽略JSON解析错误
+          // Ignore JSON parse errors
         }
       }
     }
 
-    // 发送请求（Raw模式）
+    // Send request (Raw mode)
     async function sendRequest() {
       const token = document.getElementById('authToken').value;
       if (!token) {
-        showGlobalMessage('请输入 AUTH Token', true);
+        showGlobalMessage('Please enter AUTH Token', true);
         return;
       }
 
@@ -1089,13 +1089,13 @@
       const streamMode = document.getElementById('streamMode').value;
 
       try {
-        // 解析并合并请求体
+        // Parse and merge request body
         let requestBody = JSON.parse(requestBodyStr || '{}');
         if (modelInput) {
           requestBody.model = modelInput;
         }
 
-        // 设置流式选项
+        // Set stream options
         if (streamMode === 'stream') {
           requestBody.stream = true;
         } else if (streamMode === 'stream-usage') {
@@ -1107,20 +1107,20 @@
           requestBody.stream = false;
         }
 
-        // 更新UI
+        // Update UI
         const sendBtn = document.getElementById('sendBtn');
         sendBtn.disabled = true;
-        sendBtn.textContent = streamMode !== 'normal' ? '停止' : '发送中...';
+        sendBtn.textContent = streamMode !== 'normal' ? 'Stop' : 'Sending...';
 
         document.getElementById('responseStatus').innerHTML =
-          '<span class="loading"></span> 请求中...';
+          '<span class="loading"></span> Requesting...';
         document.getElementById('responseTime').textContent = '';
         document.getElementById('responseBody').textContent = '';
         document.getElementById('tokenStats').style.display = 'none';
 
         const startTime = Date.now();
 
-        // 重置响应添加状态
+        // Reset response added state
         responseAddedToRequest = false;
         lastResponseData = null;
         document.getElementById('addResponseBtn').style.display = 'none';
@@ -1135,24 +1135,24 @@
         document.getElementById('responseTime').textContent =
           `${endTime - startTime}ms`;
 
-        // 更新最后请求时间
+        // Update last request time
         updateLastRequestTime();
         requestCount++;
 
       } catch (error) {
         console.error('Request error:', error);
         document.getElementById('responseStatus').innerHTML =
-          '<span class="status-code error">错误</span>';
+          '<span class="status-code error">Error</span>';
         document.getElementById('responseBody').textContent =
-          error.message || '请求失败';
+          error.message || 'Request failed';
       } finally {
         const sendBtn = document.getElementById('sendBtn');
         sendBtn.disabled = false;
-        sendBtn.textContent = '发送请求';
+        sendBtn.textContent = 'Send Request';
       }
     }
 
-    // 处理普通请求
+    // Handle normal request
     async function handleNormalRequest(requestBody, token) {
       const response = await fetch('/v1/chat/completions', {
         method: 'POST',
@@ -1163,7 +1163,7 @@
         body: JSON.stringify(requestBody)
       });
 
-      // 获取原始响应文本
+      // Get raw response text
       const responseText = await response.text();
       let data;
 
@@ -1177,14 +1177,14 @@
         document.getElementById('responseStatus').innerHTML =
           '<span class="status-code success">200 OK</span>';
 
-        // 在Raw模式下显示原始响应文本，否则显示格式化的JSON
+        // In Raw mode, display raw response text, otherwise display formatted JSON
         document.getElementById('responseBody').textContent = responseText;
 
-        // 保存响应数据
+        // Save response data
         lastResponseData = data;
         document.getElementById('addResponseBtn').style.display = 'inline-block';
 
-        // 显示Token统计
+        // Show Token statistics
         if (data.usage) {
           document.getElementById('tokenStats').style.display = 'flex';
           document.getElementById('promptTokens').textContent = data.usage.prompt_tokens || 0;
@@ -1192,7 +1192,7 @@
           document.getElementById('totalTokens').textContent = data.usage.total_tokens || 0;
         }
 
-        // 同步到conversation history
+        // Sync to conversation history
         if (requestBody.messages) {
           conversationHistory = requestBody.messages;
           if (data.choices && data.choices[0]) {
@@ -1203,12 +1203,12 @@
         document.getElementById('responseStatus').innerHTML =
           `<span class="status-code error">${response.status} ${response.statusText}</span>`;
 
-        // 在Raw模式下显示原始响应文本，否则显示格式化的JSON
+        // In Raw mode, display raw response text, otherwise display formatted JSON
         document.getElementById('responseBody').textContent = responseText;
       }
     }
 
-    // 处理流式请求
+    // Handle stream request
     async function handleStreamRequest(requestBody, token) {
       isStreaming = true;
       abortController = new AbortController();
@@ -1233,13 +1233,13 @@
       }
 
       document.getElementById('responseStatus').innerHTML =
-        '<span class="status-code success">200 OK</span> (流式)';
+        '<span class="status-code success">200 OK</span> (Stream)';
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
       let fullContent = '';
-      let rawData = ''; // 用于存储原始数据
+      let rawData = ''; // For storing raw data
       let responseContainer = document.getElementById('responseBody');
       responseContainer.textContent = '';
       let streamedData = [];
@@ -1256,7 +1256,7 @@
 
           for (const line of lines) {
             if (line.startsWith('data: ')) {
-              // 在Raw模式下，直接显示原始数据
+              // In Raw mode, display raw data directly
               rawData += line + '\n';
               responseContainer.textContent = rawData;
 
@@ -1268,7 +1268,7 @@
 
               try {
                 const json = JSON.parse(data);
-                // 保存流式数据
+                // Save stream data
                 streamedData.push(json);
 
                 if (json.choices && json.choices[0] && json.choices[0].delta) {
@@ -1276,7 +1276,7 @@
                   fullContent += content;
                 }
 
-                // 检查是否有usage信息
+                // Check for usage info
                 if (json.usage) {
                   finalUsage = json.usage;
                   document.getElementById('tokenStats').style.display = 'flex';
@@ -1288,21 +1288,21 @@
                 console.error('Parse error:', e);
               }
 
-              // 自动滚动到底部
+              // Auto scroll to bottom
               responseContainer.scrollTop = responseContainer.scrollHeight;
             }
           }
         }
       } catch (error) {
         if (error.name === 'AbortError') {
-          responseContainer.textContent += '\n\n[请求已取消]';
+          responseContainer.textContent += '\n\n[Request cancelled]';
         } else {
           throw error;
         }
       } finally {
         isStreaming = false;
 
-        // 构建完整的响应对象
+        // Build complete response object
         if (streamedData.length > 0) {
           const firstChunk = streamedData[0];
           lastResponseData = {
@@ -1329,11 +1329,11 @@
       }
     }
 
-    // Playground模式发送消息
+    // Playground mode send message
     async function sendPlaygroundMessage() {
       const token = document.getElementById('authToken').value;
       if (!token) {
-        showGlobalMessage('请输入 AUTH Token', true);
+        showGlobalMessage('Please enter AUTH Token', true);
         return;
       }
 
@@ -1342,11 +1342,11 @@
       const userInput = document.getElementById('userInput').value.trim();
 
       if (!userInput) {
-        showGlobalMessage('请输入消息', true);
+        showGlobalMessage('Please enter a message', true);
         return;
       }
 
-      // 构建消息历史
+      // Build message history
       const messages = [];
       if (systemPrompt) {
         messages.push({ role: 'system', content: systemPrompt });
@@ -1354,21 +1354,21 @@
       messages.push(...conversationHistory);
       messages.push({ role: 'user', content: userInput });
 
-      // 添加用户消息到界面
+      // Add user message to interface
       conversationHistory.push({ role: 'user', content: userInput });
       updateConversationDisplay();
 
-      // 清空输入框
+      // Clear input box
       document.getElementById('userInput').value = '';
 
-      // 准备请求
+      // Prepare request
       const streamMode = document.getElementById('streamMode').value;
       const requestBody = {
         model: modelInput || 'default',
         messages: messages
       };
 
-      // 设置流式选项
+      // Set stream options
       if (streamMode === 'stream') {
         requestBody.stream = true;
       } else if (streamMode === 'stream-usage') {
@@ -1380,10 +1380,10 @@
         requestBody.stream = false;
       }
 
-      // 更新按钮状态
+      // Update button state
       const sendBtn = document.getElementById('playgroundSendBtn');
       sendBtn.disabled = true;
-      sendBtn.textContent = '发送中...';
+      sendBtn.textContent = 'Sending...';
 
       try {
         const startTime = Date.now();
@@ -1403,14 +1403,14 @@
 
       } catch (error) {
         console.error('Playground error:', error);
-        showGlobalMessage('请求失败: ' + error.message, true);
+        showGlobalMessage('Request failed: ' + error.message, true);
       } finally {
         sendBtn.disabled = false;
-        sendBtn.textContent = '发送';
+        sendBtn.textContent = 'Send';
       }
     }
 
-    // 处理Playground普通请求
+    // Handle Playground normal request
     async function handlePlaygroundNormal(requestBody, token) {
       const response = await fetch('/v1/chat/completions', {
         method: 'POST',
@@ -1428,14 +1428,14 @@
         conversationHistory.push(assistantMessage);
         updateConversationDisplay();
 
-        // 在Playground模式下，不更新右侧响应面板
+        // In Playground mode, don't update right response panel
         if (currentMode === 'raw') {
           document.getElementById('responseStatus').innerHTML =
             '<span class="status-code success">200 OK</span>';
           document.getElementById('responseBody').textContent =
             JSON.stringify(data, null, 2);
 
-          // 显示Token统计
+          // Show Token statistics
           if (data.usage) {
             document.getElementById('tokenStats').style.display = 'flex';
             document.getElementById('promptTokens').textContent = data.usage.prompt_tokens || 0;
@@ -1448,9 +1448,9 @@
       }
     }
 
-    // 处理Playground流式请求
+    // Handle Playground stream request
     async function handlePlaygroundStream(requestBody, token) {
-      // 先添加一个空的助手消息
+      // First add an empty assistant message
       const assistantMessageIndex = conversationHistory.length;
       conversationHistory.push({ role: 'assistant', content: '' });
       updateConversationDisplay();
@@ -1469,14 +1469,14 @@
       });
 
       if (!response.ok) {
-        conversationHistory.pop(); // 移除空消息
+        conversationHistory.pop(); // Remove empty message
         throw new Error(`${response.status} ${response.statusText}`);
       }
 
-      // 在Playground模式下，不更新右侧响应面板
+      // In Playground mode, don't update right response panel
       if (currentMode === 'raw') {
         document.getElementById('responseStatus').innerHTML =
-          '<span class="status-code success">200 OK</span> (流式)';
+          '<span class="status-code success">200 OK</span> (Stream)';
       }
 
       const reader = response.body.getReader();
@@ -1509,13 +1509,13 @@
                   fullResponse += content;
                   updateConversationDisplay();
 
-                  // 在Raw模式下更新响应面板
+                  // In Raw mode, update response panel
                   if (currentMode === 'raw') {
                     document.getElementById('responseBody').textContent = fullResponse;
                   }
                 }
 
-                // 在Raw模式下检查usage
+                // In Raw mode, check usage
                 if (currentMode === 'raw' && json.usage) {
                   document.getElementById('tokenStats').style.display = 'flex';
                   document.getElementById('promptTokens').textContent = json.usage.prompt_tokens || 0;
@@ -1530,7 +1530,7 @@
         }
       } catch (error) {
         if (error.name === 'AbortError') {
-          conversationHistory[assistantMessageIndex].content += '\n[请求已取消]';
+          conversationHistory[assistantMessageIndex].content += '\n[Request cancelled]';
           updateConversationDisplay();
         } else {
           throw error;
@@ -1540,7 +1540,7 @@
       }
     }
 
-    // 更新对话显示
+    // Update conversation display
     function updateConversationDisplay() {
       const container = document.getElementById('conversationHistory');
       container.innerHTML = '';
@@ -1548,21 +1548,21 @@
       if (conversationHistory.length === 0) {
         container.innerHTML = `
           <div style="text-align: center; color: var(--text-secondary);">
-            对话历史将在这里显示
+            Conversation history will be displayed here
           </div>
         `;
         return;
       }
 
       conversationHistory.forEach(msg => {
-        if (msg.role === 'system') return; // 不显示系统消息
+        if (msg.role === 'system') return; // Don't display system messages
 
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${msg.role}`;
 
         const roleDiv = document.createElement('div');
         roleDiv.className = 'message-role';
-        roleDiv.textContent = msg.role === 'user' ? '用户' : '助手';
+        roleDiv.textContent = msg.role === 'user' ? 'User' : 'Assistant';
 
         const contentDiv = document.createElement('div');
         contentDiv.className = 'message-content';
@@ -1573,14 +1573,14 @@
         container.appendChild(messageDiv);
       });
 
-      // 滚动到底部
+      // Scroll to bottom
       container.scrollTop = container.scrollHeight;
     }
 
-    // 同步模式数据
+    // Sync mode data
     function syncModeData() {
       if (currentMode === 'playground') {
-        // 从Raw模式同步到Playground
+        // Sync from Raw mode to Playground
         try {
           const requestBodyStr = document.getElementById('requestBody').value;
           const requestBody = JSON.parse(requestBodyStr || '{}');
@@ -1595,10 +1595,10 @@
 
           updateConversationDisplay();
         } catch (e) {
-          // 忽略解析错误
+          // Ignore parse errors
         }
       } else {
-        // 从Playground同步到Raw模式
+        // Sync from Playground to Raw mode
         const systemPrompt = document.getElementById('systemPrompt').value;
         const messages = [];
 
@@ -1616,9 +1616,9 @@
       }
     }
 
-    // 快捷键处理
+    // Shortcut key handling
     function bindShortcuts() {
-      // Ctrl+Enter 发送请求
+      // Ctrl+Enter to send request
       document.addEventListener('keydown', (e) => {
         if (e.ctrlKey && e.key === 'Enter') {
           e.preventDefault();
@@ -1633,7 +1633,7 @@
       });
     }
 
-    // 用户输入框快捷键
+    // User input box shortcut keys
     function handleUserInputKeydown(event) {
       if (event.ctrlKey && event.key === 'Enter') {
         event.preventDefault();
@@ -1641,28 +1641,28 @@
       }
     }
 
-    // 复制响应内容
+    // Copy response content
     function copyResponse() {
       const responseBody = document.getElementById('responseBody').textContent;
       copyToClipboard(responseBody, {
-        successMessage: '响应内容已复制',
-        errorMessage: '复制失败'
+        successMessage: 'Response content copied',
+        errorMessage: 'Copy failed'
       });
     }
 
-    // 生成工具函数
+    // Generate tool functions
     async function generateHash() {
       try {
         const response = await fetch('/gen-hash');
         const hash = await response.text();
 
         copyToClipboard(hash, {
-          successMessage: 'Hash已复制到剪贴板'
+          successMessage: 'Hash copied to clipboard'
         });
 
-        showGlobalMessage(`生成的Hash: ${hash}`);
+        showGlobalMessage(`Generated Hash: ${hash}`);
       } catch (error) {
-        showGlobalMessage('生成Hash失败', true);
+        showGlobalMessage('Failed to generate Hash', true);
       }
     }
 
@@ -1672,12 +1672,12 @@
         const checksum = await response.text();
 
         copyToClipboard(checksum, {
-          successMessage: 'Checksum已复制到剪贴板'
+          successMessage: 'Checksum copied to clipboard'
         });
 
-        showGlobalMessage(`生成的Checksum: ${checksum}`);
+        showGlobalMessage(`Generated Checksum: ${checksum}`);
       } catch (error) {
-        showGlobalMessage('生成Checksum失败', true);
+        showGlobalMessage('Failed to generate Checksum', true);
       }
     }
 
@@ -1687,16 +1687,16 @@
         const timestampHeader = await response.text();
 
         copyToClipboard(timestampHeader, {
-          successMessage: 'TimestampHeader已复制到剪贴板'
+          successMessage: 'TimestampHeader copied to clipboard'
         });
 
-        showGlobalMessage(`生成的TimestampHeader: ${timestampHeader}`);
+        showGlobalMessage(`Generated TimestampHeader: ${timestampHeader}`);
       } catch (error) {
-        showGlobalMessage('生成TimestampHeader失败', true);
+        showGlobalMessage('Failed to generate TimestampHeader', true);
       }
     }
 
-    // 切换更新数据选项
+    // Toggle update data option
     function toggleUpdateData() {
       const updateData = document.getElementById('updateData').checked;
       const paramsSection = document.getElementById('paramsSection');
@@ -1708,14 +1708,14 @@
       }
     }
 
-    // 获取模型列表
+    // Get model list
     async function fetchModels() {
       const updateData = document.getElementById('updateData').checked;
       const token = document.getElementById('authToken').value;
 
-      // 只有在更新数据时才需要token
+      // Only need token when updating data
       if (updateData && !token) {
-        showGlobalMessage('更新数据需要输入 AUTH Token', true);
+        showGlobalMessage('Updating data requires AUTH Token', true);
         return;
       }
 
@@ -1723,11 +1723,11 @@
         let url = '/v1/models';
         const headers = {};
 
-        // 只有在更新数据时才添加认证和参数
+        // Only add auth and params when updating data
         if (updateData) {
           headers['Authorization'] = `Bearer ${token}`;
 
-          // 构建查询参数
+          // Build query parameters
           const queryParams = new URLSearchParams();
 
           const isNightly = document.getElementById('isNightly').checked;
@@ -1738,7 +1738,7 @@
             .map(s => s.trim())
             .filter(s => s);
 
-          // 只添加非默认值的参数
+          // Only add non-default parameters
           if (isNightly) queryParams.append('is_nightly', 'true');
           if (includeLongContext) queryParams.append('include_long_context_models', 'true');
           if (excludeMaxNamed) queryParams.append('exclude_max_named_models', 'true');
@@ -1763,51 +1763,51 @@
 
         if (response.ok) {
           displayModelsTable(data.data || []);
-          showGlobalMessage(`获取到 ${data.data.length} 个模型`);
+          showGlobalMessage(`Retrieved ${data.data.length} models`);
         } else {
-          showGlobalMessage('获取模型列表失败', true);
+          showGlobalMessage('Failed to get model list', true);
         }
       } catch (error) {
-        showGlobalMessage('请求失败: ' + error.message, true);
+        showGlobalMessage('Request failed: ' + error.message, true);
       }
     }
 
-    // 显示模型表格
+    // Display models table
     function displayModelsTable(models) {
       const container = document.getElementById('modelsTableContainer');
 
       if (models.length === 0) {
-        container.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">没有找到模型</p>';
+        container.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No models found</p>';
         return;
       }
 
       const table = document.createElement('table');
       table.className = 'models-table';
 
-      // 表头
+      // Table header
       const thead = document.createElement('thead');
       thead.innerHTML = `
         <tr>
-          <th>模型ID</th>
-          <th>显示名称</th>
-          <th>所有者</th>
-          <th>特性</th>
-          <th>创建时间</th>
+          <th>Model ID</th>
+          <th>Display Name</th>
+          <th>Owner</th>
+          <th>Features</th>
+          <th>Created At</th>
         </tr>
       `;
       table.appendChild(thead);
 
-      // 表体
+      // Table body
       const tbody = document.createElement('tbody');
       models.forEach(model => {
         const tr = document.createElement('tr');
 
-        // 特性徽章
+        // Feature badges
         const features = [];
-        if (model.supports_thinking) features.push('思考');
-        if (model.supports_images) features.push('图像');
-        if (model.supports_max_mode) features.push('Max模式');
-        if (model.supports_non_max_mode) features.push('非Max模式');
+        if (model.supports_thinking) features.push('Thinking');
+        if (model.supports_images) features.push('Images');
+        if (model.supports_max_mode) features.push('Max Mode');
+        if (model.supports_non_max_mode) features.push('Non-Max Mode');
 
         tr.innerHTML = `
           <td>${model.id}</td>
@@ -1828,11 +1828,11 @@
       container.innerHTML = '';
       container.appendChild(table);
 
-      // 保存到全局以供搜索
+      // Save to global for search
       window.currentModelsData = models;
     }
 
-    // 搜索模型
+    // Search models
     function filterModels() {
       const searchTerm = document.getElementById('modelSearch').value.toLowerCase();
 
@@ -1846,14 +1846,14 @@
       displayModelsTable(filtered);
     }
 
-    // 更新最后请求时间
+    // Update last request time
     function updateLastRequestTime() {
       const now = new Date();
-      const timeStr = now.toLocaleTimeString('zh-CN');
-      document.getElementById('lastRequestTime').textContent = `最后请求: ${timeStr}`;
+      const timeStr = now.toLocaleTimeString('en-US');
+      document.getElementById('lastRequestTime').textContent = `Last Request: ${timeStr}`;
     }
 
-    // 保存和恢复会话数据
+    // Save and restore session data
     function saveSessionData() {
       const sessionData = {
         model: document.getElementById('modelInput').value,
@@ -1893,13 +1893,13 @@
       }
     }
 
-    // 自动保存会话
-    setInterval(saveSessionData, 30000); // 每30秒保存一次
+    // Auto save session
+    setInterval(saveSessionData, 30000); // Save every 30 seconds
 
-    // 页面卸载时保存
+    // Save on page unload
     window.addEventListener('beforeunload', saveSessionData);
 
-    // 初始化JSON验证
+    // Initialize JSON validation
     function initializeJsonValidation() {
       const jsonEditor = document.getElementById('requestBody');
 
@@ -1914,11 +1914,11 @@
         }
       });
 
-      // 触发初始验证
+      // Trigger initial validation
       jsonEditor.dispatchEvent(new Event('input'));
     }
 
-    // 添加响应到请求
+    // Add response to request
     function addResponseToRequest() {
       if (!lastResponseData || responseAddedToRequest) {
         return;
@@ -1928,7 +1928,7 @@
         const requestBody = document.getElementById('requestBody');
         const currentRequest = JSON.parse(requestBody.value || '{}');
 
-        // 添加响应数据到请求
+        // Add response data to request
         if (!currentRequest.messages) {
           currentRequest.messages = [];
         }
@@ -1939,17 +1939,17 @@
 
         requestBody.value = JSON.stringify(currentRequest, null, 2);
 
-        // 触发验证
+        // Trigger validation
         requestBody.dispatchEvent(new Event('input'));
 
-        // 标记已添加，禁用按钮
+        // Mark as added, disable button
         responseAddedToRequest = true;
         document.getElementById('addResponseBtn').disabled = true;
-        document.getElementById('addResponseBtn').textContent = '已添加';
+        document.getElementById('addResponseBtn').textContent = 'Added';
 
-        showGlobalMessage('响应已添加到请求');
+        showGlobalMessage('Response added to request');
       } catch (e) {
-        showGlobalMessage('添加响应失败: ' + e.message, true);
+        showGlobalMessage('Failed to add response: ' + e.message, true);
       }
     }
   </script>
