@@ -417,7 +417,7 @@ impl FrontendLoader {
                         .entry(Box::leak(route_path.into_boxed_str()))
                     {
                         hashbrown::hash_set::Entry::Vacant(entry) => *entry.insert().get(),
-                        _ => unreachable!(), // 键不会重复，因Toroute_path是从一个HashMap取出的键
+                        _ => unreachable!(), // Key won't repeat, because route_path is a key taken from a HashMap
                     },
                     {
                         let idx = ROUTE_SERVICES.len();
@@ -491,19 +491,19 @@ impl FrontendLoader {
 }
 
 // ============================================================================
-// 公共 API
+// Public API
 // ============================================================================
 
 static ROUTE_REGISTRY: ManuallyInit<HashSet<&'static str>> = ManuallyInit::new();
 
-/// Initialize前端资源系统
+/// Initialize frontend resource system
 ///
-/// # 环境变Amount
-/// - `FRONTEND_PATH`: 前端资源路径（目录Or .zip 文件，Default: "frontend.zip"）
+/// # Environment variables
+/// - `FRONTEND_PATH`: Frontend resource path (directory or .zip file, default: "frontend.zip")
 ///
-/// # 返回
-/// - `Ok(Option<ExchangeMap>)`: 初始化成功
-/// - `Err(FrontendError)`: 初始化Failed
+/// # Returns
+/// - `Ok(Option<ExchangeMap>)`: Initialization successful
+/// - `Err(FrontendError)`: Initialization failed
 pub fn init_frontend() -> Result<(HashMap<&'static str, RouteServiceFn>, ExchangeMap), FrontendError>
 {
     ROUTE_REGISTRY.init(HashSet::with_hasher(ahash::RandomState::new()));
@@ -535,7 +535,7 @@ static mut METADATA: Option<&'static str> = None;
 
 pub const fn metadata() -> Option<&'static str> { unsafe { METADATA } }
 
-// /// Handle前端Request
+// /// Handle frontend request
 // pub async fn handle_frontend(parts: http::request::Parts) -> RouteService {
 //     let registry = &*ROUTE_REGISTRY;
 
@@ -551,28 +551,28 @@ fn print_metadata(registry: &RouteRegistry) {
 
     // println!(
     //     "========================================\n\
-    //         前端资源包信息\n\
+    //         Frontend resource package info\n\
     //         ========================================"
     // );
 
     // if let Some(name) = &registry.name {
-    //     println!("名称:       {name}");
+    //     println!("Name:       {name}");
     // }
 
     // if let Some(version) = &registry.version {
-    //     println!("版本:       {version}");
+    //     println!("Version:    {version}");
     // }
 
     // if let Some(description) = &registry.description {
-    //     println!("描述:       {description}");
+    //     println!("Description: {description}");
     // }
 
     // if let Some(author) = &registry.author {
-    //     println!("作者:       {author}");
+    //     println!("Author:     {author}");
     // }
 
     // if let Some(license) = &registry.license {
-    //     println!("许可证:     {license}");
+    //     println!("License:    {license}");
     // }
 
     // println!("========================================");

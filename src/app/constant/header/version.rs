@@ -211,8 +211,8 @@ mod tests {
         assert!(!is_valid_version_format("1..0"));
         assert!(!is_valid_version_format(""));
         assert!(!is_valid_version_format("1.0."));
-        assert!(!is_valid_version_format("10000.0.0")); // 超过4位数字
-        assert!(!is_valid_version_format("1")); // 太短
-        assert!(!is_valid_version_format(&"1.0.".repeat(20))); // 太长
+        assert!(!is_valid_version_format("10000.0.0")); // exceeds 4 digits
+        assert!(!is_valid_version_format("1")); // too short
+        assert!(!is_valid_version_format(&"1.0.".repeat(20))); // too long
     }
 }

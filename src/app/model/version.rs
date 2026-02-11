@@ -177,13 +177,13 @@ pub const fn release(major: u16, minor: u16, patch: u16) -> Version {
     Version { major, minor, patch, stage: ReleaseStage::Release }
 }
 
-// 辅助函数：创建预览版本（无 build）
+// Helper function: create preview version (without build)
 #[allow(dead_code)]
 pub const fn preview(major: u16, minor: u16, patch: u16, version: u16) -> Version {
     Version { major, minor, patch, stage: ReleaseStage::Preview { version, build: None } }
 }
 
-// 辅助函数：创建预览版本（带 build）
+// Helper function: create preview version (with build)
 #[allow(dead_code)]
 pub const fn preview_build(
     major: u16,

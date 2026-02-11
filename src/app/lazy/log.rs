@@ -49,68 +49,68 @@ pub fn init() {
         .open(&**DEBUG_LOG_FILE)
         .expect("Fatal error: log system initialization failed - unable to open log file");
 
-    // ConvertTo tokio 文件句柄
+    // Convert to tokio file handle
     LOG_FILE.init(Mutex::new(File::from_std(file)));
 }
 
-// --- 日志Message结构 ---
+// --- Log message structure ---
 
-/// 带序列号的日志Message，EnsureHave序Handle
+/// Log message with sequence number, ensures ordered processing
 pub struct LogMessage {
-    /// 全局递增的序列号，保证日志顺序
+    /// Globally incrementing sequence number, guarantees log order
     pub seq: u64,
-    /// AlreadyFormat化的日志Content（包含时间戳）
+    /// Already formatted log content (includes timestamp)
     pub content: String,
 }
 
-/// 全局日志序列号生成器（内部Use）
+/// Global log sequence number generator (internal use)
 static LOG_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
-/// Get下一个日志序列号
+/// Get next log sequence number
 #[inline]
 fn next_log_seq() -> u64 { LOG_SEQUENCE.fetch_add(1, Ordering::Relaxed) }
 
-// --- 核心组件 ---
+// --- Core components ---
 
-/// 全局单例的日志系统状态，Use OnceCell Ensure只初始化一次
+/// Global singleton log system state, uses OnceCell to ensure only initialized once
 static LOGGER_STATE: OnceCell<LoggerState> = OnceCell::const_new();
 
-/// Log系统的状态结构，包含Send通道、关闭信号and后台任务句柄
+/// Log system state structure, contains send channel, shutdown signal and background task handle
 pub struct LoggerState {
-    /// 用于Send日志Message的无界通道Send端
+    /// Unbounded channel sender for sending log messages
     pub sender: UnboundedSender<LogMessage>,
-    /// 用于Send关闭信号的 watch 通道Send端
+    /// Watch channel sender for sending shutdown signal
     shutdown_tx: watch::Sender<bool>,
-    /// 后台写入任务的句柄
+    /// Background writer task handle
     writer_handle: Mutex<Option<JoinHandle<()>>>,
 }
 
-/// Ensure日志系统Already初始化并返回其状态
+/// Ensure log system is initialized and return its state
 ///
-/// If日志系统尚未初始化，会创建所需的通道and后台任务
+/// If log system not yet initialized, creates required channels and background task
 ///
-/// Return日志系统状态的引用
+/// Returns reference to log system state
 pub fn ensure_logger_initialized() -> impl Future<Output = &'static LoggerState> {
     LOGGER_STATE.get_or_init(|| async {
-        // Create用于传递日志Message的无界通道
+        // Create unbounded channel for passing log messages
         let (sender, mut receiver) = mpsc::unbounded_channel::<LogMessage>();
-        // Create用于Send关闭信号的 watch 通道
+        // Create watch channel for sending shutdown signal
         let (shutdown_tx, mut shutdown_rx) = watch::channel(false);
 
-        // 启动后台写入任务
+        // Start background writer task
         let writer_handle = tokio::spawn(async move {
-            // Configuration常Amount
+            // Configuration constants
             const BUFFER_CAPACITY: usize = 65536; // 64KB
             const MAX_PENDING_MESSAGES: usize = 1000;
             const OUT_OF_ORDER_THRESHOLD: u64 = 100;
 
             let mut buffer = Vec::<u8>::with_capacity(BUFFER_CAPACITY);
-            // 定时刷新间隔
+            // Periodic flush interval
             let flush_interval = Duration::from_secs(3);
             let mut interval = tokio::time::interval(flush_interval);
-            interval.tick().await; // 消耗初始 tick
+            interval.tick().await; // Consume initial tick
 
-            // 用于Cache乱序到达的Message
+            // Cache for out-of-order messages
             let mut pending_messages = alloc::collections::BTreeMap::new();
             let mut next_seq = 0u64;
 
@@ -165,15 +165,15 @@ pub fn ensure_logger_initialized() -> impl Future<Output = &'static LoggerState>
                         flush_byte_buffer(&mut buffer).await;
                     }
 
-                    // 监听关闭信号
+                    // Listen for shutdown signal
                     result = shutdown_rx.changed() => {
                         if result.is_err() || *shutdown_rx.borrow() {
-                            // 接收剩余所HaveMessage
+                            // Receive all remaining messages
                             while let Ok(message) = receiver.try_recv() {
                                 pending_messages.insert(message.seq, message.content);
                             }
 
-                            // Handle所Have待Handle的Message并记录缺失范围
+                            // Handle all pending messages and record missing ranges
                             let mut missing_ranges = Vec::new();
                             for (seq, content) in pending_messages {
                                 if seq != next_seq {
@@ -184,27 +184,27 @@ pub fn ensure_logger_initialized() -> impl Future<Output = &'static LoggerState>
                                 next_seq = seq + 1;
                             }
 
-                            // 报告缺失的日志
+                            // Report missing logs
                             if !missing_ranges.is_empty() {
-                                eprintln!("日志系统Warning：关闭时发现缺失的日志序号：");
+                                eprintln!("Log system warning: missing log sequence numbers found during shutdown:");
                                 for (start, end) in missing_ranges {
                                     if start == end {
-                                        eprintln!("  序号 {start}");
+                                        eprintln!("  Sequence {start}");
                                     } else {
-                                        eprintln!("  序号 {start}-{end}");
+                                        eprintln!("  Sequence {start}-{end}");
                                     }
                                 }
                             }
 
-                            // 最终刷新
+                            // Final flush
                             flush_byte_buffer(&mut buffer).await;
                             break;
                         }
                     }
 
-                    // 所Have其他Case（如通道关闭）
+                    // All other cases (e.g. channel closed)
                     else => {
-                        // Handle剩余的待HandleMessage
+                        // Handle remaining pending messages
                         for (_, content) in pending_messages {
                             buffer.extend_from_slice(content.as_bytes());
                             buffer.push(b'\n');
@@ -224,53 +224,53 @@ pub fn ensure_logger_initialized() -> impl Future<Output = &'static LoggerState>
     })
 }
 
-/// 将缓冲区Content刷新到日志文件
+/// Flush buffer content to log file
 ///
-/// # 参数
-/// * `buffer` - 要写入的字节缓冲区，函数调用后会清Empty此缓冲区
+/// # Arguments
+/// * `buffer` - Byte buffer to write, will be cleared after function call
 async fn flush_byte_buffer(buffer: &mut Vec<u8>) {
     if buffer.is_empty() {
         return;
     }
 
-    // Get日志文件的互斥锁
+    // Get mutex lock for log file
     let mut file_guard = LOG_FILE.lock().await;
 
-    // Write数据
+    // Write data
     if let Err(err) = file_guard.write_all(buffer).await {
-        eprintln!("日志系统Error：写入日志数据Failed。Error：{err}");
+        eprintln!("Log system error: failed to write log data. Error: {err}");
         buffer.clear();
         return;
     }
     buffer.clear();
 
-    // Ensure数据刷新到磁盘
+    // Ensure data is flushed to disk
     if let Err(err) = file_guard.flush().await {
-        eprintln!("日志系统Error：刷新日志文件缓冲区到磁盘Failed。Error：{err}");
+        eprintln!("Log system error: failed to flush log file buffer to disk. Error: {err}");
     }
 }
 
-// --- 公开接口 ---
+// --- Public interface ---
 
-/// 提交Debug日志到异步Handle队列
+/// Submit debug log to async processing queue
 ///
-/// # 参数
-/// * `seq` - 日志序列号
-/// * `content` - AlreadyFormat化的日志Content
+/// # Arguments
+/// * `seq` - Log sequence number
+/// * `content` - Already formatted log content
 #[inline]
 fn submit_debug_log(seq: u64, content: String) {
     tokio::spawn(async move {
         let state = ensure_logger_initialized().await;
         let log_msg = LogMessage { seq, content };
         if let Err(e) = state.sender.send(log_msg) {
-            eprintln!("日志系统Error：Send日志Message至后台任务Failed。Error：{e}");
+            eprintln!("Log system error: failed to send log message to background task. Error: {e}");
         }
     });
 }
 
-/// 记录Debug日志的宏
+/// Macro for recording debug logs
 ///
-/// 仅当 DEBUG 开启时记录日志，异步Send到日志Handle任务
+/// Only records logs when DEBUG is enabled, asynchronously sends to log processing task
 #[macro_export]
 macro_rules! debug {
     ($($arg:tt)*) => {
@@ -281,7 +281,7 @@ macro_rules! debug {
 }
 
 pub fn debug_log(args: core::fmt::Arguments<'_>) {
-    // 立即Get序列号and时间戳，Ensure顺序性
+    // Immediately get sequence number and timestamp to ensure ordering
     let seq = next_log_seq();
     let msg = format!(
         "{} | {}",
@@ -291,51 +291,51 @@ pub fn debug_log(args: core::fmt::Arguments<'_>) {
     submit_debug_log(seq, msg);
 }
 
-/// ProgramEnd前调用，Ensure所Have缓冲日志写入文件
+/// Call before program ends to ensure all buffered logs are written to file
 ///
-/// Send关闭信号，等待后台写入任务Completed
+/// Sends shutdown signal, waits for background writer task to complete
 pub async fn flush_all_debug_logs() {
     if let Some(state) = LOGGER_STATE.get() {
         if *DEBUG {
-            __println!("日志系统：Start关闭流程...");
+            __println!("Log system: starting shutdown process...");
         }
 
-        // Send关闭信号
+        // Send shutdown signal
         if let Err(err) = state.shutdown_tx.send(true)
             && *DEBUG
         {
-            println!("日志系统Debug：Send关闭信号Failed（May写入任务Already提前End）：{err}");
+            println!("Log system debug: failed to send shutdown signal (writer task may have ended early): {err}");
         }
 
-        // 提取后台任务句柄
+        // Extract background task handle
         let handle = {
             let mut guard = state.writer_handle.lock().await;
             guard.take()
         };
 
-        // 等待后台任务Completed，设置5秒超时
+        // Wait for background task to complete, with 5 second timeout
         if let Some(handle) = handle {
             match tokio::time::timeout(Duration::from_secs(5), handle).await {
                 Ok(Ok(_)) => {
                     if *DEBUG {
-                        __println!("日志系统：关闭Completed");
+                        __println!("Log system: shutdown complete");
                     }
                 }
                 Ok(Err(join_err)) => {
                     eprintln!(
-                        "日志系统Error：后台写入任务异常终止。部分日志May丢失。Error详情：{join_err}"
+                        "Log system error: background writer task terminated abnormally. Some logs may be lost. Error details: {join_err}"
                     );
                 }
                 Err(_) => {
                     __eprintln!(
-                        "日志系统Error：等待后台写入任务超时（5秒）。部分日志May未能写入。"
+                        "Log system error: timeout waiting for background writer task (5 seconds). Some logs may not have been written."
                     );
                 }
             }
         } else if *DEBUG {
-            __println!("日志系统Debug：未找到活动写入任务句柄，MayAlready关闭。");
+            __println!("Log system debug: no active writer task handle found, may have already shut down.");
         }
     } else if *DEBUG {
-        __println!("日志系统Debug：日志系统未初始化，无需关闭。");
+        __println!("Log system debug: log system not initialized, no need to shut down.");
     }
 }

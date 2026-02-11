@@ -310,7 +310,7 @@ pub async fn get_usage_profile(
     response.json().await.ok()
 }
 
-/// GetStripe付费配置文件
+/// Get Stripe payment profile
 pub async fn get_stripe_profile(
     client: &Client,
     bearer_token: http::HeaderValue,
@@ -328,7 +328,7 @@ pub async fn get_stripe_profile(
     response.json().await.ok()
 }
 
-/// Get用户基础配置文件
+/// Get user basic profile
 pub async fn get_user_profile(
     client: &Client,
     cookie: http::HeaderValue,
@@ -559,7 +559,7 @@ pub fn tokeninfo_to_token(tuple: (configured_key::TokenInfo, [u8; 32])) -> Optio
 /// Generate PKCE code_verifier and corresponding code_challenge (S256 method)
 ///
 /// # Panics
-/// If系统随机数生成器不可用则 panic（极其Rare，通常表示系统级故障）
+/// Panics if system random number generator is unavailable (extremely rare, usually indicates system-level failure)
 #[inline]
 fn generate_pkce_pair() -> ([u8; 43], [u8; 43]) {
     use core::mem::MaybeUninit;
@@ -652,7 +652,7 @@ async fn upgrade_token(ext_token: &ExtToken, use_pri: bool) -> Option<Token> {
     let mut buf = [0; 36];
     let uuid = uuid::Uuid::new_v4().hyphenated().encode_lower(&mut buf) as &str;
 
-    // 发起刷新Request
+    // Initiate refresh request
     let upgrade_response = super::client::build_token_upgrade_request(
         &ext_token.get_client(),
         uuid,

@@ -54,16 +54,16 @@ impl ErrorDetails {
                 | Error::GitgraphNotFound
                 | Error::FileNotFound => 404,
 
-                // 409 - Conflict: 资源状态冲突
+                // 409 - Conflict: resource state conflict
                 Error::GithubMultipleOwners => 409,
 
-                // 410 - Gone: 资源不再可用
+                // 410 - Gone: resource no longer available
                 Error::Deprecated | Error::OutdatedClient => 410,
 
-                // 422 - Unprocessable Entity: RequestHave效但无法Handle
+                // 422 - Unprocessable Entity: request valid but cannot be processed
                 Error::ApiKeyNotSupported => 422,
 
-                // 429 - Too Many Requests: 限流RelatedError
+                // 429 - Too Many Requests: rate limiting related errors
                 Error::FreeUserRateLimitExceeded
                 | Error::ProUserRateLimitExceeded
                 | Error::OpenaiRateLimitExceeded
@@ -74,19 +74,19 @@ impl ErrorDetails {
                 | Error::RateLimited
                 | Error::RateLimitedChangeable => 429,
 
-                // 499 - Client Closed Request: 客户端关闭Request（非标准但常用）
+                // 499 - Client Closed Request: client closed request (non-standard but commonly used)
                 Error::UserAbortedRequest => 499,
 
-                // 503 - Service Unavailable: 服务器因过载Or维护暂时不可用
+                // 503 - Service Unavailable: server temporarily unavailable due to overload or maintenance
                 Error::FreeUserUsageLimit
                 | Error::ProUserUsageLimit
                 | Error::ResourceExhausted
                 | Error::MaxTokens => 503,
 
-                // 504 - Gateway Timeout: 网关超时
+                // 504 - Gateway Timeout: gateway timeout
                 Error::Timeout => 504,
 
-                // 533 - Upstream Failure: 上游服务报告Failed（非标准）
+                // 533 - Upstream Failure: upstream service reported failure (non-standard)
                 Error::Unspecified
                 | Error::Openai
                 | Error::CustomMessage
@@ -94,19 +94,19 @@ impl ErrorDetails {
                 | Error::RepositoryServiceRepositoryIsNotInitialized
                 | Error::Custom => 533,
             },
-            // 未在上游枚举中定义的Error被视To真正的内部服务器Error
+            // Errors not defined in upstream enum are treated as true internal server errors
             Err(_) => 500,
         };
         unsafe { NonZeroU16::new_unchecked(code) }
     }
 
-    /// ReturnErrorType的 snake_case 字符串表示。
+    /// Returns the snake_case string representation of the error type.
     ///
-    /// 此方法将Error变体映射到其 snake_case 字符串名称，
-    /// 用于日志记录、DebugOr API Response。
+    /// This method maps error variants to their snake_case string names,
+    /// used for logging, debugging or API responses.
     ///
-    /// Return value：
-    ///   - &'static str: ErrorType的 snake_case 名称。
+    /// Return value:
+    ///   - &'static str: snake_case name of the error type.
     pub fn r#type(error: i32) -> &'static str {
         use error_details::Error;
         match Error::try_from(error) {
@@ -168,7 +168,7 @@ impl ErrorDetails {
                 Error::Custom => "custom",
                 Error::HooksBlocked => "hooks_blocked",
             },
-            Err(_) => crate::app::constant::UNKNOWN, // 未知ErrorType的Default值
+            Err(_) => crate::app::constant::UNKNOWN, // Default value for unknown error types
         }
     }
 }
@@ -213,12 +213,12 @@ impl TryFrom<image::DynamicImage> for image_proto::Dimension {
 }
 
 impl AvailableModelsResponse {
-    /// 根据 `AvailableModel` 的关键Field（`name`、`client_display_name`、`server_model_name`）
-    /// 判断两个ResponseWhether相等。
+    /// Determines whether two responses are equal based on key fields of `AvailableModel`
+    /// (`name`, `client_display_name`, `server_model_name`).
     ///
-    /// # 参数
+    /// # Arguments
     ///
-    /// * `other` - 要比较的另一个 `AvailableModelsResponse` 实例。
+    /// * `other` - Another `AvailableModelsResponse` instance to compare with.
     pub fn is_subset_equal(&self, other: &Self) -> bool {
         if self.models.len() != other.models.len() {
             return false;

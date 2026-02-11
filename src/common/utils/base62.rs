@@ -2,16 +2,16 @@
 
 //! High-performance fixed-length base62 encoder/decoder
 //!
-//! 本模Block提供了针对 `u128` Type优化的 base62 编Decode功能。
+//! This module provides base62 encoding/decoding functionality optimized for `u128` type.
 //!
-//! # 特性
+//! # Features
 //!
-//! - 固定长度输出：所HaveEncode结果恰好To 22 字节
-//! - 高性能：Use魔术数除法避免昂贵的 u128 除法操作
-//! - 零分配：不Need堆内存分配
-//! - 前导零填充：数值较小时自动在前面补 '0'
+//! - Fixed-length output: all encoding results are exactly 22 bytes
+//! - High performance: uses magic number division to avoid expensive u128 division operations
+//! - Zero allocation: no heap memory allocation needed
+//! - Leading zero padding: automatically pads '0' at the front for smaller values
 //!
-//! # 示例
+//! # Example
 //!
 //! ```
 //! use base62_u128::{encode_fixed, decode_fixed, BASE62_LEN};

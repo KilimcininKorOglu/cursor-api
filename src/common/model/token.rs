@@ -231,7 +231,7 @@ impl<'de> ::serde::Deserialize<'de> for TokenPayload {
                 let exp = exp.ok_or_else(|| de::Error::missing_field(FIELD_EXP))?;
                 let is_session = is_session.ok_or_else(|| de::Error::missing_field(FIELD_TYPE))?;
 
-                // Check必须存在的常AmountField
+                // Check required constant fields
                 if !iss_seen {
                     return Err(de::Error::missing_field(FIELD_ISS));
                 }

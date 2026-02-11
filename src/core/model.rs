@@ -160,18 +160,18 @@ impl ::core::fmt::Display for MessageId {
 // pub struct ToolUseId(u128);
 
 // impl ToolUseId {
-//     /// 从字符串解析 ToolUseId
-//     /// Support两种Format：
-//     /// - "tool_xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx" (40字符)
-//     /// - "toolu_01xxxxxxxxxxxxxxxxxxxx" (30字符)
+//     /// Parse ToolUseId from string
+//     /// Supports two formats:
+//     /// - "tool_xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx" (40 characters)
+//     /// - "toolu_01xxxxxxxxxxxxxxxxxxxx" (30 characters)
 //     pub fn parse_str(s: &str) -> Option<Self> {
 //         use crate::common::utils::hex::{HEX_TABLE, SHL4_TABLE};
 
 //         let input = s.as_bytes();
 //         match (input.len(), input) {
-//             // UUIDFormat：tool_xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx
+//             // UUID format: tool_xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx
 //             (40, [b't', b'o', b'o', b'l', b'_', s @ ..]) => {
-//                 // Verification连字符位置
+//                 // Verify hyphen positions
 //                 if !matches!([s[8], s[13], s[18], s[23]], [b'-', b'-', b'-', b'-']) {
 //                     return None;
 //                 }
@@ -227,10 +227,10 @@ impl ::core::fmt::Display for MessageId {
 //     #[inline(always)]
 //     pub fn to_str<'buf>(&self, buf: &'buf mut [u8; 30]) -> &'buf mut str {
 //         unsafe {
-//             // 复制Prefix "toolu_01"
+//             // Copy prefix "toolu_01"
 //             ::core::ptr::copy_nonoverlapping(TOOLU01_PREFIX.as_ptr(), buf.as_mut_ptr(), 8);
 
-//             // Encode后续的Base62部分
+//             // Encode subsequent Base62 part
 //             crate::common::utils::base62::encode_fixed(
 //                 self.0,
 //                 &mut *buf.as_mut_ptr().add(8).cast(),
@@ -240,7 +240,7 @@ impl ::core::fmt::Display for MessageId {
 //         }
 //     }
 
-//     /// ConvertToUUIDFormat的ByteStr
+//     /// Convert to UUID format ByteStr
 //     pub fn to_byte_str(self) -> prost::ByteStr {
 //         let mut v = Vec::with_capacity(40);
 //         v.extend_from_slice(b"tool_");
@@ -249,7 +249,7 @@ impl ::core::fmt::Display for MessageId {
 //         unsafe { prost::ByteStr::from_utf8_unchecked(bytes::Bytes::from(v)) }
 //     }
 
-//     /// Format化ToUUID样式的字符串（不含Prefix）
+//     /// Format to UUID style string (without prefix)
 //     #[inline]
 //     const fn format_hyphenated(src: [u8; 16]) -> [u8; 35] {
 //         const HEX_LUT: &[u8; 16] = b"0123456789abcdef";
@@ -259,7 +259,7 @@ impl ::core::fmt::Display for MessageId {
 
 //         let mut src_idx = 0;
 
-//         // Handle前4组，每组后面都Have连字符
+//         // Handle first 4 groups, each followed by a hyphen
 //         let mut group_idx = 0;
 //         while group_idx < 4 {
 //             let (start, end) = groups[group_idx];

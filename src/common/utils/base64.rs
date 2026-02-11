@@ -2,14 +2,14 @@
 
 //! High-performance Base64 encoding/decoding implementation
 //!
-//! 本模Block提供了一个优化的 Base64 编Decode器，Use自定义字符集：
-//! - 字符集：`-AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1032547698_`
-//! - 特点：URL 安全，无需填充字符
+//! This module provides an optimized Base64 encoder/decoder using custom character set:
+//! - Character set: `-AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1032547698_`
+//! - Features: URL safe, no padding characters needed
 
-/// Base64 字符集
+/// Base64 character set
 const BASE64_CHARS: &[u8; 64] = b"-AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1032547698_";
 
-/// Base64 decode查找表
+/// Base64 decode lookup table
 const BASE64_DECODE_TABLE: [u8; 256] = {
     let mut table = [0xFF_u8; 256];
     let mut i = 0;
@@ -250,6 +250,6 @@ mod tests {
     #[test]
     fn test_invalid_input() {
         assert!(from_base64("!@#$").is_none());
-        assert!(from_base64("ABC").is_none()); // 长度 % 4 == 1
+        assert!(from_base64("ABC").is_none()); // length % 4 == 1
     }
 }

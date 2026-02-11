@@ -663,7 +663,7 @@ pub const FREE_MODELS: [&str; 6] =
 // pub(super) const LONG_CONTEXT_MODELS: [&str; 4] =
 //     [GPT_4O_128K, GEMINI_1_5_FLASH_500K, CLAUDE_3_HAIKU_200K, CLAUDE_3_5_SONNET_200K];
 
-// SupportThinking的模型
+// Models that support thinking
 const SUPPORTED_THINKING_MODELS: [&str; 42] = [
     CLAUDE_4_5_OPUS_HIGH_THINKING,
     CLAUDE_4_5_SONNET_THINKING,
@@ -709,7 +709,7 @@ const SUPPORTED_THINKING_MODELS: [&str; 42] = [
     GROK_4_FAST_REASONING,
 ];
 
-// Support图像的模型（DEFAULT 始终Support）
+// Models that support images (DEFAULT always supports)
 const SUPPORTED_IMAGE_MODELS: [&str; 51] = [
     DEFAULT,
     COMPOSER_1,
@@ -764,7 +764,7 @@ const SUPPORTED_IMAGE_MODELS: [&str; 51] = [
     GROK_4_FAST_NON_REASONING,
 ];
 
-// SupportMax与非Max的模型
+// Models that support both Max and non-Max
 const SUPPORTED_MAX_MODELS: [&str; 47] = [
     DEFAULT,
     COMPOSER_1,
@@ -815,7 +815,7 @@ const SUPPORTED_MAX_MODELS: [&str; 47] = [
     KIMI_K2_INSTRUCT,
 ];
 
-// 只SupportMax的模型
+// Models that only support Max
 const MAX_MODELS: [&str; 8] = [
     CLAUDE_4_OPUS,
     CLAUDE_4_OPUS_THINKING,

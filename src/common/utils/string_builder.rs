@@ -485,14 +485,14 @@ mod tests {
         let builder2 = builder1.clone();
         assert!(builder2.is_borrowed_state());
 
-        // 两个 builder 应该产生相同的结果
+        // Two builders should produce the same result
         assert_eq!(builder1.build(), "Hello World");
         assert_eq!(builder2.build(), "Hello World");
     }
 
     #[test]
     fn test_clone_mixed_state() {
-        // Test Clone 在 Mixed 状态下的正确性
+        // Test Clone correctness in Mixed state
         let builder1 = StringBuilder::with_capacity(3)
             .append("Hello")
             .append(String::from(" World"))

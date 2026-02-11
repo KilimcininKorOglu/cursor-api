@@ -79,15 +79,15 @@ impl TokenManagerKey {
     }
 }
 
-/// Queue优先级Type，决定token选择顺序
-/// 数值越小优先级越高
+/// Queue priority type, determines token selection order
+/// Lower value means higher priority
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(usize)]
 pub enum QueueType {
-    PrivilegedPaid = 0, // 最高优先级
+    PrivilegedPaid = 0, // Highest priority
     PrivilegedFree = 1,
     NormalPaid = 2,
-    NormalFree = 3, // 最低优先级
+    NormalFree = 3, // Lowest priority
 }
 
 impl QueueType {
@@ -95,23 +95,23 @@ impl QueueType {
     pub const fn as_index(self) -> usize { self as usize }
 }
 
-/// 全局队列头指针数组，每个队列Type独立维护轮询位置
-/// Use静态全局变Amount而非存储在TokenQueue中，避免每次select时的借用Check
+/// Global queue head pointer array, each queue type independently maintains polling position
+/// Uses static global variable instead of storing in TokenQueue to avoid borrow checking on each select
 static QUEUE_HEADS: [AtomicUsize; 4] =
     [AtomicUsize::new(0), AtomicUsize::new(0), AtomicUsize::new(0), AtomicUsize::new(0)];
 
-/// Round-robin token选择队列
+/// Round-robin token selection queue
 ///
-/// 设计要点：
-/// - 所Havetoken共享同一个vec，不同队列Type通过head指针区分轮询位置
-/// - 每次select从CurrentheadStart遍历，跳过不可用token，找到后更新head
-/// - remove时Need调整所Havehead，保证指针不会越界
+/// Design points:
+/// - All tokens share the same vec, different queue types distinguish polling position through head pointer
+/// - Each select traverses from current head, skips unavailable tokens, updates head after finding one
+/// - When removing, need to adjust all heads to ensure pointers don't go out of bounds
 pub struct TokenQueue {
     #[cfg(not(feature = "horizon"))]
     vec: Vec<TokenManagerKey>,
     #[cfg(feature = "horizon")]
     vec: Vec<usize>,
-    map: HashMap<TokenKey, usize>, // TokenKey -> vec索引，用于O(1)查找and删除
+    map: HashMap<TokenKey, usize>, // TokenKey -> vec index, for O(1) lookup and deletion
 }
 
 impl TokenQueue {
@@ -137,7 +137,7 @@ impl TokenQueue {
         let Some(vec_index) = self.map.remove(old_key) else { return false };
 
         #[cfg(not(feature = "horizon"))]
-        // SAFETY: vec_index来自map，map中的索引由push/remove维护，保证Have效
+        // SAFETY: vec_index comes from map, indices in map are maintained by push/remove, guaranteed valid
         unsafe {
             self.vec.get_unchecked_mut(vec_index).set_token_key(new_key);
         };
@@ -149,9 +149,9 @@ impl TokenQueue {
     pub fn remove(&mut self, token_key: &TokenKey) -> Option<TokenManagerKey> {
         let vec_index = self.map.remove(token_key)?;
 
-        // 调整所Have队列的head指针：Ifhead在被删除元素之后，Need前移一位
-        // 这保证了remove后指针仍然指向正确的相对位置
-        // SAFETY: QueueType是repr(usize)枚举，值域To0..4，QUEUE_HEADS长度To4
+        // Adjust head pointers of all queues: if head is after the deleted element, need to move forward by one
+        // This ensures that after remove, the pointer still points to the correct relative position
+        // SAFETY: QueueType is repr(usize) enum, value range is 0..4, QUEUE_HEADS length is 4
         unsafe {
             for i in 0..4 {
                 let head = QUEUE_HEADS.get_unchecked(i);
@@ -162,7 +162,7 @@ impl TokenQueue {
             }
         }
 
-        // Vec::remove会将后续元素前移，Need更新它们在map中的索引
+        // Vec::remove will move subsequent elements forward, need to update their indices in map
         let removed = self.vec.remove(vec_index);
 
         // Use pointer iteration to avoid repeated bounds checking
@@ -223,24 +223,24 @@ impl TokenQueue {
         Some(removed)
     }
 
-    /// Round-robin选择可用token
+    /// Round-robin select available token
     ///
-    /// 算法：
-    /// 1. 从Current队列的headStart轮询
-    /// 2. ChecktokenWhether启用且健康
-    /// 3. 找到后更新head到下一个位置
-    /// 4. 最多尝试整个vec一轮，避免无限循环
+    /// Algorithm:
+    /// 1. Poll from current queue's head
+    /// 2. Check if token is enabled and healthy
+    /// 3. After finding one, update head to next position
+    /// 4. Try at most one full round of vec to avoid infinite loop
     pub fn select(&self, queue_type: QueueType, manager: &TokenManager) -> Option<ExtToken> {
         if self.vec.is_empty() {
             return None;
         }
 
-        // SAFETY: queue_type.as_index()To0..4，QUEUE_HEADS长度To4
+        // SAFETY: queue_type.as_index() is 0..4, QUEUE_HEADS length is 4
         let head = unsafe { QUEUE_HEADS.get_unchecked(queue_type.as_index()) };
         let start = head.load(Ordering::Relaxed);
         let len = self.vec.len();
 
-        // SAFETY: vec非Empty，len>=1，baseHave效
+        // SAFETY: vec is not empty, len>=1, base is valid
         let base = self.vec.as_ptr();
 
         for i in 0..len {
@@ -251,8 +251,8 @@ impl TokenQueue {
             let token = {
                 let token_key = mgr_key.token_key();
 
-                // 先尝试用hint（mgr_key.index）快速查找
-                // Iftoken的keyAlready变化，hint失效，Need通过id_map查找
+                // First try to use hint (mgr_key.index) for fast lookup
+                // If token's key has changed, hint is invalid, need to lookup through id_map
                 let token_id = if let Some(token) = manager.get_by_id(mgr_key.index)
                     && token.bundle.primary_token.key() == token_key
                 {
@@ -267,7 +267,7 @@ impl TokenQueue {
                     continue;
                 }
 
-                // 找到可用token，更新head到下一个位置
+                // Found available token, update head to next position
                 head.store((index + 1) % len, Ordering::Relaxed);
 
                 token
@@ -281,7 +281,7 @@ impl TokenQueue {
                     continue;
                 }
 
-                // 找到可用token，更新head到下一个位置
+                // Found available token, update head to next position
                 head.store((index + 1) % len, Ordering::Relaxed);
 
                 token

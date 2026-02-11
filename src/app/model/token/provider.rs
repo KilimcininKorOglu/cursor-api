@@ -93,22 +93,22 @@ impl<'de> ::serde::Deserialize<'de> for Provider {
     }
 }
 
-/// 从环境配置初始化Support的提供者列表
+/// Initialize supported providers list from environment configuration
 ///
-/// If设置了环境变Amount `ALLOWED_PROVIDERS`，则从中Read，否则保持Default提供者列表。
-/// Environment变Amount应包含以逗号Separate的提供者标识符列表。
+/// If environment variable `ALLOWED_PROVIDERS` is set, read from it, otherwise keep default providers list.
+/// Environment variable should contain a comma-separated list of provider identifiers.
 ///
-/// # 环境变Amount示例
+/// # Environment variable example
 /// ```text
 /// ALLOWED_PROVIDERS=auth0,google-oauth2,github,custom-provider
 /// ```
 ///
-/// # 注意
-/// 此函数应在应用程序启动时调用一次。
-/// 任何未知的提供者字符串都会泄漏到静态内存中。
+/// # Note
+/// This function should be called once at application startup.
+/// Any unknown provider strings will be leaked to static memory.
 pub fn parse_providers() {
     if let Ok(env) = std::env::var("ALLOWED_PROVIDERS") {
-        // Use位标志跟踪Default提供者
+        // Use bit flags to track default providers
         const AUTH0_FLAG: u8 = 1 << 0;
         const GOOGLE_FLAG: u8 = 1 << 1;
         const GITHUB_FLAG: u8 = 1 << 2;
@@ -141,7 +141,7 @@ pub fn parse_providers() {
             })
             .collect::<Vec<_>>();
 
-        // If恰好是3个Default提供者且没Have自定义提供者，保持Default值
+        // If exactly 3 default providers and no custom providers, keep default value
         if custom_count == 0 && default_flags == ALL_DEFAULT {
             return;
         }

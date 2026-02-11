@@ -112,7 +112,7 @@ pub enum Language {
     Random,
 }
 
-// Use宏定义常Amount
+// Use macro to define constants
 crate::define_typed_constants! {
     u64 => {
         SECONDS_PER_MINUTE = 60,
@@ -548,7 +548,7 @@ struct TimeParts {
     nanos: u32,
 }
 
-// Format化实现
+// Formatting implementation
 impl HumanDuration {
     /// Randomly selects a format for variety.
     ///
@@ -795,7 +795,7 @@ impl HumanDuration {
         Self::write_padded(f, &mut buf, parts.seconds, 2)?;
         f.write_str(".")?;
 
-        // 手动分解 millis To三位数字
+        // Manually decompose millis into three digits
         Self::write_padded(f, &mut buf, (parts.millis / 100) as u8, 1)?;
         Self::write_padded(f, &mut buf, ((parts.millis / 10) % 10) as u8, 1)?;
         Self::write_padded(f, &mut buf, (parts.millis % 10) as u8, 1)?;

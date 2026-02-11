@@ -61,13 +61,13 @@ impl ExtModel {
             });
         }
 
-        // 正常验证都Failed后，CheckWhether绕过验证
+        // After all normal validations failed, check whether to bypass validation
         if unsafe { BYPASS_MODEL_VALIDATION } && !model_str.is_empty() {
             let id = get_static_id(model_str);
             return Some(Self {
                 id,
                 is_image: true,
-                // 这里的检测是孱弱的，尽管如此，影响May不大
+                // The detection here is weak, however, the impact may not be significant
                 is_thinking: id.contains("-thinking")
                     || {
                         let bytes = id.as_bytes();

@@ -58,11 +58,11 @@ impl TokenKey {
         string
     }
 
-    /// 从字符串解析 TokenKey
+    /// Parse TokenKey from string
     ///
-    /// Support两种Format：
-    /// 1. 32字符的 base64 Encode
-    /// 2. `<user_id>-<randomness>` Format
+    /// Supports two formats:
+    /// 1. 32-character base64 encoding
+    /// 2. `<user_id>-<randomness>` format
     pub fn from_string(s: &str) -> Option<Self> {
         let bytes = s.as_bytes();
 
@@ -70,7 +70,7 @@ impl TokenKey {
             return None;
         }
 
-        // base64 Format
+        // base64 format
         if bytes.len() == 32 {
             let decoded: [u8; 24] = __unwrap!(from_base64(s)?.try_into());
             let user_id = UserId::from_bytes(__unwrap!(decoded[0..16].try_into()));
@@ -78,12 +78,12 @@ impl TokenKey {
             return Some(Self { user_id, randomness });
         }
 
-        // SeparatorFormat
+        // Separator format
         let mut iter = bytes.iter().enumerate();
         let mut first_num_end = None;
         let mut second_num_start = None;
 
-        // 第一次循环：找到第一个非数字字符
+        // First loop: find first non-digit character
         for (i, b) in iter.by_ref() {
             if !b.is_ascii_digit() {
                 first_num_end = Some(i);
@@ -93,7 +93,7 @@ impl TokenKey {
 
         let first_num_end = first_num_end?;
 
-        // 第二次循环：从Last停止的地方继续，找到下一个数字字符
+        // Second loop: continue from last stop position, find next digit character
         for (i, b) in iter {
             if b.is_ascii_digit() {
                 second_num_start = Some(i);
@@ -116,24 +116,24 @@ impl TokenKey {
     }
 }
 
-/// Token 的内部表示
+/// Internal representation of Token
 ///
 /// # Memory Layout
 /// ```text
 /// +----------------------+
-/// | raw: RawToken        | 原始 token 数据
-/// | count: AtomicUsize   | 引用计数
-/// | string_len: usize    | 字符串长度
+/// | raw: RawToken        | Raw token data
+/// | count: AtomicUsize   | Reference count
+/// | string_len: usize    | String length
 /// +----------------------+
-/// | string data...       | UTF-8 字符串表示
+/// | string data...       | UTF-8 string representation
 /// +----------------------+
 /// ```
 struct TokenInner {
-    /// 原始 token 数据
+    /// Raw token data
     raw: RawToken,
-    /// 原子引用计数
+    /// Atomic reference count
     count: AtomicUsize,
-    /// 字符串表示的长度
+    /// Length of string representation
     string_len: usize,
 }
 
@@ -143,11 +143,11 @@ impl TokenInner {
         isize::MAX as usize + 1 - layout.align() - layout.size()
     };
 
-    /// Get字符串数据的起始地址
+    /// Get starting address of string data
     #[inline(always)]
     const unsafe fn string_ptr(&self) -> *const u8 { (self as *const Self).add(1) as *const u8 }
 
-    /// Get字符串切片
+    /// Get string slice
     #[inline(always)]
     const unsafe fn as_str(&self) -> &str {
         let ptr = self.string_ptr();
@@ -155,7 +155,7 @@ impl TokenInner {
         from_utf8_unchecked(slice)
     }
 
-    /// 计算存储指定长度字符串所需的内存布局
+    /// Calculate memory layout required to store string of specified length
     fn layout_for_string(string_len: usize) -> Layout {
         if string_len > Self::STRING_MAX_LEN {
             __cold_path!();
@@ -170,32 +170,32 @@ impl TokenInner {
         }
     }
 
-    /// 在指定内存位置写入结构体and字符串数据
+    /// Write struct and string data at specified memory location
     unsafe fn write_with_string(ptr: NonNull<Self>, raw: RawToken, string: &str) {
         let inner = ptr.as_ptr();
 
-        // Write结构体Field
+        // Write struct fields
         (*inner).raw = raw;
         (*inner).count = AtomicUsize::new(1);
         (*inner).string_len = string.len();
 
-        // 复制字符串数据
+        // Copy string data
         let string_ptr = (*inner).string_ptr() as *mut u8;
         copy_nonoverlapping(string.as_ptr(), string_ptr, string.len());
     }
 }
 
-/// 引用计数的 Token，Support全局Cache复用
+/// Reference-counted Token, supports global cache reuse
 ///
-/// Token 是不可变的，线程安全的，并且会自动进行Cache管理。
-/// 相同的 TokenKey 会复用同一个底层实例。
+/// Token is immutable, thread-safe, and automatically manages cache.
+/// Same TokenKey will reuse the same underlying instance.
 #[repr(transparent)]
 pub struct Token {
     ptr: NonNull<TokenInner>,
     _pd: PhantomData<TokenInner>,
 }
 
-// Safety: Token Use原子引用计数，可以安全地在线程间传递
+// Safety: Token uses atomic reference counting, can be safely passed between threads
 unsafe impl Send for Token {}
 unsafe impl Sync for Token {}
 
@@ -214,7 +214,7 @@ impl Clone for Token {
     }
 }
 
-/// Thread安全的内部指针包装
+/// Thread-safe internal pointer wrapper
 #[derive(Clone, Copy)]
 #[repr(transparent)]
 struct ThreadSafePtr(NonNull<TokenInner>);
@@ -222,7 +222,7 @@ struct ThreadSafePtr(NonNull<TokenInner>);
 unsafe impl Send for ThreadSafePtr {}
 unsafe impl Sync for ThreadSafePtr {}
 
-/// 全局 Token Cache池
+/// Global Token cache pool
 static TOKEN_MAP: ManuallyInit<HashMap<TokenKey, ThreadSafePtr, ahash::RandomState>> =
     ManuallyInit::new();
 
@@ -230,14 +230,14 @@ static TOKEN_MAP: ManuallyInit<HashMap<TokenKey, ThreadSafePtr, ahash::RandomSta
 pub fn __init() { TOKEN_MAP.init(HashMap::with_capacity_and_hasher(64, ahash::RandomState::new())) }
 
 impl Token {
-    /// CreateOr复用 Token 实例
+    /// Create or reuse Token instance
     ///
-    /// IfCache中Already存在相同的 TokenKey 且 RawToken 相同，则复用；
-    /// 否则创建新实例（May会覆盖旧的）。
+    /// If cache already contains same TokenKey and RawToken is same, reuse;
+    /// otherwise create new instance (may overwrite old one).
     ///
-    /// # 并发安全性
-    /// - Use read-write lock 保护全局Cache
-    /// - 快速路径（read lock）：尝试复用AlreadyHave实例
+    /// # Concurrency safety
+    /// - Uses read-write lock to protect global cache
+    /// - Fast path (read lock): try to reuse existing instance
     /// - Slow path (write lock): create new instance after double check, prevent race condition
     pub fn new(raw: RawToken, string: Option<String>) -> Self {
         use scc::hash_map::RawEntry;
@@ -296,9 +296,9 @@ impl Token {
                 Self { ptr, _pd: PhantomData }
             }
             RawEntry::Vacant(entry) => {
-                // 分配并初始化新实例（Use自定义 DST 布局）
+                // Allocate and initialize new instance (using custom DST layout)
                 let ptr = unsafe {
-                    // 准备字符串表示（在堆上分配之前）
+                    // Prepare string representation (before heap allocation)
                     let string = string.unwrap_or_else(|| raw.to_string());
                     let layout = TokenInner::layout_for_string(string.len());
 
@@ -312,7 +312,7 @@ impl Token {
                     ptr
                 };
 
-                // 将新实例InsertCache（持Have write lock，保证线程安全）
+                // Insert new instance into cache (holding write lock, ensures thread safety)
                 entry.insert(key, ThreadSafePtr(ptr));
 
                 Self { ptr, _pd: PhantomData }
@@ -320,23 +320,23 @@ impl Token {
         }
     }
 
-    /// Get原始 token 数据
+    /// Get raw token data
     #[inline(always)]
     pub const fn raw(&self) -> &RawToken { unsafe { &self.ptr.as_ref().raw } }
 
-    /// Get字符串表示
+    /// Get string representation
     #[inline(always)]
     pub const fn as_str(&self) -> &str { unsafe { self.ptr.as_ref().as_str() } }
 
-    /// Get token 的键
+    /// Get token key
     #[inline(always)]
     pub const fn key(&self) -> TokenKey { self.raw().key() }
 
-    /// CheckWhetherTo网页 token
+    /// Check whether it is web token
     #[inline(always)]
     pub const fn is_web(&self) -> bool { self.raw().is_web() }
 
-    /// CheckWhetherTo会话 token
+    /// Check whether it is session token
     #[inline(always)]
     pub const fn is_session(&self) -> bool { self.raw().is_session() }
 }
@@ -400,7 +400,7 @@ impl core::fmt::Display for Token {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result { f.write_str(self.as_str()) }
 }
 
-// ===== Serde 实现 =====
+// ===== Serde implementation =====
 
 mod serde_impls {
     use super::*;
