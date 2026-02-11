@@ -663,7 +663,7 @@ pub const FREE_MODELS: [&str; 6] =
 // pub(super) const LONG_CONTEXT_MODELS: [&str; 4] =
 //     [GPT_4O_128K, GEMINI_1_5_FLASH_500K, CLAUDE_3_HAIKU_200K, CLAUDE_3_5_SONNET_200K];
 
-// 支持思考的模型
+// 支持Thinking的模型
 const SUPPORTED_THINKING_MODELS: [&str; 42] = [
     CLAUDE_4_5_OPUS_HIGH_THINKING,
     CLAUDE_4_5_SONNET_THINKING,

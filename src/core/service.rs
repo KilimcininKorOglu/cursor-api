@@ -625,7 +625,7 @@ pub async fn handle_chat_completions(
                     //     })
                     //     .await;
                     // }
-                    _ => {} // 忽略其他消息类型
+                    _ => {} // 忽略其他Message type
                 }
             }
 
@@ -1310,7 +1310,7 @@ pub async fn handle_messages(
                         let last_type = ctx.last_content_type.load(Ordering::Acquire);
 
                         if last_type != LastContentType::Thinking {
-                            // 如果上次不是思考类型，需要结束上个块(如果有的话)
+                            // 如果上次不是Thinking类型，需要结束上个块(如果有的话)
                             if last_type != LastContentType::None {
                                 let event = anthropic::RawMessageStreamEvent::ContentBlockStop {
                                     index: ctx.index.load(Ordering::Acquire),
@@ -1319,7 +1319,7 @@ pub async fn handle_messages(
                                 ctx.index.fetch_add(1, Ordering::AcqRel);
                             }
 
-                            // 开始新的思考块
+                            // 开始新的Thinking块
                             let event = anthropic::RawMessageStreamEvent::ContentBlockStart {
                                 index: ctx.index.load(Ordering::Acquire),
                                 content_block: anthropic::ContentBlock::Thinking {
@@ -1504,7 +1504,7 @@ pub async fn handle_messages(
                     //     })
                     //     .await;
                     // }
-                    _ => {} // 忽略其他消息类型
+                    _ => {} // 忽略其他Message type
                 }
             }
 

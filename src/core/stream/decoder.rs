@@ -541,7 +541,7 @@ mod tests {
                             break;
                         }
                         // StreamMessage::Usage(msg) => {
-                        //     println!("额度uuid: {msg}");
+                        //     println!("Quota uuid: {msg}");
                         // }
                         StreamMessage::Content(msg) => {
                             println!("Message content: {msg}");
@@ -562,7 +562,7 @@ mod tests {
                             }
                         }
                         // StreamMessage::Debug(prompt) => {
-                        //     println!("Debug信息: {prompt}");
+                        //     println!("Debug info: {prompt}");
                         // }
                         StreamMessage::ContentStart => {
                             println!("Stream start");
@@ -612,10 +612,10 @@ mod tests {
                                 break;
                             }
                             // StreamMessage::Usage(msg) => {
-                            //     println!("额度uuid: {msg}");
+                            //     println!("Quota uuid: {msg}");
                             // }
                             StreamMessage::Content(msg) => {
-                                println!("消息内容 [hex: {hex_str}]: {msg}");
+                                println!("Message content [hex: {hex_str}]: {msg}");
                             }
                             StreamMessage::Thinking(msg) => {
                                 println!("Thinking: {msg:?}");
@@ -633,7 +633,7 @@ mod tests {
                                 }
                             }
                             // StreamMessage::Debug(prompt) => {
-                            //     println!("Debug信息 [hex: {hex_str}]: {prompt}");
+                            //     println!("Debug info [hex: {hex_str}]: {prompt}");
                             // }
                             StreamMessage::ContentStart => {
                                 println!("Stream start [hex: {hex_str}]");
@@ -650,7 +650,7 @@ mod tests {
                     offset += msg_boundary;
                 }
                 Err(e) => {
-                    println!("解析错误 [hex: {hex_str}]: {e}");
+                    println!("Parse error [hex: {hex_str}]: {e}");
                     break;
                 }
             }

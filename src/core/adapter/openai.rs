@@ -307,7 +307,7 @@ impl Adapter for Openai {
                 _ => continue,
             }
 
-            // 处理消息内容和相关字段
+            // 处理Message content和相关字段
             let (final_text, web_references, use_web) = if !is_user {
                 let (text, web_refs, has_web) = extract_web_references_info(atext);
                 (text, web_refs, has_web.to_opt())

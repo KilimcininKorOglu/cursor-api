@@ -110,7 +110,7 @@ def_header_name! {
 pub use http::header::{CONNECTION, HOST, TRANSFER_ENCODING};
 
 macro_rules! def_content_type {
-    // 递归终点：所有项已处理完
+    // Recursion endpoint: all items processed
     (@parse [$($with_header:tt)*] [$($without_header:tt)*]) => {
         def_content_type!(@generate_without_header $($without_header)*);
         def_content_type!(@generate_with_header $($with_header)*);

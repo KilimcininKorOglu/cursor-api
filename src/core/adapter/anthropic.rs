@@ -324,7 +324,7 @@ impl Adapter for Anthropic {
                 _ => __unreachable!(),
             };
 
-            // 处理消息内容和相关字段
+            // 处理Message content和相关字段
             let (final_text, web_references, use_web) = match param.role {
                 Role::Assistant => {
                     let (text, web_refs, has_web) = extract_web_references_info(text);

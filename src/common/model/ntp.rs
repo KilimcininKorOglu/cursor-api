@@ -33,7 +33,7 @@ pub enum NtpError {
     Io(std::io::Error),
     /// 请求超时
     Timeout,
-    /// 时间解析错误
+    /// 时间Parse error
     TimeParse,
 }
 
@@ -43,7 +43,7 @@ impl std::fmt::Display for NtpError {
             NtpError::Protocol(msg) => write!(f, "NTP协议错误: {msg}"),
             NtpError::Io(e) => write!(f, "IO错误: {e}"),
             NtpError::Timeout => write!(f, "NTP请求超时"),
-            NtpError::TimeParse => write!(f, "时间解析错误"),
+            NtpError::TimeParse => write!(f, "时间Parse error"),
         }
     }
 }

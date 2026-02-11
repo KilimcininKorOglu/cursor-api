@@ -26,7 +26,7 @@ enum StreamState {
     // BetweenBlocks,
     // /// message_delta 已完成，等待 message_stop
     // MessageEnding,
-    /// message_stop 已完成，流结束
+    /// message_stop 已完成，Stream end
     Completed,
 }
 
