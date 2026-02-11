@@ -56,9 +56,9 @@ impl Display for Version {
 }
 
 struct VersionValues {
-    /// 客户端版本的 HeaderValue
+    /// Client version HeaderValue
     client_version: http::header::HeaderValue,
-    /// Cursor User-Agent 的 HeaderValue
+    /// Cursor User-Agent HeaderValue
     ua_cursor: http::header::HeaderValue,
 }
 

@@ -1,16 +1,16 @@
 use core::cmp::Ordering;
 use std::io;
 
-/// 版本发布阶段
+/// Release stage
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum ReleaseStage {
-    /// 正式发布版本
+    /// Official release version
     Release,
-    /// 预览版本，Format如 `-pre.6` Or `-pre.6+build.8`
+    /// Preview version, format like `-pre.6` or `-pre.6+build.8`
     Preview {
-        /// 预览版本号
+        /// Preview version number
         version: u16,
-        /// 构建号（可选）
+        /// Build number (optional)
         build: Option<u16>,
     },
 }
@@ -22,14 +22,14 @@ impl PartialOrd for ReleaseStage {
 impl Ord for ReleaseStage {
     fn cmp(&self, other: &Self) -> Ordering {
         match (self, other) {
-            // 预览版 < 正式版
+            // Preview < Release
             (ReleaseStage::Preview { .. }, ReleaseStage::Release) => Ordering::Less,
             (ReleaseStage::Release, ReleaseStage::Preview { .. }) => Ordering::Greater,
 
-            // 正式版之间相等
+            // Release versions are equal
             (ReleaseStage::Release, ReleaseStage::Release) => Ordering::Equal,
 
-            // 预览版之间：先比较 version，再比较 build
+            // Preview versions: compare version first, then build
             (
                 ReleaseStage::Preview { version: v1, build: b1 },
                 ReleaseStage::Preview { version: v2, build: b2 },
@@ -52,7 +52,7 @@ impl core::fmt::Display for ReleaseStage {
     }
 }
 
-/// 遵循Format：v0.4.0-pre.6+build.8
+/// Follow format: v0.4.0-pre.6+build.8
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub struct Version {
     pub major: u16,
@@ -67,7 +67,7 @@ impl PartialOrd for Version {
 
 impl Ord for Version {
     fn cmp(&self, other: &Self) -> Ordering {
-        // 依次比较 major -> minor -> patch -> stage
+        // Compare major -> minor -> patch -> stage in order
         self.major
             .cmp(&other.major)
             .then_with(|| self.minor.cmp(&other.minor))
@@ -83,26 +83,26 @@ impl core::fmt::Display for Version {
 }
 
 impl Version {
-    /// 写入到 writer
+    /// Write to writer
     ///
-    /// 二进制Format（Use原生字节序）：
+    /// Binary format (use native byte order):
     /// - [0-1] major: u16
     /// - [2-3] minor: u16
     /// - [4-5] patch: u16
     /// - [6-7] len: u16 (0=Release, 1=Preview, 2=PreviewBuild)
-    /// - [8-9] (可选) pre_version: u16
-    /// - [10-11] (可选) build: u16
+    /// - [8-9] (optional) pre_version: u16
+    /// - [10-11] (optional) build: u16
     ///
     /// # Errors
     ///
-    /// If写入Failed，返回 I/O Error
+    /// If write fails, return I/O error
     pub fn write_to<W: io::Write>(&self, writer: &mut W) -> io::Result<()> {
-        // 写入固定头部
+        // Write fixed header
         writer.write_all(&self.major.to_ne_bytes())?;
         writer.write_all(&self.minor.to_ne_bytes())?;
         writer.write_all(&self.patch.to_ne_bytes())?;
 
-        // 根据 stage 写入 len and metadata
+        // Write based on stage, len and metadata
         match self.stage {
             ReleaseStage::Release => {
                 writer.write_all(&0u16.to_ne_bytes())?;
@@ -121,17 +121,17 @@ impl Version {
         Ok(())
     }
 
-    /// 从 reader Read
+    /// Read from reader
     ///
     /// # Errors
     ///
-    /// - `UnexpectedEof`: 数据不足
-    /// - `InvalidData`: len 值非法（>2）
-    /// - 其他 I/O Error
+    /// - `UnexpectedEof`: insufficient data
+    /// - `InvalidData`: len value is invalid (>2)
+    /// - other I/O errors
     pub fn read_from<R: io::Read>(reader: &mut R) -> io::Result<Self> {
         let mut buf = [0u8; 2];
 
-        // Read固定头部
+        // Read fixed header
         reader.read_exact(&mut buf)?;
         let major = u16::from_ne_bytes(buf);
 
@@ -144,7 +144,7 @@ impl Version {
         reader.read_exact(&mut buf)?;
         let len = u16::from_ne_bytes(buf);
 
-        // 根据 len Read metadata
+        // Read metadata based on len
         let stage = match len {
             0 => ReleaseStage::Release,
             1 => {
