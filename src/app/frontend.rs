@@ -223,7 +223,7 @@ trait ResourceProvider {
     fn read_file(&mut self, relative_path: &str) -> Result<Vec<u8>, FrontendError>;
 }
 
-// 目录模式
+// Directory mode
 struct DirectoryProvider {
     base_path: PathBuf,
 }
@@ -244,7 +244,7 @@ impl ResourceProvider for DirectoryProvider {
     }
 }
 
-// ZIP 模式
+// ZIP mode
 struct ZipProvider {
     archive: ZipArchive<Cursor<Vec<u8>>>,
 }
@@ -266,7 +266,7 @@ impl ResourceProvider for ZipProvider {
 }
 
 // ============================================================================
-// 前端加载器
+// Frontend loader
 // ============================================================================
 
 struct FrontendLoader {

@@ -147,12 +147,12 @@ macro_rules! def_cursor_api_url {
             )+
         )+
 
-        // 生成统一的初始化函数
+        // Generate unified initialization function
         pub fn $init_fn() {
             $(
                 $(
                     paste::paste! {
-                        // Initialize私HaveURL
+                        // Initialize private URL
                         {
                             let host = if unsafe { USE_PRI_REVERSE_PROXY } {
                                 &PRI_REVERSE_PROXY_HOST
@@ -166,7 +166,7 @@ macro_rules! def_cursor_api_url {
                             [<PRI_ $name:upper>].init(unsafe { Url::parse(&url).unwrap_unchecked() });
                         }
 
-                        // Initialize公共URL
+                        // Initialize public URL
                         {
                             let host = if unsafe { USE_PUB_REVERSE_PROXY } {
                                 &PUB_REVERSE_PROXY_HOST
@@ -186,11 +186,11 @@ macro_rules! def_cursor_api_url {
     };
 }
 
-// 一次性定义所HaveAPI
+// One-time definition of all APIs
 def_cursor_api_url! {
     init_fn: init_all_cursor_urls,
 
-    // API2 HOST RelatedAPI
+    // API2 HOST related API
     api2_group => {
         host: CURSOR_API2_HOST,
         apis: [
