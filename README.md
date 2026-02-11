@@ -1662,330 +1662,330 @@ None
 
 ```typescript
 {
-  current_file: {                                                 // 当前文件信息
-    relative_workspace_path: string,                              // 文件相对于工作区的路径
-    contents: string,                                             // 文件内容
-    rely_on_filesync: bool,                                       // 是否依赖文件同步
-    sha_256_hash?: string,                                        // 可选，文件内容SHA256哈希值
-    top_chunks: [                                                 // BM25检索的顶级代码块
+  current_file: {                                                 // Current file information
+    relative_workspace_path: string,                              // File path relative to workspace
+    contents: string,                                             // File contents
+    rely_on_filesync: bool,                                       // Whether to rely on file sync
+    sha_256_hash?: string,                                        // Optional, SHA256 hash of file contents
+    top_chunks: [                                                 // Top code chunks from BM25 retrieval
       {
-        content: string,                                          // 代码块内容
-        range: {                                                  // SimplestRange 最简单范围
-          start_line: int32,                                      // 开始行号
-          end_line_inclusive: int32                               // 结束行号（包含）
+        content: string,                                          // Code chunk content
+        range: {                                                  // SimplestRange simplest range
+          start_line: int32,                                      // Start line number
+          end_line_inclusive: int32                               // End line number (inclusive)
         },
-        score: int32,                                             // BM25分数
-        relative_path: string                                     // 代码块所在文件相对路径
+        score: int32,                                             // BM25 score
+        relative_path: string                                     // Relative path of file containing code chunk
       }
     ],
-    contents_start_at_line: int32,                                // 内容开始行号（一般为0）
-    cursor_position: {                                            // CursorPosition 光标位置
-      line: int32,                                                // 行号（0-based）
-      column: int32                                               // 列号（0-based）
+    contents_start_at_line: int32,                                // Content start line number (usually 0)
+    cursor_position: {                                            // CursorPosition cursor position
+      line: int32,                                                // Line number (0-based)
+      column: int32                                               // Column number (0-based)
     },
-    dataframes: [                                                 // DataframeInfo 数据框信息（用于数据分析场景）
+    dataframes: [                                                 // DataframeInfo dataframe info (for data analysis scenarios)
       {
-        name: string,                                             // 数据框变量名
-        shape: string,                                            // 形状描述，如"(100, 5)"
-        data_dimensionality: int32,                               // 数据维度
-        columns: [                                                // 列定义
+        name: string,                                             // Dataframe variable name
+        shape: string,                                            // Shape description, e.g. "(100, 5)"
+        data_dimensionality: int32,                               // Data dimensionality
+        columns: [                                                // Column definitions
           {
-            key: string,                                          // 列名
-            type: string                                          // 列数据类型
+            key: string,                                          // Column name
+            type: string                                          // Column data type
           }
         ],
-        row_count: int32,                                         // 行数
-        index_column: string                                      // 索引列名称
+        row_count: int32,                                         // Row count
+        index_column: string                                      // Index column name
       }
     ],
-    total_number_of_lines: int32,                                 // 文件总行数
-    language_id: string,                                          // 语言标识符（如"python", "rust"）
-    selection?: {                                                 // 可选，CursorRange 当前选中范围
-      start_position: {                                           // CursorPosition 开始位置
-        line: int32,                                              // 行号
-        column: int32                                             // 列号
+    total_number_of_lines: int32,                                 // Total number of lines in file
+    language_id: string,                                          // Language identifier (e.g. "python", "rust")
+    selection?: {                                                 // Optional, CursorRange current selection range
+      start_position: {                                           // CursorPosition start position
+        line: int32,                                              // Line number
+        column: int32                                             // Column number
       },
-      end_position: {                                             // CursorPosition 结束位置
-        line: int32,                                              // 行号
-        column: int32                                             // 列号
+      end_position: {                                             // CursorPosition end position
+        line: int32,                                              // Line number
+        column: int32                                             // Column number
       }
     },
-    alternative_version_id?: int32,                               // 可选，备选版本ID
-    diagnostics: [                                                // Diagnostic 诊断信息数组
+    alternative_version_id?: int32,                               // Optional, alternative version ID
+    diagnostics: [                                                // Diagnostic diagnostics array
       {
-        message: string,                                          // 诊断消息内容
-        range: {                                                  // CursorRange 诊断范围
-          start_position: {                                       // CursorPosition 开始位置
-            line: int32,                                          // 行号
-            column: int32                                         // 列号
+        message: string,                                          // Diagnostic message content
+        range: {                                                  // CursorRange diagnostic range
+          start_position: {                                       // CursorPosition start position
+            line: int32,                                          // Line number
+            column: int32                                         // Column number
           },
-          end_position: {                                         // CursorPosition 结束位置
-            line: int32,                                          // 行号
-            column: int32                                         // 列号
+          end_position: {                                         // CursorPosition end position
+            line: int32,                                          // Line number
+            column: int32                                         // Column number
           }
         },
-        severity: "error" | "warning" | "information" | "hint",   // DiagnosticSeverity 严重程度
-        related_information: [                                    // RelatedInformation 相关信息
+        severity: "error" | "warning" | "information" | "hint",   // DiagnosticSeverity severity level
+        related_information: [                                    // RelatedInformation related information
           {
-            message: string,                                      // 相关信息消息
-            range: {                                              // CursorRange 相关信息范围
-              start_position: {                                   // CursorPosition 开始位置
-                line: int32,                                      // 行号
-                column: int32                                     // 列号
+            message: string,                                      // Related information message
+            range: {                                              // CursorRange related information range
+              start_position: {                                   // CursorPosition start position
+                line: int32,                                      // Line number
+                column: int32                                     // Column number
               },
-              end_position: {                                     // CursorPosition 结束位置
-                line: int32,                                      // 行号
-                column: int32                                     // 列号
+              end_position: {                                     // CursorPosition end position
+                line: int32,                                      // Line number
+                column: int32                                     // Column number
               }
             }
           }
         ]
       }
     ],
-    file_version?: int32,                                         // 可选，文件版本号（用于增量更新）
-    workspace_root_path: string,                                  // 工作区根路径（绝对路径）
-    line_ending?: string,                                         // 可选，行结束符（"\n" 或 "\r\n"）
-    file_git_context: {                                           // FileGit Git上下文信息
-      commits: [                                                  // GitCommit 相关提交数组
+    file_version?: int32,                                         // Optional, file version number (for incremental updates)
+    workspace_root_path: string,                                  // Workspace root path (absolute path)
+    line_ending?: string,                                         // Optional, line ending ("\n" or "\r\n")
+    file_git_context: {                                           // FileGit Git context information
+      commits: [                                                  // GitCommit related commits array
         {
-          commit: string,                                         // 提交哈希
-          author: string,                                         // 作者
-          date: string,                                           // 提交日期
-          message: string                                         // 提交消息
+          commit: string,                                         // Commit hash
+          author: string,                                         // Author
+          date: string,                                           // Commit date
+          message: string                                         // Commit message
         }
       ]
     }
   },
-  diff_history: [string],                                         // 差异历史（已弃用，使用file_diff_histories代替）
-  model_name?: string,                                            // 可选，指定使用的模型名称
-  linter_errors?: {                                               // 可选，LinterErrors Linter错误信息
-    relative_workspace_path: string,                              // 错误所在文件相对路径
-    errors: [                                                     // LinterError 错误数组
+  diff_history: [string],                                         // Diff history (deprecated, use file_diff_histories instead)
+  model_name?: string,                                            // Optional, specify model name to use
+  linter_errors?: {                                               // Optional, LinterErrors linter error info
+    relative_workspace_path: string,                              // Relative path of file with errors
+    errors: [                                                     // LinterError error array
       {
-        message: string,                                          // 错误消息
-        range: {                                                  // CursorRange 错误范围
-          start_position: {                                       // CursorPosition 开始位置
-            line: int32,                                          // 行号
-            column: int32                                         // 列号
+        message: string,                                          // Error message
+        range: {                                                  // CursorRange error range
+          start_position: {                                       // CursorPosition start position
+            line: int32,                                          // Line number
+            column: int32                                         // Column number
           },
-          end_position: {                                         // CursorPosition 结束位置
-            line: int32,                                          // 行号
-            column: int32                                         // 列号
+          end_position: {                                         // CursorPosition end position
+            line: int32,                                          // Line number
+            column: int32                                         // Column number
           }
         },
-        source?: string,                                          // 可选，错误来源（如"eslint", "pyright"）
-        related_information: [                                    // Diagnostic.RelatedInformation 相关信息
+        source?: string,                                          // Optional, error source (e.g. "eslint", "pyright")
+        related_information: [                                    // Diagnostic.RelatedInformation related info
           {
-            message: string,                                      // 相关信息消息
-            range: {                                              // CursorRange 相关信息范围
-              start_position: {                                   // CursorPosition 开始位置
-                line: int32,                                      // 行号
-                column: int32                                     // 列号
+            message: string,                                      // Related info message
+            range: {                                              // CursorRange related info range
+              start_position: {                                   // CursorPosition start position
+                line: int32,                                      // Line number
+                column: int32                                     // Column number
               },
-              end_position: {                                     // CursorPosition 结束位置
-                line: int32,                                      // 行号
-                column: int32                                     // 列号
+              end_position: {                                     // CursorPosition end position
+                line: int32,                                      // Line number
+                column: int32                                     // Column number
               }
             }
           }
         ],
-        severity?: "error" | "warning" | "information" | "hint"   // 可选，DiagnosticSeverity 严重程度
+        severity?: "error" | "warning" | "information" | "hint"   // Optional, DiagnosticSeverity severity level
       }
     ],
-    file_contents: string                                         // 文件内容（用于错误上下文）
+    file_contents: string                                         // File contents (for error context)
   },
-  context_items: [                                                // CppContextItem 上下文项数组
+  context_items: [                                                // CppContextItem context items array
     {
-      contents: string,                                           // 上下文内容
-      symbol?: string,                                            // 可选，符号名称
-      relative_workspace_path: string,                            // 上下文所在文件相对路径
-      score: float                                                // 相关性分数
+      contents: string,                                           // Context content
+      symbol?: string,                                            // Optional, symbol name
+      relative_workspace_path: string,                            // Relative path of context file
+      score: float                                                // Relevance score
     }
   ],
-  diff_history_keys: [string],                                    // 差异历史键（已弃用）
-  give_debug_output?: bool,                                       // 可选，是否输出调试信息
-  file_diff_histories: [                                          // CppFileDiffHistory 文件差异历史数组
+  diff_history_keys: [string],                                    // Diff history keys (deprecated)
+  give_debug_output?: bool,                                       // Optional, whether to output debug info
+  file_diff_histories: [                                          // CppFileDiffHistory file diff history array
     {
-      file_name: string,                                          // 文件名
-      diff_history: [string],                                     // 差异历史数组，格式："行号-|旧内容\n行号+|新内容\n"
-      diff_history_timestamps: [double]                           // 差异时间戳数组（Unix毫秒时间戳）
+      file_name: string,                                          // File name
+      diff_history: [string],                                     // Diff history array, format: "lineNum-|oldContent\nlineNum+|newContent\n"
+      diff_history_timestamps: [double]                           // Diff timestamps array (Unix millisecond timestamps)
     }
   ],
-  merged_diff_histories: [                                        // CppFileDiffHistory 合并后的差异历史
+  merged_diff_histories: [                                        // CppFileDiffHistory merged diff history
     {
-      file_name: string,                                          // 文件名
-      diff_history: [string],                                     // 合并后的差异历史
-      diff_history_timestamps: [double]                           // 时间戳数组
+      file_name: string,                                          // File name
+      diff_history: [string],                                     // Merged diff history
+      diff_history_timestamps: [double]                           // Timestamps array
     }
   ],
-  block_diff_patches: [                                           // BlockDiffPatch 块级差异补丁
+  block_diff_patches: [                                           // BlockDiffPatch block-level diff patches
     {
-      start_model_window: {                                       // ModelWindow 模型窗口起始状态
-        lines: [string],                                          // 窗口内的代码行
-        start_line_number: int32,                                 // 窗口起始行号
-        end_line_number: int32                                    // 窗口结束行号
+      start_model_window: {                                       // ModelWindow model window start state
+        lines: [string],                                          // Code lines in window
+        start_line_number: int32,                                 // Window start line number
+        end_line_number: int32                                    // Window end line number
       },
-      changes: [                                                  // Change 变更数组
+      changes: [                                                  // Change changes array
         {
-          text: string,                                           // 变更后的文本
-          range: {                                                // IRange 变更范围
-            start_line_number: int32,                             // 起始行号
-            start_column: int32,                                  // 起始列号
-            end_line_number: int32,                               // 结束行号
-            end_column: int32                                     // 结束列号
+          text: string,                                           // Changed text
+          range: {                                                // IRange change range
+            start_line_number: int32,                             // Start line number
+            start_column: int32,                                  // Start column number
+            end_line_number: int32,                               // End line number
+            end_column: int32                                     // End column number
           }
         }
       ],
-      relative_path: string,                                      // 文件相对路径
-      model_uuid: string,                                         // 模型UUID（用于追踪补全来源）
-      start_from_change_index: int32                              // 从第几个change开始应用
+      relative_path: string,                                      // File relative path
+      model_uuid: string,                                         // Model UUID (for tracking completion source)
+      start_from_change_index: int32                              // Start applying from which change index
     }
   ],
-  is_nightly?: bool,                                              // 可选，是否为nightly构建版本
-  is_debug?: bool,                                                // 可选，是否为调试模式
-  immediately_ack?: bool,                                         // 可选，是否立即确认请求
-  enable_more_context?: bool,                                     // 可选，是否启用更多上下文检索
-  parameter_hints: [                                              // CppParameterHint 参数提示数组
+  is_nightly?: bool,                                              // Optional, whether nightly build version
+  is_debug?: bool,                                                // Optional, whether debug mode
+  immediately_ack?: bool,                                         // Optional, whether to immediately acknowledge request
+  enable_more_context?: bool,                                     // Optional, whether to enable more context retrieval
+  parameter_hints: [                                              // CppParameterHint parameter hints array
     {
-      label: string,                                              // 参数标签（如"x: int"）
-      documentation?: string                                      // 可选，参数文档说明
+      label: string,                                              // Parameter label (e.g. "x: int")
+      documentation?: string                                      // Optional, parameter documentation
     }
   ],
-  lsp_contexts: [                                                 // LspSubgraphFullContext LSP子图上下文
+  lsp_contexts: [                                                 // LspSubgraphFullContext LSP subgraph context
     {
-      uri?: string,                                               // 可选，文件URI
-      symbol_name: string,                                        // 符号名称
-      positions: [                                                // LspSubgraphPosition 位置数组
+      uri?: string,                                               // Optional, file URI
+      symbol_name: string,                                        // Symbol name
+      positions: [                                                // LspSubgraphPosition positions array
         {
-          line: int32,                                            // 行号
-          character: int32                                        // 字符位置
+          line: int32,                                            // Line number
+          character: int32                                        // Character position
         }
       ],
-      context_items: [                                            // LspSubgraphContextItem 上下文项
+      context_items: [                                            // LspSubgraphContextItem context items
         {
-          uri?: string,                                           // 可选，URI
-          type: string,                                           // 类型（如"definition", "reference"）
-          content: string,                                        // 内容
-          range?: {                                               // 可选，LspSubgraphRange 范围
-            start_line: int32,                                    // 起始行
-            start_character: int32,                               // 起始字符
-            end_line: int32,                                      // 结束行
-            end_character: int32                                  // 结束字符
+          uri?: string,                                           // Optional, URI
+          type: string,                                           // Type (e.g. "definition", "reference")
+          content: string,                                        // Content
+          range?: {                                               // Optional, LspSubgraphRange range
+            start_line: int32,                                    // Start line
+            start_character: int32,                               // Start character
+            end_line: int32,                                      // End line
+            end_character: int32                                  // End character
           }
         }
       ],
-      score: float                                                // 相关性分数
+      score: float                                                // Relevance score
     }
   ],
-  cpp_intent_info?: {                                             // 可选，CppIntentInfo 代码补全意图信息
-    source: "line_change" | "typing" | "option_hold" |            // 触发来源
+  cpp_intent_info?: {                                             // Optional, CppIntentInfo code completion intent info
+    source: "line_change" | "typing" | "option_hold" |            // Trigger source
             "linter_errors" | "parameter_hints" | 
             "cursor_prediction" | "manual_trigger" | 
             "editor_change" | "lsp_suggestions"
   },
-  workspace_id?: string,                                          // 可选，工作区唯一标识符
-  additional_files: [                                             // AdditionalFile 附加文件数组
+  workspace_id?: string,                                          // Optional, workspace unique identifier
+  additional_files: [                                             // AdditionalFile additional files array
     {
-      relative_workspace_path: string,                            // 文件相对路径
-      is_open: bool,                                              // 是否在编辑器中打开
-      visible_range_content: [string],                            // 可见范围的内容（按行）
-      last_viewed_at?: double,                                    // 可选，最后查看时间（Unix毫秒时间戳）
-      start_line_number_one_indexed: [int32],                     // 可见范围起始行号（1-based索引）
-      visible_ranges: [                                           // LineRange 可见范围数组
+      relative_workspace_path: string,                            // File relative path
+      is_open: bool,                                              // Whether open in editor
+      visible_range_content: [string],                            // Visible range content (by line)
+      last_viewed_at?: double,                                    // Optional, last viewed time (Unix millisecond timestamp)
+      start_line_number_one_indexed: [int32],                     // Visible range start line number (1-based index)
+      visible_ranges: [                                           // LineRange visible ranges array
         {
-          start_line_number: int32,                               // 起始行号
-          end_line_number_inclusive: int32                        // 结束行号（包含）
+          start_line_number: int32,                               // Start line number
+          end_line_number_inclusive: int32                        // End line number (inclusive)
         }
       ]
     }
   ],
-  control_token?: "quiet" | "loud" | "op",                        // 可选，ControlToken 控制标记
-  client_time?: double,                                           // 可选，客户端时间（Unix毫秒时间戳）
-  filesync_updates: [                                             // FilesyncUpdateWithModelVersion 文件同步增量更新
+  control_token?: "quiet" | "loud" | "op",                        // Optional, ControlToken control token
+  client_time?: double,                                           // Optional, client time (Unix millisecond timestamp)
+  filesync_updates: [                                             // FilesyncUpdateWithModelVersion file sync incremental updates
     {
-      model_version: int32,                                       // 模型版本号
-      relative_workspace_path: string,                            // 文件相对路径
-      updates: [                                                  // SingleUpdateRequest 更新操作数组
+      model_version: int32,                                       // Model version number
+      relative_workspace_path: string,                            // File relative path
+      updates: [                                                  // SingleUpdateRequest update operations array
         {
-          start_position: int32,                                  // 起始位置（字符偏移量，0-based）
-          end_position: int32,                                    // 结束位置（字符偏移量，0-based）
-          change_length: int32,                                   // 变更后的长度
-          replaced_string: string,                                // 替换的字符串内容
-          range: {                                                // SimpleRange 变更范围
-            start_line_number: int32,                             // 起始行号
-            start_column: int32,                                  // 起始列号
-            end_line_number_inclusive: int32,                     // 结束行号（包含）
-            end_column: int32                                     // 结束列号
+          start_position: int32,                                  // Start position (character offset, 0-based)
+          end_position: int32,                                    // End position (character offset, 0-based)
+          change_length: int32,                                   // Length after change
+          replaced_string: string,                                // Replaced string content
+          range: {                                                // SimpleRange change range
+            start_line_number: int32,                             // Start line number
+            start_column: int32,                                  // Start column number
+            end_line_number_inclusive: int32,                     // End line number (inclusive)
+            end_column: int32                                     // End column number
           }
         }
       ],
-      expected_file_length: int32                                 // 应用更新后预期的文件长度
+      expected_file_length: int32                                 // Expected file length after applying updates
     }
   ],
-  time_since_request_start: double,                               // 从请求开始到当前的时间（毫秒）
-  time_at_request_send: double,                                   // 请求发送时的时间戳（Unix毫秒时间戳）
-  client_timezone_offset?: double,                                // 可选，客户端时区偏移（分钟，如-480表示UTC+8）
-  lsp_suggested_items?: {                                         // 可选，LspSuggestedItems LSP建议项
-    suggestions: [                                                // LspSuggestion 建议数组
+  time_since_request_start: double,                               // Time since request start (milliseconds)
+  time_at_request_send: double,                                   // Timestamp when request was sent (Unix millisecond timestamp)
+  client_timezone_offset?: double,                                // Optional, client timezone offset (minutes, e.g. -480 for UTC+8)
+  lsp_suggested_items?: {                                         // Optional, LspSuggestedItems LSP suggested items
+    suggestions: [                                                // LspSuggestion suggestions array
       {
-        label: string                                             // 建议标签
+        label: string                                             // Suggestion label
       }
     ]
   },
-  supports_cpt?: bool,                                            // 可选，是否支持CPT（Code Patch Token）格式
-  supports_crlf_cpt?: bool,                                       // 可选，是否支持CRLF换行的CPT格式
-  code_results: [                                                 // CodeResult 代码检索结果
+  supports_cpt?: bool,                                            // Optional, whether supports CPT (Code Patch Token) format
+  supports_crlf_cpt?: bool,                                       // Optional, whether supports CRLF line ending CPT format
+  code_results: [                                                 // CodeResult code retrieval results
     {
-      code_block: {                                               // CodeBlock 代码块
-        relative_workspace_path: string,                          // 文件相对路径
-        file_contents?: string,                                   // 可选，完整文件内容
-        file_contents_length?: int32,                             // 可选，文件内容长度
-        range: {                                                  // CursorRange 代码块范围
-          start_position: {                                       // CursorPosition 开始位置
-            line: int32,                                          // 行号
-            column: int32                                         // 列号
+      code_block: {                                               // CodeBlock code block
+        relative_workspace_path: string,                          // File relative path
+        file_contents?: string,                                   // Optional, full file contents
+        file_contents_length?: int32,                             // Optional, file contents length
+        range: {                                                  // CursorRange code block range
+          start_position: {                                       // CursorPosition start position
+            line: int32,                                          // Line number
+            column: int32                                         // Column number
           },
-          end_position: {                                         // CursorPosition 结束位置
-            line: int32,                                          // 行号
-            column: int32                                         // 列号
+          end_position: {                                         // CursorPosition end position
+            line: int32,                                          // Line number
+            column: int32                                         // Column number
           }
         },
-        contents: string,                                         // 代码块内容
-        signatures: {                                             // Signatures 签名信息
-          ranges: [                                               // CursorRange 签名范围数组
+        contents: string,                                         // Code block contents
+        signatures: {                                             // Signatures signature info
+          ranges: [                                               // CursorRange signature ranges array
             {
-              start_position: {                                   // CursorPosition 开始位置
-                line: int32,                                      // 行号
-                column: int32                                     // 列号
+              start_position: {                                   // CursorPosition start position
+                line: int32,                                      // Line number
+                column: int32                                     // Column number
               },
-              end_position: {                                     // CursorPosition 结束位置
-                line: int32,                                      // 行号
-                column: int32                                     // 列号
+              end_position: {                                     // CursorPosition end position
+                line: int32,                                      // Line number
+                column: int32                                     // Column number
               }
             }
           ]
         },
-        override_contents?: string,                               // 可选，覆盖内容
-        original_contents?: string,                               // 可选，原始内容
-        detailed_lines: [                                         // DetailedLine 详细行信息
+        override_contents?: string,                               // Optional, override contents
+        original_contents?: string,                               // Optional, original contents
+        detailed_lines: [                                         // DetailedLine detailed line info
           {
-            text: string,                                         // 行文本
-            line_number: float,                                   // 行号（浮点数用于支持虚拟行）
-            is_signature: bool                                    // 是否为签名行
+            text: string,                                         // Line text
+            line_number: float,                                   // Line number (float to support virtual lines)
+            is_signature: bool                                    // Whether signature line
           }
         ],
-        file_git_context: {                                       // FileGit Git上下文
-          commits: [                                              // GitCommit 提交数组
+        file_git_context: {                                       // FileGit Git context
+          commits: [                                              // GitCommit commits array
             {
-              commit: string,                                     // 提交哈希
-              author: string,                                     // 作者
-              date: string,                                       // 提交日期
-              message: string                                     // 提交消息
+              commit: string,                                     // Commit hash
+              author: string,                                     // Author
+              date: string,                                       // Commit date
+              message: string                                     // Commit message
             }
           ]
         }
       },
-      score: float                                                // 检索相关性分数
+      score: float                                                // Retrieval relevance score
     }
   ]
 }

@@ -1,58 +1,58 @@
-# Cursor Token 获取工具
+# Cursor Token Retrieval Tool
 
-这个工具用于从 Cursor 编辑器的本地数据库中获取访问令牌。
+This tool is used to retrieve access tokens from the Cursor editor's local database.
 
-## 系统要求
+## System Requirements
 
-- Rust 编程环境
-- Cargo 包管理器
+- Rust programming environment
+- Cargo package manager
 
-## 构建说明
+## Build Instructions
 
 ### Windows
 
-1. 安装 Rust
+1. Install Rust
    ```powershell
    winget install Rustlang.Rust
-   # 或访问 https://rustup.rs/ 下载安装程序
+   # Or visit https://rustup.rs/ to download the installer
    ```
 
-2. 克隆项目并构建
+2. Clone the project and build
    ```powershell
    git clone <repository-url>
    cd get-token
    cargo build --release
    ```
 
-3. 构建完成后，可执行文件位于 `target/release/get-token.exe`
+3. After building, the executable is located at `target/release/get-token.exe`
 
 ### macOS
 
-1. 安装 Rust
+1. Install Rust
    ```bash
    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
    ```
 
-2. 克隆项目并构建
+2. Clone the project and build
    ```bash
    git clone <repository-url>
    cd get-token
    cargo build --release
    ```
 
-3. 构建完成后，可执行文件位于 `target/release/get-token`
+3. After building, the executable is located at `target/release/get-token`
 
-## 使用方法
+## Usage
 
-直接运行编译好的可执行文件即可：
+Simply run the compiled executable:
 
 - Windows: `.\target\release\get-token.exe`
 - macOS: `./target/release/get-token`
 
-程序将自动查找并显示 Cursor 编辑器的访问令牌。
+The program will automatically find and display the Cursor editor's access token.
 
-## 注意事项
+## Notes
 
-- 确保 Cursor 编辑器已经安装并且至少登录过一次
-- Windows 数据库路径：`%USERPROFILE%\AppData\Roaming\Cursor\User\globalStorage\state.vscdb`
-- macOS 数据库路径：`~/Library/Application Support/Cursor/User/globalStorage/state.vscdb`
+- Ensure the Cursor editor is installed and has been logged in at least once
+- Windows database path: `%USERPROFILE%\AppData\Roaming\Cursor\User\globalStorage\state.vscdb`
+- macOS database path: `~/Library/Application Support/Cursor/User/globalStorage/state.vscdb`
