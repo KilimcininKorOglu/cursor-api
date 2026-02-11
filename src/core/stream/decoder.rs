@@ -517,10 +517,10 @@ mod tests {
         let mut decoder = StreamDecoder::new().no_first_cache();
 
         if let Err(e) = decoder.decode(&bytes, false) {
-            println!("解析错误: {e}");
+            println!("Parse error: {e}");
         }
         if decoder.is_incomplete() {
-            println!("数据不完整");
+            println!("Data incomplete");
         }
 
         tokio::time::sleep(std::time::Duration::new(3, 5)).await
@@ -537,23 +537,23 @@ mod tests {
                 for message in messages {
                     match message {
                         StreamMessage::StreamEnd => {
-                            println!("流结束");
+                            println!("Stream end");
                             break;
                         }
                         // StreamMessage::Usage(msg) => {
                         //     println!("额度uuid: {msg}");
                         // }
                         StreamMessage::Content(msg) => {
-                            println!("消息内容: {msg}");
+                            println!("Message content: {msg}");
                         }
                         StreamMessage::Thinking(msg) => {
-                            println!("思考: {msg:?}");
+                            println!("Thinking: {msg:?}");
                         }
                         StreamMessage::ToolCall(msg) => {
-                            println!("工具调用: {msg:?}");
+                            println!("Tool call: {msg:?}");
                         }
                         StreamMessage::WebReference(refs) => {
-                            println!("网页引用:");
+                            println!("Web references:");
                             for (i, web_ref) in refs.iter().enumerate() {
                                 println!(
                                     "{}. {} - {} - {}",
@@ -565,17 +565,17 @@ mod tests {
                         //     println!("Debug信息: {prompt}");
                         // }
                         StreamMessage::ContentStart => {
-                            println!("流开始");
+                            println!("Stream start");
                         }
                     }
                 }
             }
             Err(e) => {
-                println!("解析错误: {e}");
+                println!("Parse error: {e}");
             }
         }
         if decoder.is_incomplete() {
-            println!("数据不完整");
+            println!("Data incomplete");
         }
     }
 
@@ -607,7 +607,7 @@ mod tests {
                     for message in messages {
                         match message {
                             StreamMessage::StreamEnd => {
-                                println!("流结束 [hex: {hex_str}]");
+                                println!("Stream end [hex: {hex_str}]");
                                 should_break = true;
                                 break;
                             }
@@ -618,13 +618,13 @@ mod tests {
                                 println!("消息内容 [hex: {hex_str}]: {msg}");
                             }
                             StreamMessage::Thinking(msg) => {
-                                println!("思考: {msg:?}");
+                                println!("Thinking: {msg:?}");
                             }
                             StreamMessage::ToolCall(msg) => {
-                                println!("工具调用: {msg:?}");
+                                println!("Tool call: {msg:?}");
                             }
                             StreamMessage::WebReference(refs) => {
-                                println!("网页引用 [hex: {hex_str}]:");
+                                println!("Web references [hex: {hex_str}]:");
                                 for (i, web_ref) in refs.iter().enumerate() {
                                     println!(
                                         "{}. {} - {} - {}",
@@ -636,7 +636,7 @@ mod tests {
                             //     println!("Debug信息 [hex: {hex_str}]: {prompt}");
                             // }
                             StreamMessage::ContentStart => {
-                                println!("流开始 [hex: {hex_str}]");
+                                println!("Stream start [hex: {hex_str}]");
                             }
                         }
                     }
@@ -644,7 +644,7 @@ mod tests {
                         break;
                     }
                     if decoder.is_incomplete() {
-                        println!("数据不完整 [hex: {hex_str}]");
+                        println!("Data incomplete [hex: {hex_str}]");
                         break;
                     }
                     offset += msg_boundary;

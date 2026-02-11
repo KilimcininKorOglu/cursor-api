@@ -1,6 +1,6 @@
 use crate::common::model::HeaderValue;
 
-/// 定义 HeaderName 常量
+/// Define HeaderName constants
 ///
 /// # Example
 /// ```
@@ -18,7 +18,7 @@ macro_rules! def_header_name {
     };
 }
 
-/// 定义 HeaderValue 常量
+/// Define HeaderValue constants
 ///
 /// # Example
 /// ```
@@ -116,34 +116,34 @@ macro_rules! def_content_type {
         def_content_type!(@generate_with_header $($with_header)*);
     };
 
-    // 处理 => 语法（有逗号）
+    // Handle => syntax (with comma)
     (@parse [$($with_header:tt)*] [$($without_header:tt)*] $name:ident => $value:expr, $($rest:tt)*) => {
         def_content_type!(@parse [$($with_header)* $name => $value,] [$($without_header)*] $($rest)*);
     };
 
-    // 处理 => 语法（无逗号）
+    // Handle => syntax (without comma)
     (@parse [$($with_header:tt)*] [$($without_header:tt)*] $name:ident => $value:expr) => {
         def_content_type!(@parse [$($with_header)* $name => $value,] [$($without_header)*]);
     };
 
-    // 处理 = 语法（有逗号）
+    // Handle = syntax (with comma)
     (@parse [$($with_header:tt)*] [$($without_header:tt)*] $name:ident = $value:expr, $($rest:tt)*) => {
         def_content_type!(@parse [$($with_header)*] [$($without_header)* $name = $value,] $($rest)*);
     };
 
-    // 处理 = 语法（无逗号）
+    // Handle = syntax (without comma)
     (@parse [$($with_header:tt)*] [$($without_header:tt)*] $name:ident = $value:expr) => {
         def_content_type!(@parse [$($with_header)*] [$($without_header)* $name = $value,]);
     };
 
-    // 生成字符串常量
+    // Generate string constants
     (@generate_without_header $($name:ident = $value:expr,)*) => {
         $(paste::paste! {
             const [<$name:upper>]: &'static str = $value;
         })*
     };
 
-    // 生成字符串常量和 HeaderValue 常量
+    // Generate string constants and HeaderValue constants
     (@generate_with_header $($name:ident => $value:expr,)*) => {
         $(paste::paste! {
             const [<$name:upper>]: &'static str = $value;
@@ -159,7 +159,7 @@ macro_rules! def_content_type {
 
 // Content type constants
 def_content_type!(
-    // 文本类型
+    // Text types
     text_html_utf8 => "text/html;charset=utf-8",
     text_plain_utf8 => "text/plain;charset=utf-8",
     text_css_utf8 = "text/css;charset=utf-8",
@@ -168,7 +168,7 @@ def_content_type!(
     text_xml_utf8 = "text/xml;charset=utf-8",
     text_markdown_utf8 = "text/markdown;charset=utf-8",
 
-    // 图像类型
+    // Image types
     image_jpeg = "image/jpeg",
     image_png = "image/png",
     image_gif = "image/gif",
@@ -179,7 +179,7 @@ def_content_type!(
     image_tiff = "image/tiff",
     image_avif = "image/avif",
 
-    // 音频类型
+    // Audio types
     audio_mpeg = "audio/mpeg",
     audio_mp4 = "audio/mp4",
     audio_wav = "audio/wav",
@@ -189,7 +189,7 @@ def_content_type!(
     audio_flac = "audio/flac",
     audio_m4a = "audio/m4a",
 
-    // 视频类型
+    // Video types
     video_mp4 = "video/mp4",
     video_mpeg = "video/mpeg",
     video_webm = "video/webm",
@@ -198,7 +198,7 @@ def_content_type!(
     video_quicktime = "video/quicktime",
     video_x_flv = "video/x-flv",
 
-    // 应用程序文档格式
+    // Application document formats
     application_pdf = "application/pdf",
     application_msword = "application/msword",
     application_word_docx = "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -207,26 +207,26 @@ def_content_type!(
     application_powerpoint_ppt = "application/vnd.ms-powerpoint",
     application_powerpoint_pptx = "application/vnd.openxmlformats-officedocument.presentationml.presentation",
 
-    // 压缩文件
+    // Compressed files
     application_zip = "application/zip",
     application_rar = "application/x-rar-compressed",
     application_7z = "application/x-7z-compressed",
     application_gzip = "application/gzip",
     application_tar = "application/x-tar",
 
-    // 字体类型
+    // Font types
     font_ttf = "font/ttf",
     font_otf = "font/otf",
     font_woff = "font/woff",
     font_woff2 = "font/woff2",
 
-    // 通用二进制流
+    // Generic binary stream
     application_octet_stream = "application/octet-stream"
 );
 
-// 文件扩展名到 HeaderValue 的映射
+// File extension to HeaderValue mapping
 static EXTENSION_TO_MIME: phf::Map<&'static str, &'static str> = phf::phf_map! {
-    // 文本类型
+    // Text types
     "html" => TEXT_HTML_UTF8,
     "htm" => TEXT_HTML_UTF8,
     "txt" => TEXT_PLAIN_UTF8,
@@ -238,7 +238,7 @@ static EXTENSION_TO_MIME: phf::Map<&'static str, &'static str> = phf::phf_map! {
     "md" => TEXT_MARKDOWN_UTF8,
     "markdown" => TEXT_MARKDOWN_UTF8,
 
-    // 图像类型
+    // Image types
     "jpg" => IMAGE_JPEG,
     "jpeg" => IMAGE_JPEG,
     "png" => IMAGE_PNG,
@@ -251,7 +251,7 @@ static EXTENSION_TO_MIME: phf::Map<&'static str, &'static str> = phf::phf_map! {
     "tif" => IMAGE_TIFF,
     "avif" => IMAGE_AVIF,
 
-    // 音频类型
+    // Audio types
     "mp3" => AUDIO_MPEG,
     "mp4a" => AUDIO_MP4,
     "wav" => AUDIO_WAV,
@@ -262,7 +262,7 @@ static EXTENSION_TO_MIME: phf::Map<&'static str, &'static str> = phf::phf_map! {
     "flac" => AUDIO_FLAC,
     "m4a" => AUDIO_M4A,
 
-    // 视频类型
+    // Video types
     "mp4" => VIDEO_MP4,
     "mpeg" => VIDEO_MPEG,
     "mpg" => VIDEO_MPEG,
@@ -273,7 +273,7 @@ static EXTENSION_TO_MIME: phf::Map<&'static str, &'static str> = phf::phf_map! {
     "qt" => VIDEO_QUICKTIME,
     "flv" => VIDEO_X_FLV,
 
-    // 应用程序文档格式
+    // Application document formats
     "pdf" => APPLICATION_PDF,
     "doc" => APPLICATION_MSWORD,
     "docx" => APPLICATION_WORD_DOCX,
@@ -282,7 +282,7 @@ static EXTENSION_TO_MIME: phf::Map<&'static str, &'static str> = phf::phf_map! {
     "ppt" => APPLICATION_POWERPOINT_PPT,
     "pptx" => APPLICATION_POWERPOINT_PPTX,
 
-    // 压缩文件
+    // Compressed files
     "zip" => APPLICATION_ZIP,
     "rar" => APPLICATION_RAR,
     "7z" => APPLICATION_7Z,
@@ -290,14 +290,14 @@ static EXTENSION_TO_MIME: phf::Map<&'static str, &'static str> = phf::phf_map! {
     "gzip" => APPLICATION_GZIP,
     "tar" => APPLICATION_TAR,
 
-    // 字体类型
+    // Font types
     "ttf" => FONT_TTF,
     "otf" => FONT_OTF,
     "woff" => FONT_WOFF,
     "woff2" => FONT_WOFF2,
 };
 
-/// 根据文件扩展名获取对应的 Content-Type HeaderValue
+/// Get Content-Type HeaderValue based on file extension
 pub fn get_content_type_by_extension(extension: &str) -> http::header::HeaderValue {
     let extension = if extension.chars().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit()) {
         alloc::borrow::Cow::Borrowed(extension)
