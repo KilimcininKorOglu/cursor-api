@@ -1,17 +1,17 @@
 include!("src/app/model/version.rs");
 
-/// 版本字符串解析错误
+/// Version string parse error
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ParseError {
-    /// 整体格式错误（如缺少必需部分）
+    /// Overall format error (e.g., missing required parts)
     InvalidFormat,
-    /// 数字解析失败
+    /// Number parsing failed
     InvalidNumber,
-    /// pre 部分格式错误
+    /// Pre-release part format error
     InvalidPreRelease,
-    /// build 部分格式错误
+    /// Build part format error
     InvalidBuild,
-    // /// 正式版不能带 build 标识
+    // /// Release version cannot have build identifier
     // BuildWithoutPreview,
 }
 
@@ -35,13 +35,13 @@ impl core::str::FromStr for Version {
     type Err = ParseError;
 
     fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
-        // 按 '-' 分割基础版本号和扩展部分
+        // Split base version number and extension part by '-'
         let (base, extension) = match s.split_once('-') {
             Some((base, ext)) => (base, Some(ext)),
             None => (s, None),
         };
 
-        // 解析基础版本号 major.minor.patch
+        // Parse base version number major.minor.patch
         let mut parts: [u16; 3] = [0, 0, 0];
         let mut parsed_count = 0;
         for (i, s) in base.split('.').enumerate() {
@@ -59,7 +59,7 @@ impl core::str::FromStr for Version {
         let minor = parts[1];
         let patch = parts[2];
 
-        // 解析扩展部分（如果存在）
+        // Parse extension part (if exists)
         let stage =
             if let Some(ext) = extension { parse_extension(ext)? } else { ReleaseStage::Release };
 
@@ -67,28 +67,28 @@ impl core::str::FromStr for Version {
     }
 }
 
-/// 解析扩展部分：pre.X 或 pre.X+build.Y
+/// Parse extension part: pre.X or pre.X+build.Y
 fn parse_extension(s: &str) -> core::result::Result<ReleaseStage, ParseError> {
-    // 检查是否以 "pre." 开头
+    // Check if starts with "pre."
     if !s.starts_with("pre.") {
         return Err(ParseError::InvalidPreRelease);
     }
 
-    // 移除 "pre." 前缀
+    // Remove "pre." prefix
     let after_pre = &s[4..];
 
-    // 按 '+' 分割 version 和 build 部分
+    // Split version and build parts by '+'
     let (version_str, build_str) = match after_pre.split_once('+') {
         Some((ver, build_part)) => (ver, Some(build_part)),
         None => (after_pre, None),
     };
 
-    // 解析 pre 版本号
+    // Parse pre version number
     let version = version_str.parse().map_err(|_| ParseError::InvalidPreRelease)?;
 
-    // 解析 build 号（如果存在）
+    // Parse build number (if exists)
     let build = if let Some(build_part) = build_str {
-        // 检查格式是否为 "build.X"
+        // Check if format is "build.X"
         if !build_part.starts_with("build.") {
             return Err(ParseError::InvalidBuild);
         }
@@ -105,23 +105,23 @@ fn parse_extension(s: &str) -> core::result::Result<ReleaseStage, ParseError> {
 }
 
 /**
- * 更新版本号函数
- * 此函数会读取 VERSION 文件中的数字，将其加1，然后保存回文件
- * 如果 VERSION 文件不存在或为空，将从1开始计数
- * 只在 release 模式下执行，debug/dev 模式下完全跳过
+ * Update version number function
+ * This function reads the number from VERSION file, increments it by 1, then saves back to file
+ * If VERSION file doesn't exist or is empty, counting starts from 1
+ * Only executes in release mode, completely skipped in debug/dev mode
  */
 #[cfg(not(debug_assertions))]
 #[cfg(feature = "__preview")]
 fn update_version() -> Result<()> {
     let version_path = "VERSION";
-    // VERSION文件的监控已经在main函数中添加，此处无需重复
+    // VERSION file monitoring is already added in main function, no need to repeat here
 
-    // 读取当前版本号
+    // Read current version number
     let mut version = String::new();
     let mut file = match File::open(version_path) {
         Ok(file) => file,
         Err(_) => {
-            // 如果文件不存在或无法打开，从1开始
+            // If file doesn't exist or can't be opened, start from 1
             println!("cargo:warning=VERSION file not found, creating with initial value 1");
             let mut new_file = File::create(version_path)?;
             new_file.write_all(b"1")?;
@@ -131,7 +131,7 @@ fn update_version() -> Result<()> {
 
     file.read_to_string(&mut version)?;
 
-    // 确保版本号是有效数字
+    // Ensure version number is a valid number
     #[allow(unused_variables)]
     let version_num = match version.trim().parse::<u64>() {
         Ok(num) => num,
@@ -145,13 +145,13 @@ fn update_version() -> Result<()> {
 
     #[cfg(not(feature = "__preview_locked"))]
     {
-        // 版本号加1
+        // Increment version number by 1
         let new_version = version_num + 1;
         println!(
             "cargo:warning=Release build - bumping version from {version_num} to {new_version}",
         );
 
-        // 写回文件
+        // Write back to file
         let mut file = File::create(version_path)?;
         write!(file, "{new_version}")?;
     }
@@ -210,7 +210,7 @@ fn generate_build_info() -> Result<()> {
     let version: Version = version_str.parse().unwrap();
 
     let build_info_content = format!(
-        r#"// 此文件由 build.rs 自动生成，请勿手动修改
+        r#"// This file is auto-generated by build.rs, do not modify manually
 use crate::app::model::version::{{Version, ReleaseStage::Preview}};
 
 {build_version_str}pub const BUILD_TIMESTAMP: &'static str = {build_timestamp_str:?};

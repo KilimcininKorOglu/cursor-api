@@ -221,7 +221,7 @@ impl OldRequestLogHelper {
         };
 
         if file.metadata()?.len() > usize::MAX as u64 {
-            return Err("日志文件过大".into());
+            return Err("Log file too large".into());
         }
 
         let mmap = unsafe { MmapOptions::new().map(&file)? };
@@ -244,7 +244,7 @@ impl RequestLogHelper {
             .open(&*LOGS_FILE_PATH)?;
 
         if bytes.len() > usize::MAX >> 1 {
-            return Err("日志数据过大".into());
+            return Err("Log data too large".into());
         }
 
         file.set_len(bytes.len() as u64)?;
@@ -257,7 +257,7 @@ impl RequestLogHelper {
 }
 #[derive(Clone, Copy, Archive, RkyvDeserialize, RkyvSerialize)]
 pub struct TimingInfo {
-    pub total: f64, // 总用时(秒)
+    pub total: f64, // Total time (seconds)
 }
 #[derive(Clone, Copy, PartialEq, Archive, RkyvDeserialize, RkyvSerialize)]
 #[repr(u8)]
@@ -336,7 +336,7 @@ impl OldTokenManager {
         };
 
         if file.metadata()?.len() > usize::MAX as u64 {
-            return Err("Token文件过大".into());
+            return Err("Token file too large".into());
         }
 
         let mmap = unsafe { MmapOptions::new().map(&file)? };
@@ -357,7 +357,7 @@ impl TokenManager {
             .open(&*TOKENS_FILE_PATH)?;
 
         if bytes.len() > usize::MAX >> 1 {
-            return Err("Token数据过大".into());
+            return Err("Token data too large".into());
         }
 
         file.set_len(bytes.len() as u64)?;
@@ -377,7 +377,7 @@ static DATA_DIR: LazyLock<PathBuf> = LazyLock::new(|| {
         .unwrap_or_else(|| PathBuf::from("."))
         .join(data_dir);
     if !path.exists() {
-        std::fs::create_dir_all(&path).expect("无法创建数据目录");
+        std::fs::create_dir_all(&path).expect("Unable to create data directory");
     }
     path
 });
@@ -387,7 +387,7 @@ static LOGS_FILE_PATH: LazyLock<PathBuf> = LazyLock::new(|| DATA_DIR.join("logs.
 static TOKENS_FILE_PATH: LazyLock<PathBuf> = LazyLock::new(|| DATA_DIR.join("tokens.bin"));
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // 设置自定义 panic hook
+    // Set custom panic hook
     std::panic::set_hook(Box::new(|info| {
         if let Some(msg) = info.payload().downcast_ref::<String>() {
             eprintln!("{msg}");
@@ -396,28 +396,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }));
 
-    // 加载环境变量
+    // Load environment variables
     dotenvy::dotenv().ok();
 
-    // 添加交互式询问
-    println!("是否确定使用数据适配器(cursor-api附属工具)将v0.2.8迁移至v0.2.9？（此操作不可撤销）");
-    println!(
-        "Are you sure to use data adapter (cursor-api auxiliary tool) to migrate from v0.2.8 to v0.2.9? (This operation is irreversible)"
-    );
+    // Add interactive confirmation
+    println!("Are you sure to use data adapter (cursor-api auxiliary tool) to migrate from v0.2.8 to v0.2.9? (This operation is irreversible)");
 
     let mut input = String::new();
     println!(
-        "请输入 'y'/'yes' 确认或 'n'/'no' 取消 (Please enter 'y'/'yes' to confirm or 'n'/'no' to cancel):"
+        "Please enter 'y'/'yes' to confirm or 'n'/'no' to cancel:"
     );
     std::io::stdin().read_line(&mut input)?;
 
     let input = input.trim().to_lowercase();
     if input != "y" && input != "yes" {
-        println!("操作已取消 (Operation cancelled)");
+        println!("Operation cancelled");
         return Ok(());
     }
 
-    // 执行迁移
+    // Execute migration
     let old = OldTokenManager::load_tokens()?;
     let new: TokenManager = old.into();
     new.save_tokens()?;
@@ -425,6 +422,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let new: Vec<RequestLogHelper> = old.into_iter().map(Into::into).collect();
     RequestLogHelper::save_logs(new)?;
 
-    println!("数据迁移成功完成 (Data migration completed successfully)");
+    println!("Data migration completed successfully");
     Ok(())
 }

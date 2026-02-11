@@ -33,7 +33,7 @@ fn update_sqlite_tokens(
     let db_path = get_cursor_path().join("User/globalStorage/state.vscdb");
     let conn = Connection::open(db_path)?;
 
-    // 获取原始值
+    // Get original values
     let mut stmt = conn.prepare(
         "SELECT key, value FROM ItemTable WHERE key IN (
             'cursorAuth/refreshToken',
@@ -44,7 +44,7 @@ fn update_sqlite_tokens(
         )",
     )?;
 
-    println!("\n原始值：");
+    println!("\nOriginal values:");
     let rows = stmt.query_map([], |row| {
         Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
     })?;
@@ -53,7 +53,7 @@ fn update_sqlite_tokens(
         println!("{key}: {value}");
     }
 
-    // 自动创建项并更新值
+    // Auto-create items and update values
     conn.execute(
         "INSERT OR REPLACE INTO ItemTable (key, value) VALUES ('cursorAuth/refreshToken', ?)",
         [refresh_token],
@@ -75,7 +75,7 @@ fn update_sqlite_tokens(
         [membership_type],
     )?;
 
-    println!("\n更新后的值：");
+    println!("\nUpdated values:");
     let mut stmt = conn.prepare(
         "SELECT key, value FROM ItemTable WHERE key IN (
             'cursorAuth/refreshToken',
@@ -127,13 +127,13 @@ fn update_storage_json(machine_ids: &[String; 4]) -> io::Result<()> {
 fn is_valid_jwt(token: &str) -> bool {
     let parts: Vec<&str> = token.split('.').collect();
     if parts.len() != 3 {
-        println!("警告: Token 格式不正确，应该包含3个由'.'分隔的部分");
+        println!("Warning: Token format incorrect, should contain 3 parts separated by '.'");
         return false;
     }
 
-    // 检查是否以 "ey" 开头
+    // Check if starts with "ey"
     if !token.starts_with("ey") {
-        println!("警告: Token 应该以'ey'开头");
+        println!("Warning: Token should start with 'ey'");
         return false;
     }
 
@@ -141,15 +141,15 @@ fn is_valid_jwt(token: &str) -> bool {
 }
 
 fn is_valid_sha256(id: &str) -> bool {
-    // SHA256 哈希是64个十六进制字符
+    // SHA256 hash is 64 hexadecimal characters
     if id.len() != 64 {
-        println!("警告: ID 长度应为64个字符");
+        println!("Warning: ID length should be 64 characters");
         return false;
     }
 
-    // 检查是否都是有效的十六进制字符
+    // Check if all are valid hexadecimal characters
     if !id.chars().all(|c| c.is_ascii_hexdigit()) {
-        println!("警告: ID 应只包含十六进制字符(0-9, a-f)");
+        println!("Warning: ID should only contain hexadecimal characters (0-9, a-f)");
         return false;
     }
 
@@ -157,14 +157,14 @@ fn is_valid_sha256(id: &str) -> bool {
 }
 
 fn is_valid_sqm_id(id: &str) -> bool {
-    // 格式应为 {XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX} (大写)
+    // Format should be {XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX} (uppercase)
     if id.len() != 38 {
-        println!("警告: SQM ID 格式不正确");
+        println!("Warning: SQM ID format incorrect");
         return false;
     }
 
     if !id.starts_with('{') || !id.ends_with('}') {
-        println!("警告: SQM ID 应该被花括号包围");
+        println!("Warning: SQM ID should be surrounded by curly braces");
         return false;
     }
 
@@ -173,7 +173,7 @@ fn is_valid_sqm_id(id: &str) -> bool {
         .chars()
         .all(|c| c.is_ascii_uppercase() || c.is_ascii_digit() || c == '-')
     {
-        println!("警告: UUID 部分应为大写字母、数字和连字符");
+        println!("Warning: UUID part should be uppercase letters, digits and hyphens");
         return false;
     }
 
@@ -181,9 +181,9 @@ fn is_valid_sqm_id(id: &str) -> bool {
 }
 
 fn is_valid_device_id(id: &str) -> bool {
-    // 格式应为 xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    // Format should be xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
     if id.len() != 36 {
-        println!("警告: Device ID 格式不正确");
+        println!("Warning: Device ID format incorrect");
         return false;
     }
 
@@ -191,7 +191,7 @@ fn is_valid_device_id(id: &str) -> bool {
         .chars()
         .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-')
     {
-        println!("警告: Device ID 应为小写字母、数字和连字符");
+        println!("Warning: Device ID should be lowercase letters, digits and hyphens");
         return false;
     }
 
@@ -200,21 +200,21 @@ fn is_valid_device_id(id: &str) -> bool {
 
 fn is_valid_email(email: &str) -> bool {
     if !email.contains('@') || !email.contains('.') {
-        println!("警告: 邮箱格式不正确");
+        println!("Warning: Email format incorrect");
         return false;
     }
     let parts: Vec<&str> = email.split('@').collect();
     if parts.len() != 2 || parts[0].is_empty() || parts[1].is_empty() {
-        println!("警告: 邮箱格式不正确");
+        println!("Warning: Email format incorrect");
         return false;
     }
     true
 }
 
 fn is_valid_uuid(uuid: &str) -> bool {
-    // UUID格式应为: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    // UUID format should be: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
     if uuid.len() != 36 {
-        println!("警告: UUID 格式不正确");
+        println!("Warning: UUID format incorrect");
         return false;
     }
 
@@ -226,12 +226,12 @@ fn is_valid_uuid(uuid: &str) -> bool {
         || parts[3].len() != 4
         || parts[4].len() != 12
     {
-        println!("警告: UUID 格式不正确");
+        println!("Warning: UUID format incorrect");
         return false;
     }
 
     if !uuid.chars().all(|c| c.is_ascii_hexdigit() || c == '-') {
-        println!("警告: UUID 应只包含十六进制字符(0-9, a-f)和连字符");
+        println!("Warning: UUID should only contain hexadecimal characters (0-9, a-f) and hyphens");
         return false;
     }
 
@@ -242,27 +242,27 @@ fn create_uuid_launcher(uuid: &str) -> io::Result<()> {
     let tools_dir = get_cursor_path().join("tools/set-token");
     fs::create_dir_all(&tools_dir)?;
 
-    // 创建 inject.js
+    // Create inject.js
     let inject_js = format!(
-        r#"// 保存原始 require
+        r#"// Save original require
 const originalRequire = module.constructor.prototype.require;
 
-// 重写 require 函数
+// Override require function
 module.constructor.prototype.require = function(path) {{
     const result = originalRequire.apply(this, arguments);
     
-    // 检测目标模块
+    // Detect target module
     if (path.includes('main.js')) {{
-        // 保存原始函数
+        // Save original function
         const originalModule = result;
         
-        // 创建代理对象
+        // Create proxy object
         return new Proxy(originalModule, {{
             get(target, prop) {{
-                // 拦截 execSync 调用
+                // Intercept execSync call
                 if (prop === 'execSync') {{
                     return function() {{
-                        // 返回自定义的 UUID
+                        // Return custom UUID
                         const platform = process.platform;
                         switch (platform) {{
                             case 'darwin':
@@ -286,11 +286,11 @@ module.constructor.prototype.require = function(path) {{
         uuid, uuid, uuid
     );
 
-    // 写入 inject.js
+    // Write inject.js
     fs::write(tools_dir.join("inject.js"), inject_js)?;
 
     if cfg!(windows) {
-        // 创建 Windows CMD 脚本
+        // Create Windows CMD script
         let cmd_script = format!(
             "@echo off\r\n\
             set NODE_OPTIONS=--require \"%~dp0inject.js\"\r\n\
@@ -298,14 +298,14 @@ module.constructor.prototype.require = function(path) {{
         );
         fs::write(tools_dir.join("start-cursor.cmd"), cmd_script)?;
 
-        // 创建 Windows PowerShell 脚本
+        // Create Windows PowerShell script
         let ps_script = format!(
             "$env:NODE_OPTIONS = \"--require `\"$PSScriptRoot\\inject.js`\"\"\r\n\
             Start-Process -FilePath \"$env:LOCALAPPDATA\\Programs\\Cursor\\Cursor.exe\""
         );
         fs::write(tools_dir.join("start-cursor.ps1"), ps_script)?;
     } else {
-        // 创建 Shell 脚本
+        // Create Shell script
         let shell_script = format!(
             "#!/bin/bash\n\
             SCRIPT_DIR=\"$(cd \"$(dirname \"${{BASH_SOURCE[0]}}\")\" && pwd)\"\n\
@@ -313,13 +313,13 @@ module.constructor.prototype.require = function(path) {{
             if [[ \"$OSTYPE\" == \"darwin\"* ]]; then\n\
                 open -a Cursor\n\
             else\n\
-                cursor # Linux，根据实际安装路径调整\n\
+                cursor # Linux, adjust according to actual installation path\n\
             fi"
         );
         let script_path = tools_dir.join("start-cursor.sh");
         fs::write(&script_path, shell_script)?;
 
-        // 在类Unix系统上设置可执行权限
+        // Set executable permission on Unix-like systems
         #[cfg(not(windows))]
         {
             use std::os::unix::fs::PermissionsExt;
@@ -329,37 +329,37 @@ module.constructor.prototype.require = function(path) {{
         }
     }
 
-    println!("\n注入脚本已创建在: {}", tools_dir.display());
-    println!("\n使用方法:");
+    println!("\nInjection script created at: {}", tools_dir.display());
+    println!("\nUsage:");
     if cfg!(windows) {
         println!(
-            "方法1: 双击运行 {}",
+            "Method 1: Double-click to run {}",
             tools_dir.join("start-cursor.cmd").display()
         );
         println!(
-            "方法2: 在 PowerShell 中运行 {}",
+            "Method 2: Run in PowerShell {}",
             tools_dir.join("start-cursor.ps1").display()
         );
     } else {
         println!(
-            "在终端中运行: {}",
+            "Run in terminal: {}",
             tools_dir.join("start-cursor.sh").display()
         );
     }
-    println!("\n注意：每次启动 Cursor 时都需要使用这个脚本。");
+    println!("\nNote: You need to use this script every time you start Cursor.");
 
     Ok(())
 }
 
 fn main() {
     loop {
-        println!("\n请选择操作：");
-        println!("0. 退出");
-        println!("1. 更新 Token");
-        println!("2. 更新设备 ID");
-        println!("3. 创建自定义UUID启动脚本");
+        println!("\nPlease select operation:");
+        println!("0. Exit");
+        println!("1. Update Token");
+        println!("2. Update Device ID");
+        println!("3. Create custom UUID launch script");
 
-        print!("请输入选项 (0-3): ");
+        print!("Please enter option (0-3): ");
         io::stdout().flush().unwrap();
 
         let mut choice = String::new();
@@ -370,7 +370,7 @@ fn main() {
             "1" => {
                 let mut refresh_token = String::new();
                 loop {
-                    print!("请输入 Refresh Token: ");
+                    print!("Please enter Refresh Token: ");
                     io::stdout().flush().unwrap();
                     refresh_token.clear();
                     io::stdin().read_line(&mut refresh_token).unwrap();
@@ -379,10 +379,10 @@ fn main() {
                     if is_valid_jwt(&refresh_token) {
                         break;
                     }
-                    println!("请重新输入正确格式的 Token");
+                    println!("Please re-enter Token in correct format");
                 }
 
-                print!("Access Token 是否与 Refresh Token 相同? (y/n): ");
+                print!("Is Access Token same as Refresh Token? (y/n): ");
                 io::stdout().flush().unwrap();
                 let mut same = String::new();
                 io::stdin().read_line(&mut same).unwrap();
@@ -392,7 +392,7 @@ fn main() {
                 } else {
                     let mut access_token = String::new();
                     loop {
-                        print!("请输入 Access Token: ");
+                        print!("Please enter Access Token: ");
                         io::stdout().flush().unwrap();
                         access_token.clear();
                         io::stdin().read_line(&mut access_token).unwrap();
@@ -401,14 +401,14 @@ fn main() {
                         if is_valid_jwt(&access_token) {
                             break;
                         }
-                        println!("请重新输入正确格式的 Token");
+                        println!("Please re-enter Token in correct format");
                     }
                     access_token
                 };
 
                 let mut email = String::new();
                 loop {
-                    print!("请输入邮箱: ");
+                    print!("Please enter email: ");
                     io::stdout().flush().unwrap();
                     email.clear();
                     io::stdin().read_line(&mut email).unwrap();
@@ -417,18 +417,18 @@ fn main() {
                     if is_valid_email(&email) {
                         break;
                     }
-                    println!("请重新输入正确格式的邮箱");
+                    println!("Please re-enter email in correct format");
                 }
 
                 let mut signup_type = String::new();
                 loop {
-                    println!("\n可选的注册类型：");
+                    println!("\nAvailable signup types:");
                     println!("1. Auth_0");
                     println!("2. Github");
                     println!("3. Google");
                     println!("4. unknown");
-                    println!("(WorkOS - 仅供展示，不可选择)");
-                    print!("请选择注册类型 (1-4): ");
+                    println!("(WorkOS - display only, not selectable)");
+                    print!("Please select signup type (1-4): ");
                     io::stdout().flush().unwrap();
                     signup_type.clear();
                     io::stdin().read_line(&mut signup_type).unwrap();
@@ -448,12 +448,12 @@ fn main() {
 
                 let mut membership_type = String::new();
                 loop {
-                    println!("\n可选的会员类型：");
+                    println!("\nAvailable membership types:");
                     println!("1. free");
                     println!("2. pro");
                     println!("3. enterprise");
                     println!("4. free_trial");
-                    print!("请选择会员类型 (1-4): ");
+                    print!("Please select membership type (1-4): ");
                     io::stdout().flush().unwrap();
                     membership_type.clear();
                     io::stdin().read_line(&mut membership_type).unwrap();
@@ -478,8 +478,8 @@ fn main() {
                     &signup_type,
                     &membership_type,
                 ) {
-                    Ok(_) => println!("所有信息更新成功！"),
-                    Err(e) => println!("更新失败: {}", e),
+                    Ok(_) => println!("All information updated successfully!"),
+                    Err(e) => println!("Update failed: {}", e),
                 }
             }
             "2" => {
@@ -493,7 +493,7 @@ fn main() {
 
                 for (validator, name) in validators.iter() {
                     loop {
-                        print!("请输入 {}: ", name);
+                        print!("Please enter {}: ", name);
                         io::stdout().flush().unwrap();
                         let mut id = String::new();
                         io::stdin().read_line(&mut id).unwrap();
@@ -503,19 +503,19 @@ fn main() {
                             ids.push(id);
                             break;
                         }
-                        println!("请重新输入正确格式的 ID");
+                        println!("Please re-enter ID in correct format");
                     }
                 }
 
                 match update_storage_json(&ids.try_into().unwrap()) {
-                    Ok(_) => println!("设备 ID 更新成功！"),
-                    Err(e) => println!("更新失败: {}", e),
+                    Ok(_) => println!("Device ID updated successfully!"),
+                    Err(e) => println!("Update failed: {}", e),
                 }
             }
             "3" => {
                 let mut uuid = String::new();
                 loop {
-                    print!("请输入自定义 UUID (格式: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx): ");
+                    print!("Please enter custom UUID (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx): ");
                     io::stdout().flush().unwrap();
                     uuid.clear();
                     io::stdin().read_line(&mut uuid).unwrap();
@@ -524,15 +524,15 @@ fn main() {
                     if is_valid_uuid(&uuid) {
                         break;
                     }
-                    println!("请重新输入正确格式的 UUID");
+                    println!("Please re-enter UUID in correct format");
                 }
 
                 match create_uuid_launcher(&uuid) {
-                    Ok(_) => println!("启动脚本创建成功！"),
-                    Err(e) => println!("创建失败: {}", e),
+                    Ok(_) => println!("Launch script created successfully!"),
+                    Err(e) => println!("Creation failed: {}", e),
                 }
             }
-            _ => println!("无效选项，请重试"),
+            _ => println!("Invalid option, please try again"),
         }
     }
 }

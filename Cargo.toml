@@ -30,7 +30,7 @@ byte_str = { path = "crates/byte_str" }
 atomic_enum = { path = "crates/atomic_enum" }
 proto-value = { path = "crates/proto-value" }
 
-# ===== 开发配置（编译速度优先）=====
+# ===== Development config (compilation speed priority) =====
 [profile.dev]
 opt-level = 0
 debug = "line-tables-only"
@@ -39,18 +39,18 @@ incremental = true
 codegen-units = 256
 # rustflags = ["-Clink-arg=-fuse-ld=mold"]
 
-# ===== 快速测试构建（平衡配置）=====
+# ===== Fast test build (balanced config) =====
 [profile.fast]
 inherits = "dev"
 opt-level = 1
 
-# ===== 性能测试配置（接近 release 但编译更快）=====
+# ===== Performance test config (close to release but faster compilation) =====
 [profile.bench]
 inherits = "release"
 lto = "thin"
 codegen-units = 16
 
-# ===== 发布配置（性能最大化）=====
+# ===== Release config (maximum performance) =====
 [profile.release]
 lto = true
 codegen-units = 1

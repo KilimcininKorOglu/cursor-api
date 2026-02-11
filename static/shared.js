@@ -1,18 +1,18 @@
-// Token 管理功能
+// Token management functionality
 /**
- * 保存认证令牌到本地存储
- * @param {string} token - 要保存的认证令牌
+ * Save authentication token to local storage
+ * @param {string} token - The authentication token to save
  * @returns {void}
  */
 function saveAuthToken(token) {
-  const expiryTime = new Date().getTime() + 24 * 60 * 60 * 1000; // 24小时后过期
+  const expiryTime = new Date().getTime() + 24 * 60 * 60 * 1000; // Expires after 24 hours
   localStorage.setItem("authToken", token);
   localStorage.setItem("authTokenExpiry", expiryTime);
 }
 
 /**
- * 获取存储的认证令牌
- * @returns {string|null} 如果令牌有效则返回令牌，否则返回 null
+ * Get stored authentication token
+ * @returns {string|null} Returns token if valid, otherwise returns null
  */
 function getAuthToken() {
   const token = localStorage.getItem("authToken");
@@ -31,18 +31,18 @@ function getAuthToken() {
   return token;
 }
 
-// 消息显示功能
+// Message display functionality
 /**
- * 在指定元素中显示消息
- * @param {string} elementId - 目标元素的 ID
- * @param {string} text - 要显示的消息文本
- * @param {boolean} [isError=false] - 是否为错误消息
+ * Display message in specified element
+ * @param {string} elementId - Target element ID
+ * @param {string} text - Message text to display
+ * @param {boolean} [isError=false] - Whether it's an error message
  * @returns {void}
  */
 function showMessage(elementId, text, isError = false) {
   let msg = document.getElementById(elementId);
 
-  // 如果消息元素不存在，创建一个新的
+  // If message element doesn't exist, create a new one
   if (!msg) {
     msg = document.createElement("div");
     msg.id = elementId;
@@ -53,10 +53,10 @@ function showMessage(elementId, text, isError = false) {
   msg.innerHTML = text.replace(/\n/g, "<br>");
 }
 
-// 确保消息容器存在
+// Ensure message container exists
 /**
- * 确保消息容器存在于 DOM 中
- * @returns {HTMLElement} 消息容器元素
+ * Ensure message container exists in DOM
+ * @returns {HTMLElement} Message container element
  */
 function ensureMessageContainer() {
   let container = document.querySelector(".message-container");
@@ -69,10 +69,10 @@ function ensureMessageContainer() {
 }
 
 /**
- * 显示全局消息提示
- * @param {string} text - 要显示的消息文本
- * @param {boolean} [isError=false] - 是否为错误消息
- * @param {number} [timeout=3000] - 消息显示时长（毫秒）
+ * Display global message notification
+ * @param {string} text - Message text to display
+ * @param {boolean} [isError=false] - Whether it's an error message
+ * @param {number} [timeout=3000] - Message display duration (milliseconds)
  * @returns {void}
  */
 function showGlobalMessage(text, isError = false, timeout = 3000) {
@@ -84,12 +84,12 @@ function showGlobalMessage(text, isError = false, timeout = 3000) {
 
   container.appendChild(msgElement);
 
-  // 设置淡出动画和移除
+  // Set fade-out animation and removal
   setTimeout(() => {
     msgElement.style.animation = "messageOut 0.3s ease-in-out";
     setTimeout(() => {
       msgElement.remove();
-      // 如果容器为空，也移除容器
+      // If container is empty, also remove container
       if (container.children.length === 0) {
         container.remove();
       }
@@ -97,9 +97,9 @@ function showGlobalMessage(text, isError = false, timeout = 3000) {
   }, timeout);
 }
 
-// Token 输入框自动填充和事件绑定
+// Token input auto-fill and event binding
 function initializeTokenHandling(inputId) {
-  // 直接尝试填充，如果DOM未准备好会在事件中再试一次
+  // Try to fill directly, if DOM not ready will try again in event
   const tryFillToken = () => {
     const tokenInput = document.getElementById(inputId);
     if (tokenInput) {
@@ -108,7 +108,7 @@ function initializeTokenHandling(inputId) {
         tokenInput.value = authToken;
       }
 
-      // 绑定change事件
+      // Bind change event
       tokenInput.addEventListener("change", (e) => {
         if (e.target.value) {
           saveAuthToken(e.target.value);
@@ -123,30 +123,30 @@ function initializeTokenHandling(inputId) {
     return false;
   };
 
-  // 立即尝试执行
+  // Try to execute immediately
   if (!tryFillToken()) {
-    // 如果元素还不存在，等待DOM加载完成
+    // If element doesn't exist yet, wait for DOM to load
     if (document.readyState === 'loading') {
       document.addEventListener("DOMContentLoaded", tryFillToken);
     } else {
-      // DOM已加载但元素不存在，可能需要等待一下
+      // DOM loaded but element doesn't exist, may need to wait a bit
       setTimeout(tryFillToken, 0);
     }
   }
 }
 
-// API 请求通用处理
+// API request common handling
 async function makeAuthenticatedRequest(url, options = {}) {
   const tokenId = options.tokenId || "authToken";
   const token = document.getElementById(tokenId).value;
 
   if (!token) {
-    showGlobalMessage("请输入 AUTH_TOKEN", true);
+    showGlobalMessage("Please enter AUTH_TOKEN", true);
     return null;
   }
 
   if (!/^[A-Za-z0-9\-._~+/]+=*$/.test(token)) {
-    showGlobalMessage("TOKEN格式无效，请检查是否包含特殊字符", true);
+    showGlobalMessage("Invalid TOKEN format, please check for special characters", true);
     return null;
   }
 
@@ -167,16 +167,16 @@ async function makeAuthenticatedRequest(url, options = {}) {
 
     return await response.json();
   } catch (error) {
-    showGlobalMessage(`请求失败: ${error.message}`, true);
+    showGlobalMessage(`Request failed: ${error.message}`, true);
     return null;
   }
 }
 
 /**
- * 从字符串解析布尔值
- * @param {string} str - 要解析的字符串
- * @param {boolean|null} defaultValue - 解析失败时的默认值
- * @returns {boolean|null} 解析结果，如果无法解析则返回默认值
+ * Parse boolean value from string
+ * @param {string} str - String to parse
+ * @param {boolean|null} defaultValue - Default value when parsing fails
+ * @returns {boolean|null} Parse result, returns default value if unable to parse
  */
 function parseBooleanFromString(str, defaultValue = null) {
   if (typeof str !== "string") {
@@ -195,10 +195,10 @@ function parseBooleanFromString(str, defaultValue = null) {
 }
 
 /**
- * 将布尔值转换为字符串
- * @param {boolean|undefined|null} value - 要转换的布尔值
- * @param {string} defaultValue - 转换失败时的默认值
- * @returns {string} 转换结果，如果输入无效则返回默认值
+ * Convert boolean value to string
+ * @param {boolean|undefined|null} value - Boolean value to convert
+ * @param {string} defaultValue - Default value when conversion fails
+ * @returns {string} Conversion result, returns default value if input is invalid
  */
 function parseStringFromBoolean(value, defaultValue = null) {
   if (typeof value !== "boolean") {
@@ -209,14 +209,14 @@ function parseStringFromBoolean(value, defaultValue = null) {
 }
 
 /**
- * 将会员类型代码转换为显示名称
- * @param {string|null} type - 会员类型代码,如 'free_trial', 'pro', 'free', 'enterprise' 等
- * @returns {string} 格式化后的会员类型显示名称
+ * Convert membership type code to display name
+ * @param {string|null} type - Membership type code, e.g. 'free_trial', 'pro', 'free', 'enterprise'
+ * @returns {string} Formatted membership type display name
  * @example
- * formatMembershipType('free_trial') // 返回 'Pro Trial'
- * formatMembershipType('pro') // 返回 'Pro'
- * formatMembershipType(null) // 返回 '-'
- * formatMembershipType('custom_type') // 返回 'Custom Type'
+ * formatMembershipType('free_trial') // Returns 'Pro Trial'
+ * formatMembershipType('pro') // Returns 'Pro'
+ * formatMembershipType(null) // Returns '-'
+ * formatMembershipType('custom_type') // Returns 'Custom Type'
  */
 function formatMembershipType(type) {
   if (!type) return "-";
@@ -237,54 +237,54 @@ function formatMembershipType(type) {
   }
 }
 
-// 复制文本功能
+// Copy text functionality
 /**
- * 复制文本到剪贴板
- * @param {string} text - 要复制的文本
- * @param {Object} [options={}] - 配置选项
- * @param {boolean} [options.showMessage=true] - 是否显示复制结果消息
- * @param {string} [options.successMessage='已复制到剪贴板'] - 复制成功时的消息
- * @param {string} [options.errorMessage='复制失败，请手动复制'] - 复制失败时的消息
- * @param {Function} [options.onSuccess] - 复制成功时的回调函数
- * @param {Function} [options.onError] - 复制失败时的回调函数
- * @param {HTMLElement} [options.sourceElement] - 触发复制的源元素（用于显示临时状态）
- * @returns {Promise<boolean>} 返回复制是否成功
+ * Copy text to clipboard
+ * @param {string} text - Text to copy
+ * @param {Object} [options={}] - Configuration options
+ * @param {boolean} [options.showMessage=true] - Whether to show copy result message
+ * @param {string} [options.successMessage='Copied to clipboard'] - Success message
+ * @param {string} [options.errorMessage='Copy failed, please copy manually'] - Error message
+ * @param {Function} [options.onSuccess] - Callback on successful copy
+ * @param {Function} [options.onError] - Callback on failed copy
+ * @param {HTMLElement} [options.sourceElement] - Source element that triggered copy (for temporary state display)
+ * @returns {Promise<boolean>} Returns whether copy was successful
  * @example
- * // 基础用法
+ * // Basic usage
  * copyToClipboard('Hello World');
  *
- * // 自定义消息
- * copyToClipboard('代理地址', {
- *   successMessage: '代理地址已复制',
- *   errorMessage: '无法复制代理地址'
+ * // Custom messages
+ * copyToClipboard('proxy address', {
+ *   successMessage: 'Proxy address copied',
+ *   errorMessage: 'Unable to copy proxy address'
  * });
  *
- * // 带回调函数
- * copyToClipboard('敏感信息', {
+ * // With callback functions
+ * copyToClipboard('sensitive info', {
  *   showMessage: false,
- *   onSuccess: () => console.log('复制成功'),
- *   onError: (err) => console.error('复制失败:', err)
+ *   onSuccess: () => console.log('Copy successful'),
+ *   onError: (err) => console.error('Copy failed:', err)
  * });
  *
- * // 与按钮配合使用
+ * // Use with button
  * const button = document.getElementById('copyBtn');
- * copyToClipboard('文本内容', { sourceElement: button });
+ * copyToClipboard('text content', { sourceElement: button });
  */
 async function copyToClipboard(text, options = {}) {
   const {
     showMessage = true,
-    successMessage = "已复制到剪贴板",
-    errorMessage = "复制失败，请手动复制",
+    successMessage = "Copied to clipboard",
+    errorMessage = "Copy failed, please copy manually",
     onSuccess,
     onError,
     sourceElement,
   } = options;
 
-  // 验证输入
+  // Validate input
   if (typeof text !== "string") {
-    console.error("copyToClipboard: 文本必须是字符串类型");
+    console.error("copyToClipboard: Text must be string type");
     if (showMessage) {
-      showGlobalMessage("无效的复制内容", true);
+      showGlobalMessage("Invalid copy content", true);
     }
     if (onError) {
       onError(new Error("Invalid text type"));
@@ -292,11 +292,11 @@ async function copyToClipboard(text, options = {}) {
     return false;
   }
 
-  // 如果文本为空，给出警告
+  // If text is empty, give warning
   if (!text.trim()) {
-    console.warn("copyToClipboard: 尝试复制空文本");
+    console.warn("copyToClipboard: Attempting to copy empty text");
     if (showMessage) {
-      showGlobalMessage("没有可复制的内容", true);
+      showGlobalMessage("No content to copy", true);
     }
     if (onError) {
       onError(new Error("Empty text"));
@@ -321,7 +321,7 @@ async function copyToClipboard(text, options = {}) {
       }
     }
   } catch (error) {
-    console.error("复制到剪贴板失败:", error);
+    console.error("Copy to clipboard failed:", error);
 
     if (showMessage) {
       showGlobalMessage(errorMessage, true);
@@ -334,7 +334,7 @@ async function copyToClipboard(text, options = {}) {
     return false;
   }
 
-  // 处理复制成功
+  // Handle copy success
   function handleCopySuccess() {
     if (showMessage) {
       showGlobalMessage(successMessage);
@@ -352,16 +352,16 @@ async function copyToClipboard(text, options = {}) {
 }
 
 /**
- * 传统的复制方法（用于不支持 Clipboard API 的浏览器）
+ * Traditional copy method (for browsers that don't support Clipboard API)
  * @private
- * @param {string} text - 要复制的文本
- * @returns {boolean} 是否复制成功
+ * @param {string} text - Text to copy
+ * @returns {boolean} Whether copy was successful
  */
 function fallbackCopyToClipboard(text) {
-  // 创建临时文本区域
+  // Create temporary text area
   const textArea = document.createElement("textarea");
 
-  // 设置样式使其不可见但可复制
+  // Set styles to make it invisible but copyable
   textArea.value = text;
   textArea.style.position = "fixed";
   textArea.style.top = "0";
@@ -376,26 +376,26 @@ function fallbackCopyToClipboard(text) {
   textArea.style.opacity = "0";
   textArea.style.pointerEvents = "none";
 
-  // 防止移动设备上的缩放
+  // Prevent zoom on mobile devices
   textArea.style.fontSize = "12pt";
 
   document.body.appendChild(textArea);
 
   try {
-    // 选择文本
+    // Select text
     textArea.select();
     textArea.setSelectionRange(0, text.length);
 
-    // 执行复制
+    // Execute copy
     const successful = document.execCommand("copy");
 
-    // 清理
+    // Cleanup
     document.body.removeChild(textArea);
 
     return successful;
   } catch (error) {
-    console.error("传统复制方法失败:", error);
-    // 确保清理
+    console.error("Traditional copy method failed:", error);
+    // Ensure cleanup
     if (document.body.contains(textArea)) {
       document.body.removeChild(textArea);
     }
@@ -404,11 +404,11 @@ function fallbackCopyToClipboard(text) {
 }
 
 /**
- * 为元素临时添加 CSS 类
+ * Temporarily add CSS class to element
  * @private
- * @param {HTMLElement} element - 目标元素
- * @param {string} className - 要添加的类名
- * @param {number} duration - 持续时间（毫秒）
+ * @param {HTMLElement} element - Target element
+ * @param {string} className - Class name to add
+ * @param {number} duration - Duration (milliseconds)
  */
 function addTemporaryClass(element, className, duration) {
   if (!element || !className) return;
@@ -420,21 +420,21 @@ function addTemporaryClass(element, className, duration) {
 }
 
 /**
- * 复制表格单元格内容
- * @param {HTMLElement} cell - 表格单元格元素
- * @param {Object} [options={}] - 复制选项（同 copyToClipboard）
- * @returns {Promise<boolean>} 是否复制成功
+ * Copy table cell content
+ * @param {HTMLElement} cell - Table cell element
+ * @param {Object} [options={}] - Copy options (same as copyToClipboard)
+ * @returns {Promise<boolean>} Whether copy was successful
  * @example
- * // 在表格单元格点击事件中使用
+ * // Use in table cell click event
  * td.onclick = () => copyTableCellContent(td);
  */
 async function copyTableCellContent(cell, options = {}) {
   if (!cell) {
-    console.error("copyTableCellContent: 未提供有效的单元格元素");
+    console.error("copyTableCellContent: No valid cell element provided");
     return false;
   }
 
-  // 获取纯文本内容（去除 HTML 标签）
+  // Get plain text content (remove HTML tags)
   const text = cell.textContent || cell.innerText || "";
 
   return copyToClipboard(text.trim(), {
@@ -444,27 +444,27 @@ async function copyTableCellContent(cell, options = {}) {
 }
 
 /**
- * 创建带复制功能的按钮
- * @param {string} text - 要复制的文本
- * @param {Object} [options={}] - 按钮配置选项
- * @param {string} [options.buttonText='复制'] - 按钮文本
- * @param {string} [options.buttonClass='copy-button'] - 按钮CSS类
- * @param {string} [options.copiedText='已复制'] - 复制成功后的按钮文本
- * @param {number} [options.resetDelay=2000] - 按钮文本重置延迟（毫秒）
- * @returns {HTMLButtonElement} 创建的按钮元素
+ * Create button with copy functionality
+ * @param {string} text - Text to copy
+ * @param {Object} [options={}] - Button configuration options
+ * @param {string} [options.buttonText='Copy'] - Button text
+ * @param {string} [options.buttonClass='copy-button'] - Button CSS class
+ * @param {string} [options.copiedText='Copied'] - Button text after successful copy
+ * @param {number} [options.resetDelay=2000] - Button text reset delay (milliseconds)
+ * @returns {HTMLButtonElement} Created button element
  * @example
- * // 创建一个复制按钮
- * const copyBtn = createCopyButton('要复制的文本', {
- *   buttonText: '复制密钥',
- *   copiedText: '✓ 已复制'
+ * // Create a copy button
+ * const copyBtn = createCopyButton('text to copy', {
+ *   buttonText: 'Copy Key',
+ *   copiedText: '✓ Copied'
  * });
  * document.getElementById('container').appendChild(copyBtn);
  */
 function createCopyButton(text, options = {}) {
   const {
-    buttonText = "复制",
+    buttonText = "Copy",
     buttonClass = "copy-button",
-    copiedText = "已复制",
+    copiedText = "Copied",
     resetDelay = 2000,
   } = options;
 
@@ -496,11 +496,11 @@ function createCopyButton(text, options = {}) {
 }
 
 /**
- * 检查剪贴板 API 是否可用
- * @returns {boolean} 是否支持 Clipboard API
+ * Check if Clipboard API is available
+ * @returns {boolean} Whether Clipboard API is supported
  * @example
  * if (isClipboardSupported()) {
- *   console.log('浏览器支持现代剪贴板 API');
+ *   console.log('Browser supports modern Clipboard API');
  * }
  */
 function isClipboardSupported() {
@@ -508,25 +508,25 @@ function isClipboardSupported() {
 }
 
 /**
- * 从剪贴板读取文本（需要用户权限）
- * @param {Object} [options={}] - 配置选项
- * @param {boolean} [options.showMessage=true] - 是否显示结果消息
- * @param {Function} [options.onSuccess] - 读取成功时的回调
- * @param {Function} [options.onError] - 读取失败时的回调
- * @returns {Promise<string|null>} 剪贴板中的文本，失败时返回 null
+ * Read text from clipboard (requires user permission)
+ * @param {Object} [options={}] - Configuration options
+ * @param {boolean} [options.showMessage=true] - Whether to show result message
+ * @param {Function} [options.onSuccess] - Callback on successful read
+ * @param {Function} [options.onError] - Callback on failed read
+ * @returns {Promise<string|null>} Text from clipboard, returns null on failure
  * @example
  * const text = await readFromClipboard();
  * if (text) {
- *   console.log('剪贴板内容:', text);
+ *   console.log('Clipboard content:', text);
  * }
  */
 async function readFromClipboard(options = {}) {
   const { showMessage = true, onSuccess, onError } = options;
 
   if (!isClipboardSupported()) {
-    const error = new Error("浏览器不支持剪贴板 API");
+    const error = new Error("Browser does not support Clipboard API");
     if (showMessage) {
-      showGlobalMessage("浏览器不支持读取剪贴板", true);
+      showGlobalMessage("Browser does not support reading clipboard", true);
     }
     if (onError) {
       onError(error);
@@ -543,13 +543,13 @@ async function readFromClipboard(options = {}) {
 
     return text;
   } catch (error) {
-    console.error("读取剪贴板失败:", error);
+    console.error("Read clipboard failed:", error);
 
     if (showMessage) {
       if (error.name === "NotAllowedError") {
-        showGlobalMessage("需要您的许可才能读取剪贴板", true);
+        showGlobalMessage("Permission required to read clipboard", true);
       } else {
-        showGlobalMessage("无法读取剪贴板内容", true);
+        showGlobalMessage("Unable to read clipboard content", true);
       }
     }
 

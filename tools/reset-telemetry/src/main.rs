@@ -7,12 +7,12 @@ use std::path::PathBuf;
 use uuid::Uuid;
 
 fn main() -> std::io::Result<()> {
-    // 获取用户主目录路径
+    // Get user home directory path
     let home_dir = env::var("HOME")
         .or_else(|_| env::var("USERPROFILE"))
         .unwrap();
 
-    // 构建storage.json的路径
+    // Build storage.json path
     let db_path = if cfg!(target_os = "windows") {
         PathBuf::from(home_dir.clone())
             .join(r"AppData\Roaming\Cursor\User\globalStorage\storage.json")
@@ -23,7 +23,7 @@ fn main() -> std::io::Result<()> {
             .join("Library/Application Support/Cursor/User/globalStorage/storage.json")
     };
 
-    // 构建machineid文件的路径
+    // Build machineid file path
     let machine_id_path = if cfg!(target_os = "windows") {
         PathBuf::from(home_dir).join(r"AppData\Roaming\Cursor\machineid")
     } else if cfg!(target_os = "linux") {
@@ -32,7 +32,7 @@ fn main() -> std::io::Result<()> {
         PathBuf::from(home_dir).join("Library/Application Support/Cursor/machineid")
     };
 
-    // 读取并更新storage.json
+    // Read and update storage.json
     let mut content: Value = if db_path.exists() {
         let content = fs::read_to_string(&db_path)?;
         serde_json::from_str(&content)?
@@ -40,19 +40,19 @@ fn main() -> std::io::Result<()> {
         json!({})
     };
 
-    // 生成新的遥测ID
+    // Generate new telemetry IDs
     content["telemetry.macMachineId"] = json!(generate_sha256_hash());
     content["telemetry.sqmId"] = json!(generate_sqm_id());
     content["telemetry.machineId"] = json!(generate_sha256_hash());
     content["telemetry.devDeviceId"] = json!(generate_device_id());
 
-    // 写入更新后的storage.json
+    // Write updated storage.json
     fs::write(&db_path, serde_json::to_string_pretty(&content)?)?;
 
-    // 更新machineid文件
+    // Update machineid file
     fs::write(&machine_id_path, generate_device_id())?;
 
-    println!("遥测ID已重置成功！");
+    println!("Telemetry IDs reset successfully!");
     Ok(())
 }
 

@@ -1,58 +1,58 @@
-# 用于共享的认证令牌，仅Chat端点权限(轮询与AUTH_TOKEN不同步)，无其余权限
+# Authentication token for sharing, Chat endpoint permission only (polling not synced with AUTH_TOKEN), no other permissions
 share_token = ""
 
-# 是否启用慢速池（true/false）(已失效)
+# Whether to enable slow pool (true/false) (deprecated)
 slow_pool_enabled = false
 
-# 是否启用长上下文模式（true/false）
+# Whether to enable long context mode (true/false)
 long_context_enabled = false
 
-# 图片处理能力配置
-# 可选值:
-# - none 或 disabled：禁用图片功能
-# - base64 或 base64-only：仅支持 base64 编码的图片
-# - all 或 base64-http：支持 base64 和 HTTP 图片
-#   注意：启用 HTTP 支持可能会暴露服务器 IP (使用通用代理)
+# Image processing capability configuration
+# Options:
+# - none or disabled: Disable image functionality
+# - base64 or base64-only: Only support base64 encoded images
+# - all or base64-http: Support both base64 and HTTP images
+#   Note: Enabling HTTP support may expose server IP (uses general proxy)
 vision_ability = "base64"
 
-# 额度检查配置
-# 可选值:
-# - none 或 disabled：禁用额度检查
-# - default：详见 README
-# - all 或 everything：额度无条件检查
-# - 以,分隔的模型列表，为空时使用默认值
+# Usage check configuration
+# Options:
+# - none or disabled: Disable usage checks
+# - default: See README for details
+# - all or everything: Unconditional usage check
+# - Comma-separated model list, uses default when empty
 model_usage_checks = "default"
 
-# 动态密钥功能的安全验证密钥
-# 用途：验证密钥配置请求的来源合法性（防止恶意添加/修改）
-# 留空：自动禁用动态密钥功能
-# 格式：
-#   1. 原始密钥模式（推荐）：
-#      以 "hex:" 开头，后跟 64 到 128 个十六进制字符。
-#      - 长度必须 >= 64 字符（即至少 32 字节熵）。
-#      - 推荐使用 128 字符以填满 64 字节密钥空间。
-#      示例：dynamic_key_secret="hex:a1b2..."
-#   2. 密码哈希模式：
-#      若不带前缀或长度不足 64 字符，将计算该字符串的 SHA256 哈希值作为密钥。
-# 生成：openssl rand -hex 64
+# Security verification key for dynamic key functionality
+# Purpose: Verify legitimacy of key configuration requests (prevent malicious add/modify)
+# Empty: Automatically disable dynamic key functionality
+# Format:
+#   1. Raw key mode (recommended):
+#      Starts with "hex:", followed by 64 to 128 hexadecimal characters.
+#      - Length must be >= 64 characters (i.e., at least 32 bytes entropy).
+#      - Recommended to use 128 characters to fill 64-byte key space.
+#      Example: dynamic_key_secret="hex:a1b2..."
+#   2. Password hash mode:
+#      If no prefix or length < 64 characters, SHA256 hash of the string will be used as key.
+# Generate: openssl rand -hex 64
 dynamic_key_secret = ""
 
-# 包含网络引用
+# Include web references
 web_references_included = false
 
-# 模型数据获取模式
-# 可选值:
-# - truncate        - 覆盖模式(默认):    完全使用新获取的模型列表，替换所有现有模型
-# - append:truncate - 智能合并模式:      保留现有模型中不在新列表中的，同时添加或更新新模型
-# - append          - 纯追加模式:        只添加不存在的新模型，已有模型保持不变
+# Model data fetch mode
+# Options:
+# - truncate        - Overwrite mode (default): Completely use newly fetched model list, replace all existing models
+# - append:truncate - Smart merge mode:         Keep existing models not in new list, while adding or updating new models
+# - append          - Pure append mode:         Only add new models that don't exist, existing models remain unchanged
 raw_model_fetch_mode = "truncate"
 
-# 模拟平台(默认{DEFAULT_PLATFORM})
-# 可选值:
+# Emulated platform (default {DEFAULT_PLATFORM})
+# Options:
 # - Windows
 # - macOS
 # - Linux
 emulated_platform = "{DEFAULT_PLATFORM}"
 
-# Cursor客户端版本
+# Cursor client version
 cursor_client_version = "2.0.0"

@@ -2,7 +2,7 @@ use ::std::borrow::Cow;
 
 use ::chrono::{DateTime, TimeDelta, Local, TimeZone as _, Utc};
 
-/// 获取下一个整千秒的时间点
+/// Get the next thousand-second mark time point
 fn next_thousand_second_mark() -> DateTime<Utc> {
     let now = Utc::now();
     let timestamp = now.timestamp();
@@ -14,12 +14,12 @@ fn next_thousand_second_mark() -> DateTime<Utc> {
         .expect("valid timestamp")
 }
 
-/// 格式化剩余时间为人类可读格式
+/// Format remaining time to human-readable format
 fn format_duration(duration: TimeDelta) -> Cow<'static, str> {
     let total_seconds = duration.num_seconds();
 
     if total_seconds <= 0 {
-        return Cow::Borrowed("已到达");
+        return Cow::Borrowed("Reached");
     }
 
     let hours = total_seconds / 3600;
@@ -27,11 +27,11 @@ fn format_duration(duration: TimeDelta) -> Cow<'static, str> {
     let seconds = total_seconds % 60;
 
     Cow::Owned(if hours > 0 {
-        format!("{hours} 小时 {minutes} 分钟 {seconds} 秒")
+        format!("{hours} hours {minutes} minutes {seconds} seconds")
     } else if minutes > 0 {
-        format!("{minutes} 分钟 {seconds} 秒")
+        format!("{minutes} minutes {seconds} seconds")
     } else {
-        format!("{seconds} 秒")
+        format!("{seconds} seconds")
     })
 }
 
@@ -42,14 +42,14 @@ fn main() {
 
     let remaining = next_mark_utc - Utc::now();
 
-    println!("当前时间: {}", now_local.format("%Y-%m-%d %H:%M:%S"));
+    println!("Current time: {}", now_local.format("%Y-%m-%d %H:%M:%S"));
     println!(
-        "下一个整千秒时刻: {}",
+        "Next thousand-second mark: {}",
         next_mark_local.format("%Y-%m-%d %H:%M:%S")
     );
-    println!("距离下一个整千秒还有: {}", format_duration(remaining));
+    println!("Time until next thousand-second: {}", format_duration(remaining));
 
-    println!("\n详细信息:");
-    println!("- 当前时间戳: {}", now_local.timestamp());
-    println!("- 下一个整千秒时间戳: {}", next_mark_utc.timestamp());
+    println!("\nDetails:");
+    println!("- Current timestamp: {}", now_local.timestamp());
+    println!("- Next thousand-second timestamp: {}", next_mark_utc.timestamp());
 }

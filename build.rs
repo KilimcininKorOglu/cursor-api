@@ -14,11 +14,11 @@ use std::path::PathBuf;
 use std::process::Command;
 use std::{fs::File, io::Result};
 
-// 支持的文件类型
+// Supported file types
 // #[cfg(not(feature = "use-minified"))]
 // const SUPPORTED_EXTENSIONS: [&str; 4] = ["html", "js", "css", "md"];
 
-// 需要处理的 Markdown 文件列表
+// Markdown files to process
 #[cfg(not(feature = "use-minified"))]
 const MARKDOWN_FILES: [&str; 2] = ["README.md", "LICENSE.md"];
 
@@ -53,11 +53,11 @@ fn get_files_hash() -> Result<HashMap<PathBuf, String>> {
             buf[i * 2 + 1] = HEX_CHARS[(byte & 0x0f) as usize];
         }
 
-        // SAFETY: 输出都是有效的 ASCII 字符
+        // SAFETY: Output is all valid ASCII characters
         unsafe { core::str::from_utf8_unchecked_mut(buf) }
     }
 
-    // 处理根目录的 Markdown 文件
+    // Process Markdown files in root directory
     for md_file in MARKDOWN_FILES {
         let md_path = Path::new(md_file);
         if md_path.exists() {
@@ -70,7 +70,7 @@ fn get_files_hash() -> Result<HashMap<PathBuf, String>> {
         }
     }
 
-    // 处理 static 目录中的文件
+    // Process files in static directory
     // if static_dir.exists() {
     //     for entry in fs::read_dir(static_dir)? {
     //         let entry = entry?;
@@ -120,13 +120,13 @@ fn save_hashes(hashes: &HashMap<PathBuf, String>) -> Result<()> {
 fn get_minified_output_path(path: &Path) -> PathBuf {
     let file_name = path.file_name().and_then(|f| f.to_str()).unwrap_or("");
 
-    // 检查是否是根目录的 Markdown 文件
+    // Check if it's a Markdown file in root directory
     if MARKDOWN_FILES.contains(&file_name) {
-        // 将文件名转换为小写并生成对应的 .min.html 文件
+        // Convert filename to lowercase and generate corresponding .min.html file
         let base_name = path.file_stem().unwrap().to_string_lossy().to_lowercase();
         PathBuf::from(format!("static/{}.min.html", base_name))
     } else {
-        // 其他文件保持原有逻辑
+        // Other files keep original logic
         let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
         path.with_file_name(format!("{}.min.{}", path.file_stem().unwrap().to_string_lossy(), ext))
     }
@@ -134,7 +134,7 @@ fn get_minified_output_path(path: &Path) -> PathBuf {
 
 #[cfg(not(feature = "use-minified"))]
 fn minify_assets() -> Result<()> {
-    // 获取现有文件的哈希
+    // Get hash of existing files
     let current_hashes = get_files_hash()?;
 
     if current_hashes.is_empty() {
@@ -142,22 +142,22 @@ fn minify_assets() -> Result<()> {
         return Ok(());
     }
 
-    // 加载保存的哈希值
+    // Load saved hash values
     let saved_hashes = load_saved_hashes()?;
 
-    // 找出需要更新的文件
+    // Find files that need updating
     let files_to_update: Vec<_> = current_hashes
         .iter()
         .filter(|(path, current_hash)| {
-            // 获取压缩后的输出路径
+            // Get minified output path
             let min_path = get_minified_output_path(path);
 
-            // 检查压缩/转换后的文件是否存在
+            // Check if minified/converted file exists
             if !min_path.exists() {
                 return true;
             }
 
-            // 检查原始文件是否发生变化
+            // Check if original file has changed
             saved_hashes.get(*path) != Some(*current_hash)
         })
         .map(|(path, _)| path.file_name().unwrap().to_string_lossy().into_owned())
@@ -171,14 +171,14 @@ fn minify_assets() -> Result<()> {
     println!("cargo:warning=Minifying {} files...", files_to_update.len());
     println!("cargo:warning=Files: {}", files_to_update.join(" "));
 
-    // 运行压缩脚本
+    // Run minification script
     let status = Command::new("node").arg("scripts/minify.js").args(&files_to_update).status()?;
 
     if !status.success() {
         panic!("Asset minification failed");
     }
 
-    // 保存新的哈希值
+    // Save new hash values
     save_hashes(&current_hashes)?;
 
     Ok(())
@@ -206,31 +206,31 @@ fn generate_platform_info() -> Result<()> {
 // }
 
 fn main() -> Result<()> {
-    // 更新版本号 - 只在 release 构建时执行
+    // Update version number - only execute in release builds
     #[cfg(all(not(debug_assertions), not(feature = "__preview_locked"), feature = "__preview"))]
     update_version()?;
 
     // #[cfg(feature = "__protoc")]
     // {
-    //     // Proto 文件处理
+    //     // Proto file processing
     //     println!("cargo:rerun-if-changed=src/core/aiserver/v1/lite.proto");
     //     println!("cargo:rerun-if-changed=src/core/config/key.proto");
 
-    //     // 获取环境变量 PROTOC 并创建配置
+    //     // Get PROTOC environment variable and create config
     //     let mut config = prost_build::Config::new();
 
-    //     // 检查环境变量是否设置
+    //     // Check if environment variable is set
     //     match std::env::var_os("PROTOC") {
     //         Some(path) => {
-    //             // 有环境变量时直接配置
+    //             // Configure directly when environment variable exists
     //             config.protoc_executable(PathBuf::from(path));
     //         }
     //         None => {
-    //             // 无环境变量时输出警告，使用默认 protoc
+    //             // Output warning when no environment variable, use default protoc
     //             println!(
     //                 "cargo:warning=PROTOC environment variable not set, using default protoc."
     //             );
-    //             // 这里不需要额外操作，prost-build 会自动使用默认的 protoc
+    //             // No extra action needed here, prost-build will automatically use default protoc
     //         }
     //     }
 
@@ -320,7 +320,7 @@ fn main() -> Result<()> {
     //     // config.compile_protos(&["src/core/config/key.proto"], &["src/core/config/"]).unwrap();
     // }
 
-    // 静态资源文件处理
+    // Static asset file processing
     println!("cargo:rerun-if-changed=scripts/minify.js");
     // println!("cargo:rerun-if-changed=scripts/package.json");
     // println!("cargo:rerun-if-changed=static/api.html");
@@ -334,21 +334,21 @@ fn main() -> Result<()> {
     println!("cargo:rerun-if-changed=README.md");
     println!("cargo:rerun-if-changed=LICENSE.md");
 
-    // 只在release模式下监控VERSION文件变化
+    // Only monitor VERSION file changes in release mode
     #[cfg(not(debug_assertions))]
     #[cfg(feature = "__preview")]
     println!("cargo:rerun-if-changed=VERSION");
 
     #[cfg(not(feature = "use-minified"))]
     {
-        // 检查并安装依赖
+        // Check and install dependencies
         check_and_install_deps()?;
 
-        // 运行资源压缩
+        // Run asset minification
         minify_assets()?;
     }
 
-    // 生成构建信息文件
+    // Generate build info file
     generate_build_info()?;
     generate_platform_info()?;
 
