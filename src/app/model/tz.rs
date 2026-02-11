@@ -10,7 +10,7 @@ pub fn __init() {
         Ok(tz) => tz,
         Err(_e) => chrono_tz::Tz::UTC,
     };
-    println!("时区TZ: '{tz}'");
+    println!("Timezone TZ: '{tz}'");
     TZ.init(tz);
 }
 
@@ -18,7 +18,7 @@ pub fn __init() {
 #[repr(transparent)]
 pub struct DateTime(chrono::DateTime<chrono_tz::Tz>);
 
-/// 从操作系统GetCurrent时刻，返回一个纯粹的、无时区的`NaiveDateTime`。
+/// Get current time from operating system, return a pure, timezone-free `NaiveDateTime`.
 fn now_naive() -> chrono::NaiveDateTime {
     use chrono::{NaiveDate, NaiveTime};
 
@@ -38,14 +38,14 @@ fn now_naive() -> chrono::NaiveDateTime {
 }
 
 impl DateTime {
-    /// GetCurrent时刻，并应用全局静态时区 `TZ`。
+    /// Get current time and apply global static timezone `TZ`.
     #[inline(always)]
     pub fn now() -> Self {
         use chrono::TimeZone as _;
         Self(TZ.from_utc_datetime(&now_naive()))
     }
 
-    /// GetCurrent时刻的 UTC 时间。
+    /// Get current time in UTC.
     #[inline(always)]
     pub fn utc_now() -> chrono::DateTime<chrono::Utc> { now_naive().and_utc() }
 
