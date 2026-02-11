@@ -455,12 +455,12 @@ impl Models {
                         return true;
                     }
 
-                    // Handle带Have"-online"后缀的Case
+                    // Handle case with "-online" suffix
                     if let Some(base) = id.strip_suffix("-online") {
                         if base == mid {
                             return true;
                         }
-                        // Handle同时Have"-max"and"-online"后缀的Case（即"-max-online"）
+                        // Handle case with both "-max" and "-online" suffix (i.e., "-max-online")
                         if let Some(base_without_max) = base.strip_suffix("-max")
                             && base_without_max == mid
                         {
@@ -468,7 +468,7 @@ impl Models {
                         }
                         false
                     }
-                    // Handle仅带Have"-max"后缀的Case
+                    // Handle case with only "-max" suffix
                     else if let Some(base) = id.strip_suffix("-max") {
                         base == mid
                     } else {
@@ -479,7 +479,7 @@ impl Models {
             .copied()
             .collect();
 
-        // 只To新增的模型创建ID组合
+        // Create ID combinations only for newly added models
         for model in to_add {
             let id = model.id();
 
@@ -490,7 +490,7 @@ impl Models {
             }
         }
 
-        // Update数据and时间戳
+        // Update data and timestamp
         let find_ids = HashMap::from_iter(new_models.iter().enumerate().map(|(i, m)| (m.id(), i)));
 
         INSTANCE.store(Arc::new(Models {

@@ -25,14 +25,14 @@ pub struct ExtModel {
 
 impl ExtModel {
     /// Parse ExtModel from string
-    /// Support "-online" and "-max" 后缀
-    /// 当 BYPASS_MODEL_VALIDATION To true 时，在正常验证Failed后仍返回结果
+    /// Support "-online" and "-max" suffix
+    /// When BYPASS_MODEL_VALIDATION is true, still return result after normal validation fails
     #[inline]
     pub fn from_str(s: &str) -> Option<Self> {
-        // Handle online 后缀
+        // Handle online suffix
         let (base_str, web) = s.strip_suffix("-online").map_or((s, false), |base| (base, true));
 
-        // 先尝试直接匹配（May带Have -max 后缀）
+        // Try direct matching first (may have -max suffix)
         if let Some(raw) = Models::find_id(base_str) {
             return Some(Self {
                 id: raw.server_id,
@@ -43,11 +43,11 @@ impl ExtModel {
             });
         }
 
-        // Handle max 后缀
+        // Handle max suffix
         let (model_str, max) =
             base_str.strip_suffix("-max").map_or((base_str, false), |base| (base, true));
 
-        // IfHave -max 后缀，尝试匹配不带后缀的模型名
+        // If has -max suffix, try matching model name without suffix
         if max
             && let Some(raw) = Models::find_id(model_str)
             && raw.is_max

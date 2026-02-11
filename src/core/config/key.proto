@@ -4,54 +4,54 @@ package key;
 
 // Dynamic API KEY configuration
 message KeyConfig {
-  // Authentication令牌信息
+  // Authentication token information
   message TokenInfo {
     message Token {
       string provider = 1;
-      bytes sub_id = 2;               // UserID([u8; 16])
-      bytes randomness = 3;           // 随机字符串([u8; 8])
-      int64 start = 4;                // 生成时间（Unix 时间戳）
-      int64 end = 5;                  // 过期时间（Unix 时间戳）
-      bytes signature = 6;            // Signature([u8; 32])
-      bool is_session = 7;            // 是否为会话令牌
+      bytes sub_id = 2;               // User ID ([u8; 16])
+      bytes randomness = 3;           // Random string ([u8; 8])
+      int64 start = 4;                // Generation time (Unix timestamp)
+      int64 end = 5;                  // Expiration time (Unix timestamp)
+      bytes signature = 6;            // Signature ([u8; 32])
+      bool is_session = 7;            // Whether it is a session token
     }
     Token token = 1;                  // Token
-    bytes checksum = 2;               // 校验和([u8; 64])
-    bytes client_key = 3;             // Client标识
-    optional bytes config_version = 4;// Configuration版本
-    bytes session_id = 5;             // SessionID
-    optional string proxy_name = 11;  // Proxy名称
-    optional string timezone = 12;    // 时区
-    optional int32  gcpp_host = 13;   // 代码补全
+    bytes checksum = 2;               // Checksum ([u8; 64])
+    bytes client_key = 3;             // Client identifier
+    optional bytes config_version = 4;// Configuration version
+    bytes session_id = 5;             // Session ID
+    optional string proxy_name = 11;  // Proxy name
+    optional string timezone = 12;    // Timezone
+    optional int32  gcpp_host = 13;   // Code completion
   }
 
-  // Authentication令牌（必需）
+  // Authentication token (required)
   TokenInfo token_info = 1;
 
-  // 密码SHA256哈希值
+  // Password SHA256 hash value
   optional bytes secret = 2;
 
-  // 是否禁用图片处理能力
+  // Whether to disable image processing capability
   optional bool disable_vision = 3;
 
-  // 是否启用慢速池
+  // Whether to enable slow pool
   optional bool enable_slow_pool = 4;
 
-  // Package含网络引用
+  // Package includes web references
   optional bool include_web_references = 5;
 
-  // 使用量检查模型规则
+  // Usage check model rules
   message UsageCheckModel {
-    // Check类型
+    // Check type
     enum Type {
-      TYPE_DEFAULT = 0;     // 未指定
-      TYPE_DISABLED = 1;    // 禁用
-      TYPE_ALL = 2;         // 全部
-      TYPE_CUSTOM = 3;      // 自定义列表
+      TYPE_DEFAULT = 0;     // Unspecified
+      TYPE_DISABLED = 1;    // Disabled
+      TYPE_ALL = 2;         // All
+      TYPE_CUSTOM = 3;      // Custom list
     }
-    Type type = 1;          // Check类型
-    repeated string model_ids = 2; // 模型 ID 列表，当 type 为 TYPE_CUSTOM 时生效
+    Type type = 1;          // Check type
+    repeated string model_ids = 2; // Model ID list, effective when type is TYPE_CUSTOM
   }
-  // 使用量检查模型规则
+  // Usage check model rules
   optional UsageCheckModel usage_check_models = 6;
 }
