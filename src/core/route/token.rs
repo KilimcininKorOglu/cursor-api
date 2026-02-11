@@ -20,14 +20,14 @@ use axum::{
 };
 use interned::ArcStr;
 
-// 常量定义
+// Constant definitions
 const ERROR_UNAUTHORIZED: &str = "Unauthorized";
 const ERROR_INVALID_SESSION_TOKEN: &str =
     "Invalid parameter: session_token must be a session token, not a web token";
 const ERROR_INVALID_WEB_TOKEN: &str =
     "Invalid parameter: web_token must be a web token, not a session token";
 
-// 验证认证令牌
+// Verify authentication token
 fn verify_auth_token(headers: &HeaderMap) -> bool {
     headers
         .get(AUTHORIZATION)
@@ -57,7 +57,7 @@ pub async fn handle_build_key(
         request.gcpp_host,
     );
 
-    // 构建 proto 消息
+    // Build proto message
     let key_config = ConfiguredKey {
         token_info: Some(token_info),
         secret: Some(secret),
@@ -78,7 +78,7 @@ pub async fn handle_build_key(
         },
     };
 
-    // 序列化
+    // Serialize
     let mut encoder = ::minicbor::Encoder::new(Vec::with_capacity(::minicbor::len(&key_config)));
     let _ = encoder.encode(key_config);
 

@@ -133,15 +133,15 @@ pub async fn handle_add_tokens(
         }
     }
 
-    // 如果有新tokens才进行后续操作
+    // Only proceed if there are new tokens
     if !new_tokens.is_empty() {
-        // 添加新tokens
+        // Add new tokens
         for (token_info, alias) in new_tokens {
             let _ = token_manager.add(token_info, alias);
         }
         let tokens_count = token_manager.tokens().len();
 
-        // 保存到文件
+        // Save to file
         token_manager.save().await.map_err(|_| {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -159,7 +159,7 @@ pub async fn handle_add_tokens(
             message: "New tokens have been added and reloaded",
         }))
     } else {
-        // 如果没有新tokens，返回当前状态
+        // If no new tokens, return current state
         let tokens_count = token_manager.tokens().len();
 
         Ok(Json(TokensAddResponse { tokens_count, message: "No new tokens were added" }))
@@ -172,7 +172,7 @@ pub async fn handle_delete_tokens(
 ) -> Result<Json<TokensDeleteResponse>, (StatusCode, Json<GenericError>)> {
     let mut token_manager = state.token_manager_write().await;
 
-    // 一次遍历完成删除和失败记录
+    // Complete deletion and failure recording in one pass
     let (has_updates, failed_tokens) = {
         let mut has_updates = false;
         let mut failed_tokens = if request.include_failed_tokens { Some(Vec::new()) } else { None };
@@ -194,7 +194,7 @@ pub async fn handle_delete_tokens(
         (has_updates, failed_tokens)
     };
 
-    // 如果有更新则保存
+    // Save if there are updates
     if has_updates {
         token_manager.save().await.map_err(|_| {
             (
@@ -216,7 +216,7 @@ pub async fn handle_update_tokens_profile(
     State(state): State<Arc<AppState>>,
     Json(aliases): Json<HashSet<String>>,
 ) -> Result<Json<CommonResponse>, (StatusCode, Json<GenericError>)> {
-    // 验证请求
+    // Validate request
     if aliases.is_empty() {
         return Err((
             StatusCode::BAD_REQUEST,
@@ -229,17 +229,17 @@ pub async fn handle_update_tokens_profile(
         ));
     }
 
-    // 获取当前的 token_manager
+    // Get current token_manager
     let mut token_manager = state.token_manager_write().await;
 
-    // 批量设置tokens的profile
+    // Batch set tokens profile
     let mut updated_count = 0u32;
     let mut failed_count = 0u32;
 
     let mut alias_updaters: Vec<(usize, String)> = Vec::with_capacity(aliases.len());
 
     for alias in &aliases {
-        // 验证token是否在token_manager中存在
+        // Verify token exists in token_manager
         if let Some(id) = token_manager.alias_map().get(alias.as_str()).copied() {
             let alias_is_unnamed = unsafe {
                 token_manager
@@ -251,7 +251,7 @@ pub async fn handle_update_tokens_profile(
             };
             let token_info = unsafe { token_manager.tokens_mut().get_unchecked_mut(id) };
 
-            // 获取profile
+            // Get profile
             let (usage, stripe, user, sessions) = crate::common::utils::get_token_profile(
                 token_info.bundle.get_client(),
                 token_info.bundle.as_unext(),
@@ -260,7 +260,7 @@ pub async fn handle_update_tokens_profile(
             )
             .await;
 
-            // 设置profile
+            // Set profile
             if alias_is_unnamed
                 && let Some(ref user) = user
                 && let Some(alias) = user.alias()
@@ -289,7 +289,7 @@ pub async fn handle_update_tokens_profile(
         let _ = token_manager.set_alias(id, alias);
     }
 
-    // 保存更改
+    // Save changes
     if updated_count > 0 && token_manager.save().await.is_err() {
         return Err((
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -308,7 +308,7 @@ pub async fn handle_update_tokens_profile(
             [
                 UPDATE_SUCCESS,
                 itoa::Buffer::new().format(updated_count),
-                "个令牌配置, ",
+                " token profiles, ",
                 itoa::Buffer::new().format(failed_count),
                 UPDATE_FAILURE_COUNT,
             ]
@@ -366,7 +366,7 @@ pub async fn handle_update_tokens_config_version(
         }
     }
 
-    // 保存更改
+    // Save changes
     if updated_count > 0 && token_manager.save().await.is_err() {
         return Err((
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -383,18 +383,18 @@ pub async fn handle_update_tokens_config_version(
         [
             UPDATE_SUCCESS,
             itoa::Buffer::new().format(updated_count),
-            "个令牌配置版本；",
+            " token config versions; ",
             itoa::Buffer::new().format(failed_count),
-            "个令牌更新失败，其中有",
+            " token updates failed, of which ",
             itoa::Buffer::new().format(short_token_count),
-            "个令牌是非会话令牌",
+            " tokens are non-session tokens",
         ]
         .concat()
     } else {
         [
             UPDATE_SUCCESS,
             itoa::Buffer::new().format(updated_count),
-            "个令牌配置版本；",
+            " token config versions; ",
             itoa::Buffer::new().format(failed_count),
             UPDATE_FAILURE_COUNT,
         ]
@@ -456,11 +456,11 @@ pub async fn handle_refresh_tokens(
         status: ApiStatus::Success,
         message: Cow::Owned(
             [
-                "已刷新",
+                "Refreshed ",
                 itoa::Buffer::new().format(updated_count),
-                "个令牌, ",
+                " tokens, ",
                 itoa::Buffer::new().format(failed_count),
-                "个令牌刷新失败",
+                " token refresh failed",
             ]
             .concat(),
         ),
@@ -471,7 +471,7 @@ pub async fn handle_set_tokens_status(
     State(state): State<Arc<AppState>>,
     Json(request): Json<TokensStatusSetRequest>,
 ) -> Result<Json<CommonResponse>, (StatusCode, Json<GenericError>)> {
-    // 验证请求
+    // Validate request
     if request.aliases.is_empty() {
         return Err((
             StatusCode::BAD_REQUEST,
@@ -484,15 +484,15 @@ pub async fn handle_set_tokens_status(
         ));
     }
 
-    // 获取当前的 token_manager
+    // Get current token_manager
     let mut token_manager = state.token_manager_write().await;
 
-    // 批量设置tokens的profile
+    // Batch set tokens profile
     let mut updated_count = 0u32;
     let mut failed_count = 0u32;
 
     for alias in request.aliases {
-        // 验证token是否在token_manager中存在
+        // Verify token exists in token_manager
         if let Some(info) = token_manager
             .alias_map()
             .get(alias.as_str())
@@ -506,7 +506,7 @@ pub async fn handle_set_tokens_status(
         }
     }
 
-    // 保存更改
+    // Save changes
     if updated_count > 0 && token_manager.save().await.is_err() {
         return Err((
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -525,7 +525,7 @@ pub async fn handle_set_tokens_status(
             [
                 SET_SUCCESS,
                 itoa::Buffer::new().format(updated_count),
-                "个令牌状态, ",
+                " token statuses, ",
                 itoa::Buffer::new().format(failed_count),
                 SET_FAILURE_COUNT,
             ]
@@ -538,7 +538,7 @@ pub async fn handle_set_tokens_alias(
     State(state): State<Arc<AppState>>,
     Json(request): Json<TokensAliasSetRequest>,
 ) -> Result<Json<CommonResponse>, (StatusCode, Json<GenericError>)> {
-    // 验证请求
+    // Validate request
     if request.is_empty() {
         return Err((
             StatusCode::BAD_REQUEST,
@@ -556,30 +556,30 @@ pub async fn handle_set_tokens_alias(
     let mut failed_count = 0u32;
 
     for (old_alias, new_alias) in request {
-        // 通过旧别名查找token ID
+        // Find token ID by old alias
         match token_manager.alias_map().get(old_alias.as_str()).copied() {
             Some(token_id) => {
-                // 使用set_alias方法更新别名
+                // Use set_alias method to update alias
                 match token_manager.set_alias(token_id, new_alias) {
                     Ok(()) => updated_count += 1,
                     Err(TokenError::AliasExists) => {
-                        // 新别名已存在
+                        // New alias already exists
                         failed_count += 1;
                     }
                     Err(TokenError::InvalidId) => {
-                        // 理论上不应该发生，因为ID是从alias_map获取的
+                        // Should not happen in theory, as ID is from alias_map
                         failed_count += 1;
                     }
                 }
             }
             None => {
-                // 找不到对应的旧别名
+                // Cannot find corresponding old alias
                 failed_count += 1;
             }
         }
     }
 
-    // 保存更改
+    // Save changes
     if updated_count > 0
         && let Err(e) = token_manager.save().await
     {
@@ -600,7 +600,7 @@ pub async fn handle_set_tokens_alias(
             [
                 SET_SUCCESS,
                 itoa::Buffer::new().format(updated_count),
-                "个令牌别名, ",
+                " token aliases, ",
                 itoa::Buffer::new().format(failed_count),
                 SET_FAILURE_COUNT,
             ]
@@ -613,7 +613,7 @@ pub async fn handle_set_tokens_proxy(
     State(state): State<Arc<AppState>>,
     Json(request): Json<TokensProxySetRequest>,
 ) -> Result<Json<CommonResponse>, (StatusCode, Json<GenericError>)> {
-    // 验证请求
+    // Validate request
     if request.aliases.is_empty() {
         return Err((
             StatusCode::BAD_REQUEST,
@@ -626,15 +626,15 @@ pub async fn handle_set_tokens_proxy(
         ));
     }
 
-    // 获取当前的 token_manager
+    // Get current token_manager
     let mut token_manager = state.token_manager_write().await;
 
-    // 批量设置tokens的proxy
+    // Batch set tokens proxy
     let mut updated_count = 0u32;
     let mut failed_count = 0u32;
 
     for alias in request.aliases {
-        // 验证token是否在token_manager中存在
+        // Verify token exists in token_manager
         if let Some(info) = token_manager
             .alias_map()
             .get(alias.as_str())
@@ -648,7 +648,7 @@ pub async fn handle_set_tokens_proxy(
         }
     }
 
-    // 保存更改
+    // Save changes
     if updated_count > 0 && token_manager.save().await.is_err() {
         return Err((
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -667,7 +667,7 @@ pub async fn handle_set_tokens_proxy(
             [
                 SET_SUCCESS,
                 itoa::Buffer::new().format(updated_count),
-                "个令牌代理, ",
+                " token proxies, ",
                 itoa::Buffer::new().format(failed_count),
                 SET_FAILURE_COUNT,
             ]
@@ -680,7 +680,7 @@ pub async fn handle_set_tokens_timezone(
     State(state): State<Arc<AppState>>,
     Json(request): Json<TokensTimezoneSetRequest>,
 ) -> Result<Json<CommonResponse>, (StatusCode, Json<GenericError>)> {
-    // 验证请求
+    // Validate request
     if request.aliases.is_empty() {
         return Err((
             StatusCode::BAD_REQUEST,
@@ -693,15 +693,15 @@ pub async fn handle_set_tokens_timezone(
         ));
     }
 
-    // 获取当前的 token_manager
+    // Get current token_manager
     let mut token_manager = state.token_manager_write().await;
 
-    // 批量设置tokens的timezone
+    // Batch set tokens timezone
     let mut updated_count = 0u32;
     let mut failed_count = 0u32;
 
     for alias in request.aliases {
-        // 验证token是否在token_manager中存在
+        // Verify token exists in token_manager
         if let Some(info) = token_manager
             .alias_map()
             .get(alias.as_str())
@@ -715,7 +715,7 @@ pub async fn handle_set_tokens_timezone(
         }
     }
 
-    // 保存更改
+    // Save changes
     if updated_count > 0 && token_manager.save().await.is_err() {
         return Err((
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -734,7 +734,7 @@ pub async fn handle_set_tokens_timezone(
             [
                 SET_SUCCESS,
                 itoa::Buffer::new().format(updated_count),
-                "个令牌时区, ",
+                " token timezones, ",
                 itoa::Buffer::new().format(failed_count),
                 SET_FAILURE_COUNT,
             ]
@@ -747,7 +747,7 @@ pub async fn handle_merge_tokens(
     State(state): State<Arc<AppState>>,
     Json(request): Json<TokensMergeRequest>,
 ) -> Result<Json<CommonResponse>, (StatusCode, Json<GenericError>)> {
-    // 验证请求
+    // Validate request
     if request.is_empty() {
         return Err((
             StatusCode::BAD_REQUEST,
