@@ -8,7 +8,7 @@ use byte_str::ByteStr;
 use manually_init::ManuallyInit;
 use serde::Deserialize;
 
-// 静态配置
+// Static configuration
 #[derive(Debug, Default, Clone, Deserialize)]
 pub struct AppConfig {
     pub vision_ability: VisionAbility,
@@ -34,14 +34,14 @@ impl core::ops::Deref for AppConfigWrapper {
     fn deref(&self) -> &Self::Target { &self.inner }
 }
 
-// 全局配置实例
+// Global configuration instance
 static APP_CONFIG: ManuallyInit<ArcSwap<AppConfigWrapper>> = ManuallyInit::new();
 
 macro_rules! config_methods {
-    // 递归终止
+    // Recursion termination
     () => {};
 
-    // 语法: Field名: Type as 新方法名;
+    // Syntax: field_name: Type as new_method_name;
     ($field:ident: $type:ty as $method:ident; $($rest:tt)*) => {
         #[inline]
         pub fn $method() -> $type {
@@ -50,7 +50,7 @@ macro_rules! config_methods {
         config_methods!($($rest)*);
     };
 
-    // 语法: Field名: Type;
+    // Syntax: field_name: Type;
     ($field:ident: $type:ty; $($rest:tt)*) => {
         #[inline]
         pub fn $field() -> $type {
