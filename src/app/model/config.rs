@@ -41,7 +41,7 @@ macro_rules! config_methods {
     // 递归终止
     () => {};
 
-    // 语法: 字段名: 类型 as 新方法名;
+    // 语法: Field名: 类型 as 新方法名;
     ($field:ident: $type:ty as $method:ident; $($rest:tt)*) => {
         #[inline]
         pub fn $method() -> $type {
@@ -50,7 +50,7 @@ macro_rules! config_methods {
         config_methods!($($rest)*);
     };
 
-    // 语法: 字段名: 类型;
+    // 语法: Field名: 类型;
     ($field:ident: $type:ty; $($rest:tt)*) => {
         #[inline]
         pub fn $field() -> $type {

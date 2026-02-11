@@ -76,7 +76,7 @@ impl UsageCheck {
         }
     }
 
-    // 辅助方法：获取类型字符串
+    // 辅助方法：Get类型字符串
     // #[inline]
     // fn type_str(&self) -> &'static str {
     //     match self {
@@ -175,7 +175,7 @@ impl<'de> Deserialize<'de> for UsageCheck {
 //                             content_value = Some(map.next_value()?);
 //                         }
 //                         _ => {
-//                             // 忽略未知字段
+//                             // 忽略未知Field
 //                             let _: de::IgnoredAny = map.next_value()?;
 //                         }
 //                     }

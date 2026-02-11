@@ -18,7 +18,7 @@ use scc::HashMap;
 
 /// Token 的唯一标识键
 ///
-/// 由用户ID和随机数组成，用于在全局缓存中查找对应的 Token
+/// 由用户IDand随机数组成，用于在全局缓存中查找对应的 Token
 #[derive(
     Debug, PartialEq, Eq, Hash, Clone, Copy, ::rkyv::Archive, ::rkyv::Serialize, ::rkyv::Deserialize,
 )]
@@ -31,9 +31,9 @@ pub struct TokenKey {
 }
 
 impl TokenKey {
-    /// 将 TokenKey 序列化为 base64 字符串
+    /// 将 TokenKey 序列化To base64 字符串
     ///
-    /// Format：24字节（16字节 user_id + 8字节 randomness）Encode为 32 字符的 base64
+    /// Format：24字节（16字节 user_id + 8字节 randomness）EncodeTo 32 字符的 base64
     #[allow(clippy::inherent_to_string)]
     #[inline]
     pub fn to_string(self) -> String {
@@ -45,7 +45,7 @@ impl TokenKey {
         to_base64(&bytes)
     }
 
-    /// 将 TokenKey 序列化为可读字符串
+    /// 将 TokenKey 序列化To可读字符串
     ///
     /// Format：`<user_id>-<randomness>`
     #[inline]
@@ -143,11 +143,11 @@ impl TokenInner {
         isize::MAX as usize + 1 - layout.align() - layout.size()
     };
 
-    /// 获取字符串数据的起始地址
+    /// Get字符串数据的起始地址
     #[inline(always)]
     const unsafe fn string_ptr(&self) -> *const u8 { (self as *const Self).add(1) as *const u8 }
 
-    /// 获取字符串切片
+    /// Get字符串切片
     #[inline(always)]
     const unsafe fn as_str(&self) -> &str {
         let ptr = self.string_ptr();
@@ -170,11 +170,11 @@ impl TokenInner {
         }
     }
 
-    /// 在指定内存位置写入结构体和字符串数据
+    /// 在指定内存位置写入结构体and字符串数据
     unsafe fn write_with_string(ptr: NonNull<Self>, raw: RawToken, string: &str) {
         let inner = ptr.as_ptr();
 
-        // 写入结构体字段
+        // 写入结构体Field
         (*inner).raw = raw;
         (*inner).count = AtomicUsize::new(1);
         (*inner).string_len = string.len();
@@ -195,7 +195,7 @@ pub struct Token {
     _pd: PhantomData<TokenInner>,
 }
 
-// Safety: Token 使用原子引用计数，可以安全地在线程间传递
+// Safety: Token Use原子引用计数，可以安全地在线程间传递
 unsafe impl Send for Token {}
 unsafe impl Sync for Token {}
 
@@ -232,11 +232,11 @@ pub fn __init() { TOKEN_MAP.init(HashMap::with_capacity_and_hasher(64, ahash::Ra
 impl Token {
     /// 创建或复用 Token 实例
     ///
-    /// 如果缓存中已存在相同的 TokenKey 且 RawToken 相同，则复用；
+    /// If缓存中已存在相同的 TokenKey 且 RawToken 相同，则复用；
     /// 否则创建新实例（可能会覆盖旧的）。
     ///
     /// # 并发安全性
-    /// - 使用 read-write lock 保护全局缓存
+    /// - Use read-write lock 保护全局缓存
     /// - 快速路径（read lock）：尝试复用已有实例
     /// - 慢速路径（write lock）：双重检查后创建新实例，防止竞态条件
     pub fn new(raw: RawToken, string: Option<String>) -> Self {
@@ -257,7 +257,7 @@ impl Token {
                     // 验证 RawToken 是否完全匹配（key 相同不代表 raw 相同）
                     if inner.raw == raw {
                         let count = inner.count.fetch_add(1, Ordering::Relaxed);
-                        // 防止引用计数溢出（理论上不可能，但作为安全检查）
+                        // 防止引用计数溢出（理论上不可能，但作To安全检查）
                         if count > isize::MAX as usize {
                             __cold_path!();
                             std::process::abort();
@@ -276,7 +276,7 @@ impl Token {
 
         match cache.raw_entry().from_key_hashed_nocheck_sync(hash, &key) {
             RawEntry::Occupied(entry) => {
-                // 双重检查：防止在获取 write lock 前，其他线程已经创建了相同的 Token
+                // 双重检查：防止在Get write lock 前，其他线程已经创建了相同的 Token
                 let &ThreadSafePtr(ptr) = entry.get();
                 unsafe {
                     let inner = ptr.as_ref();
@@ -296,7 +296,7 @@ impl Token {
                 Self { ptr, _pd: PhantomData }
             }
             RawEntry::Vacant(entry) => {
-                // 分配并初始化新实例（使用自定义 DST 布局）
+                // 分配并初始化新实例（Use自定义 DST 布局）
                 let ptr = unsafe {
                     // 准备字符串表示（在堆上分配之前）
                     let string = string.unwrap_or_else(|| raw.to_string());
@@ -312,7 +312,7 @@ impl Token {
                     ptr
                 };
 
-                // 将新实例插入缓存（持有 write lock，保证线程安全）
+                // 将新实例Insert缓存（持有 write lock，保证线程安全）
                 entry.insert(key, ThreadSafePtr(ptr));
 
                 Self { ptr, _pd: PhantomData }
@@ -320,23 +320,23 @@ impl Token {
         }
     }
 
-    /// 获取原始 token 数据
+    /// Get原始 token 数据
     #[inline(always)]
     pub const fn raw(&self) -> &RawToken { unsafe { &self.ptr.as_ref().raw } }
 
-    /// 获取字符串表示
+    /// Get字符串表示
     #[inline(always)]
     pub const fn as_str(&self) -> &str { unsafe { self.ptr.as_ref().as_str() } }
 
-    /// 获取 token 的键
+    /// Get token 的键
     #[inline(always)]
     pub const fn key(&self) -> TokenKey { self.raw().key() }
 
-    /// 检查是否为网页 token
+    /// 检查是否To网页 token
     #[inline(always)]
     pub const fn is_web(&self) -> bool { self.raw().is_web() }
 
-    /// 检查是否为会话 token
+    /// 检查是否To会话 token
     #[inline(always)]
     pub const fn is_session(&self) -> bool { self.raw().is_session() }
 }
@@ -346,14 +346,14 @@ impl Drop for Token {
         unsafe {
             let inner = self.ptr.as_ref();
 
-            // 递减引用计数，使用 Release ordering 确保之前的所有修改对后续操作可见
+            // 递减引用计数，Use Release ordering Ensure之前的所有修改对后续操作可见
             if inner.count.fetch_sub(1, Ordering::Release) != 1 {
-                // 不是最后一个引用，直接返回
+                // 不是Last一个引用，直接返回
                 return;
             }
 
-            // 最后一个引用：需要清理资源
-            // 获取 write lock 以保护缓存操作，同时防止并发的 new() 操作干扰
+            // Last一个引用：需要清理资源
+            // Get write lock 以保护缓存操作，同时防止并发的 new() 操作干扰
             let cache = TOKEN_MAP.get();
 
             let key = inner.raw.key();
@@ -362,18 +362,18 @@ impl Drop for Token {
                 // 例如：
                 //   Thread A: fetch_sub 返回 1
                 //   Thread B: 在 new() 中找到此 token，fetch_add 增加计数
-                //   Thread A: 获取 write lock
-                // 此时必须重新检查，否则会Error地释放正在使用的内存
+                //   Thread A: Get write lock
+                // 此时必须重新检查，否则会Error地释放正在Use的内存
                 if inner.count.load(Ordering::Relaxed) != 0 {
                     // 有新的引用产生，取消释放操作
                     return;
                 }
 
-                // 确认是最后一个引用，执行清理：
+                // 确认是Last一个引用，执行清理：
                 // 1. 从缓存中移除（防止后续 new() 找到已释放的指针）
                 e.remove();
 
-                // 2. 释放堆内存（包括 TokenInner 和内联的字符串数据）
+                // 2. 释放堆内存（包括 TokenInner and内联的字符串数据）
                 let layout = TokenInner::layout_for_string(inner.string_len);
                 dealloc(self.ptr.cast().as_ptr(), layout);
             }

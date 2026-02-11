@@ -1,18 +1,18 @@
-//! 提供时间有效期范围的数据结构和相关操作
+//! 提供时间有效期范围的数据结构andRelated操作
 
 use std::num::ParseIntError;
 
-/// 表示一个有效期范围，以两个u32值表示起始和结束时间。
+/// 表示一个有效期范围，以两个u32值表示起始and结束时间。
 ///
-/// 该结构体使用透明内存布局，通过[u32; 2]实现8字节Size。
+/// 该结构体Use透明内存布局，通过[u32; 2]实现8字节Size。
 /// Support从字符串解析，比如"60"表示60-60的范围，"3600-86400"表示3600到86400的闭区间。
 #[repr(transparent)]
 pub struct ValidityRange {
-    range: [u32; 2], // range[0]为start，range[1]为end
+    range: [u32; 2], // range[0]Tostart，range[1]Toend
 }
 
 // 验证内存布局约束
-const _: [u8; 8] = [0; ::core::mem::size_of::<ValidityRange>()]; // 确保Size为8字节
+const _: [u8; 8] = [0; ::core::mem::size_of::<ValidityRange>()]; // EnsureSizeTo8字节
 
 impl ValidityRange {
     /// 创建新的有效期范围实例
@@ -34,11 +34,11 @@ impl ValidityRange {
         }
     }
 
-    /// 获取范围的起始值
+    /// Get范围的起始值
     #[inline(always)]
     pub const fn start(&self) -> u32 { self.range[0] }
 
-    /// 获取范围的结束值
+    /// Get范围的结束值
     #[inline(always)]
     pub const fn end(&self) -> u32 { self.range[1] }
 
@@ -50,7 +50,7 @@ impl ValidityRange {
     ///
     /// # 返回值
     ///
-    /// 如果值在范围内（包括边界值）返回true，否则返回false
+    /// If值在范围内（包括边界值）返回true，否则返回false
     ///
     /// # 示例
     ///
@@ -108,8 +108,8 @@ impl ValidityRange {
 
 /// 实现Display特性，用于Format化输出
 ///
-/// 对于相同的起始和结束值，只显示一个数字；
-/// 对于不同的值，显示为"start-end"Format。
+/// 对于相同的起始and结束值，只显示一个数字；
+/// 对于不同的值，显示To"start-end"Format。
 impl std::fmt::Display for ValidityRange {
     #[inline]
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -134,7 +134,7 @@ impl std::fmt::Debug for ValidityRange {
 
 /// 实现FromStr特性，Support从字符串解析
 ///
-/// 这使得可以直接使用`str.parse()`方法解析字符串为ValidityRange
+/// 这使得可以直接Use`str.parse()`方法解析字符串ToValidityRange
 impl std::str::FromStr for ValidityRange {
     type Err = ParseIntError;
 

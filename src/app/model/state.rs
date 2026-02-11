@@ -17,15 +17,15 @@ pub struct AppState {
 
 impl AppState {
     pub async fn load() -> Result<Self, Box<dyn core::error::Error + Send + Sync + 'static>> {
-        // 并行加载日志、令牌和代理
+        // 并行加载日志、令牌and代理
         let (log_manager_result, token_manager_result, proxies_result) =
             tokio::join!(LogManager::load(), TokenManager::load(), Proxies::load());
 
-        // 获取结果，处理Error
+        // Get结果，HandleError
         let log_manager = log_manager_result?;
         let token_manager = token_manager_result?;
 
-        // 处理代理
+        // Handle代理
         let proxies = proxies_result.unwrap_or_default();
         proxies.init();
 
@@ -59,20 +59,20 @@ impl AppState {
     #[inline(always)]
     pub fn increment_error(&self) { self.error_requests.fetch_add(1, Ordering::Relaxed); }
 
-    /// 获取TokenManager的读锁
+    /// GetTokenManager的读锁
     #[inline]
     pub async fn token_manager_read(&self) -> tokio::sync::RwLockReadGuard<'_, TokenManager> {
         self.token_manager.read().await
     }
 
-    /// 获取TokenManager的写锁
+    /// GetTokenManager的写锁
     #[inline]
     pub async fn token_manager_write(&self) -> tokio::sync::RwLockWriteGuard<'_, TokenManager> {
         self.token_manager.write().await
     }
 
     pub async fn save(&self) -> Result<(), Box<dyn core::error::Error + Send + Sync + 'static>> {
-        // 并行保存日志、令牌和代理
+        // 并行保存日志、令牌and代理
         let (log_result, tokens_result, proxies_result) =
             tokio::join!(LogManager::save(), self.save_tokens(), Proxies::save());
 

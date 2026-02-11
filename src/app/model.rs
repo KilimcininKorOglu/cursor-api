@@ -258,7 +258,7 @@ impl From<crate::common::model::userinfo::TokenUsage> for ChainUsage {
 //                     return Self::Origin(input);
 //                 };
 
-//             // 更新remaining为去除前缀后的内容
+//             // 更新remainingTo去除前缀后的内容
 //             remaining = content;
 
 //             // 查找结束标记
@@ -351,7 +351,7 @@ impl ErrorInfo {
 pub struct ExtToken {
     /// 主token - 可以是client或web token
     pub primary_token: Token,
-    /// 次要token - 如果存在，必定是web token
+    /// 次要token - If存在，必定是web token
     #[serde(skip_serializing_if = "Option::is_none")]
     pub secondary_token: Option<Token>,
     pub checksum: Checksum,
@@ -400,7 +400,7 @@ impl ExtToken {
         }
     }
 
-    /// 获取适用于此 token 的 HTTP 客户端
+    /// Get适用于此 token 的 HTTP 客户端
     #[inline]
     pub fn get_client(&self) -> Client { get_client_or_general(self.proxy.as_deref()) }
 
@@ -410,7 +410,7 @@ impl ExtToken {
         move || get_client_or_general(proxy.as_deref())
     }
 
-    /// 获取此 token 关联的时区
+    /// Get此 token 关联的时区
     #[inline]
     fn timezone(&self) -> chrono_tz::Tz {
         if let Some(tz) = self.timezone { tz } else { *super::lazy::GENERAL_TIMEZONE }
@@ -431,7 +431,7 @@ impl ExtToken {
         unsafe { crate::common::model::HeaderValue::from_static(self.timezone_name()).into() }
     }
 
-    /// 获取当前时区的当前时间
+    /// Get当前时区的当前时间
     #[inline]
     pub fn now(&self) -> chrono::DateTime<chrono_tz::Tz> {
         use chrono::TimeZone as _;
@@ -458,7 +458,7 @@ impl ExtToken {
 pub struct UnextToken {
     /// 主token - 可以是client或web token
     pub primary_token: Token,
-    /// 次要token - 如果存在，必定是web token
+    /// 次要token - If存在，必定是web token
     pub secondary_token: Option<Token>,
 }
 
@@ -476,7 +476,7 @@ impl UnextToken {
 pub struct UnextTokenRef<'a> {
     /// 主token - 可以是client或web token
     pub primary_token: &'a Token,
-    /// 次要token - 如果存在，必定是web token
+    /// 次要token - If存在，必定是web token
     pub secondary_token: Option<&'a Token>,
 }
 
@@ -508,7 +508,7 @@ impl<'a> UnextTokenRef<'a> {
         let token = self.web_token();
         let token_str = token.as_str();
 
-        // 预分配足够的空间: TOKEN_PREFIX + user_id + SEPARATOR + token_str
+        // 预分配足够的Empty间: TOKEN_PREFIX + user_id + SEPARATOR + token_str
         let mut result = String::with_capacity(PREFIX_AND_USER_ID_AND_SEPARATOR + token_str.len());
 
         result.push_str(TOKEN_PREFIX);

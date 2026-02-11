@@ -91,10 +91,10 @@ impl IntoIterator for &'static Servers {
     fn into_iter(self) -> Self::IntoIter { self.inner.iter().map(String::as_str) }
 }
 
-// ========== 时间转换函数 ==========
+// ========== 时间Convert函数 ==========
 
-/// 将 NTP 64位时间戳转换为 Unix DateTime
-/// NTP 时间戳Format：高32位为秒，低32位为秒的小数部分
+/// 将 NTP 64位时间戳ConvertTo Unix DateTime
+/// NTP 时间戳Format：高32位To秒，低32位To秒的小数部分
 fn ntp_to_unix_timestamp(ntp_ts: u64) -> DateTime<Utc> {
     let ntp_secs = (ntp_ts >> 32) as i64;
     let ntp_frac = ntp_ts & 0xFFFFFFFF;
@@ -104,7 +104,7 @@ fn ntp_to_unix_timestamp(ntp_ts: u64) -> DateTime<Utc> {
     unsafe { DateTime::from_timestamp(unix_secs, nanos).unwrap_unchecked() }
 }
 
-/// 将 SystemTime 转换为 NTP 64位时间戳
+/// 将 SystemTime ConvertTo NTP 64位时间戳
 fn system_time_to_ntp_timestamp(t: SystemTime) -> Result<u64, NtpError> {
     let duration = t.duration_since(UNIX_EPOCH).map_err(|_| NtpError::TimeParse)?;
     let secs = duration.as_secs() + EPOCH_DELTA as u64;
@@ -145,7 +145,7 @@ impl NtpTimestamps {
 }
 
 /// 验证 NTP Response包的有效性
-/// 检查协议版本、模式、stratum 层级等字段
+/// 检查协议版本、模式、stratum 层级等Field
 #[inline]
 fn validate_ntp_response(packet: [u8; 48]) -> Result<(), NtpError> {
     let mode = packet[0] & 0x7;
@@ -195,7 +195,7 @@ async fn connect_to_ntp_server(socket: &UdpSocket) -> Result<&'static str, NtpEr
 }
 
 /// 发送 NTP Request并接收Response
-/// 返回：Response数据包和四个关键时间戳
+/// 返回：Response数据包and四个关键时间戳
 async fn send_and_receive_ntp_packet(
     socket: &UdpSocket,
 ) -> Result<([u8; PACKET_SIZE], NtpTimestamps), NtpError> {
@@ -206,7 +206,7 @@ async fn send_and_receive_ntp_packet(
     let t1_system = SystemTime::now();
     let t1_ntp = system_time_to_ntp_timestamp(t1_system)?;
 
-    // 将 T1 写入数据包的 Transmit Timestamp 字段（字节 40-47）
+    // 将 T1 写入数据包的 Transmit Timestamp Field（字节 40-47）
     packet[40..48].copy_from_slice(&t1_ntp.to_be_bytes());
 
     // 发送数据包（带超时保护）
@@ -219,7 +219,7 @@ async fn send_and_receive_ntp_packet(
     let t4_system = SystemTime::now();
     let t4_ntp = system_time_to_ntp_timestamp(t4_system)?;
 
-    // 从Response包中提取 T2 和 T3
+    // 从Response包中提取 T2 and T3
     let t2_ntp = u64::from_be_bytes(packet[32..40].try_into().unwrap());
     let t3_ntp = u64::from_be_bytes(packet[40..48].try_into().unwrap());
 
@@ -262,8 +262,8 @@ async fn measure_once() -> Result<(i64, i64), NtpError> {
 /// 执行一次完整的 NTP 同步流程（多次采样 + 加权平均）
 ///
 /// 流程：
-/// 1. 根据配置多次调用 `measure_once()`（默认 8 次，间隔 50ms）
-/// 2. 收集成功的样本
+/// 1. 根据配置多次调用 `measure_once()`（Default 8 次，间隔 50ms）
+/// 2. Collect成功的样本
 /// 3. 按 RTT 排序，过滤掉最大的几个
 /// 4. 清洗数据：跳过 RTT <= 0 的异常样本
 /// 5. 对剩余样本按 1/RTT 加权平均
@@ -284,7 +284,7 @@ pub async fn sync_once() -> Result<i64, NtpError> {
             }
         }
 
-        // 采样间隔（最后一次不需要等待）
+        // 采样间隔（Last一次不需要等待）
         if i + 1 < sample_count {
             tokio::time::sleep(Duration::from_millis(interval_ms)).await;
         }
@@ -370,7 +370,7 @@ pub async fn sync_once() -> Result<i64, NtpError> {
 // ========== 环境变量解析 ==========
 
 /// 从环境变量Read同步间隔
-/// 默认值：3600 秒（1 小时）
+/// Default值：3600 秒（1 小时）
 fn parse_sync_interval() -> u64 {
     crate::common::utils::parse_from_env("NTP_SYNC_INTERVAL_SECS", 3600u64)
 }
@@ -387,9 +387,9 @@ fn parse_sample_config() -> (usize, u64) {
 
 /// 启动时执行一次 NTP 同步
 ///
-/// 行为：
-/// - 无服务器配置：静默返回，DELTA 保持为 0
-/// - 同步Failed：打印Error到标准输出，DELTA 保持为 0
+/// 行To：
+/// - 无服务器配置：静默返回，DELTA 保持To 0
+/// - 同步Failed：打印Error到标准输出，DELTA 保持To 0
 /// - 同步成功：更新 DELTA，记录日志，**自动启动周期性同步任务**
 pub async fn init_sync(stdout_ready: alloc::sync::Arc<tokio::sync::Notify>) {
     let servers = SERVERS.get();
@@ -425,7 +425,7 @@ pub async fn init_sync(stdout_ready: alloc::sync::Arc<tokio::sync::Notify>) {
 /// 1. 配置了 NTP 服务器（已由 init_sync 检查）
 /// 2. 同步间隔大于 0（NTP_SYNC_INTERVAL_SECS > 0）
 ///
-/// 任务行为：
+/// 任务行To：
 /// - 在后台持续运行
 /// - 按配置的间隔执行同步
 /// - 首次 tick 被跳过（启动时已由 init_sync 完成同步）

@@ -97,13 +97,13 @@ impl LogManager {
         Ok(())
     }
 
-    /// 获取Error日志数量
+    /// GetError日志数量
     #[inline]
     pub fn error_count(&self) -> u64 {
         self.logs.iter().filter(|log| log.status as u8 != 1).count() as u64
     }
 
-    /// 获取日志总数
+    /// Get日志总数
     #[inline]
     pub fn total_count(&self) -> u64 { self.logs.len() as u64 }
 }

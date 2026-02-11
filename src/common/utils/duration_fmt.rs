@@ -112,7 +112,7 @@ pub enum Language {
     Random,
 }
 
-// 使用宏定义常量
+// Use宏定义常量
 crate::define_typed_constants! {
     u64 => {
         SECONDS_PER_MINUTE = 60,
@@ -683,7 +683,7 @@ impl HumanDuration {
             first = false;
         }
 
-        // 秒+毫秒部分：使用 itoa + 手动Format化
+        // 秒+毫秒部分：Use itoa + 手动Format化
         if !first {
             f.write_str(separator)?;
         }
@@ -795,7 +795,7 @@ impl HumanDuration {
         Self::write_padded(f, &mut buf, parts.seconds, 2)?;
         f.write_str(".")?;
 
-        // 手动分解 millis 为三位数字
+        // 手动分解 millis To三位数字
         Self::write_padded(f, &mut buf, (parts.millis / 100) as u8, 1)?;
         Self::write_padded(f, &mut buf, ((parts.millis / 10) % 10) as u8, 1)?;
         Self::write_padded(f, &mut buf, (parts.millis % 10) as u8, 1)?;

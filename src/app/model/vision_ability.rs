@@ -33,7 +33,7 @@ impl VisionAbility {
     #[inline(always)]
     pub fn is_none(self) -> bool { matches!(self, VisionAbility::None) }
 
-    /// 获取枚举的主要字符串表示
+    /// Get枚举的主要字符串表示
     #[inline]
     pub const fn as_str(self) -> &'static str {
         match self {

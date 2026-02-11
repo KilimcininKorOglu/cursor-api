@@ -5,7 +5,7 @@ use core::num::NonZeroU16;
 include!("v1/lite.rs");
 
 impl ErrorDetails {
-    /// 将Error转换为相应的 HTTP 状态码。
+    /// 将ErrorConvertTo相应的 HTTP 状态码。
     ///
     /// 此方法根据Error的性质，将内部Error类型映射到标准的 HTTP 状态码，
     /// 遵循 RESTful API 最佳实践。
@@ -24,7 +24,7 @@ impl ErrorDetails {
                 | Error::ClaudeImageTooLarge
                 | Error::ConversationTooLong => 400,
 
-                // 401 - Unauthorized: 身份验证相关Error
+                // 401 - Unauthorized: 身份验证RelatedError
                 Error::BadApiKey
                 | Error::BadUserApiKey
                 | Error::InvalidAuthId
@@ -36,7 +36,7 @@ impl ErrorDetails {
                 // 402 - Payment Required: 需要付费
                 Error::UsagePricingRequired | Error::UsagePricingRequiredChangeable => 402,
 
-                // 403 - Forbidden: 权限相关Error
+                // 403 - Forbidden: 权限RelatedError
                 Error::NotLoggedIn
                 | Error::NotHighEnoughPermissions
                 | Error::AgentRequiresLogin
@@ -60,10 +60,10 @@ impl ErrorDetails {
                 // 410 - Gone: 资源不再可用
                 Error::Deprecated | Error::OutdatedClient => 410,
 
-                // 422 - Unprocessable Entity: Request有效但无法处理
+                // 422 - Unprocessable Entity: Request有效但无法Handle
                 Error::ApiKeyNotSupported => 422,
 
-                // 429 - Too Many Requests: 限流相关Error
+                // 429 - Too Many Requests: 限流RelatedError
                 Error::FreeUserRateLimitExceeded
                 | Error::ProUserRateLimitExceeded
                 | Error::OpenaiRateLimitExceeded
@@ -94,7 +94,7 @@ impl ErrorDetails {
                 | Error::RepositoryServiceRepositoryIsNotInitialized
                 | Error::Custom => 533,
             },
-            // 未在上游枚举中定义的Error被视为真正的内部服务器Error
+            // 未在上游枚举中定义的Error被视To真正的内部服务器Error
             Err(_) => 500,
         };
         unsafe { NonZeroU16::new_unchecked(code) }
@@ -168,7 +168,7 @@ impl ErrorDetails {
                 Error::Custom => "custom",
                 Error::HooksBlocked => "hooks_blocked",
             },
-            Err(_) => crate::app::constant::UNKNOWN, // 未知Error类型的默认值
+            Err(_) => crate::app::constant::UNKNOWN, // 未知Error类型的Default值
         }
     }
 }
@@ -213,7 +213,7 @@ impl TryFrom<image::DynamicImage> for image_proto::Dimension {
 }
 
 impl AvailableModelsResponse {
-    /// 根据 `AvailableModel` 的关键字段（`name`、`client_display_name`、`server_model_name`）
+    /// 根据 `AvailableModel` 的关键Field（`name`、`client_display_name`、`server_model_name`）
     /// 判断两个Response是否相等。
     ///
     /// # 参数

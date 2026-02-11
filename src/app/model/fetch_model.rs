@@ -1,4 +1,4 @@
-/// 模型数据获取模式
+/// 模型数据Get模式
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[repr(u8)]
 pub enum FetchMode {
@@ -22,7 +22,7 @@ impl FetchMode {
     /// 表示追加模式的字符串常量
     const APPEND: &'static str = "append";
 
-    /// 从字符串解析获取模式
+    /// 从字符串解析Get模式
     #[inline]
     pub fn from_str(mut s: String) -> Self {
         s.make_ascii_lowercase();
@@ -34,7 +34,7 @@ impl FetchMode {
         }
     }
 
-    /// 返回获取模式的字符串表示
+    /// 返回Get模式的字符串表示
     #[inline]
     pub fn as_str(&self) -> &'static str {
         match self {
@@ -51,7 +51,7 @@ impl const Default for FetchMode {
 }
 
 impl ::serde::Serialize for FetchMode {
-    /// 序列化获取模式
+    /// 序列化Get模式
     #[inline]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -62,7 +62,7 @@ impl ::serde::Serialize for FetchMode {
 }
 
 impl<'de> ::serde::Deserialize<'de> for FetchMode {
-    /// 反序列化获取模式
+    /// 反序列化Get模式
     #[inline]
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where

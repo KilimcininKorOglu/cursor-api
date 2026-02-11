@@ -85,7 +85,7 @@ impl core::fmt::Display for Version {
 impl Version {
     /// 写入到 writer
     ///
-    /// 二进制Format（使用原生字节序）：
+    /// 二进制Format（Use原生字节序）：
     /// - [0-1] major: u16
     /// - [2-3] minor: u16
     /// - [4-5] patch: u16
@@ -95,14 +95,14 @@ impl Version {
     ///
     /// # Errors
     ///
-    /// 如果写入Failed，返回 I/O Error
+    /// If写入Failed，返回 I/O Error
     pub fn write_to<W: io::Write>(&self, writer: &mut W) -> io::Result<()> {
         // 写入固定头部
         writer.write_all(&self.major.to_ne_bytes())?;
         writer.write_all(&self.minor.to_ne_bytes())?;
         writer.write_all(&self.patch.to_ne_bytes())?;
 
-        // 根据 stage 写入 len 和 metadata
+        // 根据 stage 写入 len and metadata
         match self.stage {
             ReleaseStage::Release => {
                 writer.write_all(&0u16.to_ne_bytes())?;

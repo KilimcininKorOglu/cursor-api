@@ -107,7 +107,7 @@ impl<'a> StringBuilder<'a> {
                     unsafe { maybe_vec.assume_init_mut() }.push(s);
                 }
                 Cow::Owned(s) => {
-                    // 关键转换：偷取值并立即替换整个 Storage
+                    // 关键Convert：偷取值并立即替换整个 Storage
                     let old_vec = unsafe { maybe_vec.assume_init_read() };
                     // 此时 maybe_vec 未初始化，但会被立即替换
 
@@ -509,7 +509,7 @@ mod tests {
 
     #[test]
     fn test_maybe_uninit_state_transition() {
-        // 测试 MaybeUninit 在状态转换过程中的安全性
+        // 测试 MaybeUninit 在状态Convert过程中的安全性
         let mut builder = StringBuilder::with_capacity(3);
 
         // 初始状态：Borrowed，MaybeUninit 已初始化
@@ -520,7 +520,7 @@ mod tests {
         builder.append_mut(" ");
         assert!(builder.is_borrowed_state());
 
-        // 添加拥有字符串，触发状态转换
+        // 添加拥有字符串，触发状态Convert
         builder.append_mut(String::from("World"));
         assert!(builder.is_mixed_state());
 
@@ -533,12 +533,12 @@ mod tests {
 
     #[test]
     fn test_empty_builder_safety() {
-        // 测试空 builder 的安全性
+        // 测试Empty builder 的安全性
         let empty_builder = StringBuilder::with_capacity(0);
         assert!(empty_builder.is_borrowed_state());
         assert!(empty_builder.is_empty());
 
-        // 空 builder 的 clone 也应该安全
+        // Empty builder 的 clone 也应该安全
         let cloned_empty = empty_builder.clone();
         assert!(cloned_empty.is_borrowed_state());
         assert!(cloned_empty.is_empty());

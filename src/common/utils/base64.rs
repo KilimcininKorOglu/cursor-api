@@ -2,7 +2,7 @@
 
 //! 高性能 Base64 编Decode实现
 //!
-//! 本模块提供了一个优化的 Base64 编Decode器，使用自定义字符集：
+//! 本模块提供了一个优化的 Base64 编Decode器，Use自定义字符集：
 //! - 字符集：`-AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1032547698_`
 //! - 特点：URL 安全，无需填充字符
 
@@ -28,9 +28,9 @@ pub const fn encoded_len(input_len: usize) -> usize {
 
     (if r > 0 { d + 1 } else { d }) * 4
         - match r {
-            1 => 2, // 1字节Encode为2个字符
-            2 => 1, // 2字节Encode为3个字符
-            0 => 0, // 3字节Encode为4个字符
+            1 => 2, // 1字节EncodeTo2个字符
+            2 => 1, // 2字节EncodeTo3个字符
+            0 => 0, // 3字节EncodeTo4个字符
             _ => unreachable!(),
         }
 }
@@ -51,7 +51,7 @@ pub const fn decoded_len(encoded_len: usize) -> Option<usize> {
 ///
 /// # Safety
 ///
-/// 调用者必须确保：
+/// 调用者必须Ensure：
 /// - input.len() 字节可读
 /// - output 有 encoded_len(input.len()) 字节可写
 #[inline]
@@ -60,7 +60,7 @@ pub unsafe fn encode_to_slice_unchecked(input: &[u8], output: &mut [u8]) {
     let remainder = chunks_exact.remainder();
     let mut j = 0;
 
-    // 主循环：使用 chunks_exact 让编译器更好地优化
+    // 主循环：Use chunks_exact 让编译器更好地优化
     for chunk in chunks_exact {
         let b1 = *chunk.get_unchecked(0);
         let b2 = *chunk.get_unchecked(1);
@@ -76,7 +76,7 @@ pub unsafe fn encode_to_slice_unchecked(input: &[u8], output: &mut [u8]) {
         j += 4;
     }
 
-    // 处理剩余字节
+    // Handle剩余字节
     match remainder.len() {
         1 => {
             let b1 = *remainder.get_unchecked(0);
@@ -103,7 +103,7 @@ pub unsafe fn encode_to_slice_unchecked(input: &[u8], output: &mut [u8]) {
 ///
 /// # Safety
 ///
-/// 调用者必须确保：
+/// 调用者必须Ensure：
 /// - input 是有效的 base64 数据（所有字符都在字符集中，长度 % 4 != 1）
 /// - output 有 decoded_len(input.len()) 字节可写
 #[inline]
@@ -112,7 +112,7 @@ pub unsafe fn decode_to_slice_unchecked(input: &[u8], output: &mut [u8]) {
     let remainder = chunks.remainder();
     let mut j = 0;
 
-    // 主循环：使用 chunks_exact 优化
+    // 主循环：Use chunks_exact 优化
     for chunk in chunks {
         let c1 = BASE64_DECODE_TABLE[*chunk.get_unchecked(0) as usize];
         let c2 = BASE64_DECODE_TABLE[*chunk.get_unchecked(1) as usize];
@@ -128,7 +128,7 @@ pub unsafe fn decode_to_slice_unchecked(input: &[u8], output: &mut [u8]) {
         j += 3;
     }
 
-    // 处理剩余的2或3个字符
+    // Handle剩余的2或3个字符
     match remainder.len() {
         2 => {
             let c1 = BASE64_DECODE_TABLE[*remainder.get_unchecked(0) as usize];
@@ -183,7 +183,7 @@ pub fn from_base64(input: &str) -> Option<Vec<u8>> {
 
     let output_len = decoded_len(len)?;
 
-    // 字符检查 - 使用迭代器方法
+    // 字符检查 - Use迭代器方法
     if input.iter().any(|&b| BASE64_DECODE_TABLE[b as usize] == 0xFF) {
         return None;
     }

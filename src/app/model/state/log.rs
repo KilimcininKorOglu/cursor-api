@@ -18,7 +18,7 @@ pub enum RequestLogsLimit {
     Disabled,
     /// 无Limit日志记录
     Unlimited,
-    /// 有Limit的日志记录，参数为最大日志数量
+    /// 有Limit的日志记录，参数To最大日志数量
     Limited(usize),
 }
 
@@ -38,7 +38,7 @@ impl RequestLogsLimit {
     #[inline(always)]
     pub fn should_log(&self) -> bool { !matches!(self, Self::Disabled) }
 
-    /// 获取日志Limit
+    /// Get日志Limit
     #[inline(always)]
     pub fn get_limit(&self) -> Option<usize> {
         match self {
@@ -56,7 +56,7 @@ struct LogManagerHelper {
     tokens: HashMap<TokenKey, ExtTokenHelper>,
 }
 
-/// 日志管理器，负责处理日志和token的集中管理
+/// 日志管理器，负责Handle日志andtoken的集中管理
 pub struct LogManager {
     logs: VecDeque<RequestLog>,
     tokens: HashMap<TokenKey, ExtToken>,
@@ -88,7 +88,7 @@ impl LogManager {
             100usize,
         ));
 
-        // 如果Disabled日志，则返回空管理器
+        // IfDisabled日志，则返回Empty管理器
         if !logs_limit.should_log() {
             return Ok(Self::new(logs_limit));
         }
@@ -145,7 +145,7 @@ impl LogManager {
         *self.token_ref_counts.entry(token_key).or_insert(0) += 1;
     }
 
-    /// 减少token引用计数，如果计数为0则清理token
+    /// 减少token引用计数，If计数To0则清理token
     #[inline]
     fn decrement_token_ref(&mut self, token_key: TokenKey) {
         if let Some(count) = self.token_ref_counts.get_mut(&token_key) {
@@ -161,10 +161,10 @@ impl LogManager {
     #[inline]
     fn insert_token(&mut self, key: TokenKey, token: ExtToken) { self.tokens.insert(key, token); }
 
-    /// 公开方法：添加日志时同时更新相关token
+    /// 公开方法：添加日志时同时更新Relatedtoken
     #[inline(never)]
     pub fn push_log_with_token(&mut self, log: RequestLog, ext_token: ExtToken) {
-        // 如果Disabled日志，则直接返回
+        // IfDisabled日志，则直接返回
         if !self.logs_limit.should_log() {
             return;
         }
@@ -182,7 +182,7 @@ impl LogManager {
             }
         }
 
-        // 添加新token（如果提供且不存在的话）
+        // 添加新token（If提供且不存在的话）
         // debug_assert_eq!(token_key, log_token_key, "token key 与日志中的不匹配");
         self.insert_token(log_token_key, ext_token);
 
@@ -196,7 +196,7 @@ impl LogManager {
     /// 保存数据到文件
     #[inline(never)]
     pub async fn save(&self) -> Result<(), Box<dyn core::error::Error + Send + Sync + 'static>> {
-        // 如果Disabled日志，则跳过保存
+        // IfDisabled日志，则跳过保存
         if !self.logs_limit.should_log() {
             return Ok(());
         }
@@ -228,31 +228,31 @@ impl LogManager {
         Ok(())
     }
 
-    /// 获取日志的只读引用
+    /// Get日志的只读引用
     #[inline]
     pub fn logs(&self) -> &VecDeque<RequestLog> { &self.logs }
 
-    // /// 获取日志的可变引用
+    // /// Get日志的可变引用
     // #[inline]
     // pub fn logs_mut(&mut self) -> &mut VecDeque<RequestLog> {
     //     &mut self.logs
     // }
 
-    /// 获取token的只读引用
+    /// Gettoken的只读引用
     #[inline]
     pub fn tokens(&self) -> &HashMap<TokenKey, ExtToken> { &self.tokens }
 
-    // /// 兼容性方法：添加新日志（不推荐，建议使用push_log_with_token）
+    // /// 兼容性方法：添加新日志（不推荐，建议Usepush_log_with_token）
     // #[inline]
     // pub fn push_log(&mut self, log: RequestLog) {
     //     self.push_log_with_token(log, None);
     // }
 
-    /// 获取token
+    /// Gettoken
     #[inline]
     pub fn get_token(&self, key: &TokenKey) -> Option<&ExtToken> { self.tokens.get(key) }
 
-    /// 获取下一个日志ID
+    /// Get下一个日志ID
     #[inline]
     pub fn next_log_id(&self) -> u64 { self.logs.back().map_or(1, |log| log.id + 1) }
 
@@ -283,23 +283,23 @@ impl LogManager {
     #[inline]
     pub fn is_enabled(&self) -> bool { self.logs_limit.should_log() }
 
-    /// 获取Error日志数量
+    /// GetError日志数量
     #[inline]
     pub fn error_count(&self) -> u64 {
         self.logs.iter().filter(|log| log.status as u8 != 1).count() as u64
     }
 
-    /// 获取日志总数
+    /// Get日志总数
     #[inline]
     pub fn total_count(&self) -> u64 { self.logs.len() as u64 }
 
-    // /// 获取token总数
+    // /// Gettoken总数
     // #[inline]
     // pub fn token_count(&self) -> u64 {
     //     self.tokens.len() as u64
     // }
 
-    // /// 获取token引用计数统计
+    // /// Gettoken引用计数统计
     // #[inline]
     // pub fn token_ref_stats(&self) -> Vec<(TokenKey, usize)> {
     //     self.token_ref_counts
@@ -308,7 +308,7 @@ impl LogManager {
     //         .collect()
     // }
 
-    // /// 清空所有日志和token
+    // /// 清Empty所有日志andtoken
     // #[inline]
     // pub fn clear(&mut self) {
     //     self.logs.clear();
@@ -316,7 +316,7 @@ impl LogManager {
     //     self.token_ref_counts.clear();
     // }
 
-    // /// 清空日志，自动清理未使用的token
+    // /// 清Empty日志，自动清理未Use的token
     // #[inline]
     // pub fn clear_logs(&mut self) {
     //     self.logs.clear();
@@ -324,7 +324,7 @@ impl LogManager {
     //     self.token_ref_counts.clear();
     // }
 
-    // /// 手动清理未使用的token
+    // /// 手动清理未Use的token
     // #[inline(never)]
     // pub fn cleanup_unused_tokens(&mut self) {
     //     self.rebuild_token_ref_counts();
@@ -342,7 +342,7 @@ impl LogManager {
     //     self.logs.iter_mut().rev().find(|log| log.id == id)
     // }
 
-    // /// 遍历日志和对应token的迭代器
+    // /// 遍历日志and对应token的迭代器
     // #[inline]
     // pub fn logs_with_tokens(&self) -> impl Iterator<Item = (&RequestLog, &ExtToken)> {
     //     self.logs.iter().filter_map(|log| {

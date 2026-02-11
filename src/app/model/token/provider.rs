@@ -15,7 +15,7 @@ crate::def_pub_const!(
     GITHUB = "github",
 );
 
-/// 默认Support的认证提供者列表
+/// DefaultSupport的认证提供者列表
 const DEFAULT_PROVIDERS: &'static [&'static str] = &[AUTH0, GOOGLE_OAUTH2, GITHUB];
 static mut PROVIDERS: &'static [&'static str] = DEFAULT_PROVIDERS;
 
@@ -95,7 +95,7 @@ impl<'de> ::serde::Deserialize<'de> for Provider {
 
 /// 从环境配置初始化Support的提供者列表
 ///
-/// 如果设置了环境变量 `ALLOWED_PROVIDERS`，则从中Read，否则保持默认提供者列表。
+/// If设置了环境变量 `ALLOWED_PROVIDERS`，则从中Read，否则保持Default提供者列表。
 /// 环境变量应包含以逗号分隔的提供者标识符列表。
 ///
 /// # 环境变量示例
@@ -108,7 +108,7 @@ impl<'de> ::serde::Deserialize<'de> for Provider {
 /// 任何未知的提供者字符串都会泄漏到静态内存中。
 pub fn parse_providers() {
     if let Ok(env) = std::env::var("ALLOWED_PROVIDERS") {
-        // 使用位标志跟踪默认提供者
+        // Use位标志跟踪Default提供者
         const AUTH0_FLAG: u8 = 1 << 0;
         const GOOGLE_FLAG: u8 = 1 << 1;
         const GITHUB_FLAG: u8 = 1 << 2;
@@ -141,7 +141,7 @@ pub fn parse_providers() {
             })
             .collect::<Vec<_>>();
 
-        // 如果恰好是3个默认提供者且没有自定义提供者，保持默认值
+        // If恰好是3个Default提供者且没有自定义提供者，保持Default值
         if custom_count == 0 && default_flags == ALL_DEFAULT {
             return;
         }

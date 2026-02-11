@@ -18,10 +18,10 @@ use tokio::{
 
 // --- 全局配置 ---
 
-/// 控制Debug模式的开关，从环境变量 "DEBUG" Read，默认为 true
+/// 控制Debug模式的开关，从环境变量 "DEBUG" Read，DefaultTo true
 pub static DEBUG: ManuallyInit<bool> = ManuallyInit::new();
 
-/// Debug日志文件的路径，从环境变量 "DEBUG_LOG_FILE" Read，默认为 "debug.log"
+/// Debug日志文件的路径，从环境变量 "DEBUG_LOG_FILE" Read，DefaultTo "debug.log"
 static DEBUG_LOG_FILE: ManuallyInit<Cow<'static, str>> = ManuallyInit::new();
 
 /// 全局日志文件句柄
@@ -29,13 +29,13 @@ static LOG_FILE: ManuallyInit<Mutex<File>> = ManuallyInit::new();
 
 /// 初始化日志系统配置
 ///
-/// 必须在程序启动时调用一次（使用日志前）
+/// 必须在程序启动时调用一次（Use日志前）
 #[forbid(unused)]
 pub fn init() {
     DEBUG.init(parse_from_env("DEBUG", true));
     crate::common::model::health::init_service_info();
 
-    // 如果不启用Debug，不初始化日志文件
+    // If不启用Debug，不初始化日志文件
     if !*DEBUG {
         return;
     }
@@ -49,13 +49,13 @@ pub fn init() {
         .open(&**DEBUG_LOG_FILE)
         .expect("致命Error：日志系统初始化Failed - 无法打开日志文件");
 
-    // 转换为 tokio 文件句柄
+    // ConvertTo tokio 文件句柄
     LOG_FILE.init(Mutex::new(File::from_std(file)));
 }
 
 // --- 日志Message结构 ---
 
-/// 带序列号的日志Message，确保有序处理
+/// 带序列号的日志Message，Ensure有序Handle
 pub struct LogMessage {
     /// 全局递增的序列号，保证日志顺序
     pub seq: u64,
@@ -63,19 +63,19 @@ pub struct LogMessage {
     pub content: String,
 }
 
-/// 全局日志序列号生成器（内部使用）
+/// 全局日志序列号生成器（内部Use）
 static LOG_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
-/// 获取下一个日志序列号
+/// Get下一个日志序列号
 #[inline]
 fn next_log_seq() -> u64 { LOG_SEQUENCE.fetch_add(1, Ordering::Relaxed) }
 
 // --- 核心组件 ---
 
-/// 全局单例的日志系统状态，使用 OnceCell 确保只初始化一次
+/// 全局单例的日志系统状态，Use OnceCell Ensure只初始化一次
 static LOGGER_STATE: OnceCell<LoggerState> = OnceCell::const_new();
 
-/// 日志系统的状态结构，包含发送通道、关闭信号和后台任务句柄
+/// 日志系统的状态结构，包含发送通道、关闭信号and后台任务句柄
 pub struct LoggerState {
     /// 用于发送日志Message的无界通道发送端
     pub sender: UnboundedSender<LogMessage>,
@@ -85,9 +85,9 @@ pub struct LoggerState {
     writer_handle: Mutex<Option<JoinHandle<()>>>,
 }
 
-/// 确保日志系统已初始化并返回其状态
+/// Ensure日志系统已初始化并返回其状态
 ///
-/// 如果日志系统尚未初始化，会创建所需的通道和后台任务
+/// If日志系统尚未初始化，会创建所需的通道and后台任务
 ///
 /// 返回日志系统状态的引用
 pub fn ensure_logger_initialized() -> impl Future<Output = &'static LoggerState> {
@@ -114,27 +114,27 @@ pub fn ensure_logger_initialized() -> impl Future<Output = &'static LoggerState>
             let mut pending_messages = alloc::collections::BTreeMap::new();
             let mut next_seq = 0u64;
 
-            // 主循环：处理日志Message、定时刷新和关闭信号
+            // 主循环：Handle日志Message、定时刷新and关闭信号
             loop {
                 tokio::select! {
-                    biased; // 优先处理上面的分支
+                    biased; // 优先Handle上面的分支
 
                     // 接收新的日志Message
                     Some(message) = receiver.recv() => {
-                        // 将Message加入待处理队列
+                        // 将Message加入待Handle队列
                         pending_messages.insert(message.seq, message.content);
 
-                        // 检查待处理队列是否过大
+                        // 检查待Handle队列是否过大
                         if pending_messages.len() > MAX_PENDING_MESSAGES {
                             let oldest_seq = *__unwrap!(pending_messages.keys().next());
                             eprintln!(
-                                "日志系统警告：待处理Message过多（>{MAX_PENDING_MESSAGES}），强制跳过序号 {next_seq}-{}",
+                                "日志系统警告：待HandleMessage过多（>{MAX_PENDING_MESSAGES}），强制跳过序号 {next_seq}-{}",
                                 oldest_seq - 1
                             );
                             next_seq = oldest_seq;
                         }
 
-                        // 处理所有连续的Message
+                        // Handle所有连续的Message
                         while let Some(content) = pending_messages.remove(&next_seq) {
                             buffer.extend_from_slice(content.as_bytes());
                             buffer.push(b'\n');
@@ -150,10 +150,10 @@ pub fn ensure_logger_initialized() -> impl Future<Output = &'static LoggerState>
 
                     // 定时刷新触发
                     _ = interval.tick() => {
-                        // 定时刷新时，如果有积压的Message且等待时间过长，强制写入
+                        // 定时刷新时，If有积压的Message且等待时间过长，强制写入
                         if !pending_messages.is_empty() {
                             let oldest_seq = *__unwrap!(pending_messages.keys().next());
-                            // 如果最旧的Message序号与期望序号相差太大，可能有Message丢失
+                            // If最旧的Message序号与期望序号相差太大，可能有Message丢失
                             if oldest_seq > next_seq + OUT_OF_ORDER_THRESHOLD {
                                 eprintln!(
                                     "日志系统警告：检测到可能的Message丢失，跳过序号 {next_seq} 到 {}",
@@ -173,7 +173,7 @@ pub fn ensure_logger_initialized() -> impl Future<Output = &'static LoggerState>
                                 pending_messages.insert(message.seq, message.content);
                             }
 
-                            // 处理所有待处理的Message并记录缺失范围
+                            // Handle所有待Handle的Message并记录缺失范围
                             let mut missing_ranges = Vec::new();
                             for (seq, content) in pending_messages {
                                 if seq != next_seq {
@@ -202,9 +202,9 @@ pub fn ensure_logger_initialized() -> impl Future<Output = &'static LoggerState>
                         }
                     }
 
-                    // 所有其他情况（如通道关闭）
+                    // 所有其他Case（如通道关闭）
                     else => {
-                        // 处理剩余的待处理Message
+                        // Handle剩余的待HandleMessage
                         for (_, content) in pending_messages {
                             buffer.extend_from_slice(content.as_bytes());
                             buffer.push(b'\n');
@@ -227,13 +227,13 @@ pub fn ensure_logger_initialized() -> impl Future<Output = &'static LoggerState>
 /// 将缓冲区内容刷新到日志文件
 ///
 /// # 参数
-/// * `buffer` - 要写入的字节缓冲区，函数调用后会清空此缓冲区
+/// * `buffer` - 要写入的字节缓冲区，函数调用后会清Empty此缓冲区
 async fn flush_byte_buffer(buffer: &mut Vec<u8>) {
     if buffer.is_empty() {
         return;
     }
 
-    // 获取日志文件的互斥锁
+    // Get日志文件的互斥锁
     let mut file_guard = LOG_FILE.lock().await;
 
     // 写入数据
@@ -244,7 +244,7 @@ async fn flush_byte_buffer(buffer: &mut Vec<u8>) {
     }
     buffer.clear();
 
-    // 确保数据刷新到磁盘
+    // Ensure数据刷新到磁盘
     if let Err(err) = file_guard.flush().await {
         eprintln!("日志系统Error：刷新日志文件缓冲区到磁盘Failed。Error：{err}");
     }
@@ -252,7 +252,7 @@ async fn flush_byte_buffer(buffer: &mut Vec<u8>) {
 
 // --- 公开接口 ---
 
-/// 提交Debug日志到异步处理队列
+/// 提交Debug日志到异步Handle队列
 ///
 /// # 参数
 /// * `seq` - 日志序列号
@@ -270,7 +270,7 @@ fn submit_debug_log(seq: u64, content: String) {
 
 /// 记录Debug日志的宏
 ///
-/// 仅当 DEBUG 开启时记录日志，异步发送到日志处理任务
+/// 仅当 DEBUG 开启时记录日志，异步发送到日志Handle任务
 #[macro_export]
 macro_rules! debug {
     ($($arg:tt)*) => {
@@ -281,7 +281,7 @@ macro_rules! debug {
 }
 
 pub fn debug_log(args: core::fmt::Arguments<'_>) {
-    // 立即获取序列号和时间戳，确保顺序性
+    // 立即Get序列号and时间戳，Ensure顺序性
     let seq = next_log_seq();
     let msg = format!(
         "{} | {}",
@@ -291,7 +291,7 @@ pub fn debug_log(args: core::fmt::Arguments<'_>) {
     submit_debug_log(seq, msg);
 }
 
-/// 程序结束前调用，确保所有缓冲日志写入文件
+/// 程序结束前调用，Ensure所有缓冲日志写入文件
 ///
 /// 发送关闭信号，等待后台写入任务完成
 pub async fn flush_all_debug_logs() {

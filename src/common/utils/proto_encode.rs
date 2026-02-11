@@ -66,9 +66,9 @@ fn try_compress_if_beneficial(data: &[u8]) -> Option<Vec<u8>> {
 
 /// EncodeprotobufMessage，自动压缩优化
 ///
-/// 根据MessageSize和压缩效果自动选择最优Encode方式：
+/// 根据MessageSizeand压缩效果自动选择最优Encode方式：
 /// - 小Message（≤1KB）：直接返回原始Encode
-/// - 大Message：尝试gzip压缩，仅当压缩有效时使用
+/// - 大Message：尝试gzip压缩，仅当压缩有效时Use
 ///
 /// # Arguments
 /// * `message` - 实现了`prost::Message`的protobufMessage
@@ -87,7 +87,7 @@ fn try_compress_if_beneficial(data: &[u8]) -> Option<Vec<u8>> {
 /// let msg = MyMessage { field: 42 };
 /// let (data, compressed) = encode_message(&msg)?;
 /// if compressed {
-///     println!("使用压缩，节省空间");
+///     println!("Use压缩，节省Empty间");
 /// }
 /// ```
 #[inline(always)]
@@ -112,7 +112,7 @@ pub fn encode_message(message: &impl ::prost::Message) -> Result<(Vec<u8>, bool)
     }
 }
 
-/// EncodeprotobufMessage为带协议头的帧Format
+/// EncodeprotobufMessageTo带协议头的帧Format
 ///
 /// 生成包含元数据的完整协议帧，适用于流式传输场景。
 ///
@@ -138,9 +138,9 @@ pub fn encode_message(message: &impl ::prost::Message) -> Result<(Vec<u8>, bool)
 /// 当MessageEncode后长度超过`MAX_DECOMPRESSED_SIZE_BYTES`（4MiB）时返回Error
 ///
 /// # Safety
-/// 内部使用`MaybeUninit`和unsafe代码优化性能，但保证内存安全：
+/// 内部Use`MaybeUninit`andunsafe代码优化性能，但保证内存安全：
 /// - 所有写入操作在边界内
-/// - 返回前确保所有数据已初始化
+/// - 返回前Ensure所有数据已初始化
 ///
 /// # Example
 /// ```ignore
@@ -162,14 +162,14 @@ pub fn encode_message_framed(message: &impl ::prost::Message) -> Result<Vec<u8>,
     use ::core::mem::MaybeUninit;
 
     // 分配未初始化buffer：[5字节头部][Message体]
-    // 使用MaybeUninit避免不必要的零初始化
+    // UseMaybeUninit避免不必要的零初始化
     let mut buffer = Vec::<MaybeUninit<u8>>::with_capacity(5 + estimated_size);
 
     unsafe {
         // 预设长度（内容待初始化）
         buffer.set_len(5 + estimated_size);
 
-        // 获取头部和Message体的指针
+        // Get头部andMessage体的指针
         let header_ptr: *mut u8 = buffer.as_mut_ptr().cast();
         let body_ptr = header_ptr.add(5);
 
@@ -188,12 +188,12 @@ pub fn encode_message_framed(message: &impl ::prost::Message) -> Result<Vec<u8>,
                 // 用压缩数据覆盖原始Message体
                 ::core::ptr::copy_nonoverlapping(compressed.as_ptr(), body_ptr, compressed_len);
 
-                // 截断buffer到实际使用的长度
+                // 截断buffer到实际Use的长度
                 buffer.set_len(5 + compressed_len);
 
                 (0x01, compressed_len)
             } else {
-                // 压缩无效，使用原始数据
+                // 压缩无效，Use原始数据
                 (0x00, estimated_size)
             };
 
@@ -205,7 +205,7 @@ pub fn encode_message_framed(message: &impl ::prost::Message) -> Result<Vec<u8>,
         let len_bytes = (final_len as u32).to_be_bytes();
         ::core::ptr::copy_nonoverlapping(len_bytes.as_ptr(), header_ptr.add(1), 4);
 
-        // 此时buffer所有数据已初始化，安全转换为Vec<u8>
+        // 此时buffer所有数据已初始化，安全ConvertToVec<u8>
         #[allow(clippy::missing_transmute_annotations)]
         Ok(::core::intrinsics::transmute(buffer))
     }

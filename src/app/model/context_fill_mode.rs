@@ -29,7 +29,7 @@ impl ContextFillMode {
     }
 }
 
-/// 根据全局配置和指令创建 ExplicitContext
+/// 根据全局配置andInstruction创建 ExplicitContext
 #[inline]
 pub fn create_explicit_context(instructions: ByteStr) -> Option<ExplicitContext> {
     if instructions.trim().is_empty() {
@@ -45,7 +45,7 @@ pub fn create_explicit_context(instructions: ByteStr) -> Option<ExplicitContext>
     match count {
         0 => None,
         1 => {
-            // 单副本情况：零克隆，直接移动
+            // 单副本Case：零克隆，直接移动
             let mut ctx = ExplicitContext::default();
             if mode.context {
                 ctx.context = instructions;
@@ -57,7 +57,7 @@ pub fn create_explicit_context(instructions: ByteStr) -> Option<ExplicitContext>
             Some(ctx)
         }
         _ => {
-            // 多副本情况：使用 RepMove 优化最后一次移动
+            // 多副本Case：Use RepMove 优化Last一次移动
             let mut iter = RepMove::new(instructions, Clone::clone, count);
 
             Some(ExplicitContext {

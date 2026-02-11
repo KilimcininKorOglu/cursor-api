@@ -26,7 +26,7 @@ fn extract_time_ks(timestamp_base64: &str) -> Option<u64> {
             return None;
         }
 
-        // 使用后四位还原 timestamp
+        // Use后四位还原 timestamp
         Some(
             ((*timestamp_bytes.get_unchecked(2) as u64) << 24)
                 | ((*timestamp_bytes.get_unchecked(3) as u64) << 16)

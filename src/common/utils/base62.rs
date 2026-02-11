@@ -6,8 +6,8 @@
 //!
 //! # 特性
 //!
-//! - 固定长度输出：所有Encode结果恰好为 22 字节
-//! - 高性能：使用魔术数除法避免昂贵的 u128 除法操作
+//! - 固定长度输出：所有Encode结果恰好To 22 字节
+//! - 高性能：Use魔术数除法避免昂贵的 u128 除法操作
 //! - 零分配：不需要堆内存分配
 //! - 前导零填充：数值较小时自动在前面补 '0'
 //!
@@ -36,9 +36,9 @@ const BASE: u64 = 62;
 /// Encode输出的固定长度
 pub const BASE62_LEN: usize = 22;
 
-/// 62^10 - 用于将 u128 分解为可管理的块
+/// 62^10 - 用于将 u128 分解To可管理的块
 ///
-/// 这个值是精心选择的，因为：
+/// 这个值是精心选择的，因To：
 /// - 它足够大，可以高效地分解 u128
 /// - 它足够小，可以放入 u64
 const BASE_TO_10: u64 = 839_299_365_868_340_224;
@@ -48,7 +48,7 @@ const BASE_TO_10_U128: u128 = BASE_TO_10 as u128;
 ///
 /// 这些常量通过以下方式计算得出：
 /// - MULTIPLY = ceil(2^(128 + SHIFT) / BASE_TO_10)
-/// - SHIFT 选择为使结果精确的最小值
+/// - SHIFT 选择To使结果精确的最小值
 const DIV_BASE_TO_10_MULTIPLY: u128 = 233_718_071_534_448_225_491_982_379_416_108_680_074;
 const DIV_BASE_TO_10_SHIFT: u8 = 59;
 
@@ -112,7 +112,7 @@ impl std::error::Error for DecodeError {}
 // 核心算法
 // ============================================================================
 
-/// 使用魔术数快速计算 u128 / BASE_TO_10
+/// Use魔术数快速计算 u128 / BASE_TO_10
 ///
 /// # 返回值
 ///
@@ -120,7 +120,7 @@ impl std::error::Error for DecodeError {}
 ///
 /// # 算法
 ///
-/// 使用定点算术避免昂贵的 u128 除法：
+/// Use定点算术避免昂贵的 u128 除法：
 /// - quotient = (num * MULTIPLY) >> (128 + SHIFT)
 /// - remainder = num - quotient * BASE_TO_10
 #[inline(always)]
@@ -134,7 +134,7 @@ fn fast_div_base_to_10(num: u128) -> (u128, u64) {
 ///
 /// # 算法
 ///
-/// 将输入分解为 64 位块进行乘法：
+/// 将输入分解To 64 位块进行乘法：
 /// ```text
 /// x = x_hi * 2^64 + x_lo
 /// y = y_hi * 2^64 + y_lo
@@ -160,18 +160,18 @@ const fn mulh(x: u128, y: u128) -> u128 {
 // 公共 API
 // ============================================================================
 
-/// 将 u128 Encode为固定长度的 base62 字符串
+/// 将 u128 EncodeTo固定长度的 base62 字符串
 ///
 /// # 参数
 ///
 /// - `num`: 要Encode的数值
-/// - `buf`: 输出缓冲区，必须恰好为 [`BASE62_LEN`] 字节
+/// - `buf`: 输出缓冲区，必须恰好To [`BASE62_LEN`] 字节
 ///
 /// # 性能
 ///
 /// 此函数经过高度优化：
-/// - 使用两次快速除法将 u128 分解为三个 u64 块
-/// - 每个块使用原生 u64 运算进行Encode
+/// - Use两次快速除法将 u128 分解To三个 u64 块
+/// - 每个块Use原生 u64 运算进行Encode
 /// - 无分支预测Failed，无内存分配
 ///
 /// # 示例
@@ -184,7 +184,7 @@ const fn mulh(x: u128, y: u128) -> u128 {
 /// ```
 #[inline]
 pub fn encode_fixed(num: u128, buf: &mut [u8; BASE62_LEN]) {
-    // 将 u128 分解为三个块：
+    // 将 u128 分解To三个块：
     // num = high * (62^10)^2 + mid * 62^10 + low
     let (quotient, low) = fast_div_base_to_10(num);
     let (high, mid) = fast_div_base_to_10(quotient);
@@ -205,7 +205,7 @@ pub fn encode_fixed(num: u128, buf: &mut [u8; BASE62_LEN]) {
 ///
 /// # Safety
 ///
-/// 调用者必须确保：
+/// 调用者必须Ensure：
 /// - `ptr` 指向至少 `len` 字节的有效内存
 /// - `num` Encode后不会超过 `len` 个字符
 #[inline(always)]
@@ -217,11 +217,11 @@ unsafe fn encode_u64_chunk(mut num: u64, len: usize, ptr: *mut u8) {
     }
 }
 
-/// 将固定长度的 base62 字符串Decode为 u128
+/// 将固定长度的 base62 字符串DecodeTo u128
 ///
 /// # 参数
 ///
-/// - `buf`: 输入缓冲区，必须恰好为 [`BASE62_LEN`] 字节
+/// - `buf`: 输入缓冲区，必须恰好To [`BASE62_LEN`] 字节
 ///
 /// # Error
 ///
@@ -241,7 +241,7 @@ pub fn decode_fixed(buf: &[u8; BASE62_LEN]) -> Result<u128, DecodeError> {
     let mut result = 0u128;
 
     for (position, &byte) in buf.iter().enumerate() {
-        // 使用查找表快速获取字符值
+        // Use查找表快速Get字符值
         let value = DECODE_LUT[byte as usize];
         if value == 0xFF {
             return Err(DecodeError::InvalidCharacter { byte, position });

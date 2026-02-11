@@ -69,7 +69,7 @@ impl Randomness {
             buf[pos + 1] = HEX_CHARS[(byte & 0x0F) as usize];
         }
 
-        // 插入分隔符
+        // Insert分隔符
         buf[8] = b'-';
         buf[13] = b'-';
 
@@ -242,10 +242,10 @@ impl<'de> ::serde::Deserialize<'de> for Subject {
 /// 用户标识符，Support两种Format的高效ID系统
 ///
 /// 采用向前兼容设计，通过检查高32位区分Format：
-/// - 旧Format：24字符十六进制，高32位为0
-/// - 新Format：`user_` + 26字符ULID，充分利用128位空间
+/// - 旧Format：24字符十六进制，高32位To0
+/// - 新Format：`user_` + 26字符ULID，充分利用128位Empty间
 ///
-/// ULID时间戳特性确保新Format高32位非零，实现无歧义Format识别。
+/// ULID时间戳特性Ensure新Format高32位非零，实现无歧义Format识别。
 #[derive(
     Clone, Copy, PartialEq, Eq, Hash, ::rkyv::Archive, ::rkyv::Serialize, ::rkyv::Deserialize,
 )]
@@ -256,13 +256,13 @@ pub struct UserId([u8; 16]);
 impl UserId {
     const PREFIX: &'static str = "user_";
 
-    // ==================== 公开API：构造与转换 ====================
+    // ==================== 公开API：构造与Convert ====================
 
     /// 从 u128 构造
     #[inline]
     pub const fn from_u128(value: u128) -> Self { Self(value.to_ne_bytes()) }
 
-    /// 转换为 u128
+    /// ConvertTo u128
     #[inline]
     pub const fn as_u128(self) -> u128 { u128::from_ne_bytes(self.0) }
 
@@ -270,13 +270,13 @@ impl UserId {
     #[inline]
     pub const fn from_bytes(bytes: [u8; 16]) -> Self { Self(bytes) }
 
-    /// 转换为字节数组
+    /// ConvertTo字节数组
     #[inline]
     pub const fn to_bytes(self) -> [u8; 16] { self.0 }
 
-    // ==================== Format检测与字符串转换 ====================
+    // ==================== Format检测与字符串Convert ====================
 
-    /// 检查是否为旧FormatID（高32位为0）
+    /// 检查是否To旧FormatID（高32位To0）
     #[inline]
     pub const fn is_legacy(&self) -> bool {
         // Memory layout (little-endian): [低32位][次低32位][次高32位][最高32位]
@@ -293,7 +293,7 @@ impl UserId {
         parts[HIGH_INDEX] == 0
     }
 
-    /// 高性能字符串转换，旧Format24字符，新Format31字符
+    /// 高性能字符串Convert，旧Format24字符，新Format31字符
     #[allow(clippy::wrong_self_convention)]
     #[inline]
     pub fn to_str<'buf>(&self, buf: &'buf mut [u8; 31]) -> &'buf mut str {
@@ -304,7 +304,7 @@ impl UserId {
                 buf[i * 2 + 1] = HEX_CHARS[(byte & 0x0f) as usize];
             }
 
-            // SAFETY: HEX_CHARS 确保输出是有效 ASCII
+            // SAFETY: HEX_CHARS Ensure输出是有效 ASCII
             unsafe { core::str::from_utf8_unchecked_mut(&mut buf[..24]) }
         } else {
             // 新Format：user_ + 26字符 ULID
@@ -547,7 +547,7 @@ impl FromStr for RawToken {
             return Err(TokenError::InvalidSignatureLength);
         }
 
-        // 2. Decodepayload和signature
+        // 2. Decodepayloadandsignature
         let payload =
             URL_SAFE_NO_PAD.decode_to_vec(payload_b64).map_err(|_| TokenError::InvalidBase64)?;
 

@@ -14,19 +14,19 @@ pub fn init_display_name_cache() {
 
 /// 计算 AI 模型标识符的显示名称。
 ///
-/// # 转换Rules
+/// # ConvertRules
 ///
 /// 1. **版本号合并**：单数字-单数字 → 小数点版本号（如 `3-5` → `3.5`）
 /// 2. **日期保留**：日期Format在括号中显示
 ///    - `YYYY-MM-DD` Format：`2024-04-09` → `(2024-04-09)`
 ///    - `MM-DD` Format：`03-25` → `(03-25)`  
 ///    - `MMDD` Format：`0528` → `(05-28)`
-/// 3. **时间标记**：`latest` 和 `legacy` 在括号中显示
+/// 3. **时间标记**：`latest` and `legacy` 在括号中显示
 /// 4. **特殊前缀**：
 ///    - `gpt` → `GPT`
 ///    - `o1`/`o3`/`o4` → `O1`/`O3`/`O4`
 /// 5. **版本标记**：`v`/`r`/`k` 开头的版本号首字母大写（如 `v3.1` → `V3.1`）
-/// 6. **分隔符转换**：其他 `-` 转为空格，各部分首字母大写
+/// 6. **分隔符Convert**：其他 `-` 转ToEmpty格，各部分首字母大写
 ///
 /// # Arguments
 ///
@@ -39,15 +39,15 @@ pub fn init_display_name_cache() {
 /// # Examples
 ///
 /// ```
-/// // 基础转换
+/// // 基础Convert
 /// assert_eq!(calculate_display_name("claude-3-5-sonnet"), "Claude 3.5 Sonnet");
 /// assert_eq!(calculate_display_name("deepseek-v3"), "Deepseek V3");
 ///
-/// // GPT 特殊处理
+/// // GPT 特殊Handle
 /// assert_eq!(calculate_display_name("gpt-4o"), "GPT 4o");
 /// assert_eq!(calculate_display_name("gpt-3.5-turbo"), "GPT 3.5 Turbo");
 ///
-/// // 日期处理（放入括号）
+/// // 日期Handle（放入括号）
 /// assert_eq!(calculate_display_name("gpt-4-turbo-2024-04-09"), "GPT 4 Turbo (2024-04-09)");
 /// assert_eq!(calculate_display_name("gemini-2.5-pro-exp-03-25"), "Gemini 2.5 Pro Exp (03-25)");
 /// assert_eq!(calculate_display_name("deepseek-r1-0528"), "Deepseek R1 (05-28)");
@@ -59,7 +59,7 @@ pub fn init_display_name_cache() {
 /// // O 系列
 /// assert_eq!(calculate_display_name("o3-mini"), "O3 Mini");
 ///
-/// // 边界情况
+/// // 边界Case
 /// assert_eq!(calculate_display_name("version-10-beta"), "Version 10 Beta"); // 10 不是单数字
 /// assert_eq!(calculate_display_name("model-1-test-9-case"), "Model 1 Test 9 Case"); // 单数字不相邻
 /// ```
@@ -170,7 +170,7 @@ mod tests {
             "version-0528",
             "model-123",
             "test-12345",
-            // 边界情况
+            // 边界Case
             "model-1-2-3",
             "model-1-test-9-case",
             "model-fast-experimental-latest",

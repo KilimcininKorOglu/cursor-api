@@ -85,7 +85,7 @@ impl ProtocolHandler for ChatCompletions {
         let (ext_token, use_pri) = __unwrap!(extensions.remove::<TokenBundleResult>())
             .map_err(ErrorExt::into_openai_tuple)?;
 
-        // 验证模型是否Support并获取模型信息
+        // 验证模型是否Support并Get模型信息
         let model = if let Some(model) = ExtModel::from_str(&request.model) {
             model
         } else {
@@ -132,7 +132,7 @@ impl ProtocolHandler for ChatCompletions {
             )
             .await;
 
-            // 如果需要获取用户使用情况,创建后台任务获取profile
+            // If需要Get用户UseCase,创建后台任务Getprofile
             if model
                 .is_usage_check(current_config.usage_check_models.as_ref().map(UsageCheck::from_pb))
             {

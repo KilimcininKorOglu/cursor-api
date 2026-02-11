@@ -56,7 +56,7 @@ pub struct SetGeneralProxyRequest {
     pub name: String,
 }
 
-// 设置获取图像代理Request
+// 设置Get图像代理Request
 // #[derive(Deserialize)]
 // pub struct SetFetchImageProxyRequest {
 //     pub name: Option<String>,

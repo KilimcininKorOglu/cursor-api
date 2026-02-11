@@ -5,7 +5,7 @@ use core::num::NonZeroUsize;
 pub enum LogsLimit {
     /// Disabled日志记录
     Disabled,
-    /// 有Limit的日志记录，参数为最大日志数量
+    /// 有Limit的日志记录，参数To最大日志数量
     Limited(NonZeroUsize),
 }
 
@@ -22,7 +22,7 @@ impl LogsLimit {
     #[inline(always)]
     pub fn should_log(&self) -> bool { !matches!(self, Self::Disabled) }
 
-    /// 获取日志Limit
+    /// Get日志Limit
     #[inline(always)]
     pub fn get_limit(self) -> usize {
         match self {

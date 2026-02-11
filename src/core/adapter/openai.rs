@@ -39,7 +39,7 @@ crate::define_typed_constants! {
         DATA_IMAGE_PREFIX = "data:image/",
         /// Base64 分隔符
         BASE64_SEPARATOR = ";base64,",
-        /// 双换行符用于分隔指令
+        /// 双换行符用于分隔Instruction
         DOUBLE_NEWLINE = "\n\n",
     }
 }
@@ -117,12 +117,12 @@ impl Adapter for Openai {
         image_support: bool,
         is_agentic: bool,
     ) -> Result<(String, Messages, Vec<ComposerExternalLink>), AdapterError> {
-        // 分别收集 system 指令和 user/assistant 对话
+        // 分别Collect system instructionsand user/assistant Conversation
         let (system_messages, mut params): (Vec<_>, Vec<_>) = messages
             .into_iter()
             .partition(|param| matches!(param, ChatCompletionMessageParam::System { .. }));
 
-        // 收集 system 指令
+        // Collect system instructions
         let instructions = system_messages
             .into_iter()
             .map(|param| {
@@ -134,14 +134,14 @@ impl Adapter for Openai {
             .collect::<Vec<_>>()
             .join(DOUBLE_NEWLINE);
 
-        // 使用默认指令或收集到的指令
+        // Use default or collected instructions
         let instructions = if instructions.is_empty() {
             DEFAULT_INSTRUCTIONS.get().get(now)
         } else {
             instructions
         };
 
-        // 处理空对话情况
+        // Handle empty conversation
         if params.is_empty() {
             return Ok((
                 instructions,
@@ -155,7 +155,7 @@ impl Adapter for Openai {
             ));
         }
 
-        // 如果第一条是 assistant，插入空的 user Message
+        // If first is assistant, insert empty user Message
         if params
             .first()
             .is_some_and(|param| matches!(param, ChatCompletionMessageParam::Assistant { .. }))
@@ -168,7 +168,7 @@ impl Adapter for Openai {
             );
         }
 
-        // 确保最后一条是 user
+        // Ensure last is user
         // if params
         //     .last()
         //     .is_some_and(|param| matches!(param, ChatCompletionMessageParam::Assistant { .. }))
@@ -178,7 +178,7 @@ impl Adapter for Openai {
         //     });
         // }
 
-        // 转换为 proto messages
+        // Convert to proto messages
         let mut messages = Messages::with_capacity(params.len());
         let mut base_uuid = BaseUuid::new();
         let mut params = params.into_iter().peekable();
@@ -307,7 +307,7 @@ impl Adapter for Openai {
                 _ => continue,
             }
 
-            // 处理Message content和相关字段
+            // Handle Message content and related fields
             let (final_text, web_references, use_web) = if !is_user {
                 let (text, web_refs, has_web) = extract_web_references_info(atext);
                 (text, web_refs, has_web.to_opt())
@@ -353,7 +353,7 @@ impl Adapter for Openai {
             }
         }
 
-        // 获取最后一条用户Message的URLs
+        // Get URLs from last user Message
         let external_links = messages
             .last_mut()
             .map(|msg| {

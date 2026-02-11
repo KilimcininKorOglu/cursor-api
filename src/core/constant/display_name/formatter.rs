@@ -20,11 +20,11 @@ pub fn format_output(result: ParseResult) -> String {
             }
             Pattern::Version(v) => output.push_str(v.as_ref()),
             Pattern::Word(w) => output.push_str(capitalize_word(w).as_ref()),
-            _ => {} // 日期相关不应该在主体部分
+            _ => {} // 日期Related不应该在主体部分
         }
     }
 
-    // Format化日期相关部分（括号内）
+    // Format化日期Related部分（括号内）
     for date_item in result.date_parts.iter() {
         output.push_str(" (");
         match date_item {
@@ -40,7 +40,7 @@ pub fn format_output(result: ParseResult) -> String {
 
 #[inline(always)]
 fn capitalize_word(word: &str) -> Cow<'_, str> {
-    // 特殊情况处理 - 需要完全替换
+    // 特殊CaseHandle - 需要完全替换
     if word == "default" {
         return Cow::Borrowed("Default");
     }
@@ -72,13 +72,13 @@ fn capitalize_word(word: &str) -> Cow<'_, str> {
         return Cow::Borrowed(word);
     }
 
-    // 非 ASCII 字符的处理（虽然在 AI 模型名中很少见）
+    // 非 ASCII 字符的Handle（虽然在 AI 模型名中很少见）
     let mut chars = word.chars();
     match chars.next() {
         None => Cow::Borrowed(word),
         Some(first) if first.is_uppercase() => Cow::Borrowed(word),
         Some(first) => {
-            // 预分配足够的空间（假设最坏情况下大写后长度翻倍）
+            // 预分配足够的Empty间（假设最坏Case下大写后长度翻倍）
             let mut result = String::with_capacity(word.len() + 4);
             for ch in first.to_uppercase() {
                 result.push(ch);

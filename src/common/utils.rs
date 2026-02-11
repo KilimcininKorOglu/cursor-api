@@ -106,10 +106,10 @@ impl ParseFromEnv for &'static str {
                 let trimmed_len = trimmed.len();
 
                 if trimmed_len == 0 {
-                    // 如果 trim 后为空，使用默认值（不分配）
+                    // If trim 后ToEmpty，UseDefault值（不分配）
                     None
                 } else if trimmed_len == value.len() {
-                    // 不需要 trim，直接使用
+                    // 不需要 trim，直接Use
                     Some(Cow::Owned(value))
                 } else {
                     // 需要 trim - 就地修改
@@ -120,8 +120,8 @@ impl ParseFromEnv for &'static str {
 
                         // SAFETY:
                         // - trimmed 是 value.trim() 的结果，保证是 value 的子切片
-                        // - start_offset 和 trimmed_len 来自有效的切片边界
-                        // - 目标位置（索引 0）和长度在 vec 容量内
+                        // - start_offset and trimmed_len 来自有效的切片边界
+                        // - 目标位置（索引 0）and长度在 vec 容量内
                         // - ptr::copy Support重叠内存区域（memmove 语义）
                         if start_offset > 0 {
                             ::core::ptr::copy(
@@ -298,7 +298,7 @@ pub async fn get_token_profile(
 //     )
 // }
 
-/// 获取用户使用情况配置文件
+/// Get用户UseCase配置文件
 pub async fn get_usage_profile(
     client: &Client,
     cookie: http::HeaderValue,
@@ -310,7 +310,7 @@ pub async fn get_usage_profile(
     response.json().await.ok()
 }
 
-/// 获取Stripe付费配置文件
+/// GetStripe付费配置文件
 pub async fn get_stripe_profile(
     client: &Client,
     bearer_token: http::HeaderValue,
@@ -328,7 +328,7 @@ pub async fn get_stripe_profile(
     response.json().await.ok()
 }
 
-/// 获取用户基础配置文件
+/// Get用户基础配置文件
 pub async fn get_user_profile(
     client: &Client,
     cookie: http::HeaderValue,
@@ -426,22 +426,22 @@ pub async fn get_token_usage(
 }
 
 // pub fn validate_token_and_checksum(auth_token: &str) -> Option<(String, Checksum)> {
-//     // 尝试使用自定义分隔符查找
+//     // 尝试Use自定义分隔符查找
 //     let mut delimiter_pos = auth_token.rfind(*TOKEN_DELIMITER);
 
-//     // 如果自定义分隔符未找到，并且 USE_COMMA_DELIMITER 为 true，则尝试使用逗号
+//     // If自定义分隔符未找到，并且 USE_COMMA_DELIMITER To true，则尝试Use逗号
 //     if delimiter_pos.is_none() && *USE_COMMA_DELIMITER {
 //         delimiter_pos = auth_token.rfind(COMMA);
 //     }
 
-//     // 如果最终都没有找到分隔符，则返回 None
+//     // If最终都没有找到分隔符，则返回 None
 //     let comma_pos = delimiter_pos?;
 
-//     // 使用找到的分隔符位置分割字符串
+//     // Use找到的分隔符位置分割字符串
 //     let (token_part, checksum) = auth_token.split_at(comma_pos);
 //     let checksum = &checksum[1..]; // 跳过逗号
 
-//     // 解析 token - 为了向前兼容,忽略最后一个:或%3A前的内容
+//     // 解析 token - To了向前兼容,忽略Last一个:或%3A前的内容
 //     let colon_pos = token_part.rfind(':');
 //     let encoded_colon_pos = token_part.rfind("%3A");
 
@@ -456,7 +456,7 @@ pub async fn get_token_usage(
 //         }
 //     };
 
-//     // 验证 token 和 checksum 有效性
+//     // 验证 token and checksum 有效性
 //     if let Ok(chekcsum) = Checksum::from_str(checksum) {
 //         if validate_token(token) {
 //             Some((token.to_string(), chekcsum))
@@ -469,10 +469,10 @@ pub async fn get_token_usage(
 // }
 
 // pub fn extract_token(auth_token: &str) -> Option<&str> {
-//     // 尝试使用自定义分隔符查找
+//     // 尝试Use自定义分隔符查找
 //     let mut delimiter_pos = auth_token.rfind(*TOKEN_DELIMITER);
 
-//     // 如果自定义分隔符未找到，并且 USE_COMMA_DELIMITER 为 true，则尝试使用逗号
+//     // If自定义分隔符未找到，并且 USE_COMMA_DELIMITER To true，则尝试Use逗号
 //     if delimiter_pos.is_none() && *USE_COMMA_DELIMITER {
 //         delimiter_pos = auth_token.rfind(COMMA);
 //     }
@@ -509,7 +509,7 @@ pub async fn get_token_usage(
 #[inline(always)]
 pub fn format_time_ms(seconds: f64) -> f64 { (seconds * 1000.0).round() / 1000.0 }
 
-/// 将 JWT token 转换为 TokenInfo
+/// 将 JWT token ConvertTo TokenInfo
 #[inline]
 pub fn token_to_tokeninfo(
     token: RawToken,
@@ -533,7 +533,7 @@ pub fn token_to_tokeninfo(
     }
 }
 
-/// 将 TokenInfo 转换为 JWT token
+/// 将 TokenInfo ConvertTo JWT token
 #[inline]
 pub fn tokeninfo_to_token(tuple: (configured_key::TokenInfo, [u8; 32])) -> Option<ExtToken> {
     let (info, hash) = tuple;
@@ -556,24 +556,24 @@ pub fn tokeninfo_to_token(tuple: (configured_key::TokenInfo, [u8; 32])) -> Optio
     })
 }
 
-/// 生成 PKCE code_verifier 和对应的 code_challenge (S256 method)
+/// 生成 PKCE code_verifier and对应的 code_challenge (S256 method)
 ///
 /// # Panics
-/// 如果系统随机数生成器不可用则 panic（极其罕见，通常表示系统级故障）
+/// If系统随机数生成器不可用则 panic（极其罕见，通常表示系统级故障）
 #[inline]
 fn generate_pkce_pair() -> ([u8; 43], [u8; 43]) {
     use core::mem::MaybeUninit;
     use rand::TryRngCore as _;
     use sha2::Digest as _;
 
-    // 生成 32 字节随机数作为 verifier
+    // 生成 32 字节随机数作To verifier
     let mut verifier_bytes = [0u8; 32];
     rand::rngs::OsRng
         .try_fill_bytes(&mut verifier_bytes)
         .expect("System RNG unavailable: cannot generate secure PKCE verifier");
 
     unsafe {
-        // Base64 Encode为 code_verifier (32 bytes -> 43 chars)
+        // Base64 EncodeTo code_verifier (32 bytes -> 43 chars)
         let mut code_verifier = MaybeUninit::<[u8; 43]>::uninit();
 
         // SAFETY: 32 字节的 Base64URL Encode（无 padding）= ceil(32 * 8 / 6) = 43 字节
@@ -586,7 +586,7 @@ fn generate_pkce_pair() -> ([u8; 43], [u8; 43]) {
         // SHA-256 哈希 code_verifier (43 bytes -> 32 bytes)
         let hash_result = sha2::Sha256::digest(code_verifier);
 
-        // Base64 Encode为 code_challenge (32 bytes -> 43 chars)
+        // Base64 EncodeTo code_challenge (32 bytes -> 43 chars)
         let mut code_challenge = MaybeUninit::<[u8; 43]>::uninit();
 
         // SAFETY: 同上，SHA-256 固定输出 32 字节，Encode后固定 43 字节
@@ -672,7 +672,7 @@ async fn upgrade_token(ext_token: &ExtToken, use_pri: bool) -> Option<Token> {
     let mut url = token_poll_url(use_pri).clone();
     url.query_pairs_mut().append_pair("uuid", uuid).append_pair("verifier", verifier);
 
-    // 轮询获取token
+    // 轮询Gettoken
     for request in RepMove::new(
         super::client::build_token_poll_request(&ext_token.get_client(), url, use_pri),
         RequestBuilderClone,

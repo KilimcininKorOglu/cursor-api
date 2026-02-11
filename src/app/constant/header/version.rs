@@ -1,6 +1,6 @@
 //! Cursor 版本信息管理模块
 //!
-//! 本模块使用 ManuallyInit 来存储版本信息，这种设计考虑了以下因素：
+//! 本模块Use ManuallyInit 来存储版本信息，这种设计考虑了以下因素：
 //! 1. 版本信息在程序生命周期内只需初始化一次
 //! 2. 零开销访问：没有原子操作或运行时检查
 //! 3. 符合单线程初始化、多线程只读的模式
@@ -17,7 +17,7 @@ use manually_init::ManuallyInit;
 // 定义所有常量
 crate::define_typed_constants! {
     &'static str => {
-        /// 默认的客户端版本号
+        /// Default的客户端版本号
         DEFAULT_CLIENT_VERSION = "2.0.0",
         /// 环境变量名：Cursor 客户端版本
         ENV_CURSOR_CLIENT_VERSION = "CURSOR_CLIENT_VERSION",
@@ -29,7 +29,7 @@ crate::define_typed_constants! {
             target_os = "macos" => {"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Cursor/"}
             target_os = "linux" => {"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Cursor/"}
         },
-        /// 默认的 User-Agent
+        /// Default的 User-Agent
         DEFAULT_UA = cfg_select! {
             target_os = "windows" => {"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Cursor/2.0.0 Chrome/138.0.7204.251 Electron/37.7.0 Safari/537.36"}
             target_os = "macos" => {"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Cursor/2.0.0 Chrome/138.0.7204.251 Electron/37.7.0 Safari/537.36"}
@@ -58,11 +58,11 @@ static CLIENT_VERSION: ManuallyInit<http::header::HeaderValue> = ManuallyInit::n
 /// Cursor User-Agent 的 HeaderValue
 static HEADER_VALUE_UA_CURSOR_LATEST: ManuallyInit<http::header::HeaderValue> = ManuallyInit::new();
 
-/// 获取 Cursor 客户端版本的 HeaderValue
+/// Get Cursor 客户端版本的 HeaderValue
 ///
 /// # Safety
 ///
-/// 调用者必须确保 `initialize_cursor_version` 已经被调用。
+/// 调用者必须Ensure `initialize_cursor_version` 已经被调用。
 #[inline(always)]
 pub fn cursor_client_version() -> http::header::HeaderValue { CLIENT_VERSION.get().clone() }
 
@@ -73,11 +73,11 @@ pub fn cursor_version() -> bytes::Bytes {
     value_ref.inner.clone()
 }
 
-/// 获取 Cursor 用户代理的 HeaderValue
+/// Get Cursor 用户代理的 HeaderValue
 ///
 /// # Safety
 ///
-/// 调用者必须确保 `initialize_cursor_version` 已经被调用。
+/// 调用者必须Ensure `initialize_cursor_version` 已经被调用。
 #[inline(always)]
 pub fn header_value_ua_cursor_latest() -> http::header::HeaderValue {
     HEADER_VALUE_UA_CURSOR_LATEST.get().clone()
@@ -105,7 +105,7 @@ pub fn initialize_cursor_version() {
         Err(_) => {
             __cold_path!();
             __eprintln!("Error: Invalid version string for HTTP header");
-            // 使用默认版本
+            // UseDefault版本
             const { http::header::HeaderValue::from_static(DEFAULT_CLIENT_VERSION) }
         }
     };
@@ -118,7 +118,7 @@ pub fn initialize_cursor_version() {
         Err(_) => {
             __cold_path!();
             __eprintln!("Error: Invalid user agent string for HTTP header");
-            // 使用默认 UA
+            // UseDefault UA
             const { http::header::HeaderValue::from_static(DEFAULT_UA) }
         }
     };
@@ -134,7 +134,7 @@ pub fn initialize_cursor_version() {
 ///
 /// # Returns
 ///
-/// 如果版本Format有效返回 `true`，否则返回 `false`
+/// If版本Format有效返回 `true`，否则返回 `false`
 #[inline]
 pub const fn is_valid_version_format(version: &str) -> bool {
     // 快速路径：检查基本长度要求
@@ -173,13 +173,13 @@ pub const fn is_valid_version_format(version: &str) -> bool {
         i += 1;
     }
 
-    // 必须正好有两个点号，且最后一部分有数字
+    // 必须正好有两个点号，且Last一部分有数字
     dot_count == VERSION_DOT_COUNT && digit_count > 0
 }
 
 /// 验证并警告无效的版本字符串
 ///
-/// 如果版本字符串不符合Format，打印警告信息但不终止程序
+/// If版本字符串不符合Format，打印警告信息但不终止程序
 #[inline]
 pub fn validate_version_string(version: &str) {
     if !is_valid_version_format(version) {

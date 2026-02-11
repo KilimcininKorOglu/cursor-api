@@ -34,17 +34,17 @@ pub struct GetLogsParams {
 
 // 定义发送给日志Actor的命令
 pub enum LogCommand {
-    // 获取日志
+    // Get日志
     GetLogs {
         params: GetLogsParams,
         tx: oneshot::Sender<(u64, Vec<RequestLog>)>,
     },
-    // 添加一条日志
+    // 添加One日志
     AddLog {
         log: Box<RequestLog>,
         token: ExtToken,
     },
-    // 获取下一个日志ID
+    // Get下一个日志ID
     GetNextLogId {
         tx: oneshot::Sender<u64>,
     },

@@ -25,11 +25,11 @@ pub struct ExtModel {
 
 impl ExtModel {
     /// 从字符串解析 ExtModel
-    /// Support "-online" 和 "-max" 后缀
-    /// 当 BYPASS_MODEL_VALIDATION 为 true 时，在正常验证Failed后仍返回结果
+    /// Support "-online" and "-max" 后缀
+    /// 当 BYPASS_MODEL_VALIDATION To true 时，在正常验证Failed后仍返回结果
     #[inline]
     pub fn from_str(s: &str) -> Option<Self> {
-        // 处理 online 后缀
+        // Handle online 后缀
         let (base_str, web) = s.strip_suffix("-online").map_or((s, false), |base| (base, true));
 
         // 先尝试直接匹配（可能带有 -max 后缀）
@@ -43,11 +43,11 @@ impl ExtModel {
             });
         }
 
-        // 处理 max 后缀
+        // Handle max 后缀
         let (model_str, max) =
             base_str.strip_suffix("-max").map_or((base_str, false), |base| (base, true));
 
-        // 如果有 -max 后缀，尝试匹配不带后缀的模型名
+        // If有 -max 后缀，尝试匹配不带后缀的模型名
         if max
             && let Some(raw) = Models::find_id(model_str)
             && raw.is_max

@@ -35,7 +35,7 @@ impl core::error::Error for TokenError {}
 /// - **零拷贝查询**：所有查询方法返回引用，避免clone
 /// - **紧凑存储**：Vec<Option<T>>密集布局，缓存友好
 /// - **O(1)操作**：通过HashMap+Vec实现常数时间增删改查
-/// - **ID重用**：FIFO队列管理空闲ID，减少内存碎片
+/// - **ID重用**：FIFO队列管理Empty闲ID，减少内存碎片
 ///   - 优先重用最早释放的ID，提高cache locality
 ///   - Vec不会无限增长，删除后的槽位会被新token复用
 /// - **多索引**：SupportID/别名/TokenKey三种查询方式
@@ -44,12 +44,12 @@ impl core::error::Error for TokenError {}
 /// 数据结构不变性：
 /// - `tokens`, `id_to_alias` 长度始终相同
 /// - `id_map`, `alias_map` 中的id值始终 < tokens.len()
-/// - `id_map`, `alias_map` 中的id指向的 `tokens[id]` 必为 Some
-/// - `free_ids` 中的id必 < tokens.len() 且 `tokens[id]` 为 None
+/// - `id_map`, `alias_map` 中的id指向的 `tokens[id]` 必To Some
+/// - `free_ids` 中的id必 < tokens.len() 且 `tokens[id]` To None
 ///
-/// 性能关键路径已使用unsafe消除边界检查
+/// 性能关键路径已Useunsafe消除边界检查
 pub struct TokenManager {
-    /// 主存储：ID -> TokenInfo，使用OptionSupport删除后的空槽位
+    /// 主存储：ID -> TokenInfo，UseOptionSupport删除后的Empty槽位
     tokens: Vec<Option<TokenInfo>>,
     /// TokenKey -> ID映射，用于通过token内容查找
     id_map: HashMap<TokenKey, usize>,
@@ -83,7 +83,7 @@ impl TokenManager {
         token_info: TokenInfo,
         alias: S,
     ) -> Result<usize, TokenError> {
-        // 处理未命名或冲突的别名，自动生成唯一别名
+        // Handle未命名或冲突的别名，自动生成唯一别名
         let mut alias: Cow<'_, str> = alias.into();
         if alias == UNNAMED || alias.starts_with(UNNAMED_PATTERN) {
             let id = self.free_ids.front().copied().unwrap_or(self.tokens.len());
@@ -94,7 +94,7 @@ impl TokenManager {
             return Err(TokenError::AliasExists);
         }
 
-        // ID分配策略：优先重用空闲ID（FIFO顺序），否则扩展vec
+        // ID分配策略：优先重用Empty闲ID（FIFO顺序），否则扩展vec
         let id = if let Some(reused_id) = self.free_ids.pop_front() {
             reused_id
         } else {
@@ -153,7 +153,7 @@ impl TokenManager {
             self.alias_map.remove(&alias);
         }
 
-        // 将ID加入空闲队列末尾，等待重用
+        // 将ID加入Empty闲队列末尾，等待重用
         self.free_ids.push_back(id);
         Some(token_info)
     }
@@ -209,7 +209,7 @@ impl TokenManager {
 
     #[inline(never)]
     pub fn list(&self) -> Vec<(usize, Alias, TokenInfo)> {
-        // SAFETY: enumerate保证id<len，filter_map只处理Some分支，id_to_alias同步维护
+        // SAFETY: enumerate保证id<len，filter_map只HandleSome分支，id_to_alias同步维护
         unsafe {
             self.tokens
                 .iter()
@@ -235,7 +235,7 @@ impl TokenManager {
 
     #[inline(never)]
     pub async fn save(&self) -> Result<(), Box<dyn core::error::Error + Send + Sync + 'static>> {
-        // SAFETY: enumerate保证id<len，filter_map只处理Some，id_to_alias同步维护
+        // SAFETY: enumerate保证id<len，filter_map只HandleSome，id_to_alias同步维护
         let helpers: Vec<TokenInfoHelper> = unsafe {
             self.tokens
                 .iter()
@@ -335,7 +335,7 @@ impl<'w> TokensWriter<'w> {
 
 /// Token写入器，通过Drop自动同步key变化
 ///
-/// 使用场景：当需要修改token的key时，通过此类型确保：
+/// Use场景：当需要修改token的key时，通过此类型Ensure：
 /// 1. 修改完成后自动更新id_map
 /// 2. 修改完成后自动更新queue中的key
 /// 3. 防止忘记手动同步导致的索引不一致
@@ -377,7 +377,7 @@ impl Drop for TokenWriter<'_> {
     }
 }
 
-/// 生成未命名token的默认别名
+/// 生成未命名token的Default别名
 /// Format：UNNAMED_PATTERN + ID（如"unnamed_42"）
 #[inline]
 fn generate_unnamed_alias(id: usize) -> String {
@@ -393,7 +393,7 @@ fn generate_unnamed_alias(id: usize) -> String {
     } else {
         let start = s.len();
         let mut n = id;
-        // 倒序push数字，最后反转
+        // 倒序push数字，Last反转
         while n > 0 {
             s.push((b'0' + (n % 10) as u8) as char);
             n /= 10;

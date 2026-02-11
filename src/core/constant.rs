@@ -305,7 +305,7 @@ impl Models {
             return Ok(());
         }
 
-        // 内联辅助函数：将服务器模型转换为内部模型表示
+        // 内联辅助函数：将服务器模型ConvertTo内部模型表示
         #[inline]
         fn convert_model(
             model: &crate::core::aiserver::v1::available_models_response::AvailableModel,
@@ -367,7 +367,7 @@ impl Models {
                                 None
                             }
                         }
-                        // 其他情况
+                        // 其他Case
                         _ => None,
                     }
                 })(server_id)
@@ -382,17 +382,17 @@ impl Models {
             Model { id, client_id, owned_by, server_id, is_thinking, is_image, is_max, is_non_max }
         }
 
-        // 先获取当前模型列表的引用
+        // 先Get当前模型列表的引用
         let current_models = &guard.models;
 
-        // 根据不同的FetchMode来确定如何处理模型
+        // 根据不同的FetchMode来确定如何Handle模型
         let new_models: Vec<_> = match AppConfig::raw_model_fetch_mode() {
             FetchMode::Truncate => {
-                // 完全使用新获取的模型列表
+                // 完全Use新Get的模型列表
                 available_models.models.iter().map(convert_model).collect()
             }
             FetchMode::AppendTruncate => {
-                // 先收集所有在available_models中的模型ID
+                // 先Collect所有在available_models中的模型ID
                 let new_model_ids: HashSet<_> = available_models
                     .models
                     .iter()
@@ -436,7 +436,7 @@ impl Models {
         let old_ids: HashSet<_> = guard.models.iter().map(|m| m.id()).collect();
         let new_ids: HashSet<_> = new_models.iter().map(|m| m.id()).collect();
 
-        // 获取需要添加和移除的模型
+        // Get需要添加and移除的模型
         let to_add: Vec<_> = new_models.iter().filter(|m| !old_ids.contains(&m.id())).collect();
 
         let to_remove: Vec<_> =
@@ -455,12 +455,12 @@ impl Models {
                         return true;
                     }
 
-                    // 处理带有"-online"后缀的情况
+                    // Handle带有"-online"后缀的Case
                     if let Some(base) = id.strip_suffix("-online") {
                         if base == mid {
                             return true;
                         }
-                        // 处理同时有"-max"和"-online"后缀的情况（即"-max-online"）
+                        // Handle同时有"-max"and"-online"后缀的Case（即"-max-online"）
                         if let Some(base_without_max) = base.strip_suffix("-max")
                             && base_without_max == mid
                         {
@@ -468,7 +468,7 @@ impl Models {
                         }
                         false
                     }
-                    // 处理仅带有"-max"后缀的情况
+                    // Handle仅带有"-max"后缀的Case
                     else if let Some(base) = id.strip_suffix("-max") {
                         base == mid
                     } else {
@@ -479,7 +479,7 @@ impl Models {
             .copied()
             .collect();
 
-        // 只为新增的模型创建ID组合
+        // 只To新增的模型创建ID组合
         for model in to_add {
             let id = model.id();
 
@@ -490,7 +490,7 @@ impl Models {
             }
         }
 
-        // 更新数据和时间戳
+        // 更新数据and时间戳
         let find_ids = HashMap::from_iter(new_models.iter().enumerate().map(|(i, m)| (m.id(), i)));
 
         INSTANCE.store(Arc::new(Models {

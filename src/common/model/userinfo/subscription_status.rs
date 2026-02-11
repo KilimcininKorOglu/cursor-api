@@ -6,7 +6,7 @@
 )]
 #[repr(u8)]
 pub enum SubscriptionStatus {
-    /// 试用期 - 客户可安全使用产品，首次付款后自动转为active
+    /// 试用期 - 客户可安全Use产品，首次付款后自动转Toactive
     Trialing,
 
     /// 活跃状态 - 订阅状态良好，可正常提供服务
@@ -21,7 +21,7 @@ pub enum SubscriptionStatus {
     IncompleteExpired,
 
     /// 逾期未付 - 最新发票付款Failed或未尝试付款
-    /// 订阅继续生成发票，根据设置可转为canceled/unpaid或保持past_due
+    /// 订阅继续生成发票，根据设置可转Tocanceled/unpaid或保持past_due
     PastDue,
 
     /// 已取消 - 订阅已取消，终态，无法更新
@@ -30,11 +30,11 @@ pub enum SubscriptionStatus {
 
     /// 未支付 - 最新发票未付但订阅仍存在
     /// 发票保持开放状态并继续生成，但不尝试付款
-    /// 应撤销产品访问权限，因为在past_due期间已尝试并重试过付款
+    /// 应撤销产品访问权限，因To在past_due期间已尝试并重试过付款
     Unpaid,
 
-    /// 已暂停 - 试用期结束但无默认支付方式且设置为暂停
-    /// 不再为订阅创建发票，添加支付方式后可恢复
+    /// 已暂停 - 试用期结束但无Default支付方式且设置To暂停
+    /// 不再To订阅创建发票，添加支付方式后可恢复
     Paused,
 }
 

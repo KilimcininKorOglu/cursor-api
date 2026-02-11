@@ -51,8 +51,8 @@ impl TokenHealth {
 }
 
 #[cfg(not(feature = "horizon"))]
-/// 队列内部使用的复合键，将TokenKey和manager索引绑定
-/// 作为hint加速查找：如果token未被修改，index可以直接定位
+/// 队列内部Use的复合键，将TokenKeyandmanager索引绑定
+/// 作Tohint加速查找：Iftoken未被修改，index可以直接定位
 #[derive(PartialEq, Eq, Hash, Clone, Copy)]
 pub struct TokenManagerKey {
     user_id: UserId,
@@ -96,7 +96,7 @@ impl QueueType {
 }
 
 /// 全局队列头指针数组，每个队列类型独立维护轮询位置
-/// 使用静态全局变量而非存储在TokenQueue中，避免每次select时的借用检查
+/// Use静态全局变量而非存储在TokenQueue中，避免每次select时的借用检查
 static QUEUE_HEADS: [AtomicUsize; 4] =
     [AtomicUsize::new(0), AtomicUsize::new(0), AtomicUsize::new(0), AtomicUsize::new(0)];
 
@@ -111,7 +111,7 @@ pub struct TokenQueue {
     vec: Vec<TokenManagerKey>,
     #[cfg(feature = "horizon")]
     vec: Vec<usize>,
-    map: HashMap<TokenKey, usize>, // TokenKey -> vec索引，用于O(1)查找和删除
+    map: HashMap<TokenKey, usize>, // TokenKey -> vec索引，用于O(1)查找and删除
 }
 
 impl TokenQueue {
@@ -149,9 +149,9 @@ impl TokenQueue {
     pub fn remove(&mut self, token_key: &TokenKey) -> Option<TokenManagerKey> {
         let vec_index = self.map.remove(token_key)?;
 
-        // 调整所有队列的head指针：如果head在被删除元素之后，需要前移一位
+        // 调整所有队列的head指针：Ifhead在被删除元素之后，需要前移一位
         // 这保证了remove后指针仍然指向正确的相对位置
-        // SAFETY: QueueType是repr(usize)枚举，值域为0..4，QUEUE_HEADS长度为4
+        // SAFETY: QueueType是repr(usize)枚举，值域To0..4，QUEUE_HEADS长度To4
         unsafe {
             for i in 0..4 {
                 let head = QUEUE_HEADS.get_unchecked(i);
@@ -165,8 +165,8 @@ impl TokenQueue {
         // Vec::remove会将后续元素前移，需要更新它们在map中的索引
         let removed = self.vec.remove(vec_index);
 
-        // 使用指针迭代避免重复的bounds checking
-        // SAFETY: vec_index来自map且已remove一个元素，后续元素索引为vec_index..len
+        // Use指针迭代避免重复的bounds checking
+        // SAFETY: vec_index来自map且已remove一个元素，后续元素索引Tovec_index..len
         // 这些元素的token_key在map中必然存在（由push/set_key保证）
         unsafe {
             let base = self.vec.as_mut_ptr().add(vec_index);
@@ -187,9 +187,9 @@ impl TokenQueue {
     ) -> Option<usize> {
         let vec_index = self.map.remove(token_key)?;
 
-        // 调整所有队列的head指针：如果head在被删除元素之后，需要前移一位
+        // 调整所有队列的head指针：Ifhead在被删除元素之后，需要前移一位
         // 这保证了remove后指针仍然指向正确的相对位置
-        // SAFETY: QueueType是repr(usize)枚举，值域为0..4，QUEUE_HEADS长度为4
+        // SAFETY: QueueType是repr(usize)枚举，值域To0..4，QUEUE_HEADS长度To4
         unsafe {
             for i in 0..4 {
                 let head = QUEUE_HEADS.get_unchecked(i);
@@ -203,8 +203,8 @@ impl TokenQueue {
         // Vec::remove会将后续元素前移，需要更新它们在map中的索引
         let removed = self.vec.remove(vec_index);
 
-        // 使用指针迭代避免重复的bounds checking
-        // SAFETY: vec_index来自map且已remove一个元素，后续元素索引为vec_index..len
+        // Use指针迭代避免重复的bounds checking
+        // SAFETY: vec_index来自map且已remove一个元素，后续元素索引Tovec_index..len
         // 这些元素的token_key在map中必然存在（由push/set_key保证）
         unsafe {
             let base = self.vec.as_mut_ptr().add(vec_index);
@@ -235,12 +235,12 @@ impl TokenQueue {
             return None;
         }
 
-        // SAFETY: queue_type.as_index()为0..4，QUEUE_HEADS长度为4
+        // SAFETY: queue_type.as_index()To0..4，QUEUE_HEADS长度To4
         let head = unsafe { QUEUE_HEADS.get_unchecked(queue_type.as_index()) };
         let start = head.load(Ordering::Relaxed);
         let len = self.vec.len();
 
-        // SAFETY: vec非空，len>=1，base有效
+        // SAFETY: vec非Empty，len>=1，base有效
         let base = self.vec.as_ptr();
 
         for i in 0..len {
@@ -252,7 +252,7 @@ impl TokenQueue {
                 let token_key = mgr_key.token_key();
 
                 // 先尝试用hint（mgr_key.index）快速查找
-                // 如果token的key已变化，hint失效，需要通过id_map查找
+                // Iftoken的key已变化，hint失效，需要通过id_map查找
                 let token_id = if let Some(token) = manager.get_by_id(mgr_key.index)
                     && token.bundle.primary_token.key() == token_key
                 {

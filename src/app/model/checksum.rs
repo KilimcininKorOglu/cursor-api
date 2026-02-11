@@ -67,7 +67,7 @@ impl Checksum {
         }
     }
 
-    // 处理 72 字节Format：时间戳(8) + 设备哈希(64)
+    // Handle 72 字节Format：时间戳(8) + 设备哈希(64)
     #[inline]
     fn repair_short(bytes: &[u8; 72]) -> Self {
         // 验证时间戳部分
@@ -84,7 +84,7 @@ impl Checksum {
         Self { first, second: Hash::random() }
     }
 
-    // 处理 129 字节Format：设备哈希(64) + '/' + MAC哈希(64)
+    // Handle 129 字节Format：设备哈希(64) + '/' + MAC哈希(64)
     #[inline]
     fn repair_normal(bytes: &[u8; 129]) -> Self {
         // 验证分隔符
@@ -107,7 +107,7 @@ impl Checksum {
         Self { first, second }
     }
 
-    // 处理 137 字节Format：时间戳(8) + 设备哈希(64) + '/' + MAC哈希(64)
+    // Handle 137 字节Format：时间戳(8) + 设备哈希(64) + '/' + MAC哈希(64)
     #[inline]
     fn repair_full(bytes: &[u8; 137]) -> Self {
         // 验证时间戳
@@ -182,7 +182,7 @@ const fn is_valid_timestamp(bytes: &[u8; 8]) -> bool {
     true
 }
 
-// Decode 64 字符的十六进制字符串为 Hash
+// Decode 64 字符的十六进制字符串To Hash
 #[inline]
 const fn decode_hex_hash(hex_bytes: &[u8; 64]) -> Option<Hash> {
     let mut result = [0u8; 32];
@@ -196,7 +196,7 @@ const fn decode_hex_hash(hex_bytes: &[u8; 64]) -> Option<Hash> {
         let high = HEX_TABLE[hi as usize];
         let low = HEX_TABLE[lo as usize];
 
-        // 检查是否为有效的十六进制字符
+        // 检查是否To有效的十六进制字符
         if high == 0xFF || low == 0xFF {
             return None;
         }

@@ -72,11 +72,11 @@ const fn new(kilo_seconds: u64) -> u64 {
     u64::from_ne_bytes(encode_base64(&timestamp_bytes))
 }
 
-// 获取全局指针
+// Get全局指针
 #[inline(always)]
 pub fn read() -> [u8; 8] { TIMESTAMP_HEADER.load(Ordering::Relaxed).to_ne_bytes() }
 
-// 使用指定千秒更新全局原子变量
+// Use指定千秒更新全局原子变量
 #[inline]
 pub fn update_global_with(kilo_seconds: u64) {
     TIMESTAMP_HEADER.store(new(kilo_seconds), Ordering::Relaxed)

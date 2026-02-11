@@ -113,7 +113,7 @@ impl Adapter for Anthropic {
     ) -> Result<(String, Messages, Vec<ComposerExternalLink>), AdapterError> {
         let (mut params, system) = params;
 
-        // 收集 system 指令
+        // Collect system instructions
         let instructions = system.map(|content| match content {
             SystemContent::String(text) => text,
             SystemContent::Array(contents) => {
@@ -121,14 +121,14 @@ impl Adapter for Anthropic {
             }
         });
 
-        // 使用默认指令或收集到的指令
+        // Use default or collected instructions
         let instructions = if let Some(instructions) = instructions {
             instructions
         } else {
             DEFAULT_INSTRUCTIONS.get().get(now)
         };
 
-        // 处理空对话情况
+        // Handle empty conversation
         if params.is_empty() {
             return Ok((
                 instructions,
@@ -143,7 +143,7 @@ impl Adapter for Anthropic {
             ));
         }
 
-        // 如果第一条是 assistant，插入空的 user Message
+        // If first is assistant, insert empty user Message
         if params.first().is_some_and(|input| input.role == Role::Assistant) {
             params.insert(
                 0,
@@ -151,7 +151,7 @@ impl Adapter for Anthropic {
             );
         }
 
-        // 确保最后一条是 user
+        // Ensure last is user
         // if params.last().is_some_and(|input| input.role == Role::Assistant) {
         //     params.push(MessageParam {
         //         role: Role::User,
@@ -159,7 +159,7 @@ impl Adapter for Anthropic {
         //     });
         // }
 
-        // 转换为 proto messages
+        // Convert to proto messages
         let mut messages = Messages::with_capacity(params.len());
         let mut base_uuid = BaseUuid::new();
         let mut params = params.into_iter().peekable();
@@ -324,7 +324,7 @@ impl Adapter for Anthropic {
                 _ => __unreachable!(),
             };
 
-            // 处理Message content和相关字段
+            // Handle Message content and related fields
             let (final_text, web_references, use_web) = match param.role {
                 Role::Assistant => {
                     let (text, web_refs, has_web) = extract_web_references_info(text);
@@ -386,7 +386,7 @@ impl Adapter for Anthropic {
             }
         }
 
-        // 获取最后一条用户Message的URLs
+        // Get URLs from last user Message
         let external_links = messages
             .last_mut()
             .map(|msg| {

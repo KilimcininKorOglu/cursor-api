@@ -29,7 +29,7 @@ impl Id {
 /// 手动分配内存并复制字符串
 ///
 /// # Safety
-/// 分配的内存会被转换为 'static 生命周期，调用者必须确保不会手动释放
+/// 分配的内存会被ConvertTo 'static 生命周期，调用者必须Ensure不会手动释放
 #[inline]
 #[allow(unsafe_op_in_unsafe_fn)]
 unsafe fn alloc_ids(s: &str) -> Id {

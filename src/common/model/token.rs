@@ -21,7 +21,7 @@ crate::define_typed_constants! {
         // 结构体名称
         STRUCT_NAME = "TokenPayload",
 
-        // 字段名称
+        // Field名称
         FIELD_SUB = "sub",
         FIELD_TIME = "time",
         FIELD_RANDOMNESS = "randomness",
@@ -32,12 +32,12 @@ crate::define_typed_constants! {
         FIELD_TYPE = "type",
 
         // ErrorMessage
-        MSG_EXPECTING_FIELD = "字段名称",
+        MSG_EXPECTING_FIELD = "Field名称",
         MSG_EXPECTING_STRUCT = "结构体 TokenPayload",
-        MSG_TYPE_INVALID = "type 字段值必须为 ",
-        MSG_ISS_INVALID = "iss 字段值必须为 ",
-        MSG_SCOPE_INVALID = "scope 字段值必须为 ",
-        MSG_AUD_INVALID = "aud 字段值必须为 ",
+        MSG_TYPE_INVALID = "type Field值必须To ",
+        MSG_ISS_INVALID = "iss Field值必须To ",
+        MSG_SCOPE_INVALID = "scope Field值必须To ",
+        MSG_AUD_INVALID = "aud Field值必须To ",
     }
     &'static [&'static str] => {
         FIELD_NAMES = &[
@@ -223,7 +223,7 @@ impl<'de> ::serde::Deserialize<'de> for TokenPayload {
                     }
                 }
 
-                // 检查必填字段
+                // 检查必填Field
                 let sub = sub.ok_or_else(|| de::Error::missing_field(FIELD_SUB))?;
                 let time = time.ok_or_else(|| de::Error::missing_field(FIELD_TIME))?;
                 let randomness =
@@ -231,7 +231,7 @@ impl<'de> ::serde::Deserialize<'de> for TokenPayload {
                 let exp = exp.ok_or_else(|| de::Error::missing_field(FIELD_EXP))?;
                 let is_session = is_session.ok_or_else(|| de::Error::missing_field(FIELD_TYPE))?;
 
-                // 检查必须存在的常量字段
+                // 检查必须存在的常量Field
                 if !iss_seen {
                     return Err(de::Error::missing_field(FIELD_ISS));
                 }

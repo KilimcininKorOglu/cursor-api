@@ -98,7 +98,7 @@ where D: serde::Deserializer<'de> {
                 RouteDef::File { content_type: None, path: file_path }
             }
             RouteDefinition::Object(def) => {
-                // 完整Format：直接使用对象
+                // 完整Format：直接Use对象
                 def
             }
         };
@@ -343,7 +343,7 @@ impl FrontendLoader {
     fn build_routes(
         mut self,
     ) -> Result<(HashMap<&'static str, RouteServiceFn>, ExchangeMap), FrontendError> {
-        // 收集唯一路径和反向映射
+        // Collect唯一路径and反向映射
         let random_state = ahash::RandomState::new();
         let mut unique_paths = HashSet::with_hasher(random_state.clone());
         let mut path_to_routes: HashMap<String, Vec<String>> =
@@ -417,7 +417,7 @@ impl FrontendLoader {
                         .entry(Box::leak(route_path.into_boxed_str()))
                     {
                         hashbrown::hash_set::Entry::Vacant(entry) => *entry.insert().get(),
-                        _ => unreachable!(), // 键不会重复，因为route_path是从一个HashMap取出的键
+                        _ => unreachable!(), // 键不会重复，因Toroute_path是从一个HashMap取出的键
                     },
                     {
                         let idx = ROUTE_SERVICES.len();
@@ -499,7 +499,7 @@ static ROUTE_REGISTRY: ManuallyInit<HashSet<&'static str>> = ManuallyInit::new()
 /// 初始化前端资源系统
 ///
 /// # 环境变量
-/// - `FRONTEND_PATH`: 前端资源路径（目录或 .zip 文件，默认: "frontend.zip"）
+/// - `FRONTEND_PATH`: 前端资源路径（目录或 .zip 文件，Default: "frontend.zip"）
 ///
 /// # 返回
 /// - `Ok(Option<ExchangeMap>)`: 初始化成功
@@ -535,7 +535,7 @@ static mut METADATA: Option<&'static str> = None;
 
 pub const fn metadata() -> Option<&'static str> { unsafe { METADATA } }
 
-// /// 处理前端Request
+// /// Handle前端Request
 // pub async fn handle_frontend(parts: http::request::Parts) -> RouteService {
 //     let registry = &*ROUTE_REGISTRY;
 

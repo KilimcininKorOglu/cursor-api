@@ -4,7 +4,7 @@ use super::tokenizer::Token;
 
 #[derive(Debug)]
 pub enum Pattern {
-    // 特殊处理
+    // 特殊Handle
     #[allow(clippy::upper_case_acronyms)]
     GPT,
     O(u8), // O1, O3, O4
@@ -12,7 +12,7 @@ pub enum Pattern {
     // 版本号
     Version(Cow<'static, str>), // 3.5 或 v3.1
 
-    // 日期相关（放括号）
+    // 日期Related（放括号）
     Date(Cow<'static, str>),  // 2024-04-09 或 05-28
     DateMarker(&'static str), // latest, legacy (时间标记)
 
@@ -22,14 +22,14 @@ pub enum Pattern {
 
 pub struct ParseResult {
     pub main_parts: Vec<Pattern>,
-    pub date_parts: Vec<Pattern>, // 只有日期相关的才进括号
+    pub date_parts: Vec<Pattern>, // 只有日期Related的才进括号
 }
 
 #[inline(always)]
 pub fn parse_patterns(tokens: Vec<Token>) -> ParseResult {
     // 预分配：大部分 token 都会变成 pattern，日期部分通常较少
     let mut main_parts = Vec::with_capacity(tokens.len());
-    let mut date_parts = Vec::with_capacity(2); // 通常最多有1-2个日期相关项
+    let mut date_parts = Vec::with_capacity(2); // 通常最多有1-2个日期Related项
     let mut i = 0;
 
     while i < tokens.len() {
@@ -64,7 +64,7 @@ pub fn parse_patterns(tokens: Vec<Token>) -> ParseResult {
                 }
             }
             b'l' if token.meta.len == 6 => {
-                // latest, legacy - 作为日期标记
+                // latest, legacy - 作To日期标记
                 if token.content == "latest" || token.content == "legacy" {
                     date_parts.push(Pattern::DateMarker(token.content));
                     i += 1;
@@ -74,7 +74,7 @@ pub fn parse_patterns(tokens: Vec<Token>) -> ParseResult {
             _ => {}
         }
 
-        // 数字处理
+        // 数字Handle
         if token.meta.is_digit_only {
             // 单数字版本号合并
             if token.meta.digit_count == 1 && i + 1 < tokens.len() {
@@ -101,7 +101,7 @@ pub fn parse_patterns(tokens: Vec<Token>) -> ParseResult {
                 continue;
             }
 
-            // 其他数字作为普通词
+            // 其他数字作To普通词
             main_parts.push(Pattern::Word(token.content));
             i += 1;
             continue;
@@ -114,7 +114,7 @@ pub fn parse_patterns(tokens: Vec<Token>) -> ParseResult {
             continue;
         }
 
-        // 其他所有词都作为主体部分
+        // 其他所有词都作To主体部分
         main_parts.push(Pattern::Word(token.content));
         i += 1;
     }
@@ -138,7 +138,7 @@ fn is_version_pattern(s: &str) -> bool {
 fn try_parse_date(tokens: &[Token], start: usize) -> Option<Cow<'static, str>> {
     let token = &tokens[start];
 
-    // YYYY-MM-DD (必须先检查，因为 YYYY 也是4位数字)
+    // YYYY-MM-DD (必须先检查，因To YYYY 也是4位数字)
     if token.meta.digit_count == 4 && start + 2 < tokens.len() {
         let next1 = &tokens[start + 1];
         let next2 = &tokens[start + 2];
@@ -159,7 +159,7 @@ fn try_parse_date(tokens: &[Token], start: usize) -> Option<Cow<'static, str>> {
     }
 
     // MMDD -> MM-DD (如 0528)
-    // 只有当4位数字看起来像 MMDD Format时才处理（前两位 <= 12）
+    // 只有当4位数字看起来像 MMDD Format时才Handle（前两位 <= 12）
     if token.meta.digit_count == 4 {
         let bytes = token.content.as_bytes();
         // 检查是否可能是月份（01-12）
@@ -233,7 +233,7 @@ fn capitalize_first(s: &'static str) -> Cow<'static, str> {
         return Cow::Borrowed(s);
     }
 
-    // 需要转换：对于 ASCII 小写字母
+    // 需要Convert：对于 ASCII 小写字母
     if first_byte.is_ascii_lowercase() {
         // 预分配精确长度
         let mut result = String::with_capacity(s.len());

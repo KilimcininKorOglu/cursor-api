@@ -3,26 +3,26 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Archive, RkyvDeserialize, RkyvSerialize)]
 pub struct UsageSummary {
-    /// 订阅计划的使用情况（包含的额度）
+    /// 订阅计划的UseCase（包含的额度）
     pub plan: Option<PlanUsage>,
-    /// 按需使用情况（超出包含额度后的付费使用）
+    /// 按需UseCase（超出包含额度后的付费Use）
     #[serde(alias = "onDemand", skip_serializing_if = "Option::is_none")]
     pub on_demand: Option<OnDemandUsage>,
 }
 
-/// 个人用户的使用情况
+/// 个人用户的UseCase
 pub type IndividualUsage = UsageSummary;
 
-/// 团队级别的使用情况
+/// 团队级别的UseCase
 pub type TeamUsage = UsageSummary;
 
-/// 订阅计划的使用情况
+/// 订阅计划的UseCase
 ///
 /// 包含计划自带的API usage额度，以API价格计费
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Archive, RkyvDeserialize, RkyvSerialize)]
 pub struct PlanUsage {
     pub enabled: bool,
-    /// 已使用量（可能是花费单位或Request计量单位）
+    /// 已Use量（可能是花费单位或Request计量单位）
     pub used: i32,
     /// 配额上限（当前计费周期内的总限额）
     pub limit: i32,
@@ -52,15 +52,15 @@ pub struct UsageBreakdown {
     pub total: i32,
 }
 
-/// 按需使用情况
+/// 按需UseCase
 ///
-/// 当用户超出计划包含的配额后，可启用on-demand付费使用
+/// 当用户超出计划包含的配额后，可启用on-demand付费Use
 /// 按相同的API价格计费，无质量或速度降级
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Archive, RkyvDeserialize, RkyvSerialize)]
 pub struct OnDemandUsage {
     /// 是否启用按需计费
     pub enabled: bool,
-    /// 已使用的按需配额
+    /// 已Use的按需配额
     pub used: i32,
     /// 按需配额上限（None表示无Limit或未设置）
     pub limit: Option<i32>,

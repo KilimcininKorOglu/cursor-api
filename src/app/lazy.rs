@@ -127,7 +127,7 @@ macro_rules! def_cursor_api_url {
             }
         ),+ $(,)?
     ) => {
-        // 为每个API生成静态变量和getter函数
+        // To每个API生成静态变量andgetter函数
         $(
             $(
                 paste::paste! {
@@ -190,7 +190,7 @@ macro_rules! def_cursor_api_url {
 def_cursor_api_url! {
     init_fn: init_all_cursor_urls,
 
-    // API2 HOST 相关API
+    // API2 HOST RelatedAPI
     api2_group => {
         host: CURSOR_API2_HOST,
         apis: [
@@ -204,7 +204,7 @@ def_cursor_api_url! {
         ]
     },
 
-    // CURSOR HOST 相关API
+    // CURSOR HOST RelatedAPI
     cursor_group => {
         host: CURSOR_HOST,
         apis: [
@@ -220,7 +220,7 @@ def_cursor_api_url! {
         ]
     },
 
-    // API4 HOST 相关API
+    // API4 HOST RelatedAPI
     api4_group => {
         host: CURSOR_API4_HOST,
         apis: [
@@ -228,7 +228,7 @@ def_cursor_api_url! {
         ]
     },
 
-    // API2 HOST CPP相关API
+    // API2 HOST CPPRelatedAPI
     api2_cpp_group => {
         host: CURSOR_API2_HOST,
         apis: [
@@ -236,7 +236,7 @@ def_cursor_api_url! {
         ]
     },
 
-    // GCPP ASIA HOST 相关API
+    // GCPP ASIA HOST RelatedAPI
     gcpp_asia_group => {
         host: CURSOR_GCPP_ASIA_HOST,
         apis: [
@@ -247,7 +247,7 @@ def_cursor_api_url! {
         ]
     },
 
-    // GCPP EU HOST 相关API
+    // GCPP EU HOST RelatedAPI
     gcpp_eu_group => {
         host: CURSOR_GCPP_EU_HOST,
         apis: [
@@ -258,7 +258,7 @@ def_cursor_api_url! {
         ]
     },
 
-    // GCPP US HOST 相关API
+    // GCPP US HOST RelatedAPI
     gcpp_us_group => {
         host: CURSOR_GCPP_US_HOST,
         apis: [
@@ -270,7 +270,7 @@ def_cursor_api_url! {
     }
 }
 
-// TCP 和超时相关常量
+// TCP and超时Related常量
 const DEFAULT_TCP_KEEPALIVE: NonNegativeI16 = NonNegativeI16::new(60).unwrap();
 const MAX_TCP_KEEPALIVE: NonNegativeI16 = NonNegativeI16::new(600).unwrap();
 pub static TCP_KEEPALIVE: ManuallyInit<ToDuration<DEFAULT_TCP_KEEPALIVE, MAX_TCP_KEEPALIVE>> =

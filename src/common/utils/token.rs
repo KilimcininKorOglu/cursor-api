@@ -4,7 +4,7 @@ use chrono::{DateTime, Local, TimeZone as _};
 
 // 解析token
 // pub fn parse_token(token_part: &str) -> String {
-//     // 查找最后一个:或%3A的位置
+//     // 查找Last一个:或%3A的位置
 //     let colon_pos = token_part.rfind(':');
 //     let encoded_colon_pos = token_part.rfind("%3A");
 
@@ -13,7 +13,7 @@ use chrono::{DateTime, Local, TimeZone as _};
 //         (Some(pos1), None) => token_part[(pos1 + 1)..].to_string(),
 //         (None, Some(pos2)) => token_part[(pos2 + 3)..].to_string(),
 //         (Some(pos1), Some(pos2)) => {
-//             // 取较大的位置作为分隔点
+//             // 取较大的位置作To分隔点
 //             let pos = pos1.max(pos2);
 //             let start = if pos == pos2 { pos + 3 } else { pos + 1 };
 //             token_part[start..].to_string()
@@ -58,16 +58,16 @@ use chrono::{DateTime, Local, TimeZone as _};
 
 #[rustfmt::skip]
 pub fn validate_token(token: &str) -> bool {
-    // 检查 token Format和分割
+    // 检查 token Formatand分割
     let Some(parts) = token.strip_prefix(HEADER_B64) else { return false };
     let Some((payload, signature)) = parts.split_once('.') else { return false };
 
-    // Decode signature 和 payload
+    // Decode signature and payload
     let Ok(signature) = URL_SAFE_NO_PAD.decode(signature) else { return false };
     if signature.len() != 32 { return false };
     let Ok(payload) = URL_SAFE_NO_PAD.decode(payload) else { return false };
 
-    // 转换为字符串并解析
+    // ConvertTo字符串并解析
     let Ok(payload_str) = String::from_utf8(payload) else { return false };
     let Ok(payload) = serde_json::from_str::<TokenPayload>(&payload_str) else { return false };
 
@@ -129,7 +129,7 @@ pub struct JwtTime {
     pub exp: DateTime<Local>,
 }
 
-// 从 JWT token 中提取 time 字段
+// 从 JWT token 中提取 time Field
 pub fn extract_time(token: &str) -> Option<JwtTime> {
     // JWT token 由3部分组成，用 . 分隔
     let parts: Vec<&str> = token.split('.').collect();
@@ -145,13 +145,13 @@ pub fn extract_time(token: &str) -> Option<JwtTime> {
 
     drop(parts);
 
-    // 将 payload 转换为字符串
+    // 将 payload ConvertTo字符串
     let payload_str = match String::from_utf8(payload) {
         Ok(s) => s,
         Err(_) => return None,
     };
 
-    // 解析为 TokenPayload
+    // 解析To TokenPayload
     let payload: TokenPayload = match serde_json::from_str(&payload_str) {
         Ok(p) => p,
         Err(_) => return None,
