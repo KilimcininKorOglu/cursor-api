@@ -1,35 +1,35 @@
-//! 引用计数的不可变字符串，支持全局字符串池复用
+//! Reference-counted immutable string with global string pool reuse
 //!
-//! # 核心设计理念
+//! # Core Design Philosophy
 //!
-//! `ArcStr` 通过全局字符串池实现内存去重，相同内容的字符串共享同一份内存。
-//! 这在大量重复字符串的场景下能显著降低内存使用，同时保持字符串操作的高性能。
+//! `ArcStr` achieves memory deduplication through a global string pool, strings with same content share the same memory.
+//! This significantly reduces memory usage in scenarios with many duplicate strings, while maintaining high-performance string operations.
 //!
-//! # 架构概览
+//! # Architecture Overview
 //!
 //! ```text
 //! ┌─────────────────────────────────────────────────────────────────┐
-//! │                        用户 API 层                               │
+//! │                        User API Layer                           │
 //! │  ArcStr::new() │ as_str() │ clone() │ Drop │ PartialEq...       │
 //! ├─────────────────────────────────────────────────────────────────┤
-//! │                      全局字符串池                                 │
+//! │                      Global String Pool                         │
 //! │               HashMap<ThreadSafePtr, ()>                        │
-//! │               双重检查锁定 + 原子引用计数                           │
+//! │               Double-checked locking + Atomic reference count   │
 //! ├─────────────────────────────────────────────────────────────────┤
-//! │                    底层内存布局                                   │
+//! │                    Underlying Memory Layout                     │
 //! │  [hash:u64][count:AtomicUsize][len:usize][string_data...]       │
 //! └─────────────────────────────────────────────────────────────────┘
 //! ```
 //!
-//! # 性能特征
+//! # Performance Characteristics
 //!
-//! | 操作 | 时间复杂度 | 说明 |
-//! |------|-----------|------|
-//! | new() - 首次 | O(1) + 池插入 | 堆分配 + HashMap 插入 |
-//! | new() - 命中 | O(1) | HashMap 查找 + 原子递增 |
-//! | clone() | O(1) | 仅原子递增 |
-//! | drop() | O(1) | 使用预存哈希快速删除 |
-//! | as_str() | O(1) | 直接内存访问 |
+//! | Operation | Time Complexity | Description |
+//! |-----------|-----------------|-------------|
+//! | new() - first | O(1) + pool insert | Heap allocation + HashMap insertion |
+//! | new() - hit | O(1) | HashMap lookup + atomic increment |
+//! | clone() | O(1) | Only atomic increment |
+//! | drop() | O(1) | Fast deletion using pre-stored hash |
+//! | as_str() | O(1) | Direct memory access |
 
 use core::{
     alloc::Layout,
@@ -50,19 +50,19 @@ use manually_init::ManuallyInit;
 use scc::{Equivalent, HashMap};
 
 // ═══════════════════════════════════════════════════════════════════════════
-//                          第一层：公共API与核心接口
+//                          Layer 1: Public API and Core Interface
 // ═══════════════════════════════════════════════════════════════════════════
 
-/// 引用计数的不可变字符串，支持全局字符串池复用
+/// Reference-counted immutable string with global string pool reuse
 ///
-/// # 设计目标
+/// # Design Goals
 ///
-/// - **内存去重**：相同内容的字符串共享同一内存地址
-/// - **零拷贝克隆**：`clone()` 只涉及原子递增操作
-/// - **线程安全**：支持多线程环境下的安全使用
-/// - **高性能查找**：使用预计算哈希值优化池查找
+/// - **Memory deduplication**: Strings with same content share the same memory address
+/// - **Zero-copy clone**: `clone()` only involves atomic increment operation
+/// - **Thread-safe**: Supports safe use in multi-threaded environments
+/// - **High-performance lookup**: Uses pre-computed hash values to optimize pool lookup
 ///
-/// # 使用示例
+/// # Usage Example
 ///
 /// ```rust
 /// use interned::ArcStr;
@@ -70,102 +70,102 @@ use scc::{Equivalent, HashMap};
 /// let s1 = ArcStr::new("hello");
 /// let s2 = ArcStr::new("hello");
 ///
-/// // 相同内容的字符串共享同一内存
+/// // Strings with same content share the same memory
 /// assert_eq!(s1.as_ptr(), s2.as_ptr());
 /// assert_eq!(s1.ref_count(), 2);
 ///
-/// // 零成本的字符串访问
+/// // Zero-cost string access
 /// println!("{}", s1.as_str()); // "hello"
 /// ```
 ///
-/// # 内存安全
+/// # Memory Safety
 ///
-/// `ArcStr` 内部使用原子引用计数确保内存安全，无需担心悬挂指针或数据竞争。
-/// 当最后一个引用被释放时，字符串将自动从全局池中移除并释放内存。
+/// `ArcStr` internally uses atomic reference counting to ensure memory safety, no need to worry about dangling pointers or data races.
+/// When the last reference is released, the string will be automatically removed from the global pool and memory freed.
 #[repr(transparent)]
 pub struct ArcStr {
-    /// 指向 `ArcStrInner` 的非空指针
+    /// Non-null pointer to `ArcStrInner`
     ///
-    /// # 不变量
-    /// - 指针始终有效，指向正确初始化的 `ArcStrInner`
-    /// - 引用计数至少为 1（在 drop 开始前）
-    /// - 字符串数据始终是有效的 UTF-8
+    /// # Invariants
+    /// - Pointer is always valid, points to correctly initialized `ArcStrInner`
+    /// - Reference count is at least 1 (before drop starts)
+    /// - String data is always valid UTF-8
     ptr: NonNull<ArcStrInner>,
 
-    /// 零大小标记，确保 `ArcStr` 拥有数据的所有权语义
+    /// Zero-sized marker, ensures `ArcStr` has ownership semantics
     _marker: PhantomData<ArcStrInner>,
 }
 
-// SAFETY: ArcStr 使用原子引用计数，可以安全地跨线程传递和访问
+// SAFETY: ArcStr uses atomic reference counting, can be safely passed and accessed across threads
 unsafe impl Send for ArcStr {}
 unsafe impl Sync for ArcStr {}
 
 impl ArcStr {
-    /// 创建或复用字符串实例
+    /// Create or reuse string instance
     ///
-    /// 如果全局池中已存在相同内容的字符串，则复用现有实例并增加引用计数；
-    /// 否则创建新实例并加入池中。
+    /// If a string with the same content already exists in the global pool, reuses existing instance and increments reference count;
+    /// otherwise creates new instance and adds to pool.
     ///
-    /// # 并发策略
+    /// # Concurrency Strategy
     ///
-    /// 使用双重检查锁定模式来平衡性能和正确性：
-    /// 1. **读锁快速路径**：大多数情况下只需要读锁即可找到现有字符串
-    /// 2. **写锁创建路径**：仅在确实需要创建新字符串时获取写锁  
-    /// 3. **双重验证**：获取写锁后再次检查，防止并发创建重复实例
+    /// Uses double-checked locking pattern to balance performance and correctness:
+    /// 1. **Read lock fast path**: In most cases, only read lock is needed to find existing string
+    /// 2. **Write lock creation path**: Only acquires write lock when actually need to create new string
+    /// 3. **Double verification**: Check again after acquiring write lock to prevent concurrent creation of duplicates
     ///
-    /// # 性能特征
+    /// # Performance Characteristics
     ///
-    /// - **池命中**：O(1) `HashMap` 查找 + 原子递增
-    /// - **池缺失**：O(1) 内存分配 + O(1) `HashMap` 插入
-    /// - **哈希计算**：使用 ahash 的高性能哈希算法
+    /// - **Pool hit**: O(1) `HashMap` lookup + atomic increment
+    /// - **Pool miss**: O(1) memory allocation + O(1) `HashMap` insertion
+    /// - **Hash calculation**: Uses ahash's high-performance hash algorithm
     ///
     /// # Examples
     ///
     /// ```rust
     /// let s1 = ArcStr::new("shared_content");
-    /// let s2 = ArcStr::new("shared_content"); // 复用 s1 的内存
+    /// let s2 = ArcStr::new("shared_content"); // Reuses s1's memory
     /// assert_eq!(s1.as_ptr(), s2.as_ptr());
     /// ```
     pub fn new<S: AsRef<str>>(s: S) -> Self {
         let string = s.as_ref();
 
-        // 阶段 0：预计算内容哈希
+        // Phase 0: Pre-compute content hash
         //
-        // 这个哈希值在整个生命周期中会被多次使用：
-        // - 池查找时作为 HashMap 的键
-        // - 存储在 ArcStrInner 中用于后续 drop 优化
+        // This hash value will be used multiple times throughout the lifecycle:
+        // - As HashMap key during pool lookup
+        // - Stored in ArcStrInner for subsequent drop optimization
         let hash = CONTENT_HASHER.hash_one(string);
 
-        // ===== 阶段 1：读锁快速路径 =====
-        // 大部分情况下字符串已经在池中，这个路径是最常见的
+        // ===== Phase 1: Read lock fast path =====
+        // In most cases string is already in pool, this is the most common path
         {
             let pool = ARC_STR_POOL.get();
             if let Some(existing) = Self::try_find_existing(pool, hash, string) {
                 return existing;
             }
-            // 读锁自动释放
+            // Read lock automatically released
         }
 
-        // ===== 阶段 2：写锁创建路径 =====
-        // 进入这里说明需要创建新的字符串实例
+        // ===== Phase 2: Write lock creation path =====
+        // Entering here means need to create new string instance
         let pool = ARC_STR_POOL.get();
 
         match pool.raw_entry().from_key_hashed_nocheck_sync(hash, string) {
             scc::hash_map::RawEntry::Occupied(entry) => {
-                // 双重检查：在获取写锁的过程中，其他线程可能已经创建了相同的字符串
+                // Double check: While acquiring write lock, other threads may have created the same string
                 let ptr = entry.key().0;
 
-                // 找到匹配的字符串，增加其引用计数
-                // SAFETY: 池中的指针始终有效，且引用计数操作是原子的
+                // Found matching string, increment its reference count
+                // SAFETY: Pointers in pool are always valid, and reference count operations are atomic
                 unsafe { ptr.as_ref().inc_strong() };
 
                 Self { ptr, _marker: PhantomData }
             }
             scc::hash_map::RawEntry::Vacant(entry) => {
-                // 确认需要创建新实例：分配内存并初始化
+                // Confirm need to create new instance: allocate memory and initialize
                 let layout = ArcStrInner::layout_for_string(string.len());
 
-                // SAFETY: layout_for_string 确保布局有效且大小合理
+                // SAFETY: layout_for_string ensures layout is valid and size is reasonable
                 let ptr = unsafe {
                     let alloc: *mut ArcStrInner = alloc::alloc::alloc(layout).cast();
 
@@ -179,8 +179,8 @@ impl ArcStr {
                     ptr
                 };
 
-                // 将新创建的字符串加入全局池
-                // 使用 from_key_hashed_nocheck 避免重复计算哈希
+                // Add newly created string to global pool
+                // Use from_key_hashed_nocheck to avoid recalculating hash
                 entry.insert(ThreadSafePtr(ptr), ());
 
                 Self { ptr, _marker: PhantomData }
@@ -188,85 +188,85 @@ impl ArcStr {
         }
     }
 
-    /// 获取字符串切片（零成本操作）
+    /// Get string slice (zero-cost operation)
     ///
-    /// 直接访问底层字符串数据，无任何额外开销。
+    /// Directly access underlying string data, no extra overhead.
     ///
-    /// # 性能
+    /// # Performance
     ///
-    /// 这是一个 `const fn`，在编译时就能确定偏移量，
-    /// 运行时仅需要一次内存解引用。
+    /// This is a `const fn`, offset can be determined at compile time,
+    /// only needs one memory dereference at runtime.
     #[must_use]
     #[inline]
     pub const fn as_str(&self) -> &str {
-        // SAFETY: ptr 在 ArcStr 生命周期内始终指向有效的 ArcStrInner，
-        // 且字符串数据保证是有效的 UTF-8
+        // SAFETY: ptr always points to valid ArcStrInner during ArcStr's lifetime,
+        // and string data is guaranteed to be valid UTF-8
         unsafe { self.ptr.as_ref().as_str() }
     }
 
-    /// 获取字符串的字节切片
+    /// Get byte slice of string
     ///
-    /// 提供对底层字节数据的直接访问。
+    /// Provides direct access to underlying byte data.
     #[must_use]
     #[inline]
     pub const fn as_bytes(&self) -> &[u8] {
-        // SAFETY: ptr 始终指向有效的 ArcStrInner
+        // SAFETY: ptr always points to valid ArcStrInner
         unsafe { self.ptr.as_ref().as_bytes() }
     }
 
-    /// 获取字符串长度（字节数）
+    /// Get string length (in bytes)
     #[must_use]
     #[inline]
     pub const fn len(&self) -> usize {
-        // SAFETY: ptr 始终指向有效的 ArcStrInner
+        // SAFETY: ptr always points to valid ArcStrInner
         unsafe { self.ptr.as_ref().string_len }
     }
 
-    /// 检查字符串是否为空
+    /// Check if string is empty
     #[must_use]
     #[inline]
     pub const fn is_empty(&self) -> bool { self.len() == 0 }
 
-    /// 获取当前引用计数
+    /// Get current reference count
     ///
-    /// 注意：由于并发访问，返回的值可能在返回后立即发生变化。
-    /// 此方法主要用于调试和测试。
+    /// Note: Due to concurrent access, returned value may change immediately after return.
+    /// This method is mainly used for debugging and testing.
     #[must_use]
     #[inline]
     pub fn ref_count(&self) -> usize {
-        // SAFETY: ptr 始终指向有效的 ArcStrInner
+        // SAFETY: ptr always points to valid ArcStrInner
         unsafe { self.ptr.as_ref().strong_count() }
     }
 
-    /// 获取字符串数据的内存地址（用于调试和测试）
+    /// Get memory address of string data (for debugging and testing)
     ///
-    /// 返回字符串内容的起始地址，可用于验证字符串是否共享内存。
+    /// Returns starting address of string content, can be used to verify if strings share memory.
     #[must_use]
     #[inline]
     pub const fn as_ptr(&self) -> *const u8 {
-        // SAFETY: ptr 始终指向有效的 ArcStrInner
+        // SAFETY: ptr always points to valid ArcStrInner
         unsafe { self.ptr.as_ref().string_ptr() }
     }
 
-    /// 内部辅助函数：在池中查找已存在的字符串
+    /// Internal helper function: Find existing string in pool
     ///
-    /// 这个函数被提取出来以消除读锁路径和写锁路径中的重复代码。
-    /// 使用 hashbrown 的优化API来避免重复哈希计算。
+    /// This function is extracted to eliminate duplicate code in read lock path and write lock path.
+    /// Uses hashbrown's optimized API to avoid recalculating hash.
     ///
-    /// # 参数
+    /// # Parameters
     ///
-    /// - `pool`: 字符串池的引用
-    /// - `hash`: 预计算的字符串哈希值
-    /// - `string`: 要查找的字符串内容
+    /// - `pool`: Reference to string pool
+    /// - `hash`: Pre-computed string hash value
+    /// - `string`: String content to find
     ///
-    /// # 返回值
+    /// # Return Value
     ///
-    /// 如果找到匹配的字符串，返回增加引用计数后的 `ArcStr`；否则返回 `None`。
+    /// If matching string is found, returns `ArcStr` with incremented reference count; otherwise returns `None`.
     #[must_use]
     #[inline]
     fn try_find_existing(pool: &PtrMap, hash: u64, string: &str) -> Option<Self> {
-        // 使用 hashbrown 的 from_key_hashed_nocheck API
-        // 这利用了 Equivalent trait 来进行高效比较
+        // Use hashbrown's from_key_hashed_nocheck API
+        // This utilizes Equivalent trait for efficient comparison
         use scc::hash_map::RawEntry;
         let RawEntry::Occupied(entry) = pool.raw_entry().from_key_hashed_nocheck_sync(hash, string)
         else {
@@ -274,8 +274,8 @@ impl ArcStr {
         };
         let ThreadSafePtr(ptr) = *entry.key();
 
-        // 找到匹配的字符串，增加其引用计数
-        // SAFETY: 池中的指针始终有效，且引用计数操作是原子的
+        // Found matching string, increment its reference count
+        // SAFETY: Pointers in pool are always valid, and reference count operations are atomic
         unsafe { ptr.as_ref().inc_strong() };
 
         Some(Self { ptr, _marker: PhantomData })
@@ -283,67 +283,67 @@ impl ArcStr {
 }
 
 impl Clone for ArcStr {
-    /// 克隆字符串引用（仅增加引用计数）
+    /// Clone string reference (only increments reference count)
     ///
-    /// 这是一个极其轻量的操作，只涉及一次原子递增。
-    /// 不会复制字符串内容，新的 `ArcStr` 与原实例共享相同的底层内存。
+    /// This is an extremely lightweight operation, only involves one atomic increment.
+    /// Does not copy string content, new `ArcStr` shares the same underlying memory with original instance.
     ///
-    /// # 性能
+    /// # Performance
     ///
-    /// 时间复杂度：O(1) - 单次原子操作
-    /// 空间复杂度：O(1) - 无额外内存分配
+    /// Time complexity: O(1) - single atomic operation
+    /// Space complexity: O(1) - no extra memory allocation
     #[inline]
     fn clone(&self) -> Self {
-        // SAFETY: ptr 在当前 ArcStr 生命周期内有效
+        // SAFETY: ptr is valid during current ArcStr's lifetime
         unsafe { self.ptr.as_ref().inc_strong() }
         Self { ptr: self.ptr, _marker: PhantomData }
     }
 }
 
 impl Drop for ArcStr {
-    /// 释放字符串引用
+    /// Release string reference
     ///
-    /// 递减引用计数，如果这是最后一个引用，则从全局池中移除并释放内存。
+    /// Decrements reference count, if this is the last reference, removes from global pool and frees memory.
     ///
-    /// # 并发处理
+    /// # Concurrency Handling
     ///
-    /// 由于多个线程可能同时释放同一字符串的引用，这里使用了谨慎的双重检查：
-    /// 1. 原子递减引用计数
-    /// 2. 如果计数变为0，获取池的写锁
-    /// 3. 再次检查引用计数（防止并发的clone操作）
-    /// 4. 确认后从池中移除并释放内存
+    /// Since multiple threads may release references to the same string simultaneously, careful double-checking is used here:
+    /// 1. Atomically decrement reference count
+    /// 2. If count becomes 0, acquire pool's write lock
+    /// 3. Check reference count again (prevent concurrent clone operations)
+    /// 4. After confirmation, remove from pool and free memory
     ///
-    /// # 性能优化
+    /// # Performance Optimization
     ///
-    /// 使用预存储的哈希值进行 O(1) 的池查找和删除，避免重新计算哈希。
+    /// Uses pre-stored hash value for O(1) pool lookup and deletion, avoids recalculating hash.
     fn drop(&mut self) {
-        // SAFETY: ptr 在 drop 开始时仍然有效
+        // SAFETY: ptr is still valid when drop starts
         unsafe {
             let inner = self.ptr.as_ref();
 
-            // 原子递减引用计数
+            // Atomically decrement reference count
             if !inner.dec_strong() {
-                // 不是最后一个引用，直接返回
+                // Not the last reference, return directly
                 return;
             }
 
-            // 这是最后一个引用，需要清理资源
+            // This is the last reference, need to cleanup resources
             let pool = ARC_STR_POOL.get();
-            // 使用指针相等比较，这是绝对的 O(1) 操作
+            // Use pointer equality comparison, this is absolute O(1) operation
             let entry =
                 pool.raw_entry().from_key_hashed_nocheck_sync(inner.hash, &ThreadSafePtr(self.ptr));
 
             if let scc::hash_map::RawEntry::Occupied(e) = entry {
-                // 双重检查引用计数
-                // 在获取写锁期间，其他线程可能clone了这个字符串
+                // Double check reference count
+                // While acquiring write lock, other threads may have cloned this string
                 if inner.strong_count() != 0 {
                     return;
                 }
 
-                // 确认是最后一个引用，执行清理
+                // Confirm this is the last reference, execute cleanup
                 e.remove();
 
-                // 释放底层内存
+                // Free underlying memory
                 let layout = ArcStrInner::layout_for_string_unchecked(inner.string_len);
                 alloc::alloc::dealloc(self.ptr.cast().as_ptr(), layout);
             }
@@ -352,24 +352,24 @@ impl Drop for ArcStr {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//                          第二层：标准库集成
+//                          Layer 2: Standard Library Integration
 // ═══════════════════════════════════════════════════════════════════════════
 
-// # 基础 Trait 实现
+// # Basic Trait Implementations
 //
-// 这些实现确保 `ArcStr` 能够与 Rust 的标准库类型无缝集成，
-// 提供符合直觉的比较、格式化和访问接口。
+// These implementations ensure `ArcStr` can seamlessly integrate with Rust's standard library types,
+// providing intuitive comparison, formatting and access interfaces.
 
 impl PartialEq for ArcStr {
-    /// 基于指针的快速相等比较
+    /// Fast equality comparison based on pointer
     ///
-    /// # 优化原理
+    /// # Optimization Principle
     ///
-    /// 由于字符串池保证相同内容的字符串具有相同的内存地址，
-    /// 我们可以通过比较指针来快速判断字符串是否相等，
-    /// 避免逐字节的内容比较。
+    /// Since string pool guarantees strings with same content have the same memory address,
+    /// we can quickly determine string equality by comparing pointers,
+    /// avoiding byte-by-byte content comparison.
     ///
-    /// 这使得相等比较成为 O(1) 操作，而不是 O(n)。
+    /// This makes equality comparison an O(1) operation instead of O(n).
     #[inline]
     fn eq(&self, other: &Self) -> bool { self.ptr == other.ptr }
 }
@@ -382,18 +382,18 @@ impl PartialOrd for ArcStr {
 }
 
 impl Ord for ArcStr {
-    /// 基于字符串内容的字典序比较
+    /// Lexicographic comparison based on string content
     ///
-    /// 注意：这里必须比较内容而不是指针，因为指针地址与字典序无关。
+    /// Note: Must compare content here, not pointers, because pointer addresses are unrelated to lexicographic order.
     #[inline]
     fn cmp(&self, other: &Self) -> Ordering { self.as_str().cmp(other.as_str()) }
 }
 
 impl Hash for ArcStr {
-    /// 基于字符串内容的哈希
+    /// Hash based on string content
     ///
-    /// 虽然内部存储了预计算的哈希值，但这里重新计算以确保
-    /// 与 `&str` 和 `String` 的哈希值保持一致。
+    /// Although pre-computed hash value is stored internally, recalculate here to ensure
+    /// consistency with hash values of `&str` and `String`.
     #[inline]
     fn hash<H: Hasher>(&self, state: &mut H) { self.as_str().hash(state) }
 }
@@ -429,10 +429,10 @@ impl const core::ops::Deref for ArcStr {
     fn deref(&self) -> &Self::Target { self.as_str() }
 }
 
-// # 与其他字符串类型的互操作性
+// # Interoperability with Other String Types
 //
-// 这些实现使得 `ArcStr` 可以与 Rust 生态系统中的各种字符串类型
-// 进行直接比较，提供良好的开发体验。
+// These implementations allow `ArcStr` to directly compare with various string types
+// in the Rust ecosystem, providing good development experience.
 
 impl const PartialEq<str> for ArcStr {
     #[inline]
@@ -476,10 +476,10 @@ impl PartialOrd<String> for ArcStr {
     }
 }
 
-// # 类型转换实现
+// # Type Conversion Implementations
 //
-// 提供从各种字符串类型到 `ArcStr` 的便捷转换，
-// 以及从 `ArcStr` 到其他类型的转换。
+// Provides convenient conversions from various string types to `ArcStr`,
+// as well as conversions from `ArcStr` to other types.
 
 impl<'a> From<&'a str> for ArcStr {
     #[inline]
@@ -523,10 +523,10 @@ impl str::FromStr for ArcStr {
     fn from_str(s: &str) -> Result<Self, Self::Err> { Ok(Self::new(s)) }
 }
 
-/// # Serde 序列化支持
+/// # Serde Serialization Support
 ///
-/// 条件编译的 Serde 支持，使 `ArcStr` 可以参与序列化/反序列化流程。
-/// 序列化时输出字符串内容，反序列化时重新建立池化引用。
+/// Conditionally compiled Serde support, allows `ArcStr` to participate in serialization/deserialization.
+/// Outputs string content when serializing, re-establishes pooled reference when deserializing.
 #[cfg(feature = "serde")]
 mod serde_impls {
     use super::ArcStr;
@@ -549,10 +549,10 @@ mod serde_impls {
     }
 }
 
-/// # Rkyv 序列化支持
+/// # Rkyv Serialization Support
 ///
-/// 条件编译的 Rkyv 支持，使 `ArcStr` 可以参与序列化/反序列化流程。
-/// 序列化时输出字符串内容，反序列化时重新建立池化引用。
+/// Conditionally compiled Rkyv support, allows `ArcStr` to participate in serialization/deserialization.
+/// Outputs string content when serializing, re-establishes pooled reference when deserializing.
 #[cfg(feature = "rkyv")]
 mod rkyv_impls {
     use super::ArcStr;
@@ -619,270 +619,270 @@ mod rkyv_impls {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//                          第三层：核心实现机制
+//                          Layer 3: Core Implementation Mechanism
 // ═══════════════════════════════════════════════════════════════════════════
 
-// # 内存布局与数据结构设计
+// # Memory Layout and Data Structure Design
 //
-// 这个模块包含了 `ArcStr` 的底层数据结构定义和内存布局管理。
-// 理解这部分有助于深入了解性能优化的原理。
+// This module contains the underlying data structure definitions and memory layout management for `ArcStr`.
+// Understanding this part helps to deeply understand the principles of performance optimization.
 
-/// 字符串内容的内部表示（DST 头部）
+/// Internal representation of string content (DST header)
 ///
-/// # 内存布局设计
+/// # Memory Layout Design
 ///
-/// 使用 `#[repr(C)]` 确保内存布局稳定，字符串数据紧跟在结构体后面：
+/// Uses `#[repr(C)]` to ensure stable memory layout, string data follows immediately after the struct:
 ///
 /// ```text
-/// 64位系统内存布局：
+/// 64-bit system memory layout:
 /// ┌────────────────────┬──────────────────────────────────────────┐
-/// │ 字段                │ 大小与对齐                                │
+/// │ Field              │ Size and Alignment                       │
 /// ├────────────────────┼──────────────────────────────────────────┤
-/// │ hash: u64          │ 8字节, 8字节对齐 (offset: 0)               │
-/// │ count: AtomicUsize │ 8字节, 8字节对齐 (offset: 8)               │
-/// │ string_len: usize  │ 8字节, 8字节对齐 (offset: 16)              │
+/// │ hash: u64          │ 8 bytes, 8-byte aligned (offset: 0)      │
+/// │ count: AtomicUsize │ 8 bytes, 8-byte aligned (offset: 8)      │
+/// │ string_len: usize  │ 8 bytes, 8-byte aligned (offset: 16)     │
 /// ├────────────────────┼──────────────────────────────────────────┤
-/// │ [字符串数据]         │ string_len字节, 1字节对齐 (offset: 24)     │
+/// │ [string data]      │ string_len bytes, 1-byte aligned (offset: 24) │
 /// └────────────────────┴──────────────────────────────────────────┘
-/// 总头部大小：24字节
+/// Total header size: 24 bytes
 ///
-/// 32位系统内存布局：
+/// 32-bit system memory layout:
 /// ┌────────────────────┬──────────────────────────────────────────┐
-/// │ hash: u64          │ 8字节, 8字节对齐 (offset: 0)               │
-/// │ count: AtomicUsize │ 4字节, 4字节对齐 (offset: 8)               │
-/// │ string_len: usize  │ 4字节, 4字节对齐 (offset: 12)              │
+/// │ hash: u64          │ 8 bytes, 8-byte aligned (offset: 0)      │
+/// │ count: AtomicUsize │ 4 bytes, 4-byte aligned (offset: 8)      │
+/// │ string_len: usize  │ 4 bytes, 4-byte aligned (offset: 12)     │
 /// ├────────────────────┼──────────────────────────────────────────┤
-/// │ [字符串数据]         │ string_len字节, 1字节对齐 (offset: 16)     │
+/// │ [string data]      │ string_len bytes, 1-byte aligned (offset: 16) │
 /// └────────────────────┴──────────────────────────────────────────┘
-/// 总头部大小：16字节
+/// Total header size: 16 bytes
 /// ```
 ///
-/// # 设计考量
+/// # Design Considerations
 ///
-/// 1. **哈希值前置**：将 `hash` 放在首位确保在32位系统上的正确对齐
-/// 2. **原子计数器**：使用 `AtomicUsize` 保证并发安全的引用计数
-/// 3. **长度缓存**：预存字符串长度避免重复计算
-/// 4. **DST布局**：字符串数据直接跟随结构体，减少间接访问
+/// 1. **Hash value first**: Placing `hash` first ensures correct alignment on 32-bit systems
+/// 2. **Atomic counter**: Uses `AtomicUsize` to guarantee thread-safe reference counting
+/// 3. **Length caching**: Pre-stores string length to avoid repeated calculation
+/// 4. **DST layout**: String data directly follows the struct, reducing indirect access
 #[repr(C)]
 struct ArcStrInner {
-    /// 预计算的内容哈希值
+    /// Pre-computed content hash value
     ///
-    /// 这个哈希值在多个场景中被复用：
-    /// - 全局池的 `HashMap` 键
-    /// - `Drop` 时的快速查找
-    /// - 避免重复哈希计算的性能优化
+    /// This hash value is reused in multiple scenarios:
+    /// - Global pool's `HashMap` key
+    /// - Fast lookup during `Drop`
+    /// - Performance optimization to avoid repeated hash calculation
     hash: u64,
 
-    /// 原子引用计数
+    /// Atomic reference count
     ///
-    /// 使用原生原子类型确保最佳性能。
-    /// 计数范围：[1, `isize::MAX`]，超出时触发abort。
+    /// Uses native atomic type to ensure optimal performance.
+    /// Count range: [1, `isize::MAX`], triggers abort when exceeded.
     count: AtomicUsize,
 
-    /// 字符串的字节长度（UTF-8编码）
+    /// Byte length of string (UTF-8 encoded)
     ///
-    /// 预存长度避免在每次访问时扫描字符串。
-    /// 不包含NUL终止符。
+    /// Pre-stores length to avoid scanning string on each access.
+    /// Does not include NUL terminator.
     string_len: usize,
-    // 注意：字符串数据紧跟在这个结构体后面，
-    // 通过 layout_for_string() 计算的布局来确保正确的内存分配
+    // Note: String data follows immediately after this struct,
+    // layout calculated by layout_for_string() ensures correct memory allocation
 }
 
 impl ArcStrInner {
-    /// 字符串长度的上限
+    /// Upper limit for string length
     ///
-    /// 计算公式：`isize::MAX - sizeof(ArcStrInner)`
-    /// 这确保总分配大小不会溢出有符号整数范围。
+    /// Formula: `isize::MAX - sizeof(ArcStrInner)`
+    /// This ensures total allocation size won't overflow signed integer range.
     const MAX_LEN: usize = isize::MAX as usize - core::mem::size_of::<Self>();
 
-    /// 获取字符串数据的起始地址
+    /// Get starting address of string data
     ///
     /// # Safety
     ///
-    /// - `self` 必须是指向有效 `ArcStrInner` 的指针
-    /// - 必须确保字符串数据已经被正确初始化
-    /// - 调用者负责确保返回的指针在使用期间保持有效
+    /// - `self` must be a pointer to valid `ArcStrInner`
+    /// - Must ensure string data has been correctly initialized
+    /// - Caller is responsible for ensuring returned pointer remains valid during use
     #[must_use]
     #[inline]
     const unsafe fn string_ptr(&self) -> *const u8 {
-        // SAFETY: repr(C) 保证字符串数据位于结构体末尾的固定偏移处
+        // SAFETY: repr(C) guarantees string data is at fixed offset after struct end
         core::ptr::from_ref(self).add(1).cast()
     }
 
-    /// 获取字符串的字节切片
+    /// Get byte slice of string
     ///
     /// # Safety
     ///
-    /// - `self` 必须是指向有效 `ArcStrInner` 的指针
-    /// - 字符串数据必须已经被正确初始化
-    /// - `string_len` 必须准确反映实际字符串长度
-    /// - 字符串数据必须在返回的切片生命周期内保持有效
+    /// - `self` must be a pointer to valid `ArcStrInner`
+    /// - String data must have been correctly initialized
+    /// - `string_len` must accurately reflect actual string length
+    /// - String data must remain valid during returned slice's lifetime
     #[must_use]
     #[inline]
     const unsafe fn as_bytes(&self) -> &[u8] {
         let ptr = self.string_ptr();
-        // SAFETY: 调用者保证 ptr 指向有效的 string_len 字节数据
+        // SAFETY: Caller guarantees ptr points to valid string_len bytes of data
         core::slice::from_raw_parts(ptr, self.string_len)
     }
 
-    /// 获取字符串切片引用
+    /// Get string slice reference
     ///
     /// # Safety
     ///
-    /// - `self` 必须是指向有效 `ArcStrInner` 的指针
-    /// - 字符串数据必须是有效的 UTF-8 编码
-    /// - `string_len` 必须准确反映实际字符串长度
-    /// - 字符串数据必须在返回的切片生命周期内保持有效
+    /// - `self` must be a pointer to valid `ArcStrInner`
+    /// - String data must be valid UTF-8 encoding
+    /// - `string_len` must accurately reflect actual string length
+    /// - String data must remain valid during returned slice's lifetime
     #[must_use]
     #[inline]
     const unsafe fn as_str(&self) -> &str {
-        // SAFETY: 调用者保证字符串数据是有效的 UTF-8
+        // SAFETY: Caller guarantees string data is valid UTF-8
         core::str::from_utf8_unchecked(self.as_bytes())
     }
 
-    /// 计算存储指定长度字符串所需的内存布局
+    /// Calculate memory layout needed to store string of specified length
     ///
-    /// 这个函数计算出正确的内存大小和对齐要求，
-    /// 确保结构体和字符串数据都能正确对齐。
+    /// This function calculates correct memory size and alignment requirements,
+    /// ensuring both struct and string data can be correctly aligned.
     ///
     /// # Panics
     ///
-    /// 如果 `string_len > Self::MAX_LEN`，函数会panic。
-    /// 这是为了防止整数溢出和无效的内存布局。
+    /// If `string_len > Self::MAX_LEN`, function will panic.
+    /// This is to prevent integer overflow and invalid memory layout.
     ///
     /// # Examples
     ///
     /// ```rust
     /// let layout = ArcStrInner::layout_for_string(5); // "hello"
-    /// assert!(layout.size() >= 24 + 5); // 64位系统
+    /// assert!(layout.size() >= 24 + 5); // 64-bit system
     /// ```
     fn layout_for_string(string_len: usize) -> Layout {
         if string_len > Self::MAX_LEN {
             hint::cold_path();
-            panic!("字符串过长: {} 字节 (最大支持: {})", string_len, Self::MAX_LEN);
+            panic!("String too long: {} bytes (max supported: {})", string_len, Self::MAX_LEN);
         }
 
-        // SAFETY: 长度检查通过，布局计算是安全的
+        // SAFETY: Length check passed, layout calculation is safe
         unsafe { Self::layout_for_string_unchecked(string_len) }
     }
 
-    /// 计算存储指定长度字符串所需的内存布局（不检查长度）
+    /// Calculate memory layout needed to store string of specified length (without length check)
     ///
     /// # Safety
     ///
-    /// 调用者必须保证 `string_len <= Self::MAX_LEN`
+    /// Caller must guarantee `string_len <= Self::MAX_LEN`
     const unsafe fn layout_for_string_unchecked(string_len: usize) -> Layout {
         let header = Layout::new::<Self>();
         let string_data = Layout::from_size_align_unchecked(string_len, 1);
-        // SAFETY: 长度已经过检查，布局计算不会溢出
+        // SAFETY: Length has been checked, layout calculation won't overflow
         let (combined, _offset) = header.extend(string_data).unwrap_unchecked();
         combined.pad_to_align()
     }
 
-    /// 在指定内存位置初始化 `ArcStrInner` 并写入字符串数据
+    /// Initialize `ArcStrInner` at specified memory location and write string data
     ///
-    /// 这是一个低级函数，负责设置完整的DST结构：
-    /// 1. 初始化头部字段
-    /// 2. 复制字符串数据到紧邻的内存
+    /// This is a low-level function responsible for setting up complete DST structure:
+    /// 1. Initialize header fields
+    /// 2. Copy string data to adjacent memory
     ///
     /// # Safety
     ///
-    /// - `ptr` 必须指向通过 `layout_for_string(string.len())` 分配的有效内存
-    /// - 内存必须正确对齐且大小足够
-    /// - `string` 必须是有效的 UTF-8 字符串
-    /// - 调用者负责最终释放这块内存
-    /// - 在调用此函数后，调用者必须确保引用计数正确管理
+    /// - `ptr` must point to valid memory allocated via `layout_for_string(string.len())`
+    /// - Memory must be correctly aligned and large enough
+    /// - `string` must be valid UTF-8 string
+    /// - Caller is responsible for eventually freeing this memory
+    /// - After calling this function, caller must ensure reference count is correctly managed
     const unsafe fn write_with_string(ptr: NonNull<Self>, string: &str, hash: u64) {
         let inner = ptr.as_ptr();
 
-        // 第一步：初始化头部结构体
-        // SAFETY: ptr 指向有效的已分配内存，大小足够容纳 Self
+        // Step 1: Initialize header struct
+        // SAFETY: ptr points to valid allocated memory, large enough to hold Self
         core::ptr::write(
             inner,
             Self { hash, count: AtomicUsize::new(1), string_len: string.len() },
         );
 
-        // 第二步：复制字符串数据到紧邻头部后的内存
+        // Step 2: Copy string data to memory immediately after header
         // SAFETY:
-        // - string_ptr() 计算出的地址位于已分配内存范围内
-        // - string.len() 与分配时的长度一致
-        // - string.as_ptr() 指向有效的 UTF-8 数据
+        // - Address calculated by string_ptr() is within allocated memory range
+        // - string.len() matches length used during allocation
+        // - string.as_ptr() points to valid UTF-8 data
         let string_ptr = (*inner).string_ptr().cast_mut();
         core::ptr::copy_nonoverlapping(string.as_ptr(), string_ptr, string.len());
     }
 
-    /// 原子递增引用计数
+    /// Atomically increment reference count
     ///
-    /// # 溢出处理
+    /// # Overflow Handling
     ///
-    /// 如果引用计数超过 `isize::MAX`，函数会立即abort程序。
-    /// 这是一个极端情况，在正常使用中几乎不可能发生。
+    /// If reference count exceeds `isize::MAX`, function will immediately abort program.
+    /// This is an extreme case that almost never happens in normal use.
     ///
     /// # Safety
     ///
-    /// - `self` 必须指向有效的 `ArcStrInner`
-    /// - 当前引用计数必须至少为 1（即存在有效引用）
+    /// - `self` must point to valid `ArcStrInner`
+    /// - Current reference count must be at least 1 (i.e., valid reference exists)
     #[inline]
     unsafe fn inc_strong(&self) {
         let old_count = self.count.fetch_add(1, Relaxed);
 
-        // 防止引用计数溢出 - 这是一个安全检查
+        // Prevent reference count overflow - this is a safety check
         if old_count > isize::MAX as usize {
             hint::cold_path();
-            // 溢出是内存安全问题，必须立即终止程序
+            // Overflow is a memory safety issue, must immediately terminate program
             core::intrinsics::abort();
         }
     }
 
-    /// 原子递减引用计数
+    /// Atomically decrement reference count
     ///
-    /// 使用 Release 内存序确保所有之前的修改对后续的操作可见。
-    /// 这对于安全的内存回收至关重要。
+    /// Uses Release memory ordering to ensure all previous modifications are visible to subsequent operations.
+    /// This is crucial for safe memory reclamation.
     ///
     /// # Safety
     ///
-    /// - `self` 必须指向有效的 `ArcStrInner`
-    /// - 当前引用计数必须至少为 1
+    /// - `self` must point to valid `ArcStrInner`
+    /// - Current reference count must be at least 1
     ///
-    /// # 返回值
+    /// # Return Value
     ///
-    /// 如果这是最后一个引用（计数变为 0），返回 `true`；否则返回 `false`。
+    /// If this is the last reference (count becomes 0), returns `true`; otherwise returns `false`.
     #[inline]
     unsafe fn dec_strong(&self) -> bool {
-        // Release ordering: 确保之前的所有修改对后续的内存释放操作可见
+        // Release ordering: Ensures all previous modifications are visible to subsequent memory release operations
         self.count.fetch_sub(1, Release) == 1
     }
 
-    /// 获取当前引用计数的快照
+    /// Get snapshot of current reference count
     ///
-    /// 注意：由于并发性，返回值可能在返回后立即过时。
-    /// 此方法主要用于调试和测试目的。
+    /// Note: Due to concurrency, returned value may be outdated immediately after return.
+    /// This method is mainly used for debugging and testing purposes.
     #[inline]
     fn strong_count(&self) -> usize { self.count.load(Relaxed) }
 }
 
-// # 全局字符串池的设计与实现
+// # Global String Pool Design and Implementation
 //
-// 全局池是整个系统的核心，负责去重和生命周期管理。
+// The global pool is the core of the entire system, responsible for deduplication and lifecycle management.
 
-/// 线程安全的内部指针包装
+/// Thread-safe internal pointer wrapper
 ///
-/// 这个类型解决了在 `HashMap` 中存储 `NonNull<ArcStrInner>` 的问题：
-/// - 提供必要的 trait 实现（ `Hash`, `PartialEq`, `Send`, `Sync` ）
-/// - 封装指针的线程安全语义
-/// - 支持基于内容的查找（通过 Equivalent trait）
+/// This type solves the problem of storing `NonNull<ArcStrInner>` in `HashMap`:
+/// - Provides necessary trait implementations (`Hash`, `PartialEq`, `Send`, `Sync`)
+/// - Encapsulates pointer's thread-safe semantics
+/// - Supports content-based lookup (via Equivalent trait)
 ///
-/// # 线程安全性
+/// # Thread Safety
 ///
-/// 虽然包装了裸指针，但 `ThreadSafePtr` 是线程安全的，因为：
-/// - 指向的 `ArcStrInner` 是不可变的（除了原子引用计数）
-/// - 引用计数使用原子操作
-/// - 生命周期由全局池管理，确保指针有效性
+/// Although wrapping a raw pointer, `ThreadSafePtr` is thread-safe because:
+/// - The pointed `ArcStrInner` is immutable (except for atomic reference count)
+/// - Reference counting uses atomic operations
+/// - Lifecycle is managed by global pool, ensuring pointer validity
 #[derive(Debug, Clone, Copy)]
 #[repr(transparent)]
 struct ThreadSafePtr(NonNull<ArcStrInner>);
 
-// SAFETY: ArcStrInner 内容不可变且使用原子引用计数，可以安全地跨线程访问
+// SAFETY: ArcStrInner content is immutable and uses atomic reference counting, can be safely accessed across threads
 unsafe impl Send for ThreadSafePtr {}
 unsafe impl Sync for ThreadSafePtr {}
 
@@ -894,14 +894,14 @@ impl const core::ops::Deref for ThreadSafePtr {
 }
 
 impl Hash for ThreadSafePtr {
-    /// 使用预存储的哈希值
+    /// Use pre-stored hash value
     ///
-    /// 这是一个关键优化：我们不重新计算字符串内容的哈希，
-    /// 而是直接使用存储在 `ArcStrInner` 中的预计算值。
-    /// 配合 `IdentityHasher` 使用，避免任何额外的哈希计算。
+    /// This is a key optimization: We don't recalculate string content hash,
+    /// but directly use pre-computed value stored in `ArcStrInner`.
+    /// Used with `IdentityHasher` to avoid any extra hash calculation.
     #[inline]
     fn hash<H: Hasher>(&self, state: &mut H) {
-        // SAFETY: ThreadSafePtr 保证指针在池生命周期内始终有效
+        // SAFETY: ThreadSafePtr guarantees pointer is always valid during pool's lifetime
         unsafe {
             let inner = self.0.as_ref();
             state.write_u64(inner.hash);
@@ -910,11 +910,11 @@ impl Hash for ThreadSafePtr {
 }
 
 impl PartialEq for ThreadSafePtr {
-    /// 基于指针相等的比较
+    /// Comparison based on pointer equality
     ///
-    /// 这是池去重机制的核心：只有指向同一内存地址的指针
-    /// 才被认为是"相同"的池条目。内容相同但地址不同的字符串
-    /// 在池中是不应该同时存在的。
+    /// This is the core of pool deduplication mechanism: Only pointers pointing to same memory address
+    /// are considered "same" pool entries. Strings with same content but different addresses
+    /// should not exist simultaneously in the pool.
     #[inline]
     fn eq(&self, other: &Self) -> bool { self.0 == other.0 }
 }
@@ -922,48 +922,48 @@ impl PartialEq for ThreadSafePtr {
 impl Eq for ThreadSafePtr {}
 
 impl Equivalent<ThreadSafePtr> for str {
-    /// 支持用 `&str` 在 `HashSet<ThreadSafePtr>` 中查找
+    /// Support lookup with `&str` in `HashSet<ThreadSafePtr>`
     ///
-    /// 这个实现使得我们可以用字符串内容来查找池中的条目，
-    /// 而不需要先构造一个 `ThreadSafePtr`。
+    /// This implementation allows us to use string content to find entries in pool,
+    /// without needing to construct a `ThreadSafePtr` first.
     ///
-    /// # 性能优化
+    /// # Performance Optimization
     ///
-    /// 先比较字符串长度（单个 usize 比较），只有长度相等时
-    /// 才进行内容比较（潜在的 memcmp）。这避免了在长度不等时
-    /// 构造 fat pointer 的开销。
+    /// First compare string length (single usize comparison), only when lengths are equal
+    /// do content comparison (potential memcmp). This avoids overhead of constructing
+    /// fat pointer when lengths are unequal.
     #[inline]
     fn equivalent(&self, key: &ThreadSafePtr) -> bool {
-        // SAFETY: 池中的 ThreadSafePtr 保证指向有效的 ArcStrInner
+        // SAFETY: ThreadSafePtr in pool guarantees pointing to valid ArcStrInner
         unsafe {
             let inner = key.0.as_ref();
 
-            // 优化：先比较长度（O(1)），避免不必要的内容比较
+            // Optimization: Compare length first (O(1)), avoid unnecessary content comparison
             if inner.string_len != self.len() {
                 return false;
             }
 
-            // 长度相等时进行内容比较
+            // When lengths are equal, do content comparison
             inner.as_str() == self
         }
     }
 }
 
-// # 哈希算法选择与池类型定义
+// # Hash Algorithm Selection and Pool Type Definition
 
-/// 透传哈希器，用于全局池内部
+/// Pass-through hasher, used internally by global pool
 ///
-/// 由于我们在 `ArcStrInner` 中预存了哈希值，池内部的 `HashMap`
-/// 不需要重新计算哈希。`IdentityHasher` 直接透传 u64 值。
+/// Since we pre-store hash value in `ArcStrInner`, pool's internal `HashMap`
+/// doesn't need to recalculate hash. `IdentityHasher` directly passes through u64 value.
 ///
-/// # 工作原理
+/// # How It Works
 ///
-/// 1. `ThreadSafePtr::hash()` 调用 `hasher.write_u64(stored_hash)`
-/// 2. `IdentityHasher::write_u64()` 直接存储这个值
-/// 3. `IdentityHasher::finish()` 返回存储的值
-/// 4. `HashMap` 使用这个哈希值进行桶分配和查找
+/// 1. `ThreadSafePtr::hash()` calls `hasher.write_u64(stored_hash)`
+/// 2. `IdentityHasher::write_u64()` directly stores this value
+/// 3. `IdentityHasher::finish()` returns stored value
+/// 4. `HashMap` uses this hash value for bucket allocation and lookup
 ///
-/// 这避免了重复的哈希计算，将池操作的哈希开销降到最低。
+/// This avoids repeated hash calculation, minimizing hash overhead for pool operations.
 #[derive(Default, Clone, Copy)]
 struct IdentityHasher(u64);
 
@@ -979,55 +979,55 @@ impl Hasher for IdentityHasher {
     fn finish(&self) -> u64 { self.0 }
 }
 
-/// 池的类型别名，简化代码
+/// Pool type alias, simplifies code
 type PoolHasher = BuildHasherDefault<IdentityHasher>;
 type PtrMap = HashMap<ThreadSafePtr, (), PoolHasher>;
 
-/// 内容哈希计算器
+/// Content hash calculator
 ///
-/// 使用 ahash 的高性能随机哈希算法来计算字符串内容的哈希值。
-/// 这个哈希值会被存储在 `ArcStrInner` 中，用于整个生命周期。
+/// Uses ahash's high-performance random hash algorithm to calculate string content hash value.
+/// This hash value will be stored in `ArcStrInner`, used throughout its lifetime.
 ///
-/// # 为什么使用 ahash？
+/// # Why ahash?
 ///
-/// - 高性能：比标准库的 `DefaultHasher` 更快
-/// - 安全性：抗哈希洪水攻击
-/// - 质量：分布均匀，减少哈希冲突
+/// - High performance: Faster than standard library's `DefaultHasher`
+/// - Security: Resistant to hash flooding attacks
+/// - Quality: Uniform distribution, reduces hash collisions
 static CONTENT_HASHER: ManuallyInit<ahash::RandomState> = ManuallyInit::new();
 
-/// 全局字符串池
+/// Global string pool
 ///
-/// 使用 `HashMap` 实现高并发的字符串池：
-/// - **读锁**：多个线程可以同时查找现有字符串
-/// - **写锁**：创建新字符串时需要独占访问
-/// - **容量预分配**：避免初期的频繁扩容
+/// Uses `HashMap` to implement high-concurrency string pool:
+/// - **Read lock**: Multiple threads can simultaneously lookup existing strings
+/// - **Write lock**: Creating new strings requires exclusive access
+/// - **Capacity pre-allocation**: Avoids frequent resizing in early stages
 ///
-/// # 并发模式
+/// # Concurrency Pattern
 ///
 /// ```text
-/// 并发读取（常见情况）:
-/// Thread A: read_lock() -> 查找 "hello" -> 找到 -> 返回
-/// Thread B: read_lock() -> 查找 "world" -> 找到 -> 返回  
-/// Thread C: read_lock() -> 查找 "hello" -> 找到 -> 返回
+/// Concurrent reads (common case):
+/// Thread A: read_lock() -> lookup "hello" -> found -> return
+/// Thread B: read_lock() -> lookup "world" -> found -> return
+/// Thread C: read_lock() -> lookup "hello" -> found -> return
 ///
-/// 并发写入（偶尔发生）:
-/// Thread D: write_lock() -> 查找 "new" -> 未找到 -> 创建 -> 插入 -> 返回
+/// Concurrent writes (occasional):
+/// Thread D: write_lock() -> lookup "new" -> not found -> create -> insert -> return
 /// ```
 static ARC_STR_POOL: ManuallyInit<PtrMap> = ManuallyInit::new();
 
-/// 初始化全局字符串池
+/// Initialize global string pool
 ///
-/// 这个函数必须在使用 `ArcStr` 之前调用，通常在程序启动时完成。
-/// 初始化过程包括：
-/// 1. 创建内容哈希计算器
-/// 2. 创建空的字符串池（预分配128个条目的容量）
+/// This function must be called before using `ArcStr`, usually done at program startup.
+/// Initialization process includes:
+/// 1. Create content hash calculator
+/// 2. Create empty string pool (pre-allocate capacity for 128 entries)
 ///
-/// # 线程安全性
+/// # Thread Safety
 ///
-/// 虽然这个函数本身不是线程安全的，但它应该在单线程环境下
-/// （如 main 函数开始或静态初始化时）被调用一次。
+/// Although this function itself is not thread-safe, it should be called once
+/// in a single-threaded environment (like at the start of main function or during static initialization).
 #[inline(always)]
-// 只调用一次
+// Called only once
 #[allow(clippy::inline_always)]
 pub(crate) fn __init() {
     CONTENT_HASHER.init(ahash::RandomState::new());
@@ -1035,46 +1035,46 @@ pub(crate) fn __init() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//                          第四层：性能优化实现
+//                          Layer 4: Performance Optimization Implementation
 // ═══════════════════════════════════════════════════════════════════════════
 
-/// # 内存管理优化策略
+/// # Memory Management Optimization Strategy
 ///
-/// 这个模块包含了各种底层的性能优化实现，
-/// 包括内存布局计算、分配策略和并发优化。
+/// This module contains various low-level performance optimization implementations,
+/// including memory layout calculation, allocation strategy and concurrency optimization.
 
-// （这里是性能关键的内部函数实现，已经在上面的代码中体现了）
+// (Performance-critical internal function implementations are already reflected in the code above)
 
-/// # 并发控制优化
+/// # Concurrency Control Optimization
 ///
-/// 双重检查锁定模式的详细实现分析：
+/// Detailed implementation analysis of double-checked locking pattern:
 ///
 /// ```text
-/// 时间线示例：
-/// T1: Thread A 调用 ArcStr::new("test")
-/// T2: Thread A 获取读锁，查找池，未找到
-/// T3: Thread A 释放读锁
-/// T4: Thread B 调用 ArcStr::new("test")  
-/// T5: Thread B 获取读锁，查找池，未找到
-/// T6: Thread B 释放读锁
-/// T7: Thread A 获取写锁
-/// T8: Thread A 再次查找（双重检查），确认未找到
-/// T9: Thread A 创建新实例，插入池
-/// T10: Thread A 释放写锁
-/// T11: Thread B 等待写锁...
-/// T12: Thread B 获取写锁
-/// T13: Thread B 再次查找（双重检查），找到！
-/// T14: Thread B 增加引用计数，释放写锁
+/// Timeline example:
+/// T1: Thread A calls ArcStr::new("test")
+/// T2: Thread A acquires read lock, searches pool, not found
+/// T3: Thread A releases read lock
+/// T4: Thread B calls ArcStr::new("test")
+/// T5: Thread B acquires read lock, searches pool, not found
+/// T6: Thread B releases read lock
+/// T7: Thread A acquires write lock
+/// T8: Thread A searches again (double check), confirms not found
+/// T9: Thread A creates new instance, inserts into pool
+/// T10: Thread A releases write lock
+/// T11: Thread B waiting for write lock...
+/// T12: Thread B acquires write lock
+/// T13: Thread B searches again (double check), found!
+/// T14: Thread B increments reference count, releases write lock
 /// ```
 
 // ═══════════════════════════════════════════════════════════════════════════
-//                          第五层：测试与工具
+//                          Layer 5: Testing and Tools
 // ═══════════════════════════════════════════════════════════════════════════
 
-/// # 测试辅助工具
+/// # Test Helper Tools
 ///
-/// 这些函数仅在测试环境中可用，用于检查池的内部状态
-/// 和进行隔离测试。
+/// These functions are only available in test environment, used to check pool's internal state
+/// and perform isolated tests.
 
 #[cfg(test)]
 pub(crate) fn pool_stats() -> (usize, usize) {
@@ -1085,7 +1085,7 @@ pub(crate) fn pool_stats() -> (usize, usize) {
 #[cfg(test)]
 pub(crate) fn clear_pool_for_test() {
     use std::{thread, time::Duration};
-    // 短暂等待确保其他线程完成操作
+    // Brief wait to ensure other threads complete operations
     thread::sleep(Duration::from_millis(10));
     ARC_STR_POOL.get().clear_sync();
 }
@@ -1095,7 +1095,7 @@ mod tests {
     use super::*;
     use std::{thread, time::Duration};
 
-    /// 运行隔离的测试，确保测试间不会相互影响
+    /// Run isolated test, ensure tests don't affect each other
     fn run_isolated_test<F: FnOnce()>(f: F) {
         clear_pool_for_test();
         f();
@@ -1109,20 +1109,20 @@ mod tests {
             let s2 = ArcStr::new("hello");
             let s3 = ArcStr::new("world");
 
-            // 验证相等性和指针共享
+            // Verify equality and pointer sharing
             assert_eq!(s1, s2);
             assert_ne!(s1, s3);
-            assert_eq!(s1.ptr, s2.ptr); // 相同内容共享内存
-            assert_ne!(s1.ptr, s3.ptr); // 不同内容不同内存
+            assert_eq!(s1.ptr, s2.ptr); // Same content shares memory
+            assert_ne!(s1.ptr, s3.ptr); // Different content different memory
 
-            // 验证基础操作
+            // Verify basic operations
             assert_eq!(s1.as_str(), "hello");
             assert_eq!(s1.len(), 5);
             assert!(!s1.is_empty());
 
-            // 验证池状态
+            // Verify pool state
             let (count, _) = pool_stats();
-            assert_eq!(count, 2); // "hello" 和 "world"
+            assert_eq!(count, 2); // "hello" and "world"
         });
     }
 
@@ -1141,7 +1141,7 @@ mod tests {
             assert_eq!(s1.ref_count(), 1);
 
             drop(s1);
-            // 等待 drop 完成
+            // Wait for drop to complete
             thread::sleep(Duration::from_millis(5));
             assert_eq!(pool_stats().0, 0);
         });
@@ -1155,7 +1155,7 @@ mod tests {
 
             assert_eq!(s1.ptr, s2.ptr);
             assert_eq!(s1.ref_count(), 2);
-            assert_eq!(pool_stats().0, 1); // 只有一个池条目
+            assert_eq!(pool_stats().0, 1); // Only one pool entry
         });
     }
 

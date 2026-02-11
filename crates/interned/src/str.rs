@@ -1,14 +1,14 @@
-//! 组合字符串类型，统一编译期和运行时字符串
+//! Combined string type, unifying compile-time and runtime strings
 //!
-//! # 设计理念
+//! # Design Philosophy
 //!
-//! Rust 中常见两类字符串：
-//! - **字面量** (`&'static str`): 编译期确定，零成本，永不释放
-//! - **动态字符串** (`String`, `ArcStr`): 运行时构造，需要内存管理
+//! Two common types of strings in Rust:
+//! - **Literals** (`&'static str`): Determined at compile time, zero cost, never released
+//! - **Dynamic strings** (`String`, `ArcStr`): Constructed at runtime, requires memory management
 //!
-//! `Str` 通过枚举将两者统一，提供一致的 API，同时保留各自的性能优势。
+//! `Str` unifies both through an enum, providing a consistent API while preserving their respective performance advantages.
 //!
-//! # 内存布局
+//! # Memory Layout
 //!
 //! ```text
 //! enum Str {
@@ -16,65 +16,65 @@
 //!     Counted(ArcStr)        // 8 bytes (NonNull)
 //! }
 //!
-//! 总大小: 17-24 bytes (取决于编译器优化)
+//! Total size: 17-24 bytes (depends on compiler optimization)
 //! - Discriminant: 1 byte
 //! - Padding: 0-7 bytes
-//! - Data: 16 bytes (最大变体)
+//! - Data: 16 bytes (largest variant)
 //! ```
 //!
-//! # 性能对比
+//! # Performance Comparison
 //!
-//! | 操作 | Static | Counted |
-//! |------|--------|---------|
-//! | 创建 | 0 ns | ~100 ns (首次) / ~20 ns (池命中) |
+//! | Operation | Static | Counted |
+//! |-----------|--------|---------|
+//! | Create | 0 ns | ~100 ns (first time) / ~20 ns (pool hit) |
 //! | Clone | ~1 ns | ~5 ns (atomic inc) |
-//! | Drop | 0 ns | ~5 ns (atomic dec) + 可能的清理 |
-//! | `as_str()` | 0 ns | 0 ns (直接访问) |
-//! | `len()` | 0 ns | 0 ns (直接读字段) |
+//! | Drop | 0 ns | ~5 ns (atomic dec) + possible cleanup |
+//! | `as_str()` | 0 ns | 0 ns (direct access) |
+//! | `len()` | 0 ns | 0 ns (direct field read) |
 //!
-//! # 使用场景
+//! # Usage Scenarios
 //!
-//! ## ✅ 使用 Static 变体
+//! ## Use Static variant
 //!
 //! ```rust
 //! use interned::Str;
 //!
-//! // 常量表
+//! // Constant table
 //! static KEYWORDS: &[Str] = &[
 //!     Str::from_static("fn"),
 //!     Str::from_static("let"),
 //!     Str::from_static("match"),
 //! ];
 //!
-//! // 编译期字符串
+//! // Compile-time string
 //! const ERROR_MSG: Str = Str::from_static("error occurred");
 //! ```
 //!
-//! ## ✅ 使用 Counted 变体
+//! ## Use Counted variant
 //!
 //! ```rust
 //! use interned::Str;
 //!
-//! // 运行时字符串（去重）
+//! // Runtime string (deduplicated)
 //! let user_input = Str::new(get_user_input());
 //!
-//! // 跨线程共享
+//! // Cross-thread sharing
 //! let shared = Str::new("config");
 //! std::thread::spawn(move || {
 //!     process(shared);
 //! });
 //! ```
 //!
-//! ## ⚠️ 常见陷阱
+//! ## Common Pitfalls
 //!
 //! ```rust
 //! use interned::Str;
 //!
-//! // ❌ 字面量不要用 new()
-//! let bad = Str::new("literal");  // 创建 Counted，进入池
+//! // Don't use new() for literals
+//! let bad = Str::new("literal");  // Creates Counted, enters pool
 //!
-//! // ✅ 应该用 from_static
-//! const GOOD: Str = Str::from_static("literal");  // Static 变体，零成本
+//! // Should use from_static
+//! const GOOD: Str = Str::from_static("literal");  // Static variant, zero cost
 //! ```
 
 use super::arc_str::ArcStr;
@@ -88,40 +88,40 @@ use core::{
 // Core Type Definition
 // ============================================================================
 
-/// 组合字符串类型，支持编译期字面量和运行时引用计数字符串
+/// Combined string type, supports compile-time literals and runtime reference-counted strings
 ///
 /// # Variants
 ///
 /// ## Static
 ///
-/// - 包装 `&'static str`
-/// - 零分配成本
-/// - 零运行时开销
-/// - Clone 是简单的指针复制
-/// - 永不释放
+/// - Wraps `&'static str`
+/// - Zero allocation cost
+/// - Zero runtime overhead
+/// - Clone is simple pointer copy
+/// - Never released
 ///
 /// ## Counted
 ///
-/// - 包装 `ArcStr`
-/// - 堆分配，通过全局字符串池去重
-/// - 原子引用计数管理
-/// - 线程安全共享
-/// - 最后一个引用释放时回收
+/// - Wraps `ArcStr`
+/// - Heap allocated, deduplicated through global string pool
+/// - Atomic reference count management
+/// - Thread-safe sharing
+/// - Reclaimed when last reference is released
 ///
 /// # Method Shadowing
 ///
-/// `Str` 提供了与 `str` 同名的方法（如 `len()`, `is_empty()`），
-/// 这些方法会覆盖（shadow）`Deref` 提供的版本，以便：
+/// `Str` provides methods with the same names as `str` (like `len()`, `is_empty()`),
+/// these methods shadow the versions provided by `Deref`, so that:
 ///
-/// - 对 `Static` 变体：直接访问 `&'static str`
-/// - 对 `Counted` 变体：使用 `ArcStr` 的优化实现（直接读取内部字段）
+/// - For `Static` variant: Directly access `&'static str`
+/// - For `Counted` variant: Use `ArcStr`'s optimized implementation (directly read internal fields)
 ///
 /// ```rust
 /// use interned::Str;
 ///
 /// let s = Str::new("hello");
-/// // 调用 Str::len()，而不是 <Str as Deref>::deref().len()
-/// // 对于 Counted 变体，这避免了构造 &str 的开销
+/// // Calls Str::len(), not <Str as Deref>::deref().len()
+/// // For Counted variant, this avoids the overhead of constructing &str
 /// assert_eq!(s.len(), 5);
 /// ```
 ///
@@ -130,24 +130,24 @@ use core::{
 /// ```rust
 /// use interned::Str;
 ///
-/// // 编译期字符串
+/// // Compile-time string
 /// let s1 = Str::from_static("hello");
 /// assert!(s1.is_static());
 /// assert_eq!(s1.ref_count(), None);
 ///
-/// // 运行时字符串
+/// // Runtime string
 /// let s2 = Str::new("world");
 /// assert!(!s2.is_static());
 /// assert_eq!(s2.ref_count(), Some(1));
 ///
-/// // 统一接口
+/// // Unified interface
 /// assert_eq!(s1.len(), 5);
 /// assert_eq!(s2.len(), 5);
 /// ```
 ///
 /// # Thread Safety
 ///
-/// `Str` 是 `Send + Sync`，可以安全地在线程间传递：
+/// `Str` is `Send + Sync`, can be safely passed between threads:
 ///
 /// ```rust
 /// use interned::Str;
@@ -160,24 +160,24 @@ use core::{
 /// ```
 #[derive(Clone)]
 pub enum Str {
-    /// 编译期字符串字面量
+    /// Compile-time string literal
     ///
-    /// - 零成本创建和访问
-    /// - Clone 是指针复制（~1ns）
-    /// - 永不释放内存
-    /// - 适合常量表和配置
+    /// - Zero cost creation and access
+    /// - Clone is pointer copy (~1ns)
+    /// - Never releases memory
+    /// - Suitable for constant tables and configuration
     Static(&'static str),
 
-    /// 运行时引用计数字符串
+    /// Runtime reference-counted string
     ///
-    /// - 通过字符串池自动去重
-    /// - 原子引用计数（线程安全）
-    /// - Clone 增加引用计数（~5ns）
-    /// - 最后一个引用释放时回收
+    /// - Automatically deduplicated through string pool
+    /// - Atomic reference counting (thread-safe)
+    /// - Clone increments reference count (~5ns)
+    /// - Reclaimed when last reference is released
     Counted(ArcStr),
 }
 
-// SAFETY: 两个变体都是 Send + Sync
+// SAFETY: Both variants are Send + Sync
 unsafe impl Send for Str {}
 unsafe impl Sync for Str {}
 
@@ -186,13 +186,13 @@ unsafe impl Sync for Str {}
 // ============================================================================
 
 impl Str {
-    /// 创建静态字符串变体（编译期字面量）
+    /// Create static string variant (compile-time literal)
     ///
-    /// 这是创建零成本字符串的**推荐方式**。
+    /// This is the **recommended way** to create zero-cost strings.
     ///
     /// # Const Context
     ///
-    /// 此函数是 `const fn`，可在编译期求值：
+    /// This function is `const fn`, can be evaluated at compile time:
     ///
     /// ```rust
     /// use interned::Str;
@@ -207,8 +207,8 @@ impl Str {
     ///
     /// # Performance
     ///
-    /// - 编译期：零成本（字符串嵌入二进制）
-    /// - 运行期：零成本（只是指针）
+    /// - Compile time: Zero cost (string embedded in binary)
+    /// - Runtime: Zero cost (just a pointer)
     ///
     /// # Examples
     ///
@@ -224,20 +224,20 @@ impl Str {
     #[inline]
     pub const fn from_static(s: &'static str) -> Self { Self::Static(s) }
 
-    /// 创建或复用运行时字符串
+    /// Create or reuse runtime string
     ///
-    /// 字符串会进入全局字符串池，相同内容的字符串会复用同一内存。
+    /// String enters global string pool, strings with same content reuse the same memory.
     ///
     /// # Performance
     ///
-    /// - **首次创建**：堆分配 + `HashMap` 插入 ≈ 100-200ns
-    /// - **池命中**：`HashMap` 查找 + 引用计数递增 ≈ 10-20ns
+    /// - **First creation**: Heap allocation + `HashMap` insertion ≈ 100-200ns
+    /// - **Pool hit**: `HashMap` lookup + reference count increment ≈ 10-20ns
     ///
     /// # Thread Safety
     ///
-    /// 字符串池使用 `RwLock` 保护，支持并发访问：
-    /// - 多个线程可以同时读取（查找已有字符串）
-    /// - 创建新字符串时需要独占写锁
+    /// String pool is protected by `RwLock`, supports concurrent access:
+    /// - Multiple threads can read simultaneously (lookup existing strings)
+    /// - Creating new strings requires exclusive write lock
     ///
     /// # Examples
     ///
@@ -247,7 +247,7 @@ impl Str {
     /// let s1 = Str::new("dynamic");
     /// let s2 = Str::new("dynamic");
     ///
-    /// // 两个字符串共享同一内存
+    /// // Both strings share the same memory
     /// assert_eq!(s1.ref_count(), s2.ref_count());
     /// assert!(s1.ref_count().unwrap() >= 2);
     /// ```
@@ -257,13 +257,13 @@ impl Str {
     /// ```rust
     /// use interned::Str;
     ///
-    /// // ✅ 编译器：标识符去重
+    /// // Compiler: identifier deduplication
     /// let ident = Str::new(token.text);
     ///
-    /// // ✅ 配置系统：键名复用
+    /// // Config system: key name reuse
     /// let key = Str::new("database.host");
     ///
-    /// // ✅ 跨线程共享
+    /// // Cross-thread sharing
     /// let shared = Str::new("data");
     /// std::thread::spawn(move || {
     ///     process(shared);
@@ -275,9 +275,9 @@ impl Str {
     #[inline]
     pub fn new<S: AsRef<str>>(s: S) -> Self { Self::Counted(ArcStr::new(s)) }
 
-    /// 检查是否为 Static 变体
+    /// Check if it is Static variant
     ///
-    /// 用于判断字符串是否为编译期字面量。
+    /// Used to determine if string is a compile-time literal.
     ///
     /// # Examples
     ///
@@ -298,7 +298,7 @@ impl Str {
     ///
     /// fn optimize_for_static(s: &Str) {
     ///     if s.is_static() {
-    ///         // 可以安全地转换为 &'static str
+    ///         // Can safely convert to &'static str
     ///         let static_str = s.as_static().unwrap();
     ///         register_constant(static_str);
     ///     }
@@ -309,15 +309,15 @@ impl Str {
     #[inline]
     pub const fn is_static(&self) -> bool { matches!(self, Self::Static(_)) }
 
-    /// 获取引用计数
+    /// Get reference count
     ///
-    /// - **Static 变体**：返回 `None`（无引用计数概念）
-    /// - **Counted 变体**：返回 `Some(count)`
+    /// - **Static variant**: Returns `None` (no reference count concept)
+    /// - **Counted variant**: Returns `Some(count)`
     ///
     /// # Note
     ///
-    /// 由于并发访问，返回的值可能在读取后立即过时。
-    /// 主要用于调试和测试。
+    /// Due to concurrent access, returned value may be outdated immediately after reading.
+    /// Mainly used for debugging and testing.
     ///
     /// # Examples
     ///
@@ -341,9 +341,9 @@ impl Str {
         }
     }
 
-    /// 尝试获取静态字符串引用
+    /// Try to get static string reference
     ///
-    /// 只有 Static 变体会返回 `Some`。
+    /// Only Static variant returns `Some`.
     ///
     /// # Examples
     ///
@@ -359,13 +359,13 @@ impl Str {
     ///
     /// # Use Cases
     ///
-    /// 某些 API 需要 `&'static str`：
+    /// Some APIs require `&'static str`:
     ///
     /// ```rust
     /// use interned::Str;
     ///
     /// fn register_global(name: &'static str) {
-    ///     // 注册需要静态生命周期的字符串
+    ///     // Register string that requires static lifetime
     ///     # drop(name);
     /// }
     ///
@@ -373,7 +373,7 @@ impl Str {
     /// if let Some(static_str) = s.as_static() {
     ///     register_global(static_str);
     /// } else {
-    ///     // Counted 变体无法转换为 'static
+    ///     // Counted variant cannot be converted to 'static
     ///     eprintln!("warning: not a static string");
     /// }
     /// ```
@@ -386,9 +386,9 @@ impl Str {
         }
     }
 
-    /// 尝试获取内部 `ArcStr` 的引用
+    /// Try to get reference to internal `ArcStr`
     ///
-    /// 只有 Counted 变体会返回 `Some`。
+    /// Only Counted variant returns `Some`.
     ///
     /// # Examples
     ///
@@ -410,10 +410,10 @@ impl Str {
         }
     }
 
-    /// 尝试将 Counted 变体转换为 `ArcStr`
+    /// Try to convert Counted variant to `ArcStr`
     ///
-    /// - **Counted**：返回 `Some(ArcStr)`，零成本转换
-    /// - **Static**：返回 `None`
+    /// - **Counted**: Returns `Some(ArcStr)`, zero-cost conversion
+    /// - **Static**: Returns `None`
     ///
     /// # Examples
     ///
@@ -441,16 +441,16 @@ impl Str {
 // ============================================================================
 
 impl Str {
-    /// 获取字符串切片
+    /// Get string slice
     ///
-    /// 这个方法覆盖了 `Deref` 提供的 `as_str()`，以便：
-    /// - 对 `Static` 变体：直接返回 `&'static str`
-    /// - 对 `Counted` 变体：使用 `ArcStr::as_str()` 的优化实现
+    /// This method overrides `as_str()` provided by `Deref`, so that:
+    /// - For `Static` variant: Directly return `&'static str`
+    /// - For `Counted` variant: Use `ArcStr::as_str()`'s optimized implementation
     ///
     /// # Performance
     ///
-    /// - **Static**：零成本（只是返回指针）
-    /// - **Counted**：零成本（直接访问内部字段）
+    /// - **Static**: Zero cost (just returns pointer)
+    /// - **Counted**: Zero cost (directly accesses internal field)
     ///
     /// # Examples
     ///
@@ -469,9 +469,9 @@ impl Str {
         }
     }
 
-    /// 获取字符串的字节切片
+    /// Get byte slice of string
     ///
-    /// 覆盖 `Deref` 版本以传播 `ArcStr::as_bytes()` 的优化。
+    /// Overrides `Deref` version to propagate `ArcStr::as_bytes()` optimization.
     ///
     /// # Examples
     ///
@@ -490,14 +490,14 @@ impl Str {
         }
     }
 
-    /// 获取字符串长度（字节数）
+    /// Get string length (in bytes)
     ///
-    /// 覆盖 `Deref` 版本以传播 `ArcStr::len()` 的优化（直接读取字段）。
+    /// Overrides `Deref` version to propagate `ArcStr::len()` optimization (directly reads field).
     ///
     /// # Performance
     ///
-    /// - **Static**：读取 fat pointer 的 len 字段
-    /// - **Counted**：读取 `ArcStrInner::string_len` 字段（无需构造 `&str`）
+    /// - **Static**: Reads len field of fat pointer
+    /// - **Counted**: Reads `ArcStrInner::string_len` field (no need to construct `&str`)
     ///
     /// # Examples
     ///
@@ -516,9 +516,9 @@ impl Str {
         }
     }
 
-    /// 检查字符串是否为空
+    /// Check if string is empty
     ///
-    /// 覆盖 `Deref` 版本以传播 `ArcStr::is_empty()` 的优化。
+    /// Overrides `Deref` version to propagate `ArcStr::is_empty()` optimization.
     ///
     /// # Examples
     ///
@@ -540,7 +540,7 @@ impl Str {
         }
     }
 
-    /// 获取内部指针（用于调试和测试）
+    /// Get internal pointer (for debugging and testing)
     ///
     /// # Examples
     ///
@@ -566,31 +566,31 @@ impl Str {
 // ============================================================================
 
 impl const From<&'static str> for Str {
-    /// 从字面量创建 Static 变体
+    /// Create Static variant from literal
     ///
-    /// ⚠️ **注意**：只有真正的 `&'static str` 才会自动推断为 Static。
+    /// **Note**: Only true `&'static str` will be automatically inferred as Static.
     ///
     /// # Examples
     ///
     /// ```rust
     /// use interned::Str;
     ///
-    /// // ✅ 字面量自动推断为 Static
+    /// // Literal automatically inferred as Static
     /// let s: Str = "literal".into();
     /// assert!(s.is_static());
     ///
-    /// // ❌ 但这不会工作（编译错误）：
+    /// // But this won't work (compile error):
     /// // let owned = String::from("not static");
-    /// // let s: Str = owned.as_str().into();  // 生命周期不是 'static
+    /// // let s: Str = owned.as_str().into();  // Lifetime is not 'static
     /// ```
     #[inline]
     fn from(s: &'static str) -> Self { Self::Static(s) }
 }
 
 impl From<String> for Str {
-    /// 从 `String` 创建 Counted 变体
+    /// Create Counted variant from `String`
     ///
-    /// 字符串会进入字符串池，如果已存在相同内容则复用。
+    /// String enters string pool, reuses if same content already exists.
     ///
     /// # Examples
     ///
@@ -606,15 +606,15 @@ impl From<String> for Str {
 }
 
 impl From<&String> for Str {
-    /// 从 `&String` 创建 Counted 变体
+    /// Create Counted variant from `&String`
     #[inline]
     fn from(s: &String) -> Self { Self::Counted(ArcStr::from(s)) }
 }
 
 impl From<ArcStr> for Str {
-    /// 从 `ArcStr` 创建 Counted 变体
+    /// Create Counted variant from `ArcStr`
     ///
-    /// 直接包装，不会额外增加引用计数。
+    /// Directly wraps, does not additionally increment reference count.
     ///
     /// # Examples
     ///
@@ -632,9 +632,9 @@ impl From<ArcStr> for Str {
 }
 
 impl<'a> From<Cow<'a, str>> for Str {
-    /// 从 `Cow<str>` 创建 Counted 变体
+    /// Create Counted variant from `Cow<str>`
     ///
-    /// 无论 Cow 是 Borrowed 还是 Owned，都会进入字符串池。
+    /// Whether Cow is Borrowed or Owned, it will enter the string pool.
     ///
     /// # Examples
     ///
@@ -656,17 +656,17 @@ impl<'a> From<Cow<'a, str>> for Str {
 }
 
 impl From<alloc::boxed::Box<str>> for Str {
-    /// 从 `Box<str>` 创建 Counted 变体
+    /// Create Counted variant from `Box<str>`
     #[inline]
     fn from(s: alloc::boxed::Box<str>) -> Self { Self::Counted(ArcStr::from(s)) }
 }
 
 impl From<Str> for String {
-    /// 转换为 `String`（总是需要分配）
+    /// Convert to `String` (always requires allocation)
     ///
     /// # Performance
     ///
-    /// 无论哪个变体，都需要分配并复制字符串内容。
+    /// Regardless of variant, requires allocation and copying string content.
     ///
     /// # Examples
     ///
@@ -682,7 +682,7 @@ impl From<Str> for String {
 }
 
 impl From<Str> for alloc::boxed::Box<str> {
-    /// 转换为 `Box<str>`（需要分配）
+    /// Convert to `Box<str>` (requires allocation)
     ///
     /// # Examples
     ///
@@ -698,10 +698,10 @@ impl From<Str> for alloc::boxed::Box<str> {
 }
 
 impl From<Str> for Cow<'_, str> {
-    /// 转换为 `Cow`
+    /// Convert to `Cow`
     ///
-    /// - **Static 变体**：转换为 `Cow::Borrowed`（零成本）
-    /// - **Counted 变体**：转换为 `Cow::Owned`（需要分配）
+    /// - **Static variant**: Converts to `Cow::Borrowed` (zero cost)
+    /// - **Counted variant**: Converts to `Cow::Owned` (requires allocation)
     ///
     /// # Examples
     ///
@@ -727,7 +727,7 @@ impl From<Str> for Cow<'_, str> {
 }
 
 impl<'a> const From<&'a Str> for Cow<'a, str> {
-    /// 转换为 `Cow::Borrowed`（零成本）
+    /// Convert to `Cow::Borrowed` (zero cost)
     ///
     /// # Examples
     ///
@@ -748,7 +748,7 @@ impl<'a> const From<&'a Str> for Cow<'a, str> {
 impl core::str::FromStr for Str {
     type Err = core::convert::Infallible;
 
-    /// 从字符串解析（总是成功，创建 Counted 变体）
+    /// Parse from string (always succeeds, creates Counted variant)
     ///
     /// # Examples
     ///
@@ -769,13 +769,13 @@ impl core::str::FromStr for Str {
 // ============================================================================
 
 impl PartialEq for Str {
-    /// 比较字符串内容
+    /// Compare string content
     ///
     /// # Optimization
     ///
-    /// - **Counted vs Counted**：首先比较指针（O(1)），然后比较内容
-    /// - **Static vs Static**：直接比较内容（编译器可能优化为指针比较）
-    /// - **Static vs Counted**：必须比较内容
+    /// - **Counted vs Counted**: First compare pointers (O(1)), then compare content
+    /// - **Static vs Static**: Directly compare content (compiler may optimize to pointer comparison)
+    /// - **Static vs Counted**: Must compare content
     ///
     /// # Examples
     ///
@@ -785,14 +785,14 @@ impl PartialEq for Str {
     /// let s1 = Str::from_static("test");
     /// let s2 = Str::new("test");
     ///
-    /// assert_eq!(s1, s2);  // 内容相同即相等
+    /// assert_eq!(s1, s2);  // Equal if content is same
     /// ```
     #[inline]
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            // Counted vs Counted: 利用 ArcStr 的指针比较优化
+            // Counted vs Counted: Use ArcStr's pointer comparison optimization
             (Self::Counted(a), Self::Counted(b)) => a == b,
-            // 其他情况：比较字符串内容
+            // Other cases: Compare string content
             _ => self.as_str() == other.as_str(),
         }
     }
@@ -831,9 +831,9 @@ impl const PartialEq<Str> for String {
 }
 
 impl PartialEq<ArcStr> for Str {
-    /// 优化的 `Str` 与 `ArcStr` 比较
+    /// Optimized `Str` and `ArcStr` comparison
     ///
-    /// 如果 `Str` 是 Counted 变体，使用指针比较（快速路径）。
+    /// If `Str` is Counted variant, uses pointer comparison (fast path).
     ///
     /// # Examples
     ///
@@ -844,8 +844,8 @@ impl PartialEq<ArcStr> for Str {
     /// let s1 = Str::from(arc.clone());
     /// let s2 = Str::from_static("test");
     ///
-    /// assert_eq!(s1, arc);  // 指针比较
-    /// assert_eq!(s2, arc);  // 内容比较
+    /// assert_eq!(s1, arc);  // Pointer comparison
+    /// assert_eq!(s2, arc);  // Content comparison
     /// ```
     #[inline]
     fn eq(&self, other: &ArcStr) -> bool {
@@ -862,10 +862,10 @@ impl PartialEq<Str> for ArcStr {
 }
 
 impl Hash for Str {
-    /// 基于字符串内容的哈希，与变体类型无关
+    /// Hash based on string content, independent of variant type
     ///
-    /// 这确保了 `Static("a")` 和 `Counted(ArcStr::new("a"))`
-    /// 有相同的哈希值，可以在 `HashMap` 中作为相同的 key。
+    /// This ensures that `Static("a")` and `Counted(ArcStr::new("a"))`
+    /// have the same hash value, can be used as the same key in `HashMap`.
     ///
     /// # Examples
     ///
@@ -878,7 +878,7 @@ impl Hash for Str {
     /// let s2 = Str::new("key");
     ///
     /// map.insert(s1, "value");
-    /// assert_eq!(map.get(&s2), Some(&"value"));  // s2 可以找到 s1 插入的值
+    /// assert_eq!(map.get(&s2), Some(&"value"));  // s2 can find value inserted by s1
     /// ```
     #[inline]
     fn hash<H: Hasher>(&self, state: &mut H) { self.as_str().hash(state) }
@@ -889,7 +889,7 @@ impl Hash for Str {
 // ============================================================================
 
 impl PartialOrd for Str {
-    /// 字典序比较
+    /// Lexicographic comparison
     ///
     /// # Examples
     ///
@@ -907,7 +907,7 @@ impl PartialOrd for Str {
 }
 
 impl Ord for Str {
-    /// 字典序比较（总序）
+    /// Lexicographic comparison (total order)
     ///
     /// # Examples
     ///
@@ -937,12 +937,12 @@ impl Ord for Str {
 impl core::ops::Deref for Str {
     type Target = str;
 
-    /// 支持自动解引用为 `&str`
+    /// Supports automatic dereferencing to `&str`
     ///
-    /// 这允许直接调用 `str` 的所有方法（如 `starts_with()`, `contains()` 等）。
+    /// This allows directly calling all `str` methods (like `starts_with()`, `contains()`, etc.).
     ///
-    /// ⚠️ **Note**: 常用方法（如 `len()`, `is_empty()`）已被 `Str` 的同名方法覆盖，
-    /// 以便传播 `ArcStr` 的优化。
+    /// **Note**: Common methods (like `len()`, `is_empty()`) are overridden by `Str`'s methods
+    /// with the same name to propagate `ArcStr`'s optimizations.
     ///
     /// # Examples
     ///
@@ -951,7 +951,7 @@ impl core::ops::Deref for Str {
     ///
     /// let s = Str::from_static("deref");
     ///
-    /// // 可以直接调用 str 的方法
+    /// // Can directly call str methods
     /// assert!(s.starts_with("de"));
     /// assert!(s.contains("ref"));
     /// assert_eq!(s.to_uppercase(), "DEREF");
@@ -971,7 +971,7 @@ impl const AsRef<[u8]> for Str {
 }
 
 impl const core::borrow::Borrow<str> for Str {
-    /// 支持在 `HashMap<Str, V>` 中使用 `&str` 查找
+    /// Supports lookup with `&str` in `HashMap<Str, V>`
     ///
     /// # Examples
     ///
@@ -982,7 +982,7 @@ impl const core::borrow::Borrow<str> for Str {
     /// let mut map = HashMap::new();
     /// map.insert(Str::new("key"), "value");
     ///
-    /// // 可以使用 &str 查找
+    /// // Can use &str for lookup
     /// assert_eq!(map.get("key"), Some(&"value"));
     /// ```
     #[inline]
@@ -994,7 +994,7 @@ impl const core::borrow::Borrow<str> for Str {
 // ============================================================================
 
 impl core::fmt::Display for Str {
-    /// 输出字符串内容
+    /// Output string content
     ///
     /// # Examples
     ///
@@ -1009,7 +1009,7 @@ impl core::fmt::Display for Str {
 }
 
 impl core::fmt::Debug for Str {
-    /// 调试输出，显示变体类型和内容
+    /// Debug output, shows variant type and content
     ///
     /// # Output Format
     ///
@@ -1044,9 +1044,9 @@ impl core::fmt::Debug for Str {
 // ============================================================================
 
 impl const Default for Str {
-    /// 返回空字符串的 Static 变体
+    /// Returns Static variant of empty string
     ///
-    /// 这是零成本的，不会分配任何内存。
+    /// This is zero cost, does not allocate any memory.
     ///
     /// # Examples
     ///
@@ -1072,9 +1072,9 @@ mod serde_impls {
     use serde_core::{Deserialize, Deserializer, Serialize, Serializer};
 
     impl Serialize for Str {
-        /// 序列化为普通字符串，丢失变体信息
+        /// Serialize as plain string, loses variant information
         ///
-        /// ⚠️ **注意**：反序列化后总是 Counted 变体。
+        /// **Note**: After deserialization, it's always Counted variant.
         ///
         /// # Examples
         ///
@@ -1093,10 +1093,10 @@ mod serde_impls {
     }
 
     impl<'de> Deserialize<'de> for Str {
-        /// 反序列化为 Counted 变体
+        /// Deserialize as Counted variant
         ///
-        /// ⚠️ **注意**：无法恢复 Static 变体，因为反序列化的字符串
-        /// 不具有 `'static` 生命周期。
+        /// **Note**: Cannot restore Static variant, because deserialized string
+        /// does not have `'static` lifetime.
         ///
         /// # Examples
         ///
@@ -1106,7 +1106,7 @@ mod serde_impls {
         /// let json = r#""deserialize""#;
         /// let s: Str = serde_json::from_str(json).unwrap();
         ///
-        /// assert!(!s.is_static());  // 总是 Counted
+        /// assert!(!s.is_static());  // Always Counted
         /// assert_eq!(s.as_str(), "deserialize");
         /// ```
         #[inline]
@@ -1117,10 +1117,10 @@ mod serde_impls {
     }
 }
 
-/// # Rkyv 序列化支持
+/// # Rkyv Serialization Support
 ///
-/// 条件编译的 Rkyv 支持，使 `ArcStr` 可以参与序列化/反序列化流程。
-/// 序列化时输出字符串内容，反序列化时重新建立池化引用。
+/// Conditionally compiled Rkyv support, allows `ArcStr` to participate in serialization/deserialization.
+/// Outputs string content when serializing, re-establishes pooled reference when deserializing.
 #[cfg(feature = "rkyv")]
 mod rkyv_impls {
     use super::Str;
@@ -1199,7 +1199,7 @@ mod tests {
         let s1 = Str::from_static("hello");
         let s2 = Str::new("world");
 
-        // 验证调用的是覆盖版本（通过编译即可）
+        // Verify the overridden version is called (compiling is enough)
         assert_eq!(s1.len(), 5);
         assert_eq!(s2.len(), 5);
         assert!(!s1.is_empty());
@@ -1241,10 +1241,10 @@ mod tests {
         let s1 = Str::from(arc.clone());
         let s2 = Str::from_static("same");
 
-        // Counted vs ArcStr: 指针比较
+        // Counted vs ArcStr: pointer comparison
         assert_eq!(s1, arc);
 
-        // Static vs ArcStr: 内容比较
+        // Static vs ArcStr: content comparison
         assert_eq!(s2, arc);
     }
 
@@ -1271,7 +1271,7 @@ mod tests {
     fn test_deref() {
         let s = Str::from_static("deref");
 
-        // 通过 Deref 访问 str 的方法
+        // Access str methods through Deref
         assert!(s.starts_with("de"));
         assert!(s.contains("ref"));
         assert_eq!(s.to_uppercase(), "DEREF");
