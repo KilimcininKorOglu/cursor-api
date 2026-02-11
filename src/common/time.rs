@@ -1,20 +1,20 @@
-//! 跨平台项目和构建时间追踪
+//! Cross-platform project and build time tracking
 //!
-//! 提供项目启动时间（天级）和构建时间（分钟级）的优雅显示。
+//! Provides elegant display of project startup time (day-level) and build time (minute-level).
 
 pub use super::build::BUILD_EPOCH;
 use crate::common::utils::now_with_epoch;
 use chrono::{DateTime, Utc};
 use core::fmt;
 
-/// 项目基准时间点（2024-12-23 01:30:48 UTC）
+/// Project reference time point (2024-12-23 01:30:48 UTC)
 #[cfg(unix)]
 pub const EPOCH: std::time::SystemTime =
     unsafe { core::intrinsics::transmute((1734915448i64, 0u32)) };
 
-/// 项目基准时间点（2024-12-23 01:30:48 UTC）
+/// Project reference time point (2024-12-23 01:30:48 UTC)
 ///
-/// Windows使用FILETIME格式（100纳秒间隔数）
+/// Windows uses FILETIME format (100-nanosecond intervals)
 #[cfg(windows)]
 pub const EPOCH: std::time::SystemTime = unsafe {
     const INTERVALS_PER_SEC: u64 = 10_000_000;
@@ -27,19 +27,19 @@ pub const EPOCH: std::time::SystemTime = unsafe {
 const EPOCH_DATETIME: DateTime<Utc> =
     unsafe { DateTime::from_timestamp(1734915448i64, 0u32).unwrap_unchecked() };
 
-/// 打印项目运行时长（年月日）
+/// Print project runtime (years, months, days)
 pub fn print_project_age() {
     let age = ProjectAge::since_epoch();
     println!("Project started {age} ago");
 }
 
-/// 打印构建时长（分钟级）
+/// Print build time (minute-level)
 pub fn print_build_age() {
     let age = BuildAge::since_build();
     println!("Program built {age} ago");
 }
 
-/// 项目年龄（天级精度）
+/// Project age (day-level precision)
 #[derive(Debug, Clone, Copy)]
 struct ProjectAge {
     years: u32,
@@ -48,14 +48,14 @@ struct ProjectAge {
 }
 
 impl ProjectAge {
-    /// 基于日历算法计算年龄
+    /// Calculate age based on calendar algorithm
     ///
-    /// 处理月末边界情况：起始日31号且目标月不足31天时，
-    /// 计算到目标月末，剩余日期计入days
+    /// Handles month-end boundary cases: when start date is 31st and target month has fewer days,
+    /// calculate to end of target month, with remaining days counted in days
     fn from_duration(duration: core::time::Duration) -> Self {
         use chrono::Datelike as _;
 
-        // SAFETY: duration来自NTP同步模块，保证不会导致无效时间戳
+        // SAFETY: duration comes from NTP sync module, guaranteed to produce valid timestamp
         let current_datetime = EPOCH_DATETIME + __unwrap!(chrono::TimeDelta::from_std(duration));
 
         let current_year = current_datetime.year();
@@ -67,7 +67,7 @@ impl ProjectAge {
         let mut months = current_month as i32 - 12;
         let mut days = current_day as i32 - 23;
 
-        // 日期借位
+        // Day borrow
         if days < 0 {
             months -= 1;
             let (year, month) = if current_month == 1 {
@@ -84,7 +84,7 @@ impl ProjectAge {
             days += last_day_of_prev_month.day() as i32;
         }
 
-        // 月份借位
+        // Month borrow
         if months < 0 {
             years -= 1;
             months += 12;
@@ -94,7 +94,7 @@ impl ProjectAge {
     }
 
     /// # Panics
-    /// 系统时间早于项目EPOCH时panic
+    /// Panics if system time is before project EPOCH
     #[inline]
     pub fn since_epoch() -> Self {
         let duration = now_with_epoch(EPOCH, "system time before program epoch");
@@ -102,7 +102,7 @@ impl ProjectAge {
     }
 }
 
-/// 构建年龄（分钟级精度）
+/// Build age (minute-level precision)
 #[derive(Debug, Clone, Copy)]
 struct BuildAge {
     minutes: u64,
@@ -110,7 +110,7 @@ struct BuildAge {
 
 impl BuildAge {
     /// # Panics
-    /// 系统时间早于构建EPOCH时panic
+    /// Panics if system time is before build EPOCH
     #[inline]
     pub fn since_build() -> Self {
         let duration = now_with_epoch(BUILD_EPOCH, "system time before build epoch");

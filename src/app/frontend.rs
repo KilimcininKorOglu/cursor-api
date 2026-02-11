@@ -19,7 +19,7 @@ type HashMap<K, V> = hashbrown::HashMap<K, V, ahash::RandomState>;
 type HashSet<K> = hashbrown::HashSet<K, ahash::RandomState>;
 
 // ============================================================================
-// 公共类型定义
+// Public type definitions
 // ============================================================================
 
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -48,11 +48,11 @@ pub enum RouteDef {
     Exchange { from: String },
 }
 
-/// 反序列化 routes，支持简写格式
+/// Deserialize routes, supporting shorthand format
 ///
-/// # 支持的格式
+/// # Supported formats
 ///
-/// 简写格式（字符串直接映射到文件路径）：
+/// Shorthand format (string directly maps to file path):
 /// ```json
 /// {
 ///   "/index.html": "index.html",
@@ -60,7 +60,7 @@ pub enum RouteDef {
 /// }
 /// ```
 ///
-/// 完整格式（对象）：
+/// Full format (object):
 /// ```json
 /// {
 ///   "/api": {
@@ -76,7 +76,7 @@ pub enum RouteDef {
 /// }
 /// ```
 ///
-/// 混合格式：
+/// Mixed format:
 /// ```json
 /// {
 ///   "/": "index.html",
@@ -94,7 +94,7 @@ where D: serde::Deserializer<'de> {
     for (path, definition) in raw_routes {
         let route_def = match definition {
             RouteDefinition::String(file_path) => {
-                // 简写格式：字符串 → File 类型（无 Content-Type 指定）
+                // Shorthand format: string → File type (no Content-Type specified)
                 RouteDef::File { content_type: None, path: file_path }
             }
             RouteDefinition::Object(def) => {
@@ -134,7 +134,7 @@ impl axum::response::IntoResponse for RouteService {
 }
 
 // ============================================================================
-// 错误类型
+// Error types
 // ============================================================================
 
 #[derive(Debug)]
@@ -154,30 +154,30 @@ pub enum FrontendError {
 impl core::fmt::Display for FrontendError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
-            Self::PathNotFound(path) => write!(f, "路径不存在: {}", path.display()),
+            Self::PathNotFound(path) => write!(f, "Path not found: {}", path.display()),
             Self::NotZipOrDirectory(path) => {
-                write!(f, "路径必须是目录或 .zip 文件: {}", path.display())
+                write!(f, "Path must be a directory or .zip file: {}", path.display())
             }
             Self::RegistryNotFound { searched_at } => {
-                write!(f, "找不到 route_registry.json，查找位置: {searched_at}")
+                write!(f, "route_registry.json not found, searched at: {searched_at}")
             }
             Self::FileMissing { path, referenced_by } => {
-                write!(f, "文件不存在: {}\n  被以下路由引用: {}", path, referenced_by.join(", "))
+                write!(f, "File not found: {}\n  Referenced by routes: {}", path, referenced_by.join(", "))
             }
             Self::InvalidJson { context, source } => {
-                write!(f, "JSON 解析失败 ({context}): {source}")
+                write!(f, "JSON parsing failed ({context}): {source}")
             }
             Self::InvalidHeader { route, name, value, reason } => {
-                write!(f, "路由 '{route}' 的 header 无效: {name} = {value} ({reason})")
+                write!(f, "Invalid header for route '{route}': {name} = {value} ({reason})")
             }
             Self::InvalidStatus { route, status } => {
-                write!(f, "路由 '{route}' 的状态码无效: {status}")
+                write!(f, "Invalid status code for route '{route}': {status}")
             }
             Self::NoExtension { route, path } => {
-                write!(f, "路由 '{route}' 的文件 '{path}' 缺少扩展名，无法推断 Content-Type")
+                write!(f, "File '{path}' for route '{route}' has no extension, cannot infer Content-Type")
             }
-            Self::IoError(e) => write!(f, "IO 错误: {e}"),
-            Self::ZipError(e) => write!(f, "ZIP 错误: {e}"),
+            Self::IoError(e) => write!(f, "IO error: {e}"),
+            Self::ZipError(e) => write!(f, "ZIP error: {e}"),
         }
     }
 }
@@ -216,7 +216,7 @@ impl FnOnce<()> for RouteServiceFn {
 }
 
 // ============================================================================
-// 资源提供者抽象
+// Resource provider abstraction
 // ============================================================================
 
 trait ResourceProvider {

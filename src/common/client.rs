@@ -369,7 +369,7 @@ pub fn build_token_upgrade_request(
         }
     }
 
-    // 使用常量预分配空间 - body
+    // Pre-allocate space using constants - body
     let mut body = String::with_capacity(BODY_CAPACITY);
     body.push_str(UUID_PREFIX);
     body.push_str(uuid);
@@ -377,7 +377,7 @@ pub fn build_token_upgrade_request(
     body.push_str(challenge);
     body.push_str(SUFFIX);
 
-    // 使用常量预分配空间 - referer
+    // Pre-allocate space using constants - referer
     let mut referer = String::with_capacity(REFERER_CAPACITY);
     referer.push_str(REFERER_PREFIX);
     referer.push_str(challenge);

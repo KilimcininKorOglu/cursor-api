@@ -91,14 +91,14 @@ pub async fn handle_models(
         ([(CONTENT_TYPE, JSON)], content).into_response()
     }
 
-    // 如果没有认证头，返回默认可用模型
+    // If no auth header, return default available models
     let Some(auth_token) = auth(&headers) else {
         return Ok(get_current());
     };
 
-    // 获取token信息
+    // Get token information
     let (ext_token, use_pri) = async {
-        // 管理员 Token
+        // Admin Token
         if let Some(part) = auth_token.strip_prefix(&**AUTH_TOKEN) {
             let token_manager = state.token_manager.read().await;
 
@@ -120,20 +120,20 @@ pub async fn handle_models(
 
             return Ok((bundle, true));
         } else
-        // 共享 Token
+        // Shared Token
         if AppConfig::is_share() && AppConfig::share_token_eq(auth_token) {
             let token_manager = state.token_manager.read().await;
             let bundle =
                 token_manager.select(QueueType::NormalFree).ok_or(AuthError::NoAvailableTokens)?;
             return Ok((bundle, true));
         } else
-        // 普通用户 Token
+        // Regular user Token
         if let Some(key) = TokenKey::from_string(auth_token) {
             if let Some(bundle) = log_manager::get_token(key).await {
                 return Ok((bundle, false));
             }
         } else
-        // 动态密钥
+        // Dynamic key
         if AppConfig::is_dynamic_key_enabled() {
             if let Some(parsed_config) = parse_dynamic_token(auth_token)
                 && let Some(ext_token) = parsed_config.into_tuple().and_then(tokeninfo_to_token) {
@@ -146,7 +146,7 @@ pub async fn handle_models(
     .await
     .map_err(AuthError::into_generic_tuple)?;
 
-    // 获取可用模型列表
+    // Get available models list
     let models = get_available_models(ext_token, use_pri, request).await.ok_or((
         UPSTREAM_FAILURE,
         Json(GenericError {
@@ -157,7 +157,7 @@ pub async fn handle_models(
         }),
     ))?;
 
-    // 更新模型列表
+    // Update models list
     Models::update(models).map_err(|e| {
         (
             UPSTREAM_FAILURE,
@@ -176,17 +176,17 @@ pub async fn handle_models(
 #[repr(u8)]
 #[derive(Clone, Copy, PartialEq)]
 enum StreamState {
-    /// 初始状态，什么都未开始
+    /// Initial state, nothing started
     NotStarted,
-    // /// message_start 已完成，等待 content_block_start
+    // /// message_start completed, waiting for content_block_start
     // MessageStarted,
-    /// content_block_start 已完成，正在接收 content_block_delta
+    /// content_block_start completed, receiving content_block_delta
     ContentBlockActive,
-    // /// content_block_stop 已完成，等待下一个 content_block_start 或 message_delta
+    // /// content_block_stop completed, waiting for next content_block_start or message_delta
     // BetweenBlocks,
-    // /// message_delta 已完成，等待 message_stop
+    // /// message_delta completed, waiting for message_stop
     // MessageEnding,
-    /// message_stop 已完成，流结束
+    /// message_stop completed, stream ended
     Completed,
 }
 
@@ -202,7 +202,7 @@ enum LastContentType {
 atomic_enum!(StreamState = u8);
 atomic_enum!(LastContentType = u8);
 
-// 聊天处理函数的签名
+// Chat handler function signature
 pub async fn handle_chat_completions(
     State(state): State<Arc<AppState>>,
     mut extensions: Extensions,
@@ -211,7 +211,7 @@ pub async fn handle_chat_completions(
     let (ext_token, use_pri) =
         __unwrap!(extensions.remove::<TokenBundleResult>()).map_err(|e| e.into_openai_tuple())?;
 
-    // 验证模型是否支持并获取模型信息
+    // Verify model is supported and get model information
     let model = if let Some(model) = ExtModel::from_str(&request.model) {
         model
     } else {
@@ -219,7 +219,7 @@ pub async fn handle_chat_completions(
     };
     let (params, tools, is_stream, stream_options) = request.strip();
 
-    // 验证请求
+    // Validate request
     if params.is_empty() {
         return Err(ChatError::EmptyMessages(StatusCode::BAD_REQUEST).into_openai_tuple());
     }
@@ -233,7 +233,7 @@ pub async fn handle_chat_completions(
 
     let request_time = __unwrap!(extensions.remove::<DateTime>());
 
-    // 更新请求日志
+    // Update request log
     state.increment_total();
     state.increment_active();
     if log_manager::is_enabled() {

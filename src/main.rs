@@ -39,10 +39,10 @@ use natural_args::{DEFAULT_LISTEN_HOST, ENV_HOST, ENV_PORT};
 use tokio::{signal, sync::Notify};
 
 fn main() {
-    // 设置自定义 panic hook
+    // Set custom panic hook
     #[cfg(not(debug_assertions))]
     ::std::panic::set_hook(Box::new(|info| {
-        __cold_path!(); // panic 是异常路径
+        __cold_path!(); // panic is an exception path
         // std::env::set_var("RUST_BACKTRACE", "1");
         if let Some(msg) = info.payload().downcast_ref::<String>() {
             __eprint!(msg);
@@ -54,12 +54,12 @@ fn main() {
     }));
 
     // tracing_subscriber::fmt()
-    //     .with_writer(std::fs::File::create("tracing.log").expect("创建日志文件失败"))
+    //     .with_writer(std::fs::File::create("tracing.log").expect("failed to create log file"))
     //     .with_ansi(false)
     //     .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
     //     .init();
 
-    // 处理自然语言参数
+    // Process natural language arguments
     {
         let current_exe = __unwrap_panic!(std::env::current_exe());
         let file_name =
@@ -102,12 +102,12 @@ fn main() {
                 && ver < MIN_COMPAT_VERSION
             {
                 eprintln!(
-                    "数据兼容版本不匹配，目标需要: v{ver}，当前需要: v{MIN_COMPAT_VERSION}\n"
+                    "Data compatibility version mismatch, target requires: v{ver}, current requires: v{MIN_COMPAT_VERSION}\n"
                 );
                 std::process::exit(1);
             }
         } else {
-            println!("数据兼容版本标识不存在，当前需要: v{MIN_COMPAT_VERSION}");
+            println!("Data compatibility version identifier does not exist, current requires: v{MIN_COMPAT_VERSION}");
             if let Ok(mut f) = std::fs::File::create(&path) 
                 && let Err(e) = MIN_COMPAT_VERSION.write_to(&mut f) {
                     eprintln!("{e}");
@@ -115,30 +115,30 @@ fn main() {
         }
     }
 
-    // 初始化全局配置
+    // Initialize global configuration
     AppConfig::init();
 
     tokio::runtime::Builder::new_multi_thread().enable_all().build().unwrap().block_on(run())
 }
 
 async fn run() {
-    // 初始化应用状态
+    // Initialize application state
     let state = Arc::new(__unwrap_panic!(AppState::load().await));
 
-    // 尝试加载保存的配置
+    // Try to load saved configuration
     // if let Err(e) = AppConfig::load() {
     //     __cold_path!();
-    //     eprintln!("加载保存的配置失败: {e}");
+    //     eprintln!("Failed to load saved configuration: {e}");
     // }
 
-    // 初始化NTP
+    // Initialize NTP
     let stdout_ready = Arc::new(Notify::new());
     let ntp = tokio::spawn(common::model::ntp::init_sync(stdout_ready.clone()));
 
-    // 创建一个克隆用于后台任务
+    // Create a clone for background tasks
     let state_for_reload = state.clone();
 
-    // 启动后台任务在每个整1000秒时更新 checksum
+    // Start background task to update checksum at every 1000 seconds
     tokio::spawn(async move {
         use crate::app::model::timestamp_header;
         let state = state_for_reload;
@@ -148,14 +148,14 @@ async fn run() {
             let now = common::utils::now_secs();
             let current_kilo = now / 1000;
 
-            // 更新为当前千秒
+            // Update to current kilosecond
             timestamp_header::update_global_with(current_kilo);
 
-            // 等待到下一个千秒
+            // Wait until next kilosecond
             let wait_duration = (current_kilo + 1) * 1000 - now;
             ::tokio::time::sleep(::core::time::Duration::from_secs(wait_duration)).await;
 
-            // 每30次循环才更新一次client_key
+            // Update client_key only every 30 loops
             counter += 1;
             if counter >= 30 {
                 state.update_client_key().await;
@@ -164,10 +164,10 @@ async fn run() {
         }
     });
 
-    // 创建一个克隆用于信号处理
+    // Create a clone for signal handling
     let state_for_shutdown = state.clone();
 
-    // 设置关闭信号处理
+    // Set up shutdown signal handling
     let shutdown_signal = async move {
         let ctrl_c = async {
             signal::ctrl_c().await.expect("failed to install Ctrl+C handler");
@@ -211,52 +211,52 @@ async fn run() {
         #[cfg(not(any(unix, windows)))]
         ctrl_c.await;
 
-        __println!("正在关闭服务器...");
+        __println!("Shutting down server...");
 
-        // 保存配置
+        // Save configuration
         // if let Err(e) = AppConfig::save() {
-        //     __cold_path!(); // 配置保存失败是错误路径
-        //     eprintln!("保存配置失败: {e}");
+        //     __cold_path!(); // Configuration save failure is an error path
+        //     eprintln!("Failed to save configuration: {e}");
         // } else {
-        //     __println!("配置已保存");
+        //     __println!("Configuration saved");
         // }
 
-        // 保存状态
+        // Save state
         if let Err(e) = state_for_shutdown.save().await {
-            __cold_path!(); // 状态保存失败是错误路径
-            eprintln!("保存状态失败: {e}");
+            __cold_path!(); // State save failure is an error path
+            eprintln!("Failed to save state: {e}");
         } else {
-            __println!("状态已保存");
+            __println!("State saved");
         }
 
         app::lazy::log::flush_all_debug_logs().await;
     };
 
-    // 设置路由
+    // Set up routes
     let make_service = app::route::create_router(state);
 
-    // 启动服务器
+    // Start server
     let listener = {
         use std::net::{IpAddr, Ipv4Addr, SocketAddr};
         let port = std::env::var(ENV_PORT).ok().and_then(|v| v.trim().parse().ok()).unwrap_or(3000);
         let addr = SocketAddr::new(
             IpAddr::parse_ascii(parse_from_env(ENV_HOST, DEFAULT_LISTEN_HOST).as_bytes())
                 .unwrap_or_else(|e| {
-                    __cold_path!(); // IP解析失败是错误路径
-                    eprintln!("无法解析IP: {e}");
+                    __cold_path!(); // IP parsing failure is an error path
+                    eprintln!("Failed to parse IP: {e}");
                     IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0))
                 }),
             port,
         );
-        println!("服务器运行在 {addr}");
+        println!("Server running on {addr}");
         tokio::net::TcpListener::bind(addr).await.unwrap_or_else(|e| {
             __cold_path!();
-            eprintln!("无法绑定到地址 {addr}: {e}");
+            eprintln!("Failed to bind to address {addr}: {e}");
             std::process::exit(1);
         })
     };
 
-    print!("时间同步中...");
+    print!("Synchronizing time...");
     stdout_ready.notify_one();
     drop(stdout_ready);
     let _ = std::io::Write::flush(&mut std::io::stdout().lock());
@@ -267,10 +267,10 @@ async fn run() {
 
     crate::app::lazy::init_start_time();
     crate::app::model::DefaultInstructions::init();
-    println!("当前版本: v{VERSION}");
+    println!("Current version: v{VERSION}");
     #[cfg(feature = "__preview")]
     {
-        __println!("当前是测试版，有问题及时反馈哦~");
+        __println!("This is a preview version, please report issues promptly~");
     }
     common::time::print_project_age();
     common::time::print_build_age();
@@ -279,13 +279,13 @@ async fn run() {
     tokio::select! {
         result = server => {
             if let Err(e) = result {
-                __cold_path!(); // 服务器错误是异常路径
-                eprintln!("服务器错误: {e}");
+                __cold_path!(); // Server error is an exception path
+                eprintln!("Server error: {e}");
             }
         }
         _ = shutdown_signal => {
             println!(
-                "运行时间: {}",
+                "Runtime: {}",
                 common::utils::duration_fmt::human(__unwrap!(
                     app::model::DateTime::naive_now()
                         .signed_duration_since(app::lazy::START_TIME.naive())
@@ -296,7 +296,7 @@ async fn run() {
             );
             common::time::print_project_age();
             common::time::print_build_age();
-            __println!("服务器已关闭");
+            __println!("Server shut down");
         }
     }
 }

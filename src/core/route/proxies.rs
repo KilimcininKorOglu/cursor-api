@@ -15,14 +15,14 @@ type HashMap<K, V> = hashbrown::HashMap<K, V, ahash::RandomState>;
 crate::define_typed_constants! {
     &'static str => {
         // ERROR_SAVE_PROXY_CONFIG = "Failed to save proxy configuration: ",
-        MESSAGE_SAVE_PROXY_CONFIG_FAILED = "无法保存代理配置",
+        MESSAGE_SAVE_PROXY_CONFIG_FAILED = "Failed to save proxy configuration",
         ERROR_PROXY_NAME_NOT_FOUND = "Proxy name not found",
-        MESSAGE_PROXY_NAME_NOT_FOUND = "代理名称不存在",
-        MESSAGE_GENERAL_PROXY_SET = "通用代理已设置",
-        MESSAGE_PROXY_CONFIG_UPDATED = "代理配置已更新",
-        MESSAGE_NO_NEW_PROXY_ADDED = "没有添加新代理",
-        MESSAGE_ADDED_PREFIX = "已添加 ",
-        MESSAGE_ADDED_SUFFIX = " 个新代理",
+        MESSAGE_PROXY_NAME_NOT_FOUND = "Proxy name not found",
+        MESSAGE_GENERAL_PROXY_SET = "General proxy has been set",
+        MESSAGE_PROXY_CONFIG_UPDATED = "Proxy configuration updated",
+        MESSAGE_NO_NEW_PROXY_ADDED = "No new proxies added",
+        MESSAGE_ADDED_PREFIX = "Added ",
+        MESSAGE_ADDED_SUFFIX = " new proxies",
     }
 }
 
@@ -32,9 +32,9 @@ fn format_save_proxy_config_error(
     format!("Failed to save proxy configuration: {e}")
 }
 
-// 获取所有代理配置
+// Get all proxy configurations
 pub async fn handle_get_proxies() -> Json<ProxyInfoResponse> {
-    // 获取代理配置并立即释放锁
+    // Get proxy configuration and release lock immediately
     let proxies = proxy_pool::proxies().load_full();
 
     let proxies_count = proxies.len();
@@ -49,11 +49,11 @@ pub async fn handle_get_proxies() -> Json<ProxyInfoResponse> {
     })
 }
 
-// 更新代理配置
+// Update proxy configuration
 pub async fn handle_set_proxies(
     Json(proxies): Json<ProxyUpdateRequest>,
 ) -> Result<Json<ProxyInfoResponse>, (StatusCode, Json<GenericError>)> {
-    // 更新全局代理池并保存配置
+    // Update global proxy pool and save configuration
     proxies.update_global();
     if let Err(e) = Proxies::update_and_save().await {
         return Err((
@@ -67,7 +67,7 @@ pub async fn handle_set_proxies(
         ));
     }
 
-    // 获取通用代理信息（在更新应用状态前）
+    // Get general proxy information (before updating app state)
     let proxies_count = proxy_pool::proxies().load().len();
 
     Ok(Json(ProxyInfoResponse {
@@ -79,11 +79,11 @@ pub async fn handle_set_proxies(
     }))
 }
 
-// 添加新的代理
+// Add new proxies
 pub async fn handle_add_proxy(
     Json(request): Json<ProxyAddRequest>,
 ) -> Result<Json<ProxyInfoResponse>, (StatusCode, Json<GenericError>)> {
-    // 获取当前的代理配置
+    // Get current proxy configuration
     let current = proxy_pool::proxies().load_full();
     let proxies = request
         .proxies
@@ -92,7 +92,7 @@ pub async fn handle_add_proxy(
         .collect::<HashMap<_, _>>();
 
     if proxies.is_empty() {
-        // 如果没有新代理，返回当前状态
+        // If no new proxies, return current state
         let proxies_count = current.len();
 
         return Ok(Json(ProxyInfoResponse {
@@ -106,16 +106,16 @@ pub async fn handle_add_proxy(
 
     let mut current = (*current).clone();
 
-    // 处理新的代理
+    // Process new proxies
     let mut added_count = 0;
 
     for (name, proxy) in proxies {
-        // 直接添加新的代理
+        // Add new proxy directly
         current.insert(name.into(), proxy);
         added_count += 1;
     }
 
-    // 更新全局代理池并保存配置
+    // Update global proxy pool and save configuration
     proxy_pool::proxies().store(Arc::new(current));
     if let Err(e) = Proxies::update_and_save().await {
         return Err((
@@ -129,7 +129,7 @@ pub async fn handle_add_proxy(
         ));
     }
 
-    // 获取更新后的信息
+    // Get updated information
     let proxies_count = proxy_pool::proxies().load().len();
 
     Ok(Json(ProxyInfoResponse {
@@ -144,16 +144,16 @@ pub async fn handle_add_proxy(
     }))
 }
 
-// 删除指定的代理
+// Delete specified proxies
 pub async fn handle_delete_proxies(
     Json(request): Json<ProxiesDeleteRequest>,
 ) -> Result<Json<ProxiesDeleteResponse>, (StatusCode, Json<GenericError>)> {
     let names = request.names;
 
-    // 获取当前的代理配置并计算失败的代理名称
+    // Get current proxy configuration and calculate failed proxy names
     let current = proxy_pool::proxies().load_full();
 
-    // 计算失败的代理名称
+    // Calculate failed proxy names
     let capacity = (names.len() * 3) >> 2;
     let mut processing_names: Vec<String> = Vec::with_capacity(capacity);
     let mut failed_names: Vec<String> = Vec::with_capacity(capacity);
@@ -165,7 +165,7 @@ pub async fn handle_delete_proxies(
         }
     }
 
-    // 删除指定的代理
+    // Delete specified proxies
     if !processing_names.is_empty() {
         let mut map = current
             .iter()
@@ -183,7 +183,7 @@ pub async fn handle_delete_proxies(
         proxy_pool::proxies().store(Arc::new(map));
     }
 
-    // 更新全局代理池并保存配置
+    // Update global proxy pool and save configuration
     if let Err(e) = Proxies::update_and_save().await {
         return Err((
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -196,7 +196,7 @@ pub async fn handle_delete_proxies(
         ));
     }
 
-    // 根据expectation返回不同的结果
+    // Return different results based on expectation
     let updated_proxies = if request.expectation.needs_updated_tokens() {
         Some(proxy_pool::proxies().load_full())
     } else {
@@ -214,11 +214,11 @@ pub async fn handle_delete_proxies(
     }))
 }
 
-// 设置通用代理
+// Set general proxy
 pub async fn handle_set_general_proxy(
     Json(request): Json<SetGeneralProxyRequest>,
 ) -> Result<Json<CommonResponse>, (StatusCode, Json<GenericError>)> {
-    // 检查代理名称是否存在
+    // Check if proxy name exists
     if !proxy_pool::proxies().load().contains_key(request.name.as_str()) {
         return Err((
             StatusCode::BAD_REQUEST,
@@ -231,10 +231,10 @@ pub async fn handle_set_general_proxy(
         ));
     }
 
-    // 设置通用代理
+    // Set general proxy
     proxy_pool::general_name().store(Arc::new(Str::from(request.name)));
 
-    // 更新全局代理池并保存配置
+    // Update global proxy pool and save configuration
     if let Err(e) = Proxies::update_and_save().await {
         return Err((
             StatusCode::INTERNAL_SERVER_ERROR,

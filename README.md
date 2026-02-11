@@ -1,74 +1,74 @@
 # cursor-api
 
-## 说明
+## Description
 
-* 当前版本已稳定，若发现响应出现缺字漏字，与本程序无关。
-* 若发现首字慢，与本程序无关。
-* 若发现响应出现乱码，也与本程序无关。
-* 属于官方的问题，请不要像作者反馈。
-* 本程序拥有堪比客户端原本的速度，甚至可能更快。
-* 本程序的性能是非常厉害的。
-* 根据本项目开源协议，Fork的项目不能以作者的名义进行任何形式的宣传、推广或声明。原则上希望低调使用。
-* 更新的时间跨度达近10月了，求赞助，项目不收费，不定制。
-* 推荐自部署，[官方网站](https://cc.wisdgod.com) 仅用于作者测试，不保证稳定性。
+* The current version is stable. If you encounter missing characters in responses, it is not related to this program.
+* If you experience slow first character response, it is not related to this program.
+* If you encounter garbled responses, it is also not related to this program.
+* For issues related to the official service, please do not report them to the author.
+* This program has performance comparable to the original client, possibly even faster.
+* The performance of this program is excellent.
+* According to the open source license of this project, forked projects cannot promote, advertise, or make statements in the author's name. Please use it discreetly.
+* Updates have been ongoing for nearly 10 months. Sponsorship is welcome, but the project is free and no customization is offered.
+* Self-deployment is recommended. The [official website](https://cc.wisdgod.com) is only for author testing and stability is not guaranteed.
 
-## 获取key
+## Getting the Key
 
-1. 访问 [www.cursor.com](https://www.cursor.com) 并完成注册登录
-2. 在浏览器中打开开发者工具（F12）
-3. 在 Application-Cookies 中查找名为 `WorkosCursorSessionToken` 的条目，并复制其第三个字段。请注意，%3A%3A 是 :: 的 URL 编码形式，cookie 的值使用冒号 (:) 进行分隔。
+1. Visit [www.cursor.com](https://www.cursor.com) and complete registration/login
+2. Open developer tools in your browser (F12)
+3. In Application-Cookies, find the entry named `WorkosCursorSessionToken` and copy its third field. Note that %3A%3A is the URL-encoded form of ::, and the cookie value is separated by colons (:).
 
-## 配置说明
+## Configuration
 
-### 环境变量
+### Environment Variables
 
-* `PORT`: 服务器端口号（默认：3000）
-* `AUTH_TOKEN`: 认证令牌（必须，用于API认证）
-* `ROUTE_PREFIX`: 路由前缀（可选）
+* `PORT`: Server port number (default: 3000)
+* `AUTH_TOKEN`: Authentication token (required for API authentication)
+* `ROUTE_PREFIX`: Route prefix (optional)
 
-更多请查看 `/env-example`
+For more details, see `/env-example`
 
-### Token文件格式（已弃用）
+### Token File Format (Deprecated)
 
-`.tokens` 文件：每行为token和checksum的对应关系：
+`.tokens` file: Each line contains a token and checksum pair:
 
 ```
-# 这里的#表示这行在下次读取要删除
+# The # here indicates this line will be deleted on next read
 token1,checksum1
 token2,checksum2
 ```
 
-该文件可以被自动管理，但用户仅可在确认自己拥有修改能力时修改，一般仅有以下情况需要手动修改：
+This file can be automatically managed, but users should only modify it if they are confident in their ability to do so. Manual modification is generally only needed in the following cases:
 
-* 需要删除某个 token
-* 需要使用已有 checksum 来对应某一个 token
+* Need to delete a specific token
+* Need to use an existing checksum for a specific token
 
-### 模型列表
+### Model List
 
-写死了，后续也不会会支持自定义模型列表，因为本身就支持动态更新，详见[更新模型列表说明](#更新模型列表说明)
+The model list is hardcoded and custom model lists will not be supported in the future, as dynamic updates are already supported. See [Model List Update Instructions](#model-list-update-instructions) for details.
 
-打开程序自己看，以实际为准，这里不再赘述。
+Check the program itself for the actual list.
 
-## 接口说明
+## API Documentation
 
-### 基础对话
+### Basic Chat
 
-* 接口地址: `/v1/chat/completions`
-* 请求方法: POST
-* 认证方式: Bearer Token
-  1. 使用环境变量 `AUTH_TOKEN` 进行认证
-  2. 使用 `/build-key` 构建的动态密钥认证
-  3. 使用 `/config` 设置的共享Token进行认证 (关联：环境变量`SHARED_TOKEN`)
-  4. 日志中的缓存 token key 的两种表示方式认证 (`/build-key` 同时也会给出这两种格式作为动态密钥的别名，该数字key本质为一个192位的整数)
+* Endpoint: `/v1/chat/completions`
+* Method: POST
+* Authentication: Bearer Token
+  1. Using the `AUTH_TOKEN` environment variable
+  2. Using dynamic keys built via `/build-key`
+  3. Using shared tokens set via `/config` (related: `SHARED_TOKEN` environment variable)
+  4. Using cached token key representations from logs (`/build-key` also provides these two formats as aliases for dynamic keys; the numeric key is essentially a 192-bit integer)
 
-#### 请求格式
+#### Request Format
 
 ```json
 {
   "model": string,
   "messages": [
     {
-      "role": "system" | "user" | "assistant", // "system" 也可以是 "developer"
+      "role": "system" | "user" | "assistant", // "system" can also be "developer"
       "content": string | [
         {
           "type": "text" | "image_url",
@@ -87,9 +87,9 @@ token2,checksum2
 }
 ```
 
-#### 响应格式
+#### Response Format
 
-如果 `stream` 为 `false`:
+If `stream` is `false`:
 
 ```json
 {
@@ -115,7 +115,7 @@ token2,checksum2
 }
 ```
 
-如果 `stream` 为 `true`:
+If `stream` is `true`:
 
 ```
 data: {"id":string,"object":"chat.completion.chunk","created":number,"model":string,"choices":[{"index":number,"delta":{"role":"assistant","content":string},"finish_reason":null}]}
@@ -127,28 +127,28 @@ data: {"id":string,"object":"chat.completion.chunk","created":number,"model":str
 data: [DONE]
 ```
 
-### 获取模型列表
+### Get Model List
 
-* 接口地址: `/v1/models`
-* 请求方法: GET
-* 认证方式: Bearer Token
+* Endpoint: `/v1/models`
+* Method: GET
+* Authentication: Bearer Token
 
-#### 查询参数
+#### Query Parameters
 
-可选的 JSON 请求体用于作为请求模型列表的参数：
+Optional JSON request body for model list parameters:
 
 ```json
 {
-  "is_nightly": bool,                    // 是否包含 nightly 版本模型，默认 false
-  "include_long_context_models": bool,   // 是否包含长上下文模型，默认 false  
-  "exclude_max_named_models": bool,      // 是否排除 max 命名的模型，默认 true
-  "additional_model_names": [string]        // 额外包含的模型名称列表，默认空数组
+  "is_nightly": bool,                    // Whether to include nightly version models, default false
+  "include_long_context_models": bool,   // Whether to include long context models, default false  
+  "exclude_max_named_models": bool,      // Whether to exclude max-named models, default true
+  "additional_model_names": [string]     // Additional model names to include, default empty array
 }
 ```
 
-**注意**: 认证可选，查询参数可选且认证时生效，未提供时使用默认值。
+**Note**: Authentication is optional. Query parameters are optional and only take effect when authenticated. Default values are used when not provided.
 
-#### 响应格式
+#### Response Format
 
 ```typescript
 {
@@ -171,18 +171,18 @@ data: [DONE]
 }
 ```
 
-#### 更新模型列表说明
+#### Model List Update Instructions
 
-每次携带Token时都会拉取最新的模型列表，与上次更新需距离至少30分钟。`additional_model_names` 可以用添加额外模型。
+The latest model list is fetched each time a token is provided, with at least 30 minutes between updates. `additional_model_names` can be used to add extra models.
 
-### Token管理接口
+### Token Management Endpoints
 
-#### 获取Token信息
+#### Get Token Information
 
-* 接口地址: `/tokens/get`
-* 请求方法: POST
-* 认证方式: Bearer Token
-* 响应格式:
+* Endpoint: `/tokens/get`
+* Method: POST
+* Authentication: Bearer Token
+* Response Format:
 
 ```typescript
 {
@@ -298,12 +298,12 @@ data: [DONE]
 }
 ```
 
-#### 设置Token信息
+#### Set Token Information
 
-* 接口地址: `/tokens/set`
-* 请求方法: POST
-* 认证方式: Bearer Token
-* 请求格式:
+* Endpoint: `/tokens/set`
+* Method: POST
+* Authentication: Bearer Token
+* Request Format:
 
 ```typescript
 [
@@ -406,7 +406,7 @@ data: [DONE]
 ]
 ```
 
-* 响应格式:
+* Response Format:
 
 ```typescript
 {
@@ -416,102 +416,102 @@ data: [DONE]
 }
 ```
 
-#### 添加Token
+#### Add Token
 
-* 接口地址: `/tokens/add`
-* 请求方法: POST
-* 认证方式: Bearer Token
-* 请求格式:
+* Endpoint: `/tokens/add`
+* Method: POST
+* Authentication: Bearer Token
+* Request Format:
 
 ```typescript
 {
   tokens: [
     {
-      alias?: string, // 可选，无则自动生成
+      alias?: string, // Optional, auto-generated if not provided
       token: string,
-      checksum?: string, // 可选，无则自动生成
-      client_key?: string, // 可选，无则自动生成
-      session_id?: string, // 可选
-      config_version?: string, // 可选
-      proxy?: string, // 可选
-      timezone?: string, // 可选
-      gcpp_host?: string // 可选
+      checksum?: string, // Optional, auto-generated if not provided
+      client_key?: string, // Optional, auto-generated if not provided
+      session_id?: string, // Optional
+      config_version?: string, // Optional
+      proxy?: string, // Optional
+      timezone?: string, // Optional
+      gcpp_host?: string // Optional
     }
   ],
   enabled: bool
 }
 ```
 
-* 响应格式:
+* Response Format:
 
 ```typescript
 {
   status: "success",
   tokens_count: uint64,
-  message: string  // "New tokens have been added and reloaded" 或 "No new tokens were added"
+  message: string  // "New tokens have been added and reloaded" or "No new tokens were added"
 }
 ```
 
-#### 删除Token
+#### Delete Token
 
-* 接口地址: `/tokens/del`
-* 请求方法: POST
-* 认证方式: Bearer Token
-* 请求格式:
+* Endpoint: `/tokens/del`
+* Method: POST
+* Authentication: Bearer Token
+* Request Format:
 
 ```json
 {
-  "aliases": [string], // 要删除的token列表
-  "include_failed_tokens": bool // 默认为false
+  "aliases": [string], // List of tokens to delete
+  "include_failed_tokens": bool // Default is false
 }
 ```
 
-* 响应格式:
+* Response Format:
 
 ```json
 {
   "status": "success",
-  "failed_tokens": [string] // 可选，根据include_failed_tokens返回，表示未找到的token列表
+  "failed_tokens": [string] // Optional, returned based on include_failed_tokens, indicates tokens not found
 }
 ```
 
-* expectation说明:
-  - simple: 只返回基本状态
-  - updated_tokens: 返回更新后的token列表
-  - failed_tokens: 返回未找到的token列表
-  - detailed: 返回完整信息（包括updated_tokens和failed_tokens）
+* Expectation options:
+  - simple: Returns only basic status
+  - updated_tokens: Returns updated token list
+  - failed_tokens: Returns list of tokens not found
+  - detailed: Returns complete information (including updated_tokens and failed_tokens)
 
-#### 设置Tokens标签（已弃用）
+#### Set Token Tags (Deprecated)
 
-* 接口地址: `/tokens/tags/set`
-* 请求方法: POST
-* 认证方式: Bearer Token
-* 请求格式:
+* Endpoint: `/tokens/tags/set`
+* Method: POST
+* Authentication: Bearer Token
+* Request Format:
 
 ```json
 {
   "tokens": [string],
   "tags": {
-    string: null | string // 键可以为 timezone: 时区标识符 或 proxy: 代理名称
+    string: null | string // Key can be timezone: timezone identifier or proxy: proxy name
   }
 }
 ```
 
-* 响应格式:
+* Response Format:
 
 ```json
 {
   "status": "success",
-  "message": string  // "标签更新成功"
+  "message": string  // "Tags updated successfully"
 }
 ```
 
-#### 更新令牌Profile
+#### Update Token Profile
 
-* 接口地址: `/tokens/profile/update`
-* 请求方法: POST
-* 认证方式: Bearer Token
-* 请求格式:
+* Endpoint: `/tokens/profile/update`
+* Method: POST
+* Authentication: Bearer Token
+* Request Format:
 
 ```json
 [
@@ -519,21 +519,21 @@ data: [DONE]
 ]
 ```
 
-* 响应格式:
+* Response Format:
 
 ```json
 {
   "status": "success",
-  "message": "已更新{}个令牌配置, {}个令牌更新失败"
+  "message": "Updated {} token profiles, {} tokens failed to update"
 }
 ```
 
-#### 更新令牌Config Version
+#### Update Token Config Version
 
-* 接口地址: `/tokens/config-version/update`
-* 请求方法: POST
-* 认证方式: Bearer Token
-* 请求格式:
+* Endpoint: `/tokens/config-version/update`
+* Method: POST
+* Authentication: Bearer Token
+* Request Format:
 
 ```json
 [
@@ -541,21 +541,21 @@ data: [DONE]
 ]
 ```
 
-* 响应格式:
+* Response Format:
 
 ```json
 {
   "status": "success",
-  "message": "已更新{}个令牌配置版本, {}个令牌更新失败"
+  "message": "Updated {} token config versions, {} tokens failed to update"
 }
 ```
 
-#### 刷新令牌
+#### Refresh Tokens
 
-* 接口地址: `/tokens/refresh`
-* 请求方法: POST
-* 认证方式: Bearer Token
-* 请求格式:
+* Endpoint: `/tokens/refresh`
+* Method: POST
+* Authentication: Bearer Token
+* Request Format:
 
 ```json
 [
@@ -563,21 +563,21 @@ data: [DONE]
 ]
 ```
 
-* 响应格式:
+* Response Format:
 
 ```json
 {
   "status": "success",
-  "message": "已刷新{}个令牌, {}个令牌刷新失败"
+  "message": "Refreshed {} tokens, {} tokens failed to refresh"
 }
 ```
 
-#### 设置令牌状态
+#### Set Token Status
 
-* 接口地址: `/tokens/status/set`
-* 请求方法: POST
-* 认证方式: Bearer Token
-* 请求格式:
+* Endpoint: `/tokens/status/set`
+* Method: POST
+* Authentication: Bearer Token
+* Request Format:
 
 ```typescript
 {
@@ -586,21 +586,21 @@ data: [DONE]
 }
 ```
 
-* 响应格式:
+* Response Format:
 
 ```json
 {
   "status": "success",
-  "message": "已设置{}个令牌状态, {}个令牌设置失败"
+  "message": "Set status for {} tokens, {} tokens failed"
 }
 ```
 
-#### 设置令牌别名
+#### Set Token Alias
 
-* 接口地址: `/tokens/alias/set`
-* 请求方法: POST
-* 认证方式: Bearer Token
-* 请求格式:
+* Endpoint: `/tokens/alias/set`
+* Method: POST
+* Authentication: Bearer Token
+* Request Format:
 
 ```json
 {
@@ -608,168 +608,168 @@ data: [DONE]
 }
 ```
 
-* 响应格式:
+* Response Format:
 
 ```json
 {
   "status": "success",
-  "message": "已设置{}个令牌别名, {}个令牌设置失败"
+  "message": "Set alias for {} tokens, {} tokens failed"
 }
 ```
 
-#### 设置Tokens代理
+#### Set Token Proxy
 
-* 接口地址: `/tokens/proxy/set`
-* 请求方法: POST
-* 认证方式: Bearer Token
-* 请求格式:
+* Endpoint: `/tokens/proxy/set`
+* Method: POST
+* Authentication: Bearer Token
+* Request Format:
 
 ```json
 {
   "aliases": [string],
-  "proxy": string  // 可选，代理地址，null表示清除代理
+  "proxy": string  // Optional, proxy address, null to clear proxy
 }
 ```
 
-* 响应格式:
+* Response Format:
 
 ```json
 {
   "status": "success",
-  "message": "已设置{}个令牌代理, {}个令牌设置失败"
+  "message": "Set proxy for {} tokens, {} tokens failed"
 }
 ```
 
-#### 设置Tokens时区
+#### Set Token Timezone
 
-* 接口地址: `/tokens/timezone/set`
-* 请求方法: POST
-* 认证方式: Bearer Token
-* 请求格式:
+* Endpoint: `/tokens/timezone/set`
+* Method: POST
+* Authentication: Bearer Token
+* Request Format:
 
 ```json
 {
   "aliases": [string],
-  "timezone": string  // 可选，时区标识符（如"Asia/Shanghai"），null表示清除时区
+  "timezone": string  // Optional, timezone identifier (e.g., "Asia/Shanghai"), null to clear timezone
 }
 ```
 
-* 响应格式:
+* Response Format:
 
 ```json
 {
   "status": "success",
-  "message": "已设置{}个令牌时区, {}个令牌设置失败"
+  "message": "Set timezone for {} tokens, {} tokens failed"
 }
 ```
 
-#### 合并Tokens附带数据
+#### Merge Token Data
 
-* 接口地址: `/tokens/merge`
-* 请求方法: POST
-* 认证方式: Bearer Token
-* 请求格式:
+* Endpoint: `/tokens/merge`
+* Method: POST
+* Authentication: Bearer Token
+* Request Format:
 
 ```json
 {
-  "{alias}": { // 以下至少其一存在，否则会失败
-    "primary_token": string, // 可选
-    "secondary_token": string, // 可选
-    "checksum": { // 可选
+  "{alias}": { // At least one of the following must exist, otherwise it will fail
+    "primary_token": string, // Optional
+    "secondary_token": string, // Optional
+    "checksum": { // Optional
       "first": string,
       "second": string,
     },
-    "client_key": string, // 可选
-    "config_version": string, // 可选
-    "session_id": string, // 可选
-    "proxy": string, // 可选
-    "timezone": string, // 可选
-    "gcpp_host": object, // 可选
+    "client_key": string, // Optional
+    "config_version": string, // Optional
+    "session_id": string, // Optional
+    "proxy": string, // Optional
+    "timezone": string, // Optional
+    "gcpp_host": object, // Optional
   }
 }
 ```
 
-* 响应格式:
+* Response Format:
 
 ```json
 {
   "status": "success",
-  "message": "已合并{}个令牌, {}个令牌合并失败"
+  "message": "Merged {} tokens, {} tokens failed to merge"
 }
 ```
 
-#### 构建API Key
+#### Build API Key
 
-* 接口地址: `/build-key`
-* 请求方法: POST
-* 认证方式: Bearer Token (当SHARE_AUTH_TOKEN启用时需要)
-* 请求格式:
+* Endpoint: `/build-key`
+* Method: POST
+* Authentication: Bearer Token (required when SHARE_AUTH_TOKEN is enabled)
+* Request Format:
 
 ```json
 {
-  "token": string,               // 格式: JWT
+  "token": string,               // Format: JWT
   "checksum": {
-    "first": string,             // 格式: 长度为64的Hex编码字符串
-    "second": string,            // 格式: 长度为64的Hex编码字符串
+    "first": string,             // Format: 64-character hex-encoded string
+    "second": string,            // Format: 64-character hex-encoded string
   },
-  "client_key": string,          // 格式: 长度为64的Hex编码字符串
-  "config_version": string,      // 格式: UUID
-  "session_id": string,          // 格式: UUID
-  "proxy_name": string,          // 可选，指定代理
-  "timezone": string,            // 可选，指定时区
-  "gcpp_host": string,           // 可选，代码补全区域
-  "disable_vision": bool,        // 可选，禁用图片处理能力
-  "enable_slow_pool": bool,      // 可选，启用慢速池
+  "client_key": string,          // Format: 64-character hex-encoded string
+  "config_version": string,      // Format: UUID
+  "session_id": string,          // Format: UUID
+  "proxy_name": string,          // Optional, specify proxy
+  "timezone": string,            // Optional, specify timezone
+  "gcpp_host": string,           // Optional, code completion region
+  "disable_vision": bool,        // Optional, disable image processing capability
+  "enable_slow_pool": bool,      // Optional, enable slow pool
   "include_web_references": bool,
-  "usage_check_models": {          // 可选，使用量检查模型配置
+  "usage_check_models": {        // Optional, usage check model configuration
     "type": "default" | "disabled" | "all" | "custom",
-    "model_ids": string  // 当type为custom时生效，以逗号分隔的模型ID列表
+    "model_ids": string  // Effective when type is custom, comma-separated model ID list
   }
 }
 ```
 
-* 响应格式:
+* Response Format:
 
 ```json
 {
-  "keys": [string]    // 成功时返回生成的key
+  "keys": [string]    // Returns generated key on success
 }
 ```
 
-或出错时:
+Or on error:
 
 ```json
 {
-  "error": string  // 错误信息
+  "error": string  // Error message
 }
 ```
 
-说明：
+Notes:
 
-1. 此接口用于生成携带动态配置的API Key，是对直接传token与checksum模式的升级版本，在0.3起，直接传token与checksum的方式已经不再适用
+1. This endpoint is used to generate API Keys with dynamic configuration. It is an upgraded version of the direct token and checksum mode. Since version 0.3, the direct token and checksum method is no longer applicable.
 
-2. 生成的key格式为: `sk-{encoded_config}`，其中sk-为默认前缀(可配置)
+2. The generated key format is: `sk-{encoded_config}`, where sk- is the default prefix (configurable)
 
-3. usage_check_models配置说明:
-   - default: 使用默认模型列表(同下 `usage_check_models` 字段的默认值)
-   - disabled: 禁用使用量检查
-   - all: 检查所有可用模型
-   - custom: 使用自定义模型列表(需在model_ids中指定)
+3. usage_check_models configuration:
+   - default: Use default model list (same as the default value of the `usage_check_models` field below)
+   - disabled: Disable usage checking
+   - all: Check all available models
+   - custom: Use custom model list (specify in model_ids)
 
-4. 在当前版本，keys数组长度总为3，后2个基于缓存，仅第1个使用过才行：
-   1. 完整key，旧版本也存在
-   2. 数字key的base64编码版本
-   3. 数字key的明文版本
+4. In the current version, the keys array always has length 3. The last 2 are cache-based and only work after the first one is used:
+   1. Complete key (also exists in older versions)
+   2. Base64-encoded version of the numeric key
+   3. Plain text version of the numeric key
 
-5. 数字key是一个128位无符号整数与一个64位无符号整数组成的，比通常使用的uuid更难破解。
+5. The numeric key consists of a 128-bit unsigned integer and a 64-bit unsigned integer, making it harder to crack than typical UUIDs.
 
-### 代理管理接口
+### Proxy Management Endpoints
 
-#### 获取代理配置信息
+#### Get Proxy Configuration
 
-* 接口地址: `/proxies/get`
-* 请求方法: POST
-* 响应格式:
+* Endpoint: `/proxies/get`
+* Method: POST
+* Response Format:
 
 ```json
 {
@@ -778,44 +778,44 @@ data: [DONE]
     "proxies": {
       "proxy_name": "non" | "sys" | "http://proxy-url",
     },
-    "general": string // 当前使用的通用代理名称
+    "general": string // Currently used general proxy name
   },
   "proxies_count": number,
   "general_proxy": string,
-  "message": string // 可选
+  "message": string // Optional
 }
 ```
 
-#### 设置代理配置
+#### Set Proxy Configuration
 
-* 接口地址: `/proxies/set`
-* 请求方法: POST
-* 请求格式:
+* Endpoint: `/proxies/set`
+* Method: POST
+* Request Format:
 
 ```json
 {
   "proxies": {
     "{proxy_name}": "non" | "sys" | "http://proxy-url"
   },
-  "general": string  // 要设置的通用代理名称
+  "general": string  // General proxy name to set
 }
 ```
 
-* 响应格式:
+* Response Format:
 
 ```json
 {
   "status": "success",
   "proxies_count": number,
-  "message": "代理配置已更新"
+  "message": "Proxy configuration updated"
 }
 ```
 
-#### 添加代理
+#### Add Proxy
 
-* 接口地址: `/proxies/add`
-* 请求方法: POST
-* 请求格式:
+* Endpoint: `/proxies/add`
+* Method: POST
+* Request Format:
 
 ```json
 {
@@ -825,177 +825,177 @@ data: [DONE]
 }
 ```
 
-* 响应格式:
+* Response Format:
 
 ```json
 {
   "status": "success",
   "proxies_count": number,
-  "message": string  // "已添加 X 个新代理" 或 "没有添加新代理"
+  "message": string  // "Added X new proxies" or "No new proxies added"
 }
 ```
 
-#### 删除代理
+#### Delete Proxy
 
-* 接口地址: `/proxies/del`
-* 请求方法: POST
-* 请求格式:
+* Endpoint: `/proxies/del`
+* Method: POST
+* Request Format:
 
 ```json
 {
-  "names": [string],  // 要删除的代理名称列表
-  "expectation": "simple" | "updated_proxies" | "failed_names" | "detailed"  // 默认为simple
+  "names": [string],  // List of proxy names to delete
+  "expectation": "simple" | "updated_proxies" | "failed_names" | "detailed"  // Default is simple
 }
 ```
 
-* 响应格式:
+* Response Format:
 
 ```json
 {
   "status": "success",
-  "updated_proxies": {  // 可选，根据expectation返回
+  "updated_proxies": {  // Optional, returned based on expectation
     "proxies": {
       "proxy_name": "non" | "sys" | "http://proxy-url"
     },
     "general": string
   },
-  "failed_names": [string]  // 可选，根据expectation返回，表示未找到的代理名称列表
+  "failed_names": [string]  // Optional, returned based on expectation, indicates proxy names not found
 }
 ```
 
-#### 设置通用代理
+#### Set General Proxy
 
-* 接口地址: `/proxies/set-general`
-* 请求方法: POST
-* 请求格式:
+* Endpoint: `/proxies/set-general`
+* Method: POST
+* Request Format:
 
 ```json
 {
-  "name": string  // 要设置为通用代理的代理名称
+  "name": string  // Proxy name to set as general proxy
 }
 ```
 
-* 响应格式:
+* Response Format:
 
 ```json
 {
   "status": "success",
-  "message": "通用代理已设置"
+  "message": "General proxy has been set"
 }
 ```
 
-#### 代理类型说明
+#### Proxy Type Description
 
-* `non`: 表示不使用代理
-* `sys`: 表示使用系统代理
-* 其他: 表示具体的代理URL地址（如 `http://proxy-url`）
+* `non`: No proxy
+* `sys`: Use system proxy
+* Other: Specific proxy URL address (e.g., `http://proxy-url`)
 
-#### 注意事项
+#### Notes
 
-1. 代理名称必须是唯一的，添加重复名称的代理会被忽略
-2. 设置通用代理时，指定的代理名称必须存在于当前的代理配置中
-3. 删除代理时的 expectation 参数说明：
-   - simple: 只返回基本状态
-   - updated_proxies: 返回更新后的代理配置
-   - failed_names: 返回未找到的代理名称列表
-   - detailed: 返回完整信息（包括updated_proxies和failed_names）
+1. Proxy names must be unique. Adding proxies with duplicate names will be ignored.
+2. When setting the general proxy, the specified proxy name must exist in the current proxy configuration.
+3. Expectation parameter description for deleting proxies:
+   - simple: Returns only basic status
+   - updated_proxies: Returns updated proxy configuration
+   - failed_names: Returns list of proxy names not found
+   - detailed: Returns complete information (including updated_proxies and failed_names)
 
-### 错误格式
+### Error Format
 
-所有接口在发生错误时会返回统一的错误格式：
+All endpoints return a unified error format when an error occurs:
 
 ```json
 {
   "status": "error",
-  "code": number,   // 可选
-  "error": string,  // 可选，错误详细信息
-  "message": string // 错误提示信息
+  "code": number,   // Optional
+  "error": string,  // Optional, error details
+  "message": string // Error message
 }
 ```
 
-### 配置管理接口
+### Configuration Management Endpoints
 
-#### 获取配置
+#### Get Configuration
 
-* 接口地址: `/config/get`
-* 请求方法: POST
-* 认证方式: Bearer Token
-* 请求格式: 无
-* 响应格式: `x-config-hash` + 文本
+* Endpoint: `/config/get`
+* Method: POST
+* Authentication: Bearer Token
+* Request Format: None
+* Response Format: `x-config-hash` + text
 
-#### 更新配置
+#### Update Configuration
 
-* 接口地址: `/config/set`
-* 请求方法: POST
-* 认证方式: Bearer Token
-* 请求格式: `x-config-hash` + 文本
-* 响应格式: 204表示已变更，200表示未变更，其余为错误
+* Endpoint: `/config/set`
+* Method: POST
+* Authentication: Bearer Token
+* Request Format: `x-config-hash` + text
+* Response Format: 204 indicates changed, 200 indicates unchanged, others are errors
 
-#### 更新配置
+#### Reload Configuration
 
-* 接口地址: `/config/reload`
-* 请求方法: GET
-* 认证方式: Bearer Token
-* 请求格式: `x-config-hash`
-* 响应格式: 204表示已变更，200表示未变更，其余为错误
+* Endpoint: `/config/reload`
+* Method: GET
+* Authentication: Bearer Token
+* Request Format: `x-config-hash`
+* Response Format: 204 indicates changed, 200 indicates unchanged, others are errors
 
-### 日志管理接口
+### Log Management Endpoints
 
-#### 获取日志接口
+#### Get Logs
 
-* 接口地址: `/logs`
-* 请求方法: GET
-* 响应格式: 根据配置返回不同的内容类型(默认、文本或HTML)
+* Endpoint: `/logs`
+* Method: GET
+* Response Format: Returns different content types based on configuration (default, text, or HTML)
 
-#### 获取日志数据
+#### Get Log Data
 
-* 接口地址: `/logs/get`
-* 请求方法: POST
-* 认证方式: Bearer Token
-* 请求格式:
+* Endpoint: `/logs/get`
+* Method: POST
+* Authentication: Bearer Token
+* Request Format:
 
 ```typescript
 {
   "query": {
-    // 分页与排序控制
-    "limit": number,            // 可选，返回记录数量限制
-    "offset": number,           // 可选，起始位置偏移量
-    "reverse": bool,            // 可选，反向排序，默认false（从旧到新），true时从新到旧
+    // Pagination and sorting control
+    "limit": number,            // Optional, limit number of records returned
+    "offset": number,           // Optional, starting position offset
+    "reverse": bool,            // Optional, reverse order, default false (old to new), true for new to old
 
-    // 时间范围过滤
-    "from_date": string,        // 可选，开始日期时间，RFC3339格式
-    "to_date": string,          // 可选，结束日期时间，RFC3339格式
+    // Time range filtering
+    "from_date": string,        // Optional, start datetime, RFC3339 format
+    "to_date": string,          // Optional, end datetime, RFC3339 format
 
-    // 用户标识过滤
-    "user_id": string,          // 可选，按用户ID精确匹配
-    "email": string,            // 可选，按用户邮箱过滤（支持部分匹配）
-    "membership_type": string,  // 可选，按会员类型过滤 ("free"/"free_trial"/"pro"/"pro_plus"/"ultra"/"enterprise")
+    // User identification filtering
+    "user_id": string,          // Optional, exact match by user ID
+    "email": string,            // Optional, filter by user email (supports partial match)
+    "membership_type": string,  // Optional, filter by membership type ("free"/"free_trial"/"pro"/"pro_plus"/"ultra"/"enterprise")
 
-    // 核心业务过滤
-    "status": string,           // 可选，按状态过滤 ("pending"/"success"/"failure")
-    "model": string,            // 可选，按模型名称过滤（支持部分匹配）
-    "include_models": [string], // 可选，包含特定模型
-    "exclude_models": [string], // 可选，排除特定模型
+    // Core business filtering
+    "status": string,           // Optional, filter by status ("pending"/"success"/"failure")
+    "model": string,            // Optional, filter by model name (supports partial match)
+    "include_models": [string], // Optional, include specific models
+    "exclude_models": [string], // Optional, exclude specific models
 
-    // 请求特征过滤
-    "stream": bool,             // 可选，是否为流式请求
-    "has_chain": bool,          // 可选，是否包含对话链
-    "has_usage": bool,          // 可选，是否有usage信息
+    // Request characteristic filtering
+    "stream": bool,             // Optional, whether it's a streaming request
+    "has_chain": bool,          // Optional, whether it contains a conversation chain
+    "has_usage": bool,          // Optional, whether it has usage information
 
-    // 错误相关过滤
-    "has_error": bool,          // 可选，是否包含错误
-    "error": string,            // 可选，按错误过滤（支持部分匹配）
+    // Error-related filtering
+    "has_error": bool,          // Optional, whether it contains errors
+    "error": string,            // Optional, filter by error (supports partial match)
 
-    // 性能指标过滤
-    "min_total_time": number,   // 可选，最小总耗时（秒）
-    "max_total_time": number,   // 可选，最大总耗时（秒）
-    "min_tokens": number,       // 可选，最小token数（input + output）
-    "max_tokens": number        // 可选，最大token数
+    // Performance metric filtering
+    "min_total_time": number,   // Optional, minimum total time (seconds)
+    "max_total_time": number,   // Optional, maximum total time (seconds)
+    "min_tokens": number,       // Optional, minimum token count (input + output)
+    "max_tokens": number        // Optional, maximum token count
   }
 }
 ```
 
-* 响应格式:
+* Response Format:
 
 ```typescript
 {
@@ -1103,19 +1103,19 @@ data: [DONE]
 }
 ```
 
-* 说明：
-  - 所有查询参数都是可选的
-  - 管理员可以查看所有日志，普通用户只能查看与其token相关的日志
-  - 如果提供了无效的状态或会员类型，将返回空结果
-  - 日期时间格式需遵循 RFC3339 标准，如："2024-03-20T15:30:00+08:00"
-  - 邮箱和模型名称支持部分匹配
+* Notes:
+  - All query parameters are optional
+  - Administrators can view all logs, regular users can only view logs related to their tokens
+  - If an invalid status or membership type is provided, empty results will be returned
+  - Datetime format must follow RFC3339 standard, e.g., "2024-03-20T15:30:00+08:00"
+  - Email and model name support partial matching
 
-#### 获取日志令牌
+#### Get Log Tokens
 
-* 接口地址: `/logs/tokens/get`
-* 请求方法: POST
-* 认证方式: Bearer Token
-* 请求格式:
+* Endpoint: `/logs/tokens/get`
+* Method: POST
+* Authentication: Bearer Token
+* Request Format:
 
 ```typescript
 [
@@ -1123,7 +1123,7 @@ data: [DONE]
 ]
 ```
 
-* 响应格式:
+* Response Format:
 
 ```typescript
 {
@@ -1164,40 +1164,40 @@ data: [DONE]
 }
 ```
 
-### 静态资源接口
+### Static Resource Endpoints
 
-#### 环境变量示例
+#### Environment Variable Example
 
-* 接口地址: `/env-example`
-* 请求方法: GET
-* 响应格式: 文本
+* Endpoint: `/env-example`
+* Method: GET
+* Response Format: Text
 
-#### 配置文件示例
+#### Configuration File Example
 
-* 接口地址: `/config-example`
-* 请求方法: GET
-* 响应格式: 文本
+* Endpoint: `/config-example`
+* Method: GET
+* Response Format: Text
 
-#### 文档
+#### Documentation
 
-* 接口地址: `/readme`
-* 请求方法: GET
-* 响应格式: HTML
+* Endpoint: `/readme`
+* Method: GET
+* Response Format: HTML
 
-#### 许可
+#### License
 
-* 接口地址: `/license`
-* 请求方法: GET
-* 响应格式: HTML
+* Endpoint: `/license`
+* Method: GET
+* Response Format: HTML
 
-### 健康检查接口
+### Health Check Endpoint
 
-* **接口地址**: `/health`
-* **请求方法**: GET
-* **认证方式**: 无需
-* **响应格式**: 根据配置返回不同的内容类型(默认JSON、文本或HTML)
+* Endpoint: `/health`
+* Method: GET
+* Authentication: Not required
+* Response Format: Returns different content types based on configuration (default JSON, text, or HTML)
 
-#### 响应结构
+#### Response Structure
 
 ```json
 {
@@ -1241,89 +1241,89 @@ data: [DONE]
 }
 ```
 
-#### 字段说明
+#### Field Description
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `status` | string | 服务状态: "success", "warning", "error" |
-| `service.name` | string | 服务名称 |
-| `service.version` | string | 服务版本 |
-| `service.is_debug` | bool | 是否为调试模式 |
-| `service.build.version` | number | 构建版本号(仅preview功能启用时) |
-| `service.build.timestamp` | string | 构建时间戳 |
-| `service.build.is_prerelease` | bool | 是否为预发布版本 |
-| `runtime.started_at` | string | 服务启动时间 |
-| `runtime.uptime_seconds` | number | 运行时长(秒) |
-| `runtime.requests.total` | number | 总请求数 |
-| `runtime.requests.active` | number | 当前活跃请求数 |
-| `runtime.requests.errors` | number | 错误请求数 |
-| `system.memory.used_bytes` | number | 已使用内存(字节) |
-| `system.memory.used_percentage` | number | 内存使用率(%) |
-| `system.memory.available_bytes` | number | 可用内存(字节,可选) |
-| `system.cpu.usage_percentage` | number | CPU使用率(%) |
-| `system.cpu.load_average` | array | 系统负载[1分钟,5分钟,15分钟] |
-| `capabilities.models` | array | 支持的模型列表 |
-| `capabilities.endpoints` | array | 可用的API端点 |
-| `capabilities.features` | array | 支持的功能特性 |
+| Field                            | Type   | Description                                                  |
+|----------------------------------|--------|--------------------------------------------------------------|
+| `status`                         | string | Service status: "success", "warning", "error"                |
+| `service.name`                   | string | Service name                                                 |
+| `service.version`                | string | Service version                                              |
+| `service.is_debug`               | bool   | Whether in debug mode                                        |
+| `service.build.version`          | number | Build version number (only when preview feature is enabled)  |
+| `service.build.timestamp`        | string | Build timestamp                                              |
+| `service.build.is_prerelease`    | bool   | Whether it's a prerelease version                            |
+| `runtime.started_at`             | string | Service start time                                           |
+| `runtime.uptime_seconds`         | number | Uptime (seconds)                                             |
+| `runtime.requests.total`         | number | Total requests                                               |
+| `runtime.requests.active`        | number | Current active requests                                      |
+| `runtime.requests.errors`        | number | Error requests                                               |
+| `system.memory.used_bytes`       | number | Used memory (bytes)                                          |
+| `system.memory.used_percentage`  | number | Memory usage (%)                                             |
+| `system.memory.available_bytes`  | number | Available memory (bytes, optional)                           |
+| `system.cpu.usage_percentage`    | number | CPU usage (%)                                                |
+| `system.cpu.load_average`        | array  | System load [1min, 5min, 15min]                              |
+| `capabilities.models`            | array  | Supported model list                                         |
+| `capabilities.endpoints`         | array  | Available API endpoints                                      |
+| `capabilities.features`          | array  | Supported features                                           |
 
-### 其他接口
+### Other Endpoints
 
-#### 随机生成一个uuid
+#### Generate Random UUID
 
-* 接口地址: `/gen-uuid`
-* 请求方法: GET
-* 响应格式:
-
-```plaintext
-string
-```
-
-#### 随机生成一个hash
-
-* 接口地址: `/gen-hash`
-* 请求方法: GET
-* 响应格式:
+* Endpoint: `/gen-uuid`
+* Method: GET
+* Response Format:
 
 ```plaintext
 string
 ```
 
-#### 随机生成一个checksum
+#### Generate Random Hash
 
-* 接口地址: `/gen-checksum`
-* 请求方法: GET
-* 响应格式:
-
-```plaintext
-string
-```
-
-#### 随机生成一个token（已弃用）
-
-* 接口地址: `/gen-token`
-* 请求方法: GET
-* 响应格式:
+* Endpoint: `/gen-hash`
+* Method: GET
+* Response Format:
 
 ```plaintext
 string
 ```
 
-#### 获取当前的checksum header
+#### Generate Random Checksum
 
-* 接口地址: `/get-checksum-header`
-* 请求方法: GET
-* 响应格式:
+* Endpoint: `/gen-checksum`
+* Method: GET
+* Response Format:
 
 ```plaintext
 string
 ```
 
-#### 获取账号信息
+#### Generate Random Token (Deprecated)
 
-* 接口地址: `/token-profile/get`
-* 请求方法: POST
-* 认证方式: Bearer Token
-* 请求格式:
+* Endpoint: `/gen-token`
+* Method: GET
+* Response Format:
+
+```plaintext
+string
+```
+
+#### Get Current Checksum Header
+
+* Endpoint: `/get-checksum-header`
+* Method: GET
+* Response Format:
+
+```plaintext
+string
+```
+
+#### Get Account Information
+
+* Endpoint: `/token-profile/get`
+* Method: POST
+* Authentication: Bearer Token
+* Request Format:
 
 ```typescript
 {
@@ -1334,7 +1334,7 @@ string
 }
 ```
 
-* 响应格式:
+* Response Format:
 
 ```typescript
 {
@@ -1427,7 +1427,7 @@ string
 }
 ```
 
-如果发生错误，响应格式为:
+If an error occurs, the response format is:
 
 ```json
 {
@@ -1435,50 +1435,50 @@ string
 }
 ```
 
-#### 获取Config Version
+#### Get Config Version
 
-* 接口地址: `/config-version/get`
-* 请求方法: POST
-* 认证方式: Bearer Token (当SHARE_AUTH_TOKEN启用时需要)
-* 请求格式:
+* Endpoint: `/config-version/get`
+* Method: POST
+* Authentication: Bearer Token (required when SHARE_AUTH_TOKEN is enabled)
+* Request Format:
 
 ```json
 {
-  "token": string,               // 格式: JWT
+  "token": string,               // Format: JWT
   "checksum": {
-    "first": string,             // 格式: 长度为64的Hex编码字符串
-    "second": string,            // 格式: 长度为64的Hex编码字符串
+    "first": string,             // Format: 64-character hex-encoded string
+    "second": string,            // Format: 64-character hex-encoded string
   },
-  "client_key": string,          // 格式: 长度为64的Hex编码字符串
-  "session_id": string,          // 格式: UUID
-  "proxy_name": string,          // 可选，指定代理
-  "timezone": string,            // 可选，指定时区
-  "gcpp_host": string            // 可选，代码补全区域
+  "client_key": string,          // Format: 64-character hex-encoded string
+  "session_id": string,          // Format: UUID
+  "proxy_name": string,          // Optional, specify proxy
+  "timezone": string,            // Optional, specify timezone
+  "gcpp_host": string            // Optional, code completion region
 }
 ```
 
-* 响应格式:
+* Response Format:
 
 ```json
 {
-  "config_version": string    // 成功时返回生成的UUID
+  "config_version": string    // Returns generated UUID on success
 }
 ```
 
-或出错时:
+Or on error:
 
 ```json
 {
-  "error": string  // 错误信息
+  "error": string  // Error message
 }
 ```
 
-#### 获取更新令牌（已弃用）
+#### Get Upgrade Token (Deprecated)
 
-* 接口地址: `/token-upgrade`
-* 请求方法: POST
-* 认证方式: 请求体中包含token
-* 请求格式:
+* Endpoint: `/token-upgrade`
+* Method: POST
+* Authentication: Token included in request body
+* Request Format:
 
 ```json
 {
@@ -1486,7 +1486,7 @@ string
 }
 ```
 
-* 响应格式:
+* Response Format:
 
 ```json
 {
@@ -1496,43 +1496,43 @@ string
 }
 ```
 
-## Copilot++ 接口文档
+## Copilot++ API Documentation
 
-1. 相关接口都需要 `x-client-key`, 格式请见 `/gen-hash`（32字节）。
-2. Cookie `FilesyncCookie` 是16字节，工作区不变即不变。
-3. 关于形如 `AWSALBAPP-0` 的 Cookie 具有7天有效期，可能变化，详情请查阅 Amazon 相关文档。
-4. `FilesyncCookie` 和 `AWSALBAPP` 总是被 `/file/upload` 或 `/file/sync`。
-5. 以下所有接口都使用 POST 方法，且都需要认证。
+1. All related endpoints require `x-client-key`. See `/gen-hash` for format (32 bytes).
+2. Cookie `FilesyncCookie` is 16 bytes and remains unchanged as long as the workspace doesn't change.
+3. Cookies like `AWSALBAPP-0` have a 7-day validity period and may change. See Amazon documentation for details.
+4. `FilesyncCookie` and `AWSALBAPP` are always set by `/file/upload` or `/file/sync`.
+5. All endpoints below use POST method and require authentication.
 
-### 获取代码补全服务的配置信息
+### Get Code Completion Service Configuration
 
-* 接口地址: `/cpp/config`
+* Endpoint: `/cpp/config`
 
-#### 请求格式
+#### Request Format
 
 ```json
 {
-  "is_nightly": bool,  // 可选，是否使用nightly版本
-  "model": string,        // 模型名称
-  "supports_cpt": bool // 可选，是否支持CPT
+  "is_nightly": bool,  // Optional, whether to use nightly version
+  "model": string,     // Model name
+  "supports_cpt": bool // Optional, whether CPT is supported
 }
 ```
 
-### 响应格式
+### Response Format
 
 ```json
 {
-  "above_radius": number,                                        // 可选，上方扫描半径
-  "below_radius": number,                                        // 可选，下方扫描半径
-  "merge_behavior": {                                            // 可选，合并行为
+  "above_radius": number,                                        // Optional, scan radius above
+  "below_radius": number,                                        // Optional, scan radius below
+  "merge_behavior": {                                            // Optional, merge behavior
     "type": string,
-    "limit": number,                                             // 可选，限制
-    "radius": number                                             // 可选，半径
+    "limit": number,                                             // Optional, limit
+    "radius": number                                             // Optional, radius
   },
-  "is_on": bool,                                              // 可选，是否开启
-  "is_ghost_text": bool,                                      // 可选，是否使用幽灵文本
-  "should_let_user_enable_cpp_even_if_not_pro": bool,         // 可选，非专业用户是否可以启用
-  "heuristics": [                                                // 启用的启发式规则列表
+  "is_on": bool,                                                 // Optional, whether enabled
+  "is_ghost_text": bool,                                         // Optional, whether to use ghost text
+  "should_let_user_enable_cpp_even_if_not_pro": bool,            // Optional, allow non-pro users to enable
+  "heuristics": [                                                // Enabled heuristic rules list
     "lots_of_added_text",
     "duplicating_line_after_suggestion",
     "duplicating_multiple_lines_after_suggestion",
@@ -1540,125 +1540,125 @@ string
     "output_extends_beyond_range_and_is_repeated",
     "suggesting_recently_rejected_edit"
   ],
-  "exclude_recently_viewed_files_patterns": [string],            // 最近查看文件排除模式
-  "enable_rvf_tracking": bool,                                // 是否启用RVF跟踪
-  "global_debounce_duration_millis": number,                     // 全局去抖动时间(毫秒)
-  "client_debounce_duration_millis": number,                     // 客户端去抖动时间(毫秒)
-  "cpp_url": string,                                             // CPP服务URL
-  "use_whitespace_diff_history": bool,                        // 是否使用空白差异历史
-  "import_prediction_config": {                                  // 导入预测配置
-    "is_disabled_by_backend": bool,                           // 是否被后端禁用
-    "should_turn_on_automatically": bool,                     // 是否自动开启
-    "python_enabled": bool                                    // Python是否启用
+  "exclude_recently_viewed_files_patterns": [string],            // Recently viewed files exclusion patterns
+  "enable_rvf_tracking": bool,                                   // Whether to enable RVF tracking
+  "global_debounce_duration_millis": number,                     // Global debounce duration (milliseconds)
+  "client_debounce_duration_millis": number,                     // Client debounce duration (milliseconds)
+  "cpp_url": string,                                             // CPP service URL
+  "use_whitespace_diff_history": bool,                           // Whether to use whitespace diff history
+  "import_prediction_config": {                                  // Import prediction configuration
+    "is_disabled_by_backend": bool,                              // Whether disabled by backend
+    "should_turn_on_automatically": bool,                        // Whether to turn on automatically
+    "python_enabled": bool                                       // Whether Python is enabled
   },
-  "enable_filesync_debounce_skipping": bool,                  // 是否启用文件同步去抖动跳过
-  "check_filesync_hash_percent": number,                         // 文件同步哈希检查百分比
-  "geo_cpp_backend_url": string,                                 // 地理位置CPP后端URL
-  "recently_rejected_edit_thresholds": {                         // 可选，最近拒绝编辑阈值
-    "hard_reject_threshold": number,                             // 硬拒绝阈值
-    "soft_reject_threshold": number                              // 软拒绝阈值
+  "enable_filesync_debounce_skipping": bool,                     // Whether to enable filesync debounce skipping
+  "check_filesync_hash_percent": number,                         // Filesync hash check percentage
+  "geo_cpp_backend_url": string,                                 // Geographic CPP backend URL
+  "recently_rejected_edit_thresholds": {                         // Optional, recently rejected edit thresholds
+    "hard_reject_threshold": number,                             // Hard reject threshold
+    "soft_reject_threshold": number                              // Soft reject threshold
   },
-  "is_fused_cursor_prediction_model": bool,                   // 是否使用融合光标预测模型
-  "include_unchanged_lines": bool,                            // 是否包含未更改行
-  "should_fetch_rvf_text": bool,                              // 是否获取RVF文本
-  "max_number_of_cleared_suggestions_since_last_accept": number, // 可选，上次接受后清除建议的最大数量
-  "suggestion_hint_config": {                                    // 可选，建议提示配置
-    "important_lsp_extensions": [string],                        // 重要的LSP扩展
-    "enabled_for_path_extensions": [string]                      // 启用的路径扩展
+  "is_fused_cursor_prediction_model": bool,                      // Whether to use fused cursor prediction model
+  "include_unchanged_lines": bool,                               // Whether to include unchanged lines
+  "should_fetch_rvf_text": bool,                                 // Whether to fetch RVF text
+  "max_number_of_cleared_suggestions_since_last_accept": number, // Optional, max cleared suggestions since last accept
+  "suggestion_hint_config": {                                    // Optional, suggestion hint configuration
+    "important_lsp_extensions": [string],                        // Important LSP extensions
+    "enabled_for_path_extensions": [string]                      // Enabled path extensions
   }
 }
 ```
 
-### 获取可用的代码补全模型列表
+### Get Available Code Completion Models
 
-* 接口地址: `/cpp/models`
+* Endpoint: `/cpp/models`
 
-#### 请求格式
+#### Request Format
 
-无
+None
 
-### 响应格式
+### Response Format
 
 ```json
 {
-  "models": [string],     // 可用模型列表
-  "default_model": string // 可选，默认模型
+  "models": [string],     // Available model list
+  "default_model": string // Optional, default model
 }
 ```
 
-### 上传文件
+### Upload File
 
-* 接口地址: `/file/upload`
+* Endpoint: `/file/upload`
 
-#### 请求格式
+#### Request Format
 
 ```json
 {
-  "uuid": string,                    // 文件标识符
-  "relative_workspace_path": string, // 文件相对于工作区的路径
-  "contents": string,                // 文件内容
-  "model_version": number,           // 模型版本
-  "sha256_hash": string              // 可选，文件的SHA256哈希值
+  "uuid": string,                    // File identifier
+  "relative_workspace_path": string, // File path relative to workspace
+  "contents": string,                // File contents
+  "model_version": number,           // Model version
+  "sha256_hash": string              // Optional, SHA256 hash of file
 }
 ```
 
-### 响应格式
+### Response Format
 
 ```json
 {
-  "error": string // 错误类型：unspecified, non_existant, hash_mismatch
+  "error": string // Error type: unspecified, non_existant, hash_mismatch
 }
 ```
 
-### 同步文件变更
+### Sync File Changes
 
-* 接口地址: `/file/sync`
+* Endpoint: `/file/sync`
 
-#### 请求格式
+#### Request Format
 
 ```json
 {
-  "uuid": string,                                // 文件标识符
-  "relative_workspace_path": string,             // 文件相对于工作区的路径
-  "model_version": number,                       // 模型版本
-  "filesync_updates": [                          // 文件同步更新数组
+  "uuid": string,                                // File identifier
+  "relative_workspace_path": string,             // File path relative to workspace
+  "model_version": number,                       // Model version
+  "filesync_updates": [                          // File sync update array
     {
-      "model_version": number,                   // 模型版本
-      "relative_workspace_path": string,         // 文件相对于工作区的路径
-      "updates": [                               // 单个更新请求数组
+      "model_version": number,                   // Model version
+      "relative_workspace_path": string,         // File path relative to workspace
+      "updates": [                               // Single update request array
         {
-          "start_position": number,              // 更新开始位置
-          "end_position": number,                // 更新结束位置
-          "change_length": number,               // 变更长度
-          "replaced_string": string,             // 替换的字符串
-          "range": {                             // 简单范围
-            "start_line_number": number,         // 开始行号
-            "start_column": number,              // 开始列
-            "end_line_number_inclusive": number, // 结束行号（包含）
-            "end_column": number                 // 结束列
+          "start_position": number,              // Update start position
+          "end_position": number,                // Update end position
+          "change_length": number,               // Change length
+          "replaced_string": string,             // Replaced string
+          "range": {                             // Simple range
+            "start_line_number": number,         // Start line number
+            "start_column": number,              // Start column
+            "end_line_number_inclusive": number, // End line number (inclusive)
+            "end_column": number                 // End column
           }
         }
       ],
-      "expected_file_length": number             // 预期文件长度
+      "expected_file_length": number             // Expected file length
     }
   ],
-  "sha256_hash": string                          // 文件的SHA256哈希值
+  "sha256_hash": string                          // SHA256 hash of file
 }
 ```
 
-### 响应格式
+### Response Format
 
 ```json
 {
-  "error": string // 错误类型：unspecified, non_existant, hash_mismatch
+  "error": string // Error type: unspecified, non_existant, hash_mismatch
 }
 ```
 
-### 流式代码补全
+### Streaming Code Completion
 
-* 接口地址: `/cpp/stream`
+* Endpoint: `/cpp/stream`
 
-#### 请求格式
+#### Request Format
 
 ```typescript
 {
@@ -1991,15 +1991,15 @@ string
 }
 ```
 
-### 响应格式 (SSE 流)
+### Response Format (SSE Stream)
 
-服务器通过 Server-Sent Events (SSE) 返回流式响应。每个事件包含 `type` 字段区分消息类型。
+The server returns streaming responses via Server-Sent Events (SSE). Each event contains a `type` field to distinguish message types.
 
 ---
 
-#### 事件类型
+#### Event Types
 
-**1. model_info** - 模型信息
+**1. model_info** - Model Information
 ```typescript
 {
   type: "model_info",
@@ -2010,32 +2010,32 @@ string
 
 ---
 
-**2. range_replace** - 范围替换
+**2. range_replace** - Range Replacement
 ```typescript
 {
   type: "range_replace",
-  start_line_number: int32,                  // 起始行（1-based）
-  end_line_number_inclusive: int32,          // 结束行（1-based，包含）
+  start_line_number: int32,                  // Start line (1-based)
+  end_line_number_inclusive: int32,          // End line (1-based, inclusive)
   binding_id?: string,
   should_remove_leading_eol?: bool
 }
 ```
-> **注意**：替换的文本内容通过后续的 `text` 事件发送
+> **Note**: The replacement text content is sent via subsequent `text` events
 
 ---
 
-**3. text** - 文本内容
+**3. text** - Text Content
 ```typescript
 {
   type: "text",
   text: string
 }
 ```
-> **说明**：流式输出的主要内容，客户端应累积
+> **Description**: Main content of streaming output, client should accumulate
 
 ---
 
-**4. cursor_prediction** - 光标预测
+**4. cursor_prediction** - Cursor Prediction
 ```typescript
 {
   type: "cursor_prediction",
@@ -2049,7 +2049,7 @@ string
 
 ---
 
-**5. done_edit** - 编辑完成
+**5. done_edit** - Edit Complete
 ```typescript
 {
   type: "done_edit"
@@ -2058,7 +2058,7 @@ string
 
 ---
 
-**6. begin_edit** - 编辑开始
+**6. begin_edit** - Edit Start
 ```typescript
 {
   type: "begin_edit"
@@ -2067,17 +2067,17 @@ string
 
 ---
 
-**7. done_stream** - 内容阶段结束
+**7. done_stream** - Content Phase End
 ```typescript
 {
   type: "done_stream"
 }
 ```
-> **说明**：之后可能会有 `debug` 消息
+> **Description**: May be followed by `debug` messages
 
 ---
 
-**8. debug** - 调试信息
+**8. debug** - Debug Information
 ```typescript
 {
   type: "debug",
@@ -2089,18 +2089,18 @@ string
   server_timing?: string
 }
 ```
-> **说明**：可能出现多次，前端可累积用于统计
+> **Description**: May appear multiple times, frontend can accumulate for statistics
 
 ---
 
-**9. error** - 错误
+**9. error** - Error
 ```typescript
 {
   type: "error",
   error: {
-    code: uint16,                            // 非零错误码
-    type: string,                            // 错误类型
-    details?: {                              // 可选的详细信息
+    code: uint16,                            // Non-zero error code
+    type: string,                            // Error type
+    details?: {                              // Optional detailed information
       title: string,
       detail: string,
       additional_info?: Record<string, string>
@@ -2111,7 +2111,7 @@ string
 
 ---
 
-**10. stream_end** - 流结束
+**10. stream_end** - Stream End
 ```typescript
 {
   type: "stream_end"
@@ -2120,29 +2120,29 @@ string
 
 ---
 
-#### 典型消息序列
+#### Typical Message Sequences
 
-**基础场景：**
+**Basic Scenario:**
 ```
 model_info
-range_replace        // 指定范围
-text (×N)           // 流式文本
+range_replace        // Specify range
+text (xN)           // Streaming text
 done_edit
 done_stream
-debug (×N)          // 可选的多个调试消息
+debug (xN)          // Optional multiple debug messages
 stream_end
 ```
 
-**多次编辑：**
+**Multiple Edits:**
 ```
 model_info
 range_replace
-text (×N)
+text (xN)
 done_edit
-begin_edit          // 下一次编辑
+begin_edit          // Next edit
 range_replace
-text (×N)
-cursor_prediction   // 可选
+text (xN)
+cursor_prediction   // Optional
 done_edit
 done_stream
 stream_end
@@ -2150,45 +2150,45 @@ stream_end
 
 ---
 
-#### 客户端处理要点
+#### Client Processing Guidelines
 
-1. **累积文本**
-   - `range_replace` 指定范围
-   - 累积后续所有 `text` 内容
-   - `done_edit` 时应用变更
+1. **Accumulate Text**
+   - `range_replace` specifies the range
+   - Accumulate all subsequent `text` content
+   - Apply changes when `done_edit` is received
 
-2. **换行符处理**
-   - `should_remove_leading_eol=true` 时移除首个换行符
+2. **Newline Handling**
+   - Remove the first newline when `should_remove_leading_eol=true`
 
-3. **多编辑会话**
-   - `begin_edit` 标记新会话开始
-   - `binding_id` 用于关联同一补全的多个编辑
+3. **Multiple Edit Sessions**
+   - `begin_edit` marks the start of a new session
+   - `binding_id` is used to associate multiple edits from the same completion
 
-4. **错误处理**
-   - 流中出现 `error` 时，客户端应中止当前操作
+4. **Error Handling**
+   - When `error` appears in the stream, the client should abort the current operation
 
-5. **调试信息**
-   - `done_stream` 后可能有多个 `debug` 消息
-   - 前端可累积用于性能分析
+5. **Debug Information**
+   - Multiple `debug` messages may appear after `done_stream`
+   - Frontend can accumulate for performance analysis
 
-## 鸣谢
+## Acknowledgments
 
-感谢以下项目和贡献者:
+Thanks to the following projects and contributors:
 
-- [cursor-api](https://github.com/wisdgod/cursor-api) - 本项目本身
-- [zhx47/cursor-api](https://github.com/zhx47/cursor-api) - 提供了本项目起步阶段的主要参考
-- [luolazyandlazy/cursorToApi](https://github.com/luolazyandlazy/cursorToApi) - zhx47/cursor-api基于此项目优化
+- [cursor-api](https://github.com/wisdgod/cursor-api) - This project itself
+- [zhx47/cursor-api](https://github.com/zhx47/cursor-api) - Provided the main reference during the initial development of this project
+- [luolazyandlazy/cursorToApi](https://github.com/luolazyandlazy/cursorToApi) - zhx47/cursor-api was optimized based on this project
 
-## 关于赞助
+## About Sponsorship
 
-非常感谢我自己持续8个多月的更新和大家的支持！你想赞助的话，清直接联系我，我一般不会拒绝。
+Thank you for my continuous updates over 8+ months and everyone's support! If you want to sponsor, please contact me directly. I generally won't refuse.
 
-有人说少个二维码来着，还是算了。如果觉得好用，给点支持。没啥大不了的，有空尽量做一点，只是心力确实消耗很大。
+Someone mentioned adding a QR code, but let's skip that. If you find it useful, feel free to show some support. It's no big deal. I'll do what I can when I have time, but it does take a lot of mental energy.
 
-~~要不给我邮箱发口令红包？~~
+~~How about sending a red packet to my email?~~
 
-**赞助一定要是你真心想给，也不强求。**
+**Sponsorship should only be given if you genuinely want to, no pressure.**
 
-就算你给我赞助，我可能也不会区别对待你。我不想说你赞助多少就有什么，不想赞助失去本来的意味。
+Even if you sponsor me, I probably won't treat you differently. I don't want to say "sponsor X amount and get Y". I don't want sponsorship to lose its original meaning.
 
-纯粹！
+Keep it pure!

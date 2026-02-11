@@ -67,14 +67,14 @@ pub static GENERAL_TIMEZONE: LazyLock<chrono_tz::Tz> = LazyLock::new(|| {
     let tz = parse_from_env("GENERAL_TIMEZONE", EMPTY_STRING);
     if tz.is_empty() {
         __eprintln!(
-            "未配置时区，请在环境变量GENERAL_TIMEZONE中设置，格式如'Asia/Shanghai'\n将使用默认时区: Asia/Shanghai"
+            "Timezone not configured, please set it in environment variable GENERAL_TIMEZONE, format like 'Asia/Shanghai'\nUsing default timezone: Asia/Shanghai"
         );
         chrono_tz::Tz::Asia__Shanghai
     } else {
         match chrono_tz::Tz::from_str(&tz) {
             Ok(tz) => tz,
             Err(e) => {
-                eprintln!("无法解析时区 '{tz}': {e}\n将使用默认时区: Asia/Shanghai");
+                eprintln!("Failed to parse timezone '{tz}': {e}\nUsing default timezone: Asia/Shanghai");
                 chrono_tz::Tz::Asia__Shanghai
             }
         }
@@ -85,14 +85,14 @@ pub static GENERAL_GCPP_HOST: LazyLock<GcppHost> = LazyLock::new(|| {
     let gcpp_host = parse_from_env("GENERAL_GCPP_HOST", EMPTY_STRING);
     if gcpp_host.is_empty() {
         __eprintln!(
-            "未配置默认代码补全区域，请在环境变量GENERAL_GCPP_HOST中设置，格式如'Asia'\n将使用默认区域: Asia"
+            "Default code completion region not configured, please set it in environment variable GENERAL_GCPP_HOST, format like 'Asia'\nUsing default region: Asia"
         );
         GcppHost::Asia
     } else {
         match GcppHost::from_str(&gcpp_host) {
             Some(gcpp_host) => gcpp_host,
             None => {
-                eprintln!("无法解析区域 '{gcpp_host}'\n将使用默认区域: Asia");
+                eprintln!("Failed to parse region '{gcpp_host}'\nUsing default region: Asia");
                 GcppHost::Asia
             }
         }

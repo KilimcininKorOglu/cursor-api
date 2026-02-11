@@ -9,12 +9,12 @@ pub const UPSTREAM_FAILURE: http::StatusCode = unsafe { core::intrinsics::transm
 
 #[macro_export]
 macro_rules! def_pub_const {
-    // 单个常量定义
+    // Single constant definition
     // ($name:ident, $value:expr) => {
     //     pub const $name: &'static str = $value;
     // };
 
-    // 批量常量定义
+    // Batch constant definition
     ($($(#[$meta:meta])* $name:ident = $value:expr),+ $(,)?) => {
         $(
             $(#[$meta])*
@@ -25,7 +25,7 @@ macro_rules! def_pub_const {
 
 #[macro_export]
 macro_rules! define_typed_constants {
-    // 递归情况：处理一个类型块，然后继续处理剩余的
+    // Recursive case: process one type block, then continue with remaining
     (
         $vis:vis $ty:ty => {
             $(
@@ -40,13 +40,13 @@ macro_rules! define_typed_constants {
             $vis const $name: $ty = $value;
         )*
 
-        // 递归处理剩余的类型块
+        // Recursively process remaining type blocks
         $crate::define_typed_constants! {
             $($rest)*
         }
     };
 
-    // 基础情况：没有更多内容时停止
+    // Base case: stop when no more content
     () => {};
 }
 
@@ -73,9 +73,9 @@ impl ExeName {
 
 impl core::fmt::Display for ExeName {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        const BOLD_YELLOW: &str = "\x1b[1;33m"; // 粗体 + 黄色
-        const BOLD_BRIGHT_RED: &str = "\x1b[1;91m"; // 粗体 + 亮红色
-        const RESET: &str = "\x1b[0m"; // 重置所有样式
+        const BOLD_YELLOW: &str = "\x1b[1;33m"; // Bold + Yellow
+        const BOLD_BRIGHT_RED: &str = "\x1b[1;91m"; // Bold + Bright Red
+        const RESET: &str = "\x1b[0m"; // Reset all styles
         if unsafe { IS_TERMINAL } {
             f.write_str(if self.0 { BOLD_BRIGHT_RED } else { BOLD_YELLOW })?;
             f.write_str(Self::EXE_NAME)?;
@@ -197,7 +197,7 @@ def_pub_const!(
 def_pub_const!(
     ERR_STREAM_RESPONSE = "Empty stream response",
     ERR_RESPONSE_RECEIVED = "Empty response received",
-    ERR_LOG_TOKEN_NOT_FOUND = "日志对应的token必须存在 - 数据一致性错误",
+    ERR_LOG_TOKEN_NOT_FOUND = "Token corresponding to log must exist - data consistency error",
     // INVALID_STREAM = "invalid_stream"
 );
 
@@ -241,7 +241,7 @@ def_pub_const!(HTTPS_PREFIX = "https://");
 //             return;
 //         }
 
-//         // 检查标签长度限制
+//         // Check tag length limit
 //         const MAX_TAG_LEN: usize = 16;
 //         let tag_len = tag.len();
 //         if tag_len > MAX_TAG_LEN - 3 {
@@ -252,7 +252,7 @@ def_pub_const!(HTTPS_PREFIX = "https://");
 //         let mut buf = [core::mem::MaybeUninit::<u8>::uninit(); MAX_TAG_LEN];
 //         let tag_bytes = tag.as_bytes();
 
-//         // 构建开始标签 <tag>
+//         // Build opening tag <tag>
 //         buf[1].write(b'<');
 //         ::core::ptr::copy_nonoverlapping(
 //             tag_bytes.as_ptr(),
@@ -262,7 +262,7 @@ def_pub_const!(HTTPS_PREFIX = "https://");
 //         let open_len = tag_len + 2;
 //         *buf.get_unchecked_mut(open_len) = core::mem::MaybeUninit::new(b'>');
 
-//         // 分配开始标签
+//         // Allocate opening tag
 //         let open_layout = ::core::alloc::Layout::from_size_align_unchecked(open_len, 1);
 //         let open_ptr = alloc::alloc::alloc(open_layout);
 //         if open_ptr.is_null() {
@@ -273,12 +273,12 @@ def_pub_const!(HTTPS_PREFIX = "https://");
 //             open_ptr, open_len,
 //         )));
 
-//         // 构建结束标签 </tag>
+//         // Build closing tag </tag>
 //         buf[0].write(b'<');
 //         buf[1].write(b'/');
 //         let close_len = open_len + 1;
 
-//         // 分配结束标签
+//         // Allocate closing tag
 //         let close_layout = ::core::alloc::Layout::from_size_align_unchecked(close_len, 1);
 //         let close_ptr = alloc::alloc::alloc(close_layout);
 //         if close_ptr.is_null() {

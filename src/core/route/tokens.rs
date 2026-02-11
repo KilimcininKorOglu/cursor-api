@@ -21,25 +21,25 @@ type HashSet<K> = hashbrown::HashSet<K, ahash::RandomState>;
 
 crate::define_typed_constants! {
     &'static str => {
-        SET_SUCCESS = "已设置",
-        SET_FAILURE_COUNT = "个令牌设置失败",
-        UPDATE_SUCCESS = "已更新",
-        UPDATE_FAILURE_COUNT = "个令牌更新失败",
+        SET_SUCCESS = "Set successfully",
+        SET_FAILURE_COUNT = "tokens failed to set",
+        UPDATE_SUCCESS = "Updated",
+        UPDATE_FAILURE_COUNT = "tokens failed to update",
         ERROR_SAVE_TOKEN_DATA = "Failed to save token data",
-        MESSAGE_SAVE_TOKEN_DATA_FAILED = "无法保存令牌数据",
+        MESSAGE_SAVE_TOKEN_DATA_FAILED = "Failed to save token data",
         ERROR_NO_TOKENS_PROVIDED = "No tokens provided",
-        MESSAGE_NO_TOKENS_PROVIDED = "未提供任何令牌",
+        MESSAGE_NO_TOKENS_PROVIDED = "No tokens provided",
         ERROR_SAVE_TOKEN_PROFILES = "Failed to save token profiles",
         ERROR_SAVE_TOKENS = "Failed to save tokens",
         ERROR_SAVE_TOKEN_STATUSES = "Failed to save token statuses",
         ERROR_SAVE_TOKEN_ALIASES = "Failed to save token aliases",
         ERROR_SAVE_TOKEN_PROXIES = "Failed to save token proxies",
         ERROR_SAVE_TOKEN_TIMEZONES = "Failed to save token timezones",
-        MESSAGE_SAVE_TOKEN_PROFILE_FAILED = "无法保存令牌配置数据",
-        MESSAGE_SAVE_TOKEN_CONFIG_VERSION_FAILED = "无法保存令牌配置版本数据",
-        MESSAGE_SAVE_TOKEN_STATUS_FAILED = "无法保存令牌状态数据",
-        MESSAGE_SAVE_TOKEN_PROXY_FAILED = "无法保存令牌代理数据",
-        MESSAGE_SAVE_TOKEN_TIMEZONE_FAILED = "无法保存令牌时区数据",
+        MESSAGE_SAVE_TOKEN_PROFILE_FAILED = "Failed to save token profile data",
+        MESSAGE_SAVE_TOKEN_CONFIG_VERSION_FAILED = "Failed to save token config version data",
+        MESSAGE_SAVE_TOKEN_STATUS_FAILED = "Failed to save token status data",
+        MESSAGE_SAVE_TOKEN_PROXY_FAILED = "Failed to save token proxy data",
+        MESSAGE_SAVE_TOKEN_TIMEZONE_FAILED = "Failed to save token timezone data",
     }
 }
 
@@ -53,7 +53,7 @@ pub async fn handle_set_tokens(
     State(state): State<Arc<AppState>>,
     Json(tokens): Json<TokensUpdateRequest>,
 ) -> Result<Json<TokensAddResponse>, StatusCode> {
-    // 获取写锁并更新token manager
+    // Get write lock and update token manager
     let mut token_manager = state.token_manager_write().await;
     *token_manager = TokenManager::new(tokens.len());
     for (alias, token_info) in tokens {
@@ -61,7 +61,7 @@ pub async fn handle_set_tokens(
     }
     let tokens_count = token_manager.tokens().len();
 
-    // 保存到文件
+    // Save to file
     token_manager.save().await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     Ok(Json(TokensAddResponse {
@@ -74,10 +74,10 @@ pub async fn handle_add_tokens(
     State(state): State<Arc<AppState>>,
     Json(request): Json<TokensAddRequest>,
 ) -> Result<Json<TokensAddResponse>, (StatusCode, Json<GenericError>)> {
-    // 获取token manager的写锁
+    // Get write lock on token manager
     let mut token_manager = state.token_manager_write().await;
 
-    // 创建现有token的集合
+    // Create set of existing tokens
     let existing_tokens: HashSet<_> = token_manager
         .tokens()
         .iter()
@@ -85,7 +85,7 @@ pub async fn handle_add_tokens(
         .map(|info| info.bundle.primary_token.as_str())
         .collect();
 
-    // 处理新的tokens
+    // Process new tokens
     let mut new_tokens = Vec::with_capacity(request.tokens.len());
     for token_info in request.tokens {
         if !existing_tokens.contains(token_info.token.as_str())

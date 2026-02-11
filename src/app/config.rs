@@ -10,7 +10,7 @@ use axum::{
     http::{HeaderMap, StatusCode, header::AUTHORIZATION},
 };
 
-// 定义处理更新操作的宏
+// Macro for handling update operations
 macro_rules! handle_updates {
     ($request:expr, $($field:ident => $update_fn:expr),* $(,)?) => {
         $(
@@ -21,7 +21,7 @@ macro_rules! handle_updates {
     };
 }
 
-// 定义处理重置操作的宏
+// Macro for handling reset operations
 macro_rules! handle_resets {
     ($request:expr, $($field:ident => $reset_fn:expr),* $(,)?) => {
         $(
@@ -45,7 +45,7 @@ pub async fn handle_config_update(
             Json(GenericError {
                 status: ApiStatus::Error,
                 code: Some(StatusCode::UNAUTHORIZED),
-                error: Some(Cow::Borrowed("未提供认证令牌")),
+                error: Some(Cow::Borrowed("No authentication token provided")),
                 message: None,
             }),
         ))?;
@@ -56,7 +56,7 @@ pub async fn handle_config_update(
             Json(GenericError {
                 status: ApiStatus::Error,
                 code: Some(StatusCode::UNAUTHORIZED),
-                error: Some(Cow::Borrowed("无效的认证令牌")),
+                error: Some(Cow::Borrowed("Invalid authentication token")),
                 message: None,
             }),
         ));
@@ -93,7 +93,7 @@ pub async fn handle_config_update(
             Ok(Json(ConfigResponse {
                 status: ApiStatus::Success,
                 data: None,
-                message: Some(Cow::Borrowed("配置已更新")),
+                message: Some(Cow::Borrowed("Configuration updated")),
             }))
         }
 
@@ -112,7 +112,7 @@ pub async fn handle_config_update(
             Ok(Json(ConfigResponse {
                 status: ApiStatus::Success,
                 data: None,
-                message: Some(Cow::Borrowed("配置已重置")),
+                message: Some(Cow::Borrowed("Configuration reset")),
             }))
         }
 
@@ -121,7 +121,7 @@ pub async fn handle_config_update(
             Json(GenericError {
                 status: ApiStatus::Error,
                 code: Some(StatusCode::BAD_REQUEST),
-                error: Some(Cow::Borrowed("无效的操作类型")),
+                error: Some(Cow::Borrowed("Invalid operation type")),
                 message: None,
             }),
         )),

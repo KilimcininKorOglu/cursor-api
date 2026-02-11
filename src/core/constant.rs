@@ -21,7 +21,7 @@ use std::time::Instant;
 type HashMap<K, V> = hashbrown::HashMap<K, V, ahash::RandomState>;
 type HashSet<K> = hashbrown::HashSet<K, ahash::RandomState>;
 
-// AI 服务商
+// AI service providers
 crate::define_typed_constants!(
     &'static str => {
         CURSOR = "cursor",
@@ -36,12 +36,12 @@ crate::define_typed_constants!(
 
 macro_rules! def_const_models {
     ($($name:ident => $value:expr),+ $(,)?) => {
-        // 定义常量
+        // Define constants
         $(
             const $name: &'static str = $value;
         )+
 
-        // 生成 PHF map
+        // Generate PHF map
         static MODEL_MAP: ::phf::Map<&'static str, &'static str> = ::phf::phf_map! {
             $(
                 $value => $name,
@@ -50,12 +50,12 @@ macro_rules! def_const_models {
     };
 }
 
-// AI 模型
+// AI models
 def_const_models!(
-    // 默认模型
+    // Default model
     DEFAULT => "default",
 
-    // Anthropic 模型
+    // Anthropic models
     CLAUDE_4_5_OPUS_HIGH => "claude-4.5-opus-high",
     CLAUDE_4_5_OPUS_HIGH_THINKING => "claude-4.5-opus-high-thinking",
     CLAUDE_4_5_SONNET => "claude-4.5-sonnet",
@@ -73,11 +73,11 @@ def_const_models!(
     CLAUDE_4_OPUS_LEGACY => "claude-4-opus-legacy",
     CLAUDE_4_OPUS_THINKING_LEGACY => "claude-4-opus-thinking-legacy",
 
-    // Cursor 模型
+    // Cursor models
     COMPOSER_1 => "composer-1",
     CURSOR_SMALL => "cursor-small",
 
-    // Google 模型
+    // Google models
     GEMINI_3_PRO => "gemini-3-pro",
     GEMINI_3_PRO_PREVIEW => "gemini-3-pro-preview",
     GEMINI_2_5_PRO_PREVIEW_05_06 => "gemini-2.5-pro-preview-05-06",
@@ -85,7 +85,7 @@ def_const_models!(
     GEMINI_2_5_FLASH_PREVIEW_05_20 => "gemini-2.5-flash-preview-05-20",
     GEMINI_2_5_FLASH => "gemini-2.5-flash",
 
-    // OpenAI 模型
+    // OpenAI models
     GPT_5_1_CODEX_MAX => "gpt-5.1-codex-max",
     GPT_5_1_CODEX_MAX_HIGH => "gpt-5.1-codex-max-high",
     GPT_5_1_CODEX_MAX_LOW => "gpt-5.1-codex-max-low",
@@ -138,15 +138,15 @@ def_const_models!(
     // Deepseek 模型 (legacy)
     DEEPSEEK_V3 => "deepseek-v3",
 
-    // OpenAI 模型 (legacy)
+    // OpenAI models (legacy)
     GPT_4O_MINI => "gpt-4o-mini",
 );
 
-/// 通过 PHF 快速查找模型 ID
+/// Fast lookup of model ID via PHF
 #[inline]
 fn get_model_const(id: &str) -> Option<&'static str> { MODEL_MAP.get(id).copied() }
 
-/// 获取静态字符串引用，如果不存在则 intern
+/// Get static string reference, intern if not exists
 #[inline]
 pub fn get_static_id(id: &str) -> &'static str {
     match get_model_const(id) {
@@ -162,7 +162,7 @@ pub(super) static MODEL_ID_SOURCE: ManuallyInit<ModelIdSource> = ManuallyInit::n
 macro_rules! create_models {
     ($($owner:ident => [$($model:expr,)+]),* $(,)?) => {
         pub fn create_models() {
-            // ModelIds 只在这个作用域内有效
+            // ModelIds only valid in this scope
             #[derive(Debug, Clone, Copy)]
             struct ModelIds {
                 id: &'static str,
@@ -271,23 +271,23 @@ impl Models {
     #[inline]
     pub fn last_update_elapsed() -> Duration { Self::get().last_update.elapsed() }
 
-    // 克隆所有模型
+    // Clone all models
     // pub fn cloned() -> Vec<Model> {
     //     Self::get().models.as_ref().clone()
     // }
 
-    // 检查模型是否存在
+    // Check if model exists
     // pub fn exists(model_id: &str) -> bool {
     //     Self::get().models.iter().any(|m| m.id == model_id)
     // }
 
-    // 查找模型并返回其 ID
+    // Find model and return its ID
     pub fn find_id(id: &str) -> Option<Model> {
         let guard = Self::get();
         guard.find_ids.get(id).map(|&i| *unsafe { guard.models.get_unchecked(i) })
     }
 
-    // 返回所有模型 ID 的列表
+    // Return list of all model IDs
     // pub fn ids() -> Arc<Vec<&'static str>> { Self::get().cached_ids.clone() }
 
     // 写入方法

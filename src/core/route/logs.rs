@@ -23,39 +23,39 @@ type HashSet<K> = hashbrown::HashSet<K, ahash::RandomState>;
 
 #[derive(serde::Deserialize, Default)]
 pub struct LogsQueryParams {
-    // 分页与排序控制
-    pub limit: Option<usize>,  // 返回记录数量限制
-    pub offset: Option<usize>, // 起始位置偏移量
-    pub reverse: Option<bool>, // 反向排序，默认false（从旧到新）
+    // Pagination and sorting control
+    pub limit: Option<usize>,  // Limit number of records returned
+    pub offset: Option<usize>, // Starting position offset
+    pub reverse: Option<bool>, // Reverse order, default false (old to new)
 
-    // 时间范围过滤
-    pub from_date: Option<DateTime>, // 开始日期时间
-    pub to_date: Option<DateTime>,   // 结束日期时间
+    // Time range filtering
+    pub from_date: Option<DateTime>, // Start datetime
+    pub to_date: Option<DateTime>,   // End datetime
 
-    // 用户标识过滤
-    pub user_id: Option<String>,         // 按用户ID精确匹配
-    pub email: Option<String>,           // 按用户邮箱过滤（部分匹配）
-    pub membership_type: Option<String>, // 按会员类型过滤
+    // User identification filtering
+    pub user_id: Option<String>,         // Exact match by user ID
+    pub email: Option<String>,           // Filter by user email (partial match)
+    pub membership_type: Option<String>, // Filter by membership type
 
-    // 核心业务过滤
-    pub status: Option<String>,              // 按状态过滤
-    pub model: Option<String>,               // 按模型名称过滤（部分匹配）
-    pub include_models: Option<Vec<String>>, // 包含特定模型
-    pub exclude_models: Option<Vec<String>>, // 排除特定模型
+    // Core business filtering
+    pub status: Option<String>,              // Filter by status
+    pub model: Option<String>,               // Filter by model name (partial match)
+    pub include_models: Option<Vec<String>>, // Include specific models
+    pub exclude_models: Option<Vec<String>>, // Exclude specific models
 
-    // 请求特征过滤
-    pub stream: Option<bool>,    // 是否为流式请求
-    pub has_chain: Option<bool>, // 是否包含对话链
+    // Request characteristic filtering
+    pub stream: Option<bool>,    // Whether it's a streaming request
+    pub has_chain: Option<bool>, // Whether it contains conversation chain
 
-    // 错误相关过滤
-    pub has_error: Option<bool>, // 是否包含错误
-    pub error: Option<String>,   // 按错误过滤（部分匹配）
+    // Error-related filtering
+    pub has_error: Option<bool>, // Whether it contains errors
+    pub error: Option<String>,   // Filter by error (partial match)
 
-    // 性能指标过滤
-    pub min_total_time: Option<f64>, // 最小总耗时（秒）
-    pub max_total_time: Option<f64>, // 最大总耗时（秒）
-    pub min_tokens: Option<i32>,     // 最小token数
-    pub max_tokens: Option<i32>,     // 最大token数
+    // Performance metric filtering
+    pub min_total_time: Option<f64>, // Minimum total time (seconds)
+    pub max_total_time: Option<f64>, // Maximum total time (seconds)
+    pub min_tokens: Option<i32>,     // Minimum token count
+    pub max_tokens: Option<i32>,     // Maximum token count
 }
 
 #[derive(::serde::Deserialize)]
@@ -195,7 +195,7 @@ pub async fn handle_get_logs_tokens(
     headers: HeaderMap,
     Json(keys): Json<HashSet<String>>,
 ) -> Result<Json<LogsTokensResponse>, StatusCode> {
-    // 获取认证头
+    // Get auth header
     let auth_token = headers
         .get(AUTHORIZATION)
         .and_then(|h| h.to_str().ok())

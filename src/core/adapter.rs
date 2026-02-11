@@ -15,13 +15,13 @@ pub use utils::ToolId;
 
 crate::define_typed_constants! {
     &'static str => {
-        /// 换行符
+        /// Newline character
         NEWLINE = "\n",
-        /// Web 搜索模式
+        /// Web search mode
         WEB_SEARCH_MODE = "full_search",
-        /// Ask 模式名称
+        /// Ask mode name
         ASK_MODE_NAME = "Ask",
-        /// Agent 模式名称
+        /// Agent mode name
         AGENT_MODE_NAME = "Agent",
     }
 }
@@ -29,7 +29,7 @@ crate::define_typed_constants! {
 #[inline]
 fn parse_web_references(text: &str) -> Vec<WebReference> {
     let mut web_refs = Vec::new();
-    let lines = text.lines().skip(1); // 跳过 "WebReferences:" 行
+    let lines = text.lines().skip(1); // Skip "WebReferences:" line
 
     for line in lines {
         let line = line.trim();
@@ -37,7 +37,7 @@ fn parse_web_references(text: &str) -> Vec<WebReference> {
             break;
         }
 
-        // 跳过序号和空格
+        // Skip sequence number and spaces
         let mut chars = line.chars();
         for c in chars.by_ref() {
             if c == '.' {
@@ -46,7 +46,7 @@ fn parse_web_references(text: &str) -> Vec<WebReference> {
         }
         let remaining = chars.as_str().trim_start();
 
-        // 解析 [title](url) 部分
+        // Parse [title](url) part
         let mut chars = remaining.chars();
         if chars.next() != Some('[') {
             continue;
@@ -86,7 +86,7 @@ fn parse_web_references(text: &str) -> Vec<WebReference> {
     web_refs
 }
 
-// 解析消息中的外部链接
+// Parse external links in messages
 #[inline]
 fn extract_external_links(
     text: &str,
@@ -122,7 +122,7 @@ fn extract_external_links(
     }
 }
 
-// 检测并分离 WebReferences
+// Detect and separate WebReferences
 #[inline]
 fn extract_web_references_info(text: String) -> (String, Vec<WebReference>, bool) {
     if text.starts_with("WebReferences:") {
@@ -168,14 +168,14 @@ impl BaseUuid {
 //             '.' => result.push('_'),
 //             c if c.is_whitespace() => result.push('_'),
 //             c if c.is_ascii_alphanumeric() || c == '_' || c == '-' => result.push(c),
-//             _ => {} // 忽略其他字符
+//             _ => {} // Ignore other characters
 //         }
 //     }
 
 //     result
 // }
 
-// 处理 HTTP 图片 URL
+// Handle HTTP image URL
 async fn process_http_image(
     url: url::Url,
 ) -> Result<(bytes::Bytes, Option<Dimension>), AdapterError> {
@@ -183,11 +183,11 @@ async fn process_http_image(
         get_fetch_image_client().get(url).send().await.map_err(|_| AdapterError::RequestFailed)?;
     let image_data = response.bytes().await.map_err(|_| AdapterError::ResponseReadFailed)?;
 
-    // 检查图片格式
+    // Check image format
     let format = image::guess_format(&image_data);
     match format {
         Ok(image::ImageFormat::Png | image::ImageFormat::Jpeg | image::ImageFormat::WebP) => {
-            // 这些格式都支持
+            // These formats are all supported
         }
         Ok(image::ImageFormat::Gif) => {
             if is_animated_gif(&image_data) {
@@ -198,7 +198,7 @@ async fn process_http_image(
     }
     let format = unsafe { format.unwrap_unchecked() };
 
-    // 获取图片尺寸
+    // Get image dimensions
     let dimensions = image::load_from_memory_with_format(&image_data, format)
         .ok()
         .and_then(|img| img.try_into().ok());
@@ -225,11 +225,11 @@ async fn process_http_to_base64_image(
         get_fetch_image_client().get(url).send().await.map_err(|_| AdapterError::RequestFailed)?;
     let image_data = response.bytes().await.map_err(|_| AdapterError::ResponseReadFailed)?;
 
-    // 检查图片格式
+    // Check image format
     let format = image::guess_format(&image_data);
     match format {
         Ok(image::ImageFormat::Png | image::ImageFormat::Jpeg | image::ImageFormat::WebP) => {
-            // 这些格式都支持
+            // These formats are all supported
         }
         Ok(image::ImageFormat::Gif) => {
             if is_animated_gif(&image_data) {

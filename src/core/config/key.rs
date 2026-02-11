@@ -1,24 +1,24 @@
 use minicbor::{CborLen, Decode, Encode};
 
-/// 动态配置的 API KEY
+/// Dynamic configured API KEY
 #[derive(Clone, PartialEq, Encode, Decode, CborLen)]
 pub struct ConfiguredKey {
-    /// 认证令牌（必需）
+    /// Authentication token (required)
     #[n(0)]
     pub token_info: Option<configured_key::TokenInfo>,
-    /// 密码SHA256哈希值
+    /// Password SHA256 hash value
     #[n(1)]
     pub secret: Option<[u8; 32]>,
-    /// 是否禁用图片处理能力
+    /// Whether to disable image processing capability
     #[n(2)]
     pub disable_vision: Option<bool>,
-    /// 是否启用慢速池
+    /// Whether to enable slow pool
     #[n(3)]
     pub enable_slow_pool: Option<bool>,
-    /// 包含网络引用
+    /// Include web references
     #[n(4)]
     pub include_web_references: Option<bool>,
-    /// 使用量检查模型规则
+    /// Usage check model rules
     #[n(5)]
     pub usage_check_models: Option<configured_key::UsageCheckModel>,
 }
@@ -26,31 +26,31 @@ pub struct ConfiguredKey {
 pub mod configured_key {
     use super::*;
 
-    /// 认证令牌信息
+    /// Authentication token information
     #[derive(Clone, PartialEq, Encode, Decode, CborLen)]
     pub struct TokenInfo {
-        /// 令牌（必需）
+        /// Token (required)
         #[n(0)]
         pub token: token_info::Token,
-        /// 校验和(\[u8; 64\])
+        /// Checksum (\[u8; 64\])
         #[n(1)]
         pub checksum: [u8; 64],
-        /// 客户端标识(\[u8; 32\])
+        /// Client identifier (\[u8; 32\])
         #[n(2)]
         pub client_key: [u8; 32],
-        /// 配置版本
+        /// Configuration version
         #[n(3)]
         pub config_version: Option<[u8; 16]>,
-        /// 会话ID
+        /// Session ID
         #[n(4)]
         pub session_id: [u8; 16],
-        /// 代理名称
+        /// Proxy name
         #[n(5)]
         pub proxy_name: Option<String>,
-        /// 时区
+        /// Timezone
         #[n(6)]
         pub timezone: Option<String>,
-        /// 代码补全
+        /// Code completion
         #[n(7)]
         pub gcpp_host: Option<u8>,
     }
@@ -62,34 +62,34 @@ pub mod configured_key {
         pub struct Token {
             #[n(0)]
             pub provider: String,
-            /// 用户ID(\[u8; 16\])
+            /// User ID (\[u8; 16\])
             #[n(1)]
             pub sub_id: [u8; 16],
-            /// 随机字符串(\[u8; 8\])
+            /// Random string (\[u8; 8\])
             #[n(2)]
             pub randomness: [u8; 8],
-            /// 生成时间（Unix 时间戳）
+            /// Generation time (Unix timestamp)
             #[n(3)]
             pub start: i64,
-            /// 过期时间（Unix 时间戳）
+            /// Expiration time (Unix timestamp)
             #[n(4)]
             pub end: i64,
-            /// 签名(\[u8; 32\])
+            /// Signature (\[u8; 32\])
             #[n(5)]
             pub signature: [u8; 32],
-            /// 是否为会话令牌
+            /// Whether it's a session token
             #[n(6)]
             pub is_session: bool,
         }
     }
 
-    /// 使用量检查模型规则
+    /// Usage check model rules
     #[derive(Clone, PartialEq, Encode, Decode, CborLen)]
     pub struct UsageCheckModel {
-        /// 检查类型
+        /// Check type
         #[n(0)]
         pub r#type: usage_check_model::Type,
-        /// 模型 ID 列表，当 type 为 TYPE_CUSTOM 时生效
+        /// Model ID list, effective when type is TYPE_CUSTOM
         #[n(1)]
         pub model_ids: Vec<String>,
     }
@@ -97,21 +97,21 @@ pub mod configured_key {
     pub mod usage_check_model {
         use super::*;
 
-        /// 检查类型
+        /// Check type
         #[derive(::serde::Deserialize, Clone, Copy, PartialEq, Encode, Decode, CborLen)]
         #[serde(rename_all = "lowercase")]
         #[cbor(index_only)]
         pub enum Type {
-            /// 未指定
+            /// Not specified
             #[n(0)]
             Default = 0,
-            /// 禁用
+            /// Disabled
             #[n(1)]
             Disabled = 1,
-            /// 全部
+            /// All
             #[n(2)]
             All = 2,
-            /// 自定义列表
+            /// Custom list
             #[n(3)]
             Custom = 3,
         }
