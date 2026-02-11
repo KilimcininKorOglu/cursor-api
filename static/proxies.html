@@ -5,12 +5,12 @@
   <meta charset="UTF-8" />
   <link rel="icon" type="image/x-icon" href="data:image/x-icon;," />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>代理信息Management</title>
+  <title>Proxy Management</title>
   <!-- Include shared styles -->
   <link rel="stylesheet" href="/static/shared-styles.css" />
   <script src="/static/shared.js"></script>
   <style>
-    /* 代理列表布局样式 */
+    /* Proxy list layout styles */
     .proxy-system {
       background: var(--card-background);
       border-radius: var(--border-radius);
@@ -84,7 +84,7 @@
       background: var(--card-background);
     }
 
-    /* 表格滚动时的阴影效果 */
+    /* Table scroll shadow effect */
     .proxy-list.scrolled .proxy-table thead {
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
@@ -156,7 +156,7 @@
       color: var(--primary-color);
     }
 
-    /* 代理Type图标 */
+    /* Proxy type icon */
     .proxy-icon {
       display: inline-flex;
       align-items: center;
@@ -167,7 +167,7 @@
       font-size: 16px;
     }
 
-    /* 空Status样式 */
+    /* Empty state styles */
     .empty-state {
       display: flex;
       flex-direction: column;
@@ -193,7 +193,7 @@
       margin: 0 0 24px 0;
     }
 
-    /* Status栏 */
+    /* Status bar */
     .status-bar {
       padding: 8px 16px;
       background: var(--card-background);
@@ -210,7 +210,7 @@
       gap: 16px;
     }
 
-    /* 右键菜单 */
+    /* Context menu */
     .context-menu {
       position: fixed;
       background: var(--card-background);
@@ -275,7 +275,7 @@
       opacity: 0.7;
     }
 
-    /* Filter面板 */
+    /* Filter panel */
     .filter-panel {
       padding: 16px;
       background: var(--card-background);
@@ -295,7 +295,7 @@
       min-width: 250px;
     }
 
-    /* 多选下拉框样式 */
+    /* Multi-select dropdown styles */
     .multiselect {
       position: relative;
       width: 100%;
@@ -413,7 +413,7 @@
       color: var(--text-secondary);
     }
 
-    /* 对话框样式 */
+    /* Dialog styles */
     .modal-backdrop {
       position: fixed;
       top: 0;
@@ -507,7 +507,7 @@
       gap: 12px;
     }
 
-    /* 加载骨架屏 */
+    /* Loading skeleton */
     .skeleton {
       animation: skeleton-loading 1s linear infinite alternate;
     }
@@ -527,7 +527,7 @@
       margin-bottom: 1px;
     }
 
-    /* Response式设计 */
+    /* Responsive design */
     @media (max-width: 768px) {
       .filter-row {
         flex-direction: column;
@@ -546,7 +546,7 @@
         padding: 8px 12px;
       }
 
-      /* 移动端表格优化 */
+      /* Mobile table optimization */
       .proxy-table thead th:nth-child(3) {
         display: none;
       }
@@ -567,7 +567,7 @@
       }
     }
 
-    /* 高对比度模式支持 */
+    /* High contrast mode support */
     @media (prefers-contrast: high) {
       .proxy-table tbody tr.selected td:first-child::before {
         width: 5px;
@@ -579,7 +579,7 @@
       }
     }
 
-    /* 减少动画模式 */
+    /* Reduced motion mode */
     @media (prefers-reduced-motion: reduce) {
       * {
         animation-duration: 0.01ms !important;
@@ -591,7 +591,7 @@
 </head>
 
 <body>
-  <h1>代理信息Management</h1>
+  <h1>Proxy Management</h1>
 
   <div class="container">
     <div class="form-group">
@@ -600,15 +600,15 @@
     </div>
   </div>
 
-  <!-- Filter面板 -->
+  <!-- Filter panel -->
   <div class="filter-panel">
     <div class="filter-row">
       <div class="filter-group">
-        <label for="proxyTypeFilter">代理Type:</label>
+        <label for="proxyTypeFilter">Proxy Type:</label>
         <div class="multiselect" id="proxyTypeFilter">
           <div class="multiselect-dropdown" role="button" tabindex="0" aria-haspopup="listbox" aria-expanded="false">
             <div class="selected-options" id="selectedProxyTypes">
-              <span class="selected-options-placeholder">请Select代理Type...</span>
+              <span class="selected-options-placeholder">Select proxy type...</span>
             </div>
           </div>
           <div class="multiselect-options" role="listbox" aria-multiselectable="true">
@@ -618,7 +618,7 @@
             </div>
             <div class="multiselect-option" role="option" data-value="sys">
               <input type="checkbox" id="type-sys" value="sys" checked />
-              <label for="type-sys">System代理</label>
+              <label for="type-sys">System Proxy</label>
             </div>
             <div class="multiselect-option" role="option" data-value="http">
               <input type="checkbox" id="type-http" value="http" checked />
@@ -644,33 +644,33 @@
         </div>
       </div>
       <div class="filter-group">
-        <label class="visually-hidden">Actions按钮</label>
+        <label class="visually-hidden">Action buttons</label>
         <div class="button-group">
-          <button id="refreshBtn" onclick="getProxyInfo()" class="primary" title="Refresh代理列表 (F5)">
+          <button id="refreshBtn" onclick="getProxyInfo()" class="primary" title="Refresh proxy list (F5)">
             <span>Refresh List</span>
             <span class="context-menu-shortcut">F5</span>
           </button>
-          <button id="addProxyBtn" onclick="showAddProxyModal()" class="secondary" title="Add新代理">
-            Add代理
+          <button id="addProxyBtn" onclick="showAddProxyModal()" class="secondary" title="Add new proxy">
+            Add Proxy
           </button>
-          <button id="exportBtn" onclick="exportProxies()" class="secondary" title="Export代理Configuration">
-            ExportConfiguration
+          <button id="exportBtn" onclick="exportProxies()" class="secondary" title="Export proxy configuration">
+            Export Config
           </button>
-          <button id="importBtn" onclick="showImportModal()" class="secondary" title="Import代理Configuration">
-            ImportConfiguration
+          <button id="importBtn" onclick="showImportModal()" class="secondary" title="Import proxy configuration">
+            Import Config
           </button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 代理列表区域 -->
+  <!-- Proxy list area -->
   <div class="proxy-system">
     <div class="toolbar">
       <div class="search-box">
         <span class="search-icon">🔍</span>
-        <input type="text" id="searchInput" placeholder="Search代理Name..." aria-label="Search代理" />
-        <button class="clear-search" id="clearSearch" onclick="clearSearchInput()" aria-label="清除Search">
+        <input type="text" id="searchInput" placeholder="Search proxy name..." aria-label="Search proxy" />
+        <button class="clear-search" id="clearSearch" onclick="clearSearchInput()" aria-label="Clear search">
           ✕
         </button>
       </div>
@@ -680,21 +680,21 @@
       <table class="proxy-table" role="table">
         <thead>
           <tr role="row">
-            <th role="columnheader" style="width: 30%">代理Name</th>
-            <th role="columnheader" style="width: 25%">代理Type</th>
-            <th role="columnheader" style="width: 45%">代理Address</th>
+            <th role="columnheader" style="width: 30%">Proxy Name</th>
+            <th role="columnheader" style="width: 25%">Proxy Type</th>
+            <th role="columnheader" style="width: 45%">Proxy Address</th>
           </tr>
         </thead>
         <tbody id="proxyListBody" role="rowgroup">
-          <!-- 动态生成的代理列表 -->
+          <!-- Dynamically generated proxy list -->
         </tbody>
       </table>
       <div id="emptyState" class="empty-state" style="display: none">
         <div class="empty-state-icon">🌐</div>
         <h3>No Proxy Found</h3>
-        <p>请Add代理或更改Filterrecords件</p>
+        <p>Please add proxy or change filter conditions</p>
         <button onclick="showAddProxyModal()" class="primary">
-          Add代理
+          Add Proxy
         </button>
       </div>
       <div id="loadingState" class="skeleton" style="display: none">
@@ -706,20 +706,20 @@
 
     <div class="status-bar">
       <div class="status-info">
-        <span id="selectionStatus">已Select: 0 </span>
-        <span id="totalCount">Total 0 代理</span>
+        <span id="selectionStatus">Selected: 0</span>
+        <span id="totalCount">Total 0 proxies</span>
       </div>
     </div>
   </div>
 
-  <!-- 右键菜单 -->
+  <!-- Context menu -->
   <div id="contextMenu" class="context-menu" role="menu">
     <div class="context-menu-item" onclick="setAsGeneral()" role="menuitem" tabindex="0">
       <span>Set as General Proxy</span>
       <span class="context-menu-shortcut">Ctrl+G</span>
     </div>
     <div class="context-menu-item" onclick="copyProxyUrl()" role="menuitem" tabindex="0">
-      <span>Copy代理Address</span>
+      <span>Copy Proxy Address</span>
       <span class="context-menu-shortcut">Ctrl+C</span>
     </div>
     <div class="context-menu-divider" role="separator"></div>
@@ -729,30 +729,30 @@
     </div>
   </div>
 
-  <!-- Add代理对话框 -->
+  <!-- Add proxy dialog -->
   <div class="modal-backdrop" id="addProxyModal-backdrop" onclick="closeModal('addProxyModal')"></div>
   <div class="modal" id="addProxyModal" role="dialog" aria-labelledby="addProxyTitle" aria-modal="true">
     <div class="modal-header">
-      <h3 id="addProxyTitle">Add代理</h3>
-      <button class="modal-close" onclick="closeModal('addProxyModal')" aria-label="Close对话框">
+      <h3 id="addProxyTitle">Add Proxy</h3>
+      <button class="modal-close" onclick="closeModal('addProxyModal')" aria-label="Close dialog">
         ×
       </button>
     </div>
     <div class="modal-body">
       <div class="form-group">
-        <label for="proxyName">代理Name:</label>
-        <input type="text" id="proxyName" placeholder="输入代理Name" required />
+        <label for="proxyName">Proxy Name:</label>
+        <input type="text" id="proxyName" placeholder="Enter proxy name" required />
       </div>
       <div class="form-group">
-        <label for="proxyType">代理Type:</label>
+        <label for="proxyType">Proxy Type:</label>
         <select id="proxyType" onchange="toggleProxyUrl()">
           <option value="non">No Proxy</option>
-          <option value="sys">System代理</option>
-          <option value="custom" selected>Custom代理</option>
+          <option value="sys">System Proxy</option>
+          <option value="custom" selected>Custom Proxy</option>
         </select>
       </div>
       <div class="form-group" id="proxyUrlGroup">
-        <label for="proxyUrl">代理Address:</label>
+        <label for="proxyUrl">Proxy Address:</label>
         <input type="text" id="proxyUrl" placeholder="e.g.: http://localhost:7890" />
         <div class="help-text">
           Supported formats: http://localhost:7890,
@@ -768,17 +768,17 @@
     </div>
   </div>
 
-  <!-- ConfirmDelete对话框 -->
+  <!-- Confirm delete dialog -->
   <div class="modal-backdrop" id="confirmModal-backdrop" onclick="closeModal('confirmModal')"></div>
   <div class="modal" id="confirmModal" role="dialog" aria-labelledby="confirmTitle" aria-modal="true">
     <div class="modal-header">
-      <h3 id="confirmTitle">ConfirmDelete</h3>
-      <button class="modal-close" onclick="closeModal('confirmModal')" aria-label="Close对话框">
+      <h3 id="confirmTitle">Confirm Delete</h3>
+      <button class="modal-close" onclick="closeModal('confirmModal')" aria-label="Close dialog">
         ×
       </button>
     </div>
     <div class="modal-body">
-      <p id="confirmMessage">OK要Delete选中的代理吗？</p>
+      <p id="confirmMessage">Are you sure you want to delete the selected proxy?</p>
     </div>
     <div class="modal-footer">
       <button onclick="closeModal('confirmModal')" class="secondary">
@@ -788,18 +788,18 @@
     </div>
   </div>
 
-  <!-- Import对话框 -->
+  <!-- Import dialog -->
   <div class="modal-backdrop" id="importModal-backdrop" onclick="closeModal('importModal')"></div>
   <div class="modal" id="importModal" role="dialog" aria-labelledby="importTitle" aria-modal="true">
     <div class="modal-header">
-      <h3 id="importTitle">Import代理Configuration</h3>
-      <button class="modal-close" onclick="closeModal('importModal')" aria-label="Close对话框">
+      <h3 id="importTitle">Import Proxy Configuration</h3>
+      <button class="modal-close" onclick="closeModal('importModal')" aria-label="Close dialog">
         ×
       </button>
     </div>
     <div class="modal-body">
       <div class="form-group">
-        <label for="importFile">SelectJSON文件:</label>
+        <label for="importFile">Select JSON file:</label>
         <input type="file" id="importFile" accept=".json" onchange="previewImportFile()" />
       </div>
       <div id="importPreview" style="display: none; margin-top: 16px">
@@ -823,42 +823,42 @@
     </div>
   </div>
 
-  <!-- 全局通知区域 -->
+  <!-- Global notification area -->
   <div id="toast-container" class="toast-container"></div>
 
   <script>
-    // 全局变量
+    // Global variables
     let allProxies = {};
     let generalProxy = "";
     let selectedProxies = new Set();
     let proxiesToDelete = [];
     let searchDebounceTimer = null;
 
-    // 初始化TokenHandling
+    // Initialize token handling
     initializeTokenHandling("authToken");
 
-    // 初始化
+    // Initialize
     document.addEventListener("DOMContentLoaded", () => {
-      // 获取代理信息
+      // Get proxy info
       getProxyInfo();
 
-      // 监听Search输入（防抖）
+      // Listen for search input (debounced)
       const searchInput = document.getElementById("searchInput");
       searchInput.addEventListener("input", (e) => {
         clearTimeout(searchDebounceTimer);
         const value = e.target.value;
 
-        // Show/Hide清除按钮
+        // Show/Hide clear button
         const clearBtn = document.getElementById("clearSearch");
         clearBtn.classList.toggle("show", value.length > 0);
 
-        // 防抖Search
+        // Debounced search
         searchDebounceTimer = setTimeout(() => {
           filterProxies();
         }, 300);
       });
 
-      // 监听代理列表滚动
+      // Listen for proxy list scroll
       const proxyListContainer =
         document.getElementById("proxyListContainer");
       proxyListContainer.addEventListener("scroll", () => {
@@ -866,24 +866,24 @@
         proxyListContainer.classList.toggle("scrolled", scrolled);
       });
 
-      // 初始化多选下拉框
+      // Initialize multi-select dropdown
       initMultiSelect();
 
-      // Settings键盘快捷键
+      // Setup keyboard shortcuts
       setupKeyboardShortcuts();
 
-      // Settings上下文菜单
+      // Setup context menu
       setupContextMenu();
 
       updateStatusBar();
     });
 
-    // 初始化多选下拉框
+    // Initialize multi-select dropdown
     function initMultiSelect() {
       const dropdown = document.querySelector(".multiselect-dropdown");
       const options = document.querySelector(".multiselect-options");
 
-      // 点击下拉框Show/Hide选items
+      // Click dropdown to show/hide options
       dropdown.addEventListener("click", function (e) {
         e.stopPropagation();
         const isOpen = dropdown.classList.contains("active");
@@ -895,7 +895,7 @@
         }
       });
 
-      // 键盘导航支持
+      // Keyboard navigation support
       dropdown.addEventListener("keydown", function (e) {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
@@ -903,14 +903,14 @@
         }
       });
 
-      // 点击外部Close下拉框
+      // Click outside to close dropdown
       document.addEventListener("click", function (e) {
         if (!e.target.closest(".multiselect")) {
           closeMultiSelect();
         }
       });
 
-      // 监听选items点击
+      // Listen for option clicks
       const optionDivs = document.querySelectorAll(".multiselect-option");
       optionDivs.forEach((div) => {
         div.addEventListener("click", function (e) {
@@ -920,7 +920,7 @@
           checkbox.dispatchEvent(new Event("change"));
         });
 
-        // 监听复选框变化
+        // Listen for checkbox changes
         const checkbox = div.querySelector('input[type="checkbox"]');
         checkbox.addEventListener("change", function () {
           updateSelectedOptions();
@@ -928,11 +928,11 @@
         });
       });
 
-      // 初始化已选items
+      // Initialize selected items
       updateSelectedOptions();
     }
 
-    // 打开多选下拉框
+    // Open multi-select dropdown
     function openMultiSelect() {
       const dropdown = document.querySelector(".multiselect-dropdown");
       const options = document.querySelector(".multiselect-options");
@@ -942,7 +942,7 @@
       options.classList.add("show");
     }
 
-    // Close多选下拉框
+    // Close multi-select dropdown
     function closeMultiSelect() {
       const dropdown = document.querySelector(".multiselect-dropdown");
       const options = document.querySelector(".multiselect-options");
@@ -952,7 +952,7 @@
       options.classList.remove("show");
     }
 
-    // Update已选选itemsShow
+    // Update selected options display
     function updateSelectedOptions() {
       const selectedContainer = document.getElementById("selectedProxyTypes");
       const checkboxes = document.querySelectorAll(
@@ -961,7 +961,7 @@
 
       if (checkboxes.length === 0) {
         selectedContainer.innerHTML =
-          '<span class="selected-options-placeholder">请Select代理Type...</span>';
+          '<span class="selected-options-placeholder">Select proxy type...</span>';
         return;
       }
 
@@ -974,7 +974,7 @@
       selectedContainer.innerHTML = html;
     }
 
-    // 清除Search输入
+    // Clear search input
     function clearSearchInput() {
       const searchInput = document.getElementById("searchInput");
       const clearBtn = document.getElementById("clearSearch");
@@ -985,16 +985,16 @@
       searchInput.focus();
     }
 
-    // 检测YesMac还Yes其他System
+    // Detect if Mac or other system
     function isModifierKey(e) {
       const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
       return isMac ? e.metaKey : e.ctrlKey;
     }
 
-    // Settings键盘快捷键
+    // Setup keyboard shortcuts
     function setupKeyboardShortcuts() {
       document.addEventListener("keydown", function (e) {
-        // 忽略输入框中的快捷键
+        // Ignore shortcuts in input fields
         if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") {
           return;
         }
@@ -1035,12 +1035,12 @@
       });
     }
 
-    // Settings上下文菜单
+    // Setup context menu
     function setupContextMenu() {
       const proxyList = document.querySelector(".proxy-list");
       const contextMenu = document.getElementById("contextMenu");
 
-      // 右键点击Show菜单
+      // Right click to show menu
       proxyList.addEventListener("contextmenu", function (e) {
         const row = e.target.closest("tr");
 
@@ -1060,21 +1060,21 @@
         showContextMenu(e.pageX, e.pageY);
       });
 
-      // 点击其他地方Close菜单
+      // Click elsewhere to close menu
       document.addEventListener("click", function () {
         closeContextMenu();
       });
 
-      // 阻止右键菜单内部点击导致菜单Close
+      // Prevent context menu internal click from closing menu
       contextMenu.addEventListener("click", function (e) {
         e.stopPropagation();
       });
 
-      // 键盘导航支持
+      // Keyboard navigation support
       setupContextMenuKeyboardNav();
     }
 
-    // Settings右键菜单键盘导航
+    // Setup context menu keyboard navigation
     function setupContextMenuKeyboardNav() {
       const contextMenu = document.getElementById("contextMenu");
       const items = contextMenu.querySelectorAll(
@@ -1108,19 +1108,19 @@
       });
     }
 
-    // Show右键菜单
+    // Show context menu
     function showContextMenu(x, y) {
       const menu = document.getElementById("contextMenu");
 
-      // 先Settings在鼠标位置，然后调整避免超出边界
+      // First set at mouse position, then adjust to avoid overflow
       menu.style.left = x + "px";
       menu.style.top = y + "px";
       menu.style.display = "block";
 
-      // 调整位置以避免超出边界
+      // Adjust position to avoid overflow
       positionContextMenu(menu, x, y);
 
-      // 聚焦Page一Availableitems
+      // Focus first available item
       const firstItem = menu.querySelector(
         ".context-menu-item:not(.disabled)",
       );
@@ -1129,26 +1129,26 @@
       }
     }
 
-    // Close右键菜单
+    // Close context menu
     function closeContextMenu() {
       const contextMenu = document.getElementById("contextMenu");
       contextMenu.style.display = "none";
     }
 
-    // Update右键菜单itemsStatus
+    // Update context menu item status
     function updateContextMenuItems() {
       const selectedCount = selectedProxies.size;
       const items = document.querySelectorAll(".context-menu-item");
 
       items.forEach((item) => {
-        // 根据SelectStatusEnable/Disable菜单items
+        // Enable/Disable menu items based on selection status
         if (item.onclick.toString().includes("setAsGeneral")) {
           item.classList.toggle("disabled", selectedCount !== 1);
         }
       });
     }
 
-    // 计算菜单位置
+    // Calculate menu position
     function positionContextMenu(menu, x, y) {
       menu.style.visibility = "hidden";
       menu.style.display = "block";
@@ -1174,10 +1174,10 @@
       menu.style.visibility = "visible";
     }
 
-    // 获取代理信息
+    // Get proxy info
     async function getProxyInfo() {
       showLoadingState();
-      showToast("Loading代理列表...", "info");
+      showToast("Loading proxy list...", "info");
 
       const data = await makeAuthenticatedRequest("/proxies/get");
 
@@ -1187,16 +1187,16 @@
         renderProxies();
         updateStatusBar();
         showToast(
-          `代理列表已Update：Total ${data.proxies_count || 0} `,
+          `Proxy list updated: Total ${data.proxies_count || 0}`,
           "success",
         );
       } else {
-        showToast("获取代理列表Failed", "error");
+        showToast("Failed to get proxy list", "error");
         hideLoadingState();
       }
     }
 
-    // Show加载Status
+    // Show loading state
     function showLoadingState() {
       const loadingState = document.getElementById("loadingState");
       const emptyState = document.getElementById("emptyState");
@@ -1207,13 +1207,13 @@
       proxyListBody.innerHTML = "";
     }
 
-    // Hide加载Status
+    // Hide loading state
     function hideLoadingState() {
       const loadingState = document.getElementById("loadingState");
       loadingState.style.display = "none";
     }
 
-    // 渲染代理列表
+    // Render proxy list
     function renderProxies() {
       const proxyListBody = document.getElementById("proxyListBody");
       const emptyState = document.getElementById("emptyState");
@@ -1248,11 +1248,11 @@
         })
         .join("");
 
-      // Add点击事件处理
+      // Add click event handling
       setupProxyRowEvents();
     }
 
-    // Settings代理行事件
+    // Setup proxy row events
     function setupProxyRowEvents() {
       const rows = document.querySelectorAll("#proxyListBody tr");
       rows.forEach((row) => {
@@ -1260,17 +1260,17 @@
           const name = this.dataset.name;
 
           if (e.shiftKey && selectedProxies.size > 0) {
-            // Shift+点击进行RangeSelect
+            // Shift+click for range selection
             selectRange(name);
           } else if (isModifierKey(e)) {
-            // Ctrl/Cmd+点击进行多选
+            // Ctrl/Cmd+click for multi-selection
             if (selectedProxies.has(name)) {
               deselectProxy(name);
             } else {
               selectProxy(name, true);
             }
           } else {
-            // 普通点击
+            // Normal click
             clearSelection();
             selectProxy(name);
           }
@@ -1280,7 +1280,7 @@
       });
     }
 
-    // SelectRange内的代理
+    // Select proxies in range
     function selectRange(endName) {
       const rows = Array.from(document.querySelectorAll("#proxyListBody tr"));
       const lastSelected = Array.from(selectedProxies).pop();
@@ -1303,7 +1303,7 @@
       }
     }
 
-    // Select所有代理
+    // Select all proxies
     function selectAllProxies() {
       const rows = document.querySelectorAll("#proxyListBody tr");
       rows.forEach((row) => {
@@ -1313,14 +1313,14 @@
       updateSelectionStatus();
     }
 
-    // HTML转义
+    // HTML escape
     function escapeHtml(text) {
       const div = document.createElement("div");
       div.textContent = text;
       return div.innerHTML;
     }
 
-    // 获取代理图标
+    // Get proxy icon
     function getProxyIcon(type) {
       const icons = {
         non: "🚫",
@@ -1335,7 +1335,7 @@
       return icons[type] || icons.unknown;
     }
 
-    // 获取代理Type
+    // Get proxy type
     function getProxyType(value) {
       if (value === "non") return "non";
       if (value === "sys") return "sys";
@@ -1348,22 +1348,22 @@
       }
     }
 
-    // 格式化代理Type
+    // Format proxy type
     function formatProxyType(type) {
       const types = {
         non: "No Proxy",
-        sys: "System代理",
+        sys: "System Proxy",
         http: "HTTP",
         https: "HTTPS",
         socks4: "SOCKS4",
         socks5: "SOCKS5",
         socks5h: "SOCKS5H",
-        unknown: "未知",
+        unknown: "Unknown",
       };
       return types[type] || type;
     }
 
-    // 验证代理Address格式
+    // Validate proxy address format
     function validateProxyUrl(url, type) {
       if (type === "non" || type === "sys") return true;
 
@@ -1384,18 +1384,18 @@
         }
 
         if (!proxyUrl.hostname || !proxyUrl.port) {
-          showToast("代理Address必须包含主机名和端口号", "warning");
+          showToast("Proxy address must include hostname and port", "warning");
           return false;
         }
 
         return true;
       } catch (e) {
-        showToast("代理Address格式None效", "warning");
+        showToast("Invalid proxy address format", "warning");
         return false;
       }
     }
 
-    // Filter代理
+    // Filter proxies
     function filterProxies() {
       const searchTerm = document
         .getElementById("searchInput")
@@ -1419,7 +1419,7 @@
       updateStatusBar(filteredProxies.length);
     }
 
-    // 渲染Filter后的代理
+    // Render filtered proxies
     function renderFilteredProxies(proxies) {
       const temp = allProxies;
       allProxies = proxies;
@@ -1427,7 +1427,7 @@
       allProxies = temp;
     }
 
-    // UpdateStatus栏
+    // Update status bar
     function updateStatusBar(filteredCount) {
       const total = Object.keys(allProxies).length;
       const selected = selectedProxies.size;
@@ -1435,15 +1435,15 @@
       const totalCount = document.getElementById("totalCount");
 
       if (selectionStatus) {
-        selectionStatus.textContent = `已Select: ${selected} `;
+        selectionStatus.textContent = `Selected: ${selected}`;
       }
       if (totalCount) {
         const count = filteredCount !== undefined ? filteredCount : total;
-        totalCount.textContent = `Total ${count} 代理`;
+        totalCount.textContent = `Total ${count} proxies`;
       }
     }
 
-    // Select代理
+    // Select proxy
     function selectProxy(name, append = false) {
       if (!name) return;
 
@@ -1460,7 +1460,7 @@
       updateSelectionStatus();
     }
 
-    // CancelSelect代理
+    // Deselect proxy
     function deselectProxy(name) {
       if (!name) return;
 
@@ -1473,7 +1473,7 @@
       updateSelectionStatus();
     }
 
-    // 清除所有Select
+    // Clear all selection
     function clearSelection() {
       selectedProxies.clear();
       const rows = document.querySelectorAll("#proxyListBody tr.selected");
@@ -1484,12 +1484,12 @@
       updateSelectionStatus();
     }
 
-    // UpdateSelectStatus
+    // Update selection status
     function updateSelectionStatus() {
       updateStatusBar();
     }
 
-    // ShowAdd代理对话框
+    // Show add proxy dialog
     function showAddProxyModal() {
       document.getElementById("proxyName").value = "";
       document.getElementById("proxyType").value = "custom";
@@ -1497,34 +1497,34 @@
       toggleProxyUrl();
       showModal("addProxyModal");
 
-      // 聚焦Page一输入框
+      // Focus first input
       setTimeout(() => {
         document.getElementById("proxyName").focus();
       }, 200);
     }
 
-    // 切换代理Address输入框Show
+    // Toggle proxy address input display
     function toggleProxyUrl() {
       const type = document.getElementById("proxyType").value;
       const urlGroup = document.getElementById("proxyUrlGroup");
       urlGroup.style.display = type === "custom" ? "block" : "none";
     }
 
-    // ConfirmAdd代理
+    // Confirm add proxy
     async function confirmAddProxy() {
       const name = document.getElementById("proxyName").value.trim();
       const type = document.getElementById("proxyType").value;
       const url = document.getElementById("proxyUrl").value.trim();
 
       if (!name) {
-        showToast("请输入代理Name", "warning");
+        showToast("Please enter proxy name", "warning");
         document.getElementById("proxyName").focus();
         return;
       }
 
       if (type === "custom") {
         if (!url) {
-          showToast("请输入代理Address", "warning");
+          showToast("Please enter proxy address", "warning");
           document.getElementById("proxyUrl").focus();
           return;
         }
@@ -1535,7 +1535,7 @@
       }
 
       closeModal("addProxyModal");
-      showToast("正在Add代理...", "info");
+      showToast("Adding proxy...", "info");
 
       const proxy = {
         [name]: type === "non" || type === "sys" ? type : url,
@@ -1548,36 +1548,36 @@
       });
 
       if (data) {
-        showToast(data.message || "AddSuccess", "success");
+        showToast(data.message || "Add successful", "success");
         getProxyInfo();
       } else {
-        showToast("Add代理Failed", "error");
+        showToast("Add proxy failed", "error");
       }
     }
 
-    // Delete选中的代理
+    // Delete selected proxies
     function deleteSelectedProxies() {
       if (selectedProxies.size === 0) {
-        showToast("请先Select要Delete的代理", "info");
+        showToast("Please select proxies to delete first", "info");
         return;
       }
 
       proxiesToDelete = [...selectedProxies];
       document.getElementById("confirmMessage").textContent =
         proxiesToDelete.length > 1
-          ? `OK要Delete选中的 ${proxiesToDelete.length} 代理吗？`
-          : "OK要Delete选中的代理吗？";
+          ? `Are you sure you want to delete ${proxiesToDelete.length} selected proxies?`
+          : "Are you sure you want to delete the selected proxy?";
 
       closeContextMenu();
       showModal("confirmModal");
     }
 
-    // ConfirmDelete代理
+    // Confirm delete proxies
     async function confirmDeleteProxies() {
       if (proxiesToDelete.length === 0) return;
 
       closeModal("confirmModal");
-      showToast("正在Delete代理...", "info");
+      showToast("Deleting proxies...", "info");
 
       const data = await makeAuthenticatedRequest("/proxies/del", {
         body: JSON.stringify({
@@ -1590,30 +1590,30 @@
         const failedCount = data.failed_names?.length || 0;
         const successCount = proxiesToDelete.length - failedCount;
         const message = failedCount
-          ? `DeleteSuccess: ${successCount} ，Failed: ${failedCount} `
-          : `SuccessDelete ${successCount} 代理`;
+          ? `Delete successful: ${successCount}, Failed: ${failedCount}`
+          : `Successfully deleted ${successCount} proxies`;
 
         showToast(message, "success");
         clearSelection();
         getProxyInfo();
       } else {
-        showToast("Delete代理Failed", "error");
+        showToast("Delete proxy failed", "error");
       }
 
       proxiesToDelete = [];
     }
 
-    // Settings为通用代理
+    // Set as general proxy
     async function setAsGeneral() {
       if (selectedProxies.size !== 1) {
-        showToast("请Select一代理Set as General Proxy", "info");
+        showToast("Please select one proxy to set as general", "info");
         return;
       }
 
       closeContextMenu();
 
       const name = [...selectedProxies][0];
-      showToast("正在Settings通用代理...", "info");
+      showToast("Setting general proxy...", "info");
 
       const data = await makeAuthenticatedRequest("/proxies/set-general", {
         body: JSON.stringify({
@@ -1622,17 +1622,17 @@
       });
 
       if (data) {
-        showToast("通用代理SettingsSuccess", "success");
+        showToast("General proxy set successfully", "success");
         getProxyInfo();
       } else {
-        showToast("Settings通用代理Failed", "error");
+        showToast("Set general proxy failed", "error");
       }
     }
 
-    // Copy代理Address
+    // Copy proxy address
     async function copyProxyUrl() {
       if (selectedProxies.size === 0) {
-        showToast("请先Select代理", "info");
+        showToast("Please select a proxy first", "info");
         return;
       }
 
@@ -1642,22 +1642,22 @@
       closeContextMenu();
 
       if (typeof value === "string" && value !== "non" && value !== "sys") {
-        // 使用Total享的Copy方法
+        // Use shared copy method
         const success = await copyToClipboard(value, {
-          showMessage: false, // 使用Custom的 toast 消息
+          showMessage: false, // Use custom toast message
           onSuccess: () => {
-            showToast("代理Address已Copy到剪贴板", "success");
+            showToast("Proxy address copied to clipboard", "success");
           },
           onError: () => {
-            showToast("CopyFailed，请手动Copy", "error");
+            showToast("Copy failed, please copy manually", "error");
           },
         });
       } else {
-        showToast("该代理没有可Copy的Address", "warning");
+        showToast("This proxy has no copyable address", "warning");
       }
     }
 
-    // Export代理Configuration
+    // Export proxy configuration
     function exportProxies() {
       const config = {
         proxies: allProxies,
@@ -1676,10 +1676,10 @@
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      showToast("代理Configuration已Export", "success");
+      showToast("Proxy configuration exported", "success");
     }
 
-    // ShowImport对话框
+    // Show import dialog
     function showImportModal() {
       document.getElementById("importFile").value = "";
       document.getElementById("importPreview").style.display = "none";
@@ -1687,7 +1687,7 @@
       showModal("importModal");
     }
 
-    // 预览Import文件
+    // Preview import file
     function previewImportFile() {
       const fileInput = document.getElementById("importFile");
       const preview = document.getElementById("importPreview");
@@ -1707,14 +1707,14 @@
         try {
           const config = JSON.parse(e.target.result);
 
-          // 验证文件格式
+          // Validate file format
           if (!config.proxies || typeof config.proxies !== "object") {
-            throw new Error("None效的Configuration文件格式");
+            throw new Error("Invalid configuration file format");
           }
 
-          // Show预览
+          // Show preview
           const proxyCount = Object.keys(config.proxies).length;
-          const previewText = `代理Count: ${proxyCount}\n通用代理: ${config.general || "None"}\n\n代理列表:\n${Object.entries(
+          const previewText = `Proxy count: ${proxyCount}\nGeneral proxy: ${config.general || "None"}\n\nProxy list:\n${Object.entries(
             config.proxies,
           )
             .slice(0, 10)
@@ -1725,7 +1725,7 @@
           preview.style.display = "block";
           confirmBtn.disabled = false;
         } catch (error) {
-          showToast("文件格式None效: " + error.message, "error");
+          showToast("Invalid file format: " + error.message, "error");
           preview.style.display = "none";
           confirmBtn.disabled = true;
         }
@@ -1734,12 +1734,12 @@
       reader.readAsText(file);
     }
 
-    // ConfirmImport
+    // Confirm import
     async function confirmImport() {
       const fileInput = document.getElementById("importFile");
 
       if (!fileInput.files || fileInput.files.length === 0) {
-        showToast("请Select要Import的文件", "warning");
+        showToast("Please select a file to import", "warning");
         return;
       }
 
@@ -1751,28 +1751,28 @@
           const config = JSON.parse(e.target.result);
 
           closeModal("importModal");
-          showToast("正在Import代理Configuration...", "info");
+          showToast("Importing proxy configuration...", "info");
 
           const data = await makeAuthenticatedRequest("/proxies/set", {
             body: JSON.stringify(config),
           });
 
           if (data) {
-            showToast("代理ConfigurationImportSuccess", "success");
+            showToast("Proxy configuration imported successfully", "success");
             fileInput.value = "";
             getProxyInfo();
           } else {
-            showToast("ImportFailed", "error");
+            showToast("Import failed", "error");
           }
         } catch (error) {
-          showToast("ImportFailed: " + error.message, "error");
+          showToast("Import failed: " + error.message, "error");
         }
       };
 
       reader.readAsText(file);
     }
 
-    // Show对话框
+    // Show dialog
     function showModal(modalId) {
       const modal = document.getElementById(modalId);
       const backdrop = document.getElementById(`${modalId}-backdrop`);
@@ -1783,7 +1783,7 @@
       }
     }
 
-    // Close对话框
+    // Close dialog
     function closeModal(modalId) {
       const modal = document.getElementById(modalId);
       const backdrop = document.getElementById(`${modalId}-backdrop`);
@@ -1794,7 +1794,7 @@
       }
     }
 
-    // Close所有对话框
+    // Close all dialogs
     function closeAllModals() {
       const modals = document.querySelectorAll(".modal");
       const backdrops = document.querySelectorAll(".modal-backdrop");
@@ -1808,9 +1808,9 @@
       });
     }
 
-    // Show通知消息
+    // Show notification message
     function showToast(message, type = "info", duration = 3000) {
-      // 获取或创建通知容器
+      // Get or create notification container
       let container = document.getElementById("toast-container");
       if (!container) {
         container = document.createElement("div");
@@ -1819,35 +1819,35 @@
         document.body.appendChild(container);
       }
 
-      // 创建新的通知元素
+      // Create new notification element
       const toast = document.createElement("div");
       toast.className = `toast ${type}`;
 
-      // Add文本容器
+      // Add text container
       toast.innerHTML = `<div class="toast-content">${message}</div>`;
 
-      // Add到容器
+      // Add to container
       container.appendChild(toast);
 
-      // 强制一次重排，确保过渡动画生效
+      // Force a reflow to ensure transition animation works
       void toast.offsetWidth;
 
-      // Show通知
+      // Show notification
       requestAnimationFrame(() => {
         toast.classList.add("show");
       });
 
-      // Settings自动移除
+      // Set auto remove
       setTimeout(() => {
         toast.classList.remove("show");
 
-        // 通知消失动画完成后移除元素
+        // Remove element after notification fade animation completes
         setTimeout(() => {
           if (container.contains(toast)) {
             container.removeChild(toast);
           }
 
-          // 如果没有More通知，移除容器
+          // If no more notifications, remove container
           if (container.children.length === 0) {
             if (document.body.contains(container)) {
               document.body.removeChild(container);
@@ -1856,7 +1856,7 @@
         }, 400);
       }, duration);
 
-      // 限制MaxShowCount
+      // Limit max display count
       const maxToasts = 5;
       const toasts = container.querySelectorAll(".toast");
       if (toasts.length > maxToasts) {
