@@ -16,7 +16,7 @@ pub fn init_display_name_cache() {
 ///
 /// # ConvertRules
 ///
-/// 1. **Version number merge**：Single digit-single digit → decimal version number（如 `3-5` → `3.5`）
+/// 1. **Version number merge**：Single digit-single digit → decimal version number (e.g. `3-5` → `3.5`)
 /// 2. **Date retention**：Date format displayed in parentheses
 ///    - `YYYY-MM-DD` Format：`2024-04-09` → `(2024-04-09)`
 ///    - `MM-DD` Format：`03-25` → `(03-25)`  
@@ -25,7 +25,7 @@ pub fn init_display_name_cache() {
 /// 4. **Special prefix**：
 ///    - `gpt` → `GPT`
 ///    - `o1`/`o3`/`o4` → `O1`/`O3`/`O4`
-/// 5. **Version marker**：`v`/`r`/`k` Version number starting with first letter capitalized（如 `v3.1` → `V3.1`）
+/// 5. **Version marker**：`v`/`r`/`k` Version number starting with first letter capitalized (e.g. `v3.1` → `V3.1`)
 /// 6. **Separator convert**：Other `-` convert to empty format, each part first letter capitalized
 ///
 /// # Arguments
