@@ -116,11 +116,11 @@ def_const_models!(
     O3_PRO => "o3-pro",
     GPT_5_PRO => "gpt-5-pro",
 
-    // Deepseek 模型
+    // Deepseek models
     DEEPSEEK_R1_0528 => "deepseek-r1-0528",
     DEEPSEEK_V3_1 => "deepseek-v3.1",
 
-    // XAI 模型
+    // XAI models
     GROK_3_MINI => "grok-3-mini",
     GROK_CODE_FAST_1 => "grok-code-fast-1",
     GROK_4 => "grok-4",
@@ -128,14 +128,14 @@ def_const_models!(
     GROK_4_FAST_REASONING => "grok-4-fast-reasoning",
     GROK_4_FAST_NON_REASONING => "grok-4-fast-non-reasoning",
 
-    // MoonshotAI 模型
+    // MoonshotAI models
     KIMI_K2_INSTRUCT => "kimi-k2-instruct",
     ACCOUNTS_FIREWORKS_MODELS_KIMI_K2_INSTRUCT => "accounts/fireworks/models/kimi-k2-instruct",
 
-    // Cursor 模型 (legacy)
+    // Cursor models (legacy)
     CURSOR_FAST => "cursor-fast",
 
-    // Deepseek 模型 (legacy)
+    // Deepseek models (legacy)
     DEEPSEEK_V3 => "deepseek-v3",
 
     // OpenAI models (legacy)
@@ -290,7 +290,7 @@ impl Models {
     // Return list of all model IDs
     // pub fn ids() -> Arc<Vec<&'static str>> { Self::get().cached_ids.clone() }
 
-    // 写入方法
+    // Write method
     pub fn update(
         available_models: crate::core::aiserver::v1::AvailableModelsResponse,
     ) -> Result<(), &'static str> {
@@ -305,7 +305,7 @@ impl Models {
             return Ok(());
         }
 
-        // 内联辅助函数：将服务器模型ConvertTo内部模型表示
+        // Inline helper function: convert server model to internal model representation
         #[inline]
         fn convert_model(
             model: &crate::core::aiserver::v1::available_models_response::AvailableModel,
@@ -344,7 +344,7 @@ impl Models {
                             _ => None,
                         },
                         b'o' => match *bytes.get(1)? {
-                            b'1' | b'3' | b'4' => Some(OPENAI), // o1/o3/o4 系列
+                            b'1' | b'3' | b'4' => Some(OPENAI), // o1/o3/o4 series
                             _ => None,
                         },
                         b'c' => match *bytes.get(1)? {
@@ -367,7 +367,7 @@ impl Models {
                                 None
                             }
                         }
-                        // 其他Case
+                        // Other cases
                         _ => None,
                     }
                 })(server_id)
@@ -382,44 +382,44 @@ impl Models {
             Model { id, client_id, owned_by, server_id, is_thinking, is_image, is_max, is_non_max }
         }
 
-        // 先GetCurrent模型列表的引用
+        // First get reference to current models list
         let current_models = &guard.models;
 
-        // 根据不同的FetchMode来确定如何Handle模型
+        // Determine how to handle models based on different FetchMode
         let new_models: Vec<_> = match AppConfig::raw_model_fetch_mode() {
             FetchMode::Truncate => {
-                // 完全Use新Get的模型列表
+                // Completely use newly fetched models list
                 available_models.models.iter().map(convert_model).collect()
             }
             FetchMode::AppendTruncate => {
-                // 先Collect所Have在available_models中的模型ID
+                // First collect all model IDs in available_models
                 let new_model_ids: HashSet<_> = available_models
                     .models
                     .iter()
                     .map(|model| get_static_id(model.name.as_str()))
                     .collect();
 
-                // 保留current_models中不在new_model_ids中的模型
+                // Keep models in current_models that are not in new_model_ids
                 let mut result: Vec<_> = current_models
                     .iter()
                     .filter(|model| !new_model_ids.contains(&model.id))
                     .cloned()
                     .collect();
 
-                // 添加所Have新模型
+                // Add all new models
                 result.extend(available_models.models.iter().map(convert_model));
 
                 result
             }
             FetchMode::Append => {
-                // 只添加不存在的模型
+                // Only add models that don't exist
                 let existing_ids: HashSet<_> =
                     current_models.iter().map(|model| model.id).collect();
 
-                // 复制现Have模型
+                // Copy existing models
                 let mut result = current_models.to_vec();
 
-                // 仅添加ID不存在的新模型
+                // Only add new models with IDs that don't exist
                 result.extend(
                     available_models
                         .models
@@ -432,17 +432,17 @@ impl Models {
             }
         };
 
-        // 计算模型变化
+        // Calculate model changes
         let old_ids: HashSet<_> = guard.models.iter().map(|m| m.id()).collect();
         let new_ids: HashSet<_> = new_models.iter().map(|m| m.id()).collect();
 
-        // GetNeed添加and移除的模型
+        // Get models to add and remove
         let to_add: Vec<_> = new_models.iter().filter(|m| !old_ids.contains(&m.id())).collect();
 
         let to_remove: Vec<_> =
             guard.models.iter().filter(|m| !new_ids.contains(&m.id())).collect();
 
-        // 从Cache中移除不再Need的ID
+        // Remove no longer needed IDs from cache
         let mut ids: Vec<_> = guard
             .ids
             .iter()
