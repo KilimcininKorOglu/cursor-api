@@ -2,19 +2,19 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "https://example.com/schemas/route-registry.json",
     "title": "Route Registry",
-    "description": "前端资源路由注册表，定义URL路径与资源的映射关系",
+    "description": "Frontend resource route registry, defines URL path to resource mapping",
     "type": "object",
     "properties": {
         "name": {
             "type": "string",
-            "description": "前端包名称",
+            "description": "Frontend package name",
             "examples": [
                 "my-frontend-app"
             ]
         },
         "version": {
             "type": "string",
-            "description": "版本号（建议遵循 Semantic Versioning）",
+            "description": "Version number (recommended to follow Semantic Versioning)",
             "pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9.-]+)?(\\+[a-zA-Z0-9.-]+)?$",
             "examples": [
                 "1.0.0",
@@ -23,21 +23,21 @@
         },
         "description": {
             "type": "string",
-            "description": "前端包描述",
+            "description": "Frontend package description",
             "examples": [
                 "Modern web application frontend"
             ]
         },
         "author": {
             "type": "string",
-            "description": "作者信息",
+            "description": "Author information",
             "examples": [
                 "John Doe <john@example.com>"
             ]
         },
         "license": {
             "type": "string",
-            "description": "许可证类型",
+            "description": "License type",
             "examples": [
                 "MIT",
                 "Apache-2.0",
@@ -46,7 +46,7 @@
         },
         "routes": {
             "type": "object",
-            "description": "路由映射表，键为URL路径，值为路由定义",
+            "description": "Route mapping table, key is URL path, value is route definition",
             "additionalProperties": {
                 "$ref": "#/definitions/RouteDefinition"
             },
@@ -70,11 +70,11 @@
     "definitions": {
         "RouteDefinition": {
             "title": "Route Definition",
-            "description": "路由定义，支持简写（字符串）和完整格式（对象）",
+            "description": "Route definition, supports shorthand (string) and full format (object)",
             "oneOf": [
                 {
                     "type": "string",
-                    "description": "简写格式：直接指定文件路径，自动创建 File 类型路由",
+                    "description": "Shorthand format: directly specify file path, automatically creates File type route",
                     "examples": [
                         "index.html",
                         "dist/app.js",
@@ -88,7 +88,7 @@
         },
         "RouteDef": {
             "title": "Route Definition Object",
-            "description": "完整的路由定义对象",
+            "description": "Full route definition object",
             "type": "object",
             "oneOf": [
                 {
@@ -104,17 +104,17 @@
         },
         "FileRoute": {
             "title": "File Route",
-            "description": "文件路由：返回静态文件内容",
+            "description": "File route: returns static file content",
             "type": "object",
             "properties": {
                 "type": {
                     "type": "string",
                     "const": "file",
-                    "description": "路由类型标识"
+                    "description": "Route type identifier"
                 },
                 "path": {
                     "type": "string",
-                    "description": "文件相对路径（相对于资源包根目录）",
+                    "description": "File relative path (relative to resource package root directory)",
                     "examples": [
                         "index.html",
                         "assets/app.js",
@@ -123,7 +123,7 @@
                 },
                 "content_type": {
                     "type": "string",
-                    "description": "HTTP Content-Type 响应头（可选，未指定时从文件扩展名推断）",
+                    "description": "HTTP Content-Type response header (optional, inferred from file extension if not specified)",
                     "enum": [
                         "text_html_utf8",
                         "text_plain_utf8",
@@ -190,17 +190,17 @@
         },
         "EmptyRoute": {
             "title": "Empty Route",
-            "description": "空响应路由：返回仅包含状态码和头的响应（无 body），常用于重定向、CORS 预检等",
+            "description": "Empty response route: returns response with only status code and headers (no body), commonly used for redirects, CORS preflight, etc.",
             "type": "object",
             "properties": {
                 "type": {
                     "type": "string",
                     "const": "empty",
-                    "description": "路由类型标识"
+                    "description": "Route type identifier"
                 },
                 "status": {
                     "type": "integer",
-                    "description": "HTTP 状态码",
+                    "description": "HTTP status code",
                     "minimum": 100,
                     "maximum": 999,
                     "examples": [
@@ -213,7 +213,7 @@
                 },
                 "headers": {
                     "type": "array",
-                    "description": "响应头列表",
+                    "description": "Response headers list",
                     "items": {
                         "$ref": "#/definitions/Header"
                     },
@@ -246,17 +246,17 @@
         },
         "ExchangeRoute": {
             "title": "Exchange Route",
-            "description": "交换内置路由",
+            "description": "Exchange built-in route",
             "type": "object",
             "properties": {
                 "type": {
                     "type": "string",
                     "const": "exchange",
-                    "description": "路由类型标识"
+                    "description": "Route type identifier"
                 },
                 "from": {
                     "type": "string",
-                    "description": "原始路由路径",
+                    "description": "Original route path",
                     "examples": [
                         "/env-example",
                         "/readme"
@@ -271,12 +271,12 @@
         },
         "Header": {
             "title": "HTTP Header",
-            "description": "HTTP 响应头键值对",
+            "description": "HTTP response header key-value pair",
             "type": "array",
             "items": [
                 {
                     "type": "string",
-                    "description": "Header 名称（符合 HTTP 规范）",
+                    "description": "Header name (compliant with HTTP specification)",
                     "pattern": "^[!#$%&'*+\\-.0-9A-Z^_`a-z|~]+$",
                     "examples": [
                         "Content-Type",
@@ -286,7 +286,7 @@
                 },
                 {
                     "type": "string",
-                    "description": "Header 值（可打印 ASCII 字符）",
+                    "description": "Header value (printable ASCII characters)",
                     "examples": [
                         "application/json",
                         "https://example.com",
@@ -302,7 +302,7 @@
         {
             "name": "example-frontend",
             "version": "1.0.0",
-            "description": "示例前端应用",
+            "description": "Example frontend application",
             "author": "Developer Team",
             "license": "MIT",
             "routes": {
