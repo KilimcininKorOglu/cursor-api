@@ -1,9 +1,9 @@
-//! 内部缓冲区管理
+//! Internal buffer management
 
 use crate::frame::RawMessage;
 use core::iter::FusedIterator;
 
-/// 消息缓冲区（内部使用）
+/// Message buffer (internal use)
 pub struct Buffer {
     inner: Vec<u8>,
     cursor: usize,
@@ -55,7 +55,7 @@ impl AsRef<[u8]> for Buffer {
     fn as_ref(&self) -> &[u8] { unsafe { self.inner.get_unchecked(self.cursor..) } }
 }
 
-/// 消息迭代器（内部使用）
+/// Message iterator (internal use)
 #[derive(Debug, Clone)]
 pub struct MessageIter<'b> {
     buffer: &'b [u8],
@@ -63,7 +63,7 @@ pub struct MessageIter<'b> {
 }
 
 impl<'b> MessageIter<'b> {
-    /// 返回当前已消耗的字节数
+    /// Return current consumed byte count
     #[inline]
     pub fn offset(&self) -> usize { self.offset }
 }
@@ -73,7 +73,7 @@ impl<'b> Iterator for MessageIter<'b> {
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        // 至少需要 5 字节（1 字节 type + 4 字节 length）
+        // Need at least 5 bytes (1 byte type + 4 bytes length)
         if self.offset + 5 > self.buffer.len() {
             return None;
         }
@@ -87,7 +87,7 @@ impl<'b> Iterator for MessageIter<'b> {
             *get_offset_len_noubcheck(self.buffer, self.offset + 1, 4).cast()
         }) as usize;
 
-        // 检查消息是否完整
+        // Check if message is complete
         if self.offset + 5 + msg_len > self.buffer.len() {
             return None;
         }
@@ -104,15 +104,15 @@ impl<'b> Iterator for MessageIter<'b> {
     #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
         let count = self.len();
-        (count, Some(count)) // 精确值
+        (count, Some(count)) // Exact value
     }
 }
 
-// 实现 ExactSizeIterator
+// Implement ExactSizeIterator
 impl<'b> ExactSizeIterator for MessageIter<'b> {
     #[inline]
     fn len(&self) -> usize {
-        // 精确计算剩余完整消息数量
+        // Precisely calculate remaining complete message count
         let mut count = 0;
         let mut offset = self.offset;
 
@@ -133,7 +133,7 @@ impl<'b> ExactSizeIterator for MessageIter<'b> {
     }
 }
 
-// 实现 FusedIterator
+// Implement FusedIterator
 impl<'b> FusedIterator for MessageIter<'b> {}
 
 impl<'b> IntoIterator for &'b Buffer {
@@ -164,13 +164,13 @@ mod tests {
     fn test_exact_size_iterator() {
         let mut buffer = Buffer::new();
 
-        // 构造两个消息：type=0, len=3, data="abc"
+        // Construct two messages: type=0, len=3, data="abc"
         buffer.extend_from_slice(&[0, 0, 0, 0, 3, b'a', b'b', b'c']);
         buffer.extend_from_slice(&[0, 0, 0, 0, 2, b'x', b'y']);
 
         let iter = (&buffer).into_iter();
 
-        // 验证 ExactSizeIterator
+        // Verify ExactSizeIterator
         assert_eq!(iter.len(), 2);
         assert_eq!(iter.size_hint(), (2, Some(2)));
 
@@ -180,14 +180,14 @@ mod tests {
 
     #[test]
     fn test_fused_iterator() {
-        let buffer = Buffer::new(); // 空缓冲区
+        let buffer = Buffer::new(); // Empty buffer
 
         let mut iter = (&buffer).into_iter();
 
-        // 验证 FusedIterator
+        // Verify FusedIterator
         assert_eq!(iter.next(), None);
-        assert_eq!(iter.next(), None); // 仍然是 None
-        assert_eq!(iter.next(), None); // 永远是 None
+        assert_eq!(iter.next(), None); // Still None
+        assert_eq!(iter.next(), None); // Always None
     }
 
     #[test]
@@ -198,10 +198,10 @@ mod tests {
         let iter = (&buffer).into_iter();
         let iter_clone = iter.clone();
 
-        // 消耗原迭代器
+        // Consume original iterator
         assert_eq!(iter.count(), 1);
 
-        // 副本仍然可用
+        // Clone is still usable
         assert_eq!(iter_clone.count(), 1);
     }
 }

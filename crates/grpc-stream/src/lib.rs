@@ -1,8 +1,8 @@
-//! gRPC 流式消息解码器
+//! gRPC streaming message decoder
 //!
-//! 提供高性能的 gRPC streaming 消息解析，支持 gzip 压缩。
+//! Provides high-performance gRPC streaming message parsing with gzip compression support.
 //!
-//! # 示例
+//! # Example
 //!
 //! ```no_run
 //! use grpc_stream_decoder::StreamDecoder;
@@ -16,7 +16,7 @@
 //!
 //! let mut decoder = StreamDecoder::<MyMessage>::new();
 //!
-//! // 接收到的数据块
+//! // Received data chunk
 //! let chunk = receive_data();
 //! let messages = decoder.decode(&chunk);
 //!
@@ -33,14 +33,14 @@ mod buffer;
 mod compression;
 mod decoder;
 
-// 公开 API
+// Public API
 pub use frame::RawMessage;
 pub use buffer::Buffer;
 pub use compression::{compress_gzip, decompress_gzip};
 pub use decoder::StreamDecoder;
 
-// 常量
-/// 最大解压缩消息大小限制（4 MiB）
-/// 
-/// 对齐gRPC标准的默认最大消息大小，防止内存滥用攻击
+// Constants
+/// Maximum decompressed message size limit (4 MiB)
+///
+/// Aligned with gRPC standard default max message size, prevents memory abuse attacks
 pub const MAX_DECOMPRESSED_SIZE_BYTES: usize = 0x400000; // 4 * 1024 * 1024

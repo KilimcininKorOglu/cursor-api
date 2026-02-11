@@ -1,18 +1,18 @@
 #![allow(private_bounds)]
 
-//! 数字字符串化模块
+//! Number stringification module
 //!
-//! 用于在序列化/反序列化时将数字转换为字符串，
-//! 特别适用于与 JavaScript 交互时避免精度损失的场景。
+//! Used to convert numbers to strings during serialization/deserialization,
+//! especially suitable for scenarios where precision loss needs to be avoided when interacting with JavaScript.
 
 use core::{fmt, marker::PhantomData};
 use serde_core::{Deserialize, Deserializer, Serialize, Serializer, de};
 
-/// 密封特征，限制可以被字符串化的类型
+/// Sealed trait, restricts types that can be stringified
 mod private {
     use super::*;
 
-    /// 在 JavaScript 必需以 BigInt 存储的类型
+    /// Types that must be stored as BigInt in JavaScript
     pub trait BigInt: Sized + Copy {
         fn serialize_to<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error>;
         fn deserialize_from<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error>;
@@ -192,9 +192,9 @@ where T: private::BigInt
     }
 }
 
-/// 字符串化包装器
+/// Stringification wrapper
 ///
-/// 用于将数字类型在序列化时转换为字符串，在反序列化时兼容数字和字符串。
+/// Used to convert numeric types to strings during serialization, compatible with both numbers and strings during deserialization.
 #[repr(transparent)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Stringify<T>(pub T);
@@ -227,13 +227,13 @@ impl<'de, T: Item> Deserialize<'de> for Stringify<T> {
     }
 }
 
-/// 用于 `#[serde(with = "stringify")]` 的序列化函数
+/// Serialization function for `#[serde(with = "stringify")]`
 #[inline(always)]
 pub fn serialize<T: Item, S: Serializer>(value: &T, serializer: S) -> Result<S::Ok, S::Error> {
     value.serialize(serializer)
 }
 
-/// 用于 `#[serde(with = "stringify")]` 的反序列化函数
+/// Deserialization function for `#[serde(with = "stringify")]`
 #[inline(always)]
 pub fn deserialize<'de, T: Item, D: Deserializer<'de>>(deserializer: D) -> Result<T, D::Error> {
     T::deserialize(deserializer)
@@ -310,7 +310,7 @@ mod tests {
         assert!(deserialized.id_list.is_empty());
     }
 
-    /// 验证能同时接受字符串和数字输入
+    /// Verify can accept both string and number input
     #[test]
     fn test_deserialization_robustness() {
         let mixed_json = r#"{

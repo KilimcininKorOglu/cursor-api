@@ -6,11 +6,11 @@ pub use core::sync::atomic::Ordering;
 pub use traits::{AtomicRepr, WithArithmeticOps, WithBitwiseOps};
 pub use wrapper::Atomic;
 
-/// 定义原子操作的能力接口与契约
+/// Defines capability interfaces and contracts for atomic operations
 mod traits {
     use core::sync::atomic::Ordering;
 
-    /// 基础原子存储能力 (Load/Store/CAS)
+    /// Basic atomic storage capability (Load/Store/CAS)
     pub trait AtomicStorage: Sized {
         type Primitive: Copy;
 
@@ -44,7 +44,7 @@ mod traits {
             F: FnMut(Self::Primitive) -> Option<Self::Primitive>;
     }
 
-    /// 位运算能力 (Bitwise)
+    /// Bitwise operation capability (Bitwise)
     pub trait AtomicBitwise: AtomicStorage {
         fn fetch_and(&self, val: Self::Primitive, order: Ordering) -> Self::Primitive;
         fn fetch_nand(&self, val: Self::Primitive, order: Ordering) -> Self::Primitive;
@@ -52,8 +52,8 @@ mod traits {
         fn fetch_xor(&self, val: Self::Primitive, order: Ordering) -> Self::Primitive;
     }
 
-    /// 算术运算能力 (Arithmetic)
-    /// 注意：枚举和布尔值不应实现此 Trait，以防语义错误。
+    /// Arithmetic operation capability (Arithmetic)
+    /// Note: Enums and booleans should not implement this Trait to prevent semantic errors.
     pub trait AtomicArithmetic: AtomicStorage {
         fn fetch_add(&self, val: Self::Primitive, order: Ordering) -> Self::Primitive;
         fn fetch_sub(&self, val: Self::Primitive, order: Ordering) -> Self::Primitive;
@@ -61,31 +61,31 @@ mod traits {
         fn fetch_min(&self, val: Self::Primitive, order: Ordering) -> Self::Primitive;
     }
 
-    /// 桥接高层类型 T 与底层原子存储 Storage
+    /// Bridges high-level type T with underlying atomic storage Storage
     pub const unsafe trait AtomicRepr: Copy {
         type Storage: AtomicStorage;
 
         fn const_new(val: Self) -> Self::Storage;
         fn into_prim(self) -> <Self::Storage as AtomicStorage>::Primitive;
 
-        /// SAFETY: 调用者必须保证 `val` 是该类型 T 的有效位模式
+        /// SAFETY: Caller must guarantee `val` is a valid bit pattern for type T
         unsafe fn from_prim(val: <Self::Storage as AtomicStorage>::Primitive) -> Self;
     }
 
-    /// 标记 Trait：启用位运算方法
+    /// Marker Trait: Enables bitwise operation methods
     pub trait WithBitwiseOps: AtomicRepr
     where Self::Storage: AtomicBitwise
     {
     }
 
-    /// 标记 Trait：启用算术运算方法
+    /// Marker Trait: Enables arithmetic operation methods
     pub trait WithArithmeticOps: AtomicRepr
     where Self::Storage: AtomicArithmetic
     {
     }
 }
 
-/// 核心封装结构体
+/// Core wrapper struct
 mod wrapper {
     use super::traits::*;
     use core::{marker::PhantomData, sync::atomic::Ordering};
@@ -136,7 +136,7 @@ mod wrapper {
         _marker: PhantomData<T>,
     }
 
-    // 基础功能：所有实现了 AtomicRepr 的类型均可用
+    // Basic functionality: Available for all types implementing AtomicRepr
     impl<T: AtomicRepr> Atomic<T> {
         /// Creates a new generic atomic.
         ///
@@ -276,7 +276,7 @@ mod wrapper {
         }
     }
 
-    // 扩展功能：仅当类型被标记为支持位运算时启用
+    // Extended functionality: Only enabled when type is marked as supporting bitwise operations
     impl<T: WithBitwiseOps> Atomic<T>
     where <T as AtomicRepr>::Storage: AtomicBitwise
     {
@@ -325,7 +325,7 @@ mod wrapper {
         }
     }
 
-    // 扩展功能：仅当类型被标记为支持算术运算时启用
+    // Extended functionality: Only enabled when type is marked as supporting arithmetic operations
     impl<T: WithArithmeticOps> Atomic<T>
     where <T as AtomicRepr>::Storage: AtomicArithmetic
     {
@@ -369,12 +369,12 @@ mod wrapper {
     }
 }
 
-/// 标准库类型的实现细节
+/// Standard library type implementation details
 mod impls {
     use super::traits::*;
     use core::sync::atomic::{self, Ordering};
 
-    // 辅助宏：实现 AtomicStorage 和 AtomicBitwise
+    // Helper macro: Implement AtomicStorage and AtomicBitwise
     macro_rules! impl_common_atomics {
         ($Atom:ty, $Prim:ty) => {
             impl AtomicStorage for $Atom {
@@ -434,7 +434,7 @@ mod impls {
         };
     }
 
-    // Bool 实现：仅 Storage + Bitwise
+    // Bool implementation: Only Storage + Bitwise
     impl_common_atomics!(atomic::AtomicBool, bool);
 
     unsafe impl const AtomicRepr for bool {
@@ -448,7 +448,7 @@ mod impls {
     }
     impl WithBitwiseOps for bool {}
 
-    // 整数实现：Storage + Bitwise + Arithmetic
+    // Integer implementation: Storage + Bitwise + Arithmetic
     macro_rules! impl_int_atomics {
         ($($Prim:ty => $Atom:ty),* $(,)?) => {
             $(
@@ -488,10 +488,10 @@ mod impls {
     }
 }
 
-/// 自动实现宏
+/// Auto-implementation macro
 ///
-/// 生成的枚举仅实现 `AtomicRepr`，不实现标记 Trait，
-/// 从而在编译期禁止对 Enum 进行非法运算。
+/// Generated enums only implement `AtomicRepr`, not marker Traits,
+/// thus preventing illegal operations on Enum at compile time.
 #[macro_export]
 macro_rules! atomic_enum {
     ($Enum:ty = $Base:ty) => {
@@ -528,7 +528,7 @@ macro_rules! atomic_enum {
                 #[inline(always)]
                 #[allow(unsafe_op_in_unsafe_fn)]
                 unsafe fn from_prim(val: $Base) -> Self {
-                    // SAFETY: 宏使用者需保证枚举与底层类型的内存布局一致性
+                    // SAFETY: Macro user must ensure enum and underlying type have consistent memory layout
                     ::core::mem::transmute(val)
                 }
             }

@@ -1,4 +1,4 @@
-//! 流式消息解码器
+//! Streaming message decoder
 
 use prost::Message;
 
@@ -6,11 +6,11 @@ use crate::buffer::Buffer;
 use crate::compression::decompress_gzip;
 use crate::frame::RawMessage;
 
-/// gRPC 流式消息解码器
+/// gRPC streaming message decoder
 ///
-/// 处理增量数据块，解析完整的 Protobuf 消息。
+/// Processes incremental data chunks, parses complete Protobuf messages.
 ///
-/// # 示例
+/// # Example
 ///
 /// ```no_run
 /// use grpc_stream_decoder::StreamDecoder;
@@ -24,7 +24,7 @@ use crate::frame::RawMessage;
 ///
 /// let mut decoder = StreamDecoder::new();
 ///
-/// // 使用默认处理器
+/// // Using default processor
 /// loop {
 ///     let chunk = receive_network_data();
 ///     let messages: Vec<MyMessage> = decoder.decode_default(&chunk);
@@ -34,9 +34,9 @@ use crate::frame::RawMessage;
 ///     }
 /// }
 ///
-/// // 使用自定义处理器
+/// // Using custom processor
 /// let messages = decoder.decode(&chunk, |raw_msg| {
-///     // 自定义解码逻辑
+///     // Custom decoding logic
 ///     match raw_msg.r#type {
 ///         0 => MyMessage::decode(raw_msg.data).ok(),
 ///         _ => None,
@@ -48,27 +48,27 @@ pub struct StreamDecoder {
 }
 
 impl StreamDecoder {
-    /// 创建新的解码器
+    /// Create new decoder
     #[inline]
     pub fn new() -> Self { Self { buffer: Buffer::new() } }
 
-    /// 使用自定义处理器解码数据块
+    /// Decode data chunk with custom processor
     ///
-    /// # 类型参数
-    /// - `T`: 目标消息类型
-    /// - `F`: 处理函数，签名为 `Fn(RawMessage<'_>) -> Option<T>`
+    /// # Type Parameters
+    /// - `T`: Target message type
+    /// - `F`: Processor function, signature is `Fn(RawMessage<'_>) -> Option<T>`
     ///
-    /// # 参数
-    /// - `data`: 接收到的数据块
-    /// - `processor`: 自定义处理函数，接收原始消息并返回解码结果
+    /// # Parameters
+    /// - `data`: Received data chunk
+    /// - `processor`: Custom processor function, receives raw message and returns decode result
     ///
-    /// # 返回
-    /// 解码成功的消息列表
+    /// # Returns
+    /// List of successfully decoded messages
     ///
-    /// # 示例
+    /// # Example
     ///
     /// ```no_run
-    /// // 自定义处理：只接受未压缩消息
+    /// // Custom processing: only accept uncompressed messages
     /// let messages = decoder.decode(&data, |raw_msg| {
     ///     if raw_msg.r#type == 0 {
     ///         MyMessage::decode(raw_msg.data).ok()
@@ -95,21 +95,21 @@ impl StreamDecoder {
         messages
     }
 
-    /// 使用默认处理器解码数据块
+    /// Decode data chunk with default processor
     ///
-    /// 默认行为：
-    /// - 类型 0：直接解码 Protobuf 消息
-    /// - 类型 1：先 gzip 解压，再解码
-    /// - 其他类型：忽略
+    /// Default behavior:
+    /// - Type 0: Directly decode Protobuf message
+    /// - Type 1: First gzip decompress, then decode
+    /// - Other types: Ignore
     ///
-    /// # 类型参数
-    /// - `T`: 实现 `prost::Message + Default` 的消息类型
+    /// # Type Parameters
+    /// - `T`: Message type implementing `prost::Message + Default`
     ///
-    /// # 参数
-    /// - `data`: 接收到的数据块
+    /// # Parameters
+    /// - `data`: Received data chunk
     ///
-    /// # 返回
-    /// 解码成功的消息列表
+    /// # Returns
+    /// List of successfully decoded messages
     pub fn decode_default<T: Message + Default>(&mut self, data: &[u8]) -> Vec<T> {
         self.decode(data, |raw_msg| match raw_msg.r#type {
             0 => Self::decode_message(raw_msg.data),
@@ -118,11 +118,11 @@ impl StreamDecoder {
         })
     }
 
-    /// 解码未压缩消息
+    /// Decode uncompressed message
     #[inline]
     fn decode_message<T: Message + Default>(data: &[u8]) -> Option<T> { T::decode(data).ok() }
 
-    /// 解码 gzip 压缩消息
+    /// Decode gzip compressed message
     #[inline]
     fn decode_compressed_message<T: Message + Default>(data: &[u8]) -> Option<T> {
         let decompressed = decompress_gzip(data)?;

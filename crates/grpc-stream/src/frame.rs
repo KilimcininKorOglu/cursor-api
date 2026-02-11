@@ -1,10 +1,10 @@
-//! 原始消息帧定义
+//! Raw message frame definition
 
-/// gRPC 流式消息的原始帧
+/// Raw frame of gRPC streaming message
 ///
-/// 包含帧头信息和消息数据的引用。
+/// Contains frame header information and reference to message data.
 ///
-/// # 帧格式
+/// # Frame Format
 ///
 /// ```text
 /// +------+----------+----------------+
@@ -13,31 +13,31 @@
 /// +------+----------+----------------+
 /// ```
 ///
-/// - `type`: 消息类型
-///   - `0`: 未压缩
-///   - `1`: gzip 压缩
-/// - `length`: 消息体长度（大端序）
-/// - `data`: 消息体数据
+/// - `type`: Message type
+///   - `0`: Uncompressed
+///   - `1`: gzip compressed
+/// - `length`: Message body length (big-endian)
+/// - `data`: Message body data
 ///
-/// # 字段说明
+/// # Field Description
 ///
-/// - `r#type`: 帧类型标志（0=未压缩, 1=gzip）
-/// - `data`: 消息体数据切片，其长度可通过 `data.len()` 获取
+/// - `r#type`: Frame type flag (0=uncompressed, 1=gzip)
+/// - `data`: Message body data slice, its length can be obtained via `data.len()`
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct RawMessage<'b> {
-    /// 消息类型（0=未压缩, 1=gzip）
+    /// Message type (0=uncompressed, 1=gzip)
     pub r#type: u8,
 
-    /// 消息体数据
+    /// Message body data
     pub data: &'b [u8],
 }
 
 impl RawMessage<'_> {
-    /// 计算该消息在缓冲区中占用的总字节数
+    /// Calculate total bytes this message occupies in buffer
     ///
-    /// 包含 5 字节帧头 + 消息体长度
+    /// Includes 5-byte frame header + message body length
     ///
-    /// # 示例
+    /// # Example
     ///
     /// ```
     /// # use grpc_stream_decoder::RawMessage;

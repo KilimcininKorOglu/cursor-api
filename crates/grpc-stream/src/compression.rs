@@ -1,12 +1,12 @@
-//! 压缩数据处理
+//! Compressed data handling
 
 use crate::MAX_DECOMPRESSED_SIZE_BYTES;
 use flate2::read::GzDecoder;
 use std::io::Read as _;
 
-/// 压缩数据为gzip格式
+/// Compress data to gzip format
 ///
-/// 使用固定压缩级别6，预分配容量以减少内存分配
+/// Uses fixed compression level 6, pre-allocates capacity to reduce memory allocation
 #[inline]
 pub fn compress_gzip(data: &[u8]) -> Vec<u8> {
     use ::std::io::Write as _;
@@ -14,48 +14,48 @@ pub fn compress_gzip(data: &[u8]) -> Vec<u8> {
 
     const LEVEL: Compression = Compression::new(6);
 
-    // 预分配容量：假设压缩率50% + gzip头部约18字节
+    // Pre-allocate capacity: assume 50% compression ratio + gzip header ~18 bytes
     let estimated_size = data.len() / 2 + 18;
     let mut encoder = GzEncoder::new(Vec::with_capacity(estimated_size), LEVEL);
 
-    // 写入Vec不会失败，可以安全unwrap
+    // Writing to Vec won't fail, safe to unwrap
     unsafe {
         encoder.write_all(data).unwrap_unchecked();
         encoder.finish().unwrap_unchecked()
     }
 }
 
-/// 解压 gzip 数据
+/// Decompress gzip data
 ///
-/// # 参数
-/// - `data`: gzip 压缩的数据
+/// # Parameters
+/// - `data`: gzip compressed data
 ///
-/// # 返回
-/// - `Some(Vec<u8>)`: 解压成功
-/// - `None`: 不是有效的 gzip 数据或解压失败
+/// # Returns
+/// - `Some(Vec<u8>)`: Decompression successful
+/// - `None`: Not valid gzip data or decompression failed
 ///
-/// # 最小 GZIP 文件结构
+/// # Minimum GZIP File Structure
 ///
 /// ```text
 /// +----------+-------------+----------+
 /// | Header   | DEFLATE     | Footer   |
 /// | 10 bytes | 2+ bytes    | 8 bytes  |
 /// +----------+-------------+----------+
-/// 最小: 10 + 2 + 8 = 20 字节
+/// Minimum: 10 + 2 + 8 = 20 bytes
 /// ```
 ///
-/// # 安全性
-/// - 限制解压后大小不超过 `MAX_DECOMPRESSED_SIZE_BYTES`
-/// - 防止 gzip 炸弹攻击
+/// # Security
+/// - Limits decompressed size to not exceed `MAX_DECOMPRESSED_SIZE_BYTES`
+/// - Prevents gzip bomb attacks
 pub fn decompress_gzip(data: &[u8]) -> Option<Vec<u8>> {
-    // 快速路径：拒绝明显无效的数据
-    // 最小有效 gzip 文件为 20 字节（头10 + 数据2 + 尾8）
+    // Fast path: reject obviously invalid data
+    // Minimum valid gzip file is 20 bytes (header 10 + data 2 + footer 8)
     if data.len() < 20 {
         return None;
     }
 
-    // SAFETY: 上面已验证 data.len() >= 20，保证索引 0, 1, 2 有效
-    // 检查 gzip 魔数（0x1f 0x8b）和压缩方法（0x08 = DEFLATE）
+    // SAFETY: Already verified data.len() >= 20, guarantees indices 0, 1, 2 are valid
+    // Check gzip magic number (0x1f 0x8b) and compression method (0x08 = DEFLATE)
     if unsafe {
         *data.get_unchecked(0) != 0x1f
             || *data.get_unchecked(1) != 0x8b
@@ -64,19 +64,19 @@ pub fn decompress_gzip(data: &[u8]) -> Option<Vec<u8>> {
         return None;
     }
 
-    // 读取 gzip footer 中的 ISIZE（原始大小，最后 4 字节，小端序）
-    // SAFETY: 已验证 data.len() >= 20，末尾 4 字节必然有效
+    // Read ISIZE from gzip footer (original size, last 4 bytes, little-endian)
+    // SAFETY: Already verified data.len() >= 20, last 4 bytes are guaranteed valid
     let capacity = unsafe {
         let ptr = data.as_ptr().add(data.len() - 4) as *const [u8; 4];
         u32::from_le_bytes(ptr.read()) as usize
     };
 
-    // 防止解压炸弹攻击
+    // Prevent decompression bomb attack
     if capacity > MAX_DECOMPRESSED_SIZE_BYTES {
         return None;
     }
 
-    // 执行实际解压
+    // Perform actual decompression
     let mut decoder = GzDecoder::new(data);
     let mut decompressed = Vec::with_capacity(capacity);
 
@@ -91,7 +91,7 @@ mod tests {
 
     #[test]
     fn test_too_short() {
-        // 小于 20 字节的数据应该直接拒绝
+        // Data less than 20 bytes should be rejected directly
         assert!(decompress_gzip(&[]).is_none());
         assert!(decompress_gzip(&[0x1f, 0x8b, 0x08]).is_none());
         assert!(decompress_gzip(&[0u8; 19]).is_none());
@@ -99,31 +99,31 @@ mod tests {
 
     #[test]
     fn test_invalid_magic() {
-        // 长度足够但魔数错误
+        // Length sufficient but magic number wrong
         let mut data = vec![0u8; 20];
-        data[0] = 0x00; // 错误的魔数
+        data[0] = 0x00; // Wrong magic number
         data[1] = 0x8b;
         data[2] = 0x08;
         assert!(decompress_gzip(&data).is_none());
 
-        // 正确的第一字节，错误的第二字节
+        // First byte correct, second byte wrong
         data[0] = 0x1f;
         data[1] = 0x00;
         assert!(decompress_gzip(&data).is_none());
 
-        // 前两字节正确，压缩方法错误
+        // First two bytes correct, compression method wrong
         data[1] = 0x8b;
-        data[2] = 0x09; // 非 DEFLATE
+        data[2] = 0x09; // Non-DEFLATE
         assert!(decompress_gzip(&data).is_none());
     }
 
     #[test]
     fn test_gzip_bomb_protection() {
-        // 构造声称解压后为 2MB 的假 gzip 数据
-        let mut fake_gzip = vec![0x1f, 0x8b, 0x08]; // 正确的魔数
-        fake_gzip.extend_from_slice(&[0u8; 14]); // 填充到 17 字节
+        // Construct fake gzip data claiming to decompress to 2MB
+        let mut fake_gzip = vec![0x1f, 0x8b, 0x08]; // Correct magic number
+        fake_gzip.extend_from_slice(&[0u8; 14]); // Pad to 17 bytes
 
-        // ISIZE 字段（最后 4 字节）：2MB
+        // ISIZE field (last 4 bytes): 2MB
         let size_2mb = 2 * 1024 * 1024u32;
         fake_gzip.extend_from_slice(&size_2mb.to_le_bytes());
 
@@ -133,7 +133,7 @@ mod tests {
 
     #[test]
     fn test_valid_gzip() {
-        // 使用标准库压缩一些数据
+        // Use standard library to compress some data
         use flate2::{Compression, write::GzEncoder};
         use std::io::Write;
 
@@ -142,17 +142,17 @@ mod tests {
         encoder.write_all(original).unwrap();
         let compressed = encoder.finish().unwrap();
 
-        // 验证：压缩数据 >= 20 字节
+        // Verify: compressed data >= 20 bytes
         assert!(compressed.len() >= 20);
 
-        // 解压并验证
+        // Decompress and verify
         let decompressed = decompress_gzip(&compressed).unwrap();
         assert_eq!(&decompressed, original);
     }
 
     #[test]
     fn test_empty_gzip() {
-        // 压缩空数据（最小有效 gzip）
+        // Compress empty data (minimum valid gzip)
         use flate2::{Compression, write::GzEncoder};
         use std::io::Write;
 
@@ -160,7 +160,7 @@ mod tests {
         encoder.write_all(&[]).unwrap();
         let compressed = encoder.finish().unwrap();
 
-        // 验证：最小 gzip 文件 ~20 字节
+        // Verify: minimum gzip file ~20 bytes
         assert!(compressed.len() >= 20);
 
         let decompressed = decompress_gzip(&compressed).unwrap();
