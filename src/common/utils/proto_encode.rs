@@ -60,7 +60,7 @@ fn try_compress_if_beneficial(data: &[u8]) -> Option<Vec<u8>> {
 
     let compressed = grpc_stream::compress_gzip(data);
 
-    // 仅当压缩有效时返回
+    // 仅当压缩Have效时返回
     if compressed.len() < data.len() { Some(compressed) } else { None }
 }
 
@@ -68,14 +68,14 @@ fn try_compress_if_beneficial(data: &[u8]) -> Option<Vec<u8>> {
 ///
 /// 根据MessageSizeand压缩效果自动选择最优Encode方式：
 /// - 小Message（≤1KB）：直接返回原始Encode
-/// - 大Message：尝试gzip压缩，仅当压缩有效时Use
+/// - 大Message：尝试gzip压缩，仅当压缩Have效时Use
 ///
 /// # Arguments
 /// * `message` - 实现了`prost::Message`的protobufMessage
 ///
 /// # Returns
 /// - `Ok((data, is_compressed))` - Encode成功
-///   - `data`: Encode后的字节数据（可能已压缩）
+///   - `data`: Encode后的字节数据（May已压缩）
 ///   - `is_compressed`: `true`表示返回的是压缩数据，`false`表示原始Encode
 /// - `Err(&str)` - Message超过4MiBSizeLimit
 ///
@@ -94,7 +94,7 @@ fn try_compress_if_beneficial(data: &[u8]) -> Option<Vec<u8>> {
 pub fn encode_message(message: &impl ::prost::Message) -> Result<(Vec<u8>, bool), ExceedSizeLimit> {
     let estimated_size = message.encoded_len();
 
-    // 检查MessageSize是否超过Limit
+    // CheckMessageSize是否超过Limit
     if estimated_size > grpc_stream::MAX_DECOMPRESSED_SIZE_BYTES {
         __cold_path!();
         return Err(ExceedSizeLimit);
@@ -139,8 +139,8 @@ pub fn encode_message(message: &impl ::prost::Message) -> Result<(Vec<u8>, bool)
 ///
 /// # Safety
 /// 内部Use`MaybeUninit`andunsafe代码优化性能，但保证内存安全：
-/// - 所有写入操作在边界内
-/// - 返回前Ensure所有数据已初始化
+/// - 所Have写入操作在边界内
+/// - 返回前Ensure所Have数据已初始化
 ///
 /// # Example
 /// ```ignore
@@ -153,7 +153,7 @@ pub fn encode_message(message: &impl ::prost::Message) -> Result<(Vec<u8>, bool)
 pub fn encode_message_framed(message: &impl ::prost::Message) -> Result<Vec<u8>, ExceedSizeLimit> {
     let estimated_size = message.encoded_len();
 
-    // 检查MessageSize是否超过Limit（4MiB远小于u32::MAX-5，无需额外检查协议Limit）
+    // CheckMessageSize是否超过Limit（4MiB远小于u32::MAX-5，无需额外Check协议Limit）
     if estimated_size > grpc_stream::MAX_DECOMPRESSED_SIZE_BYTES {
         __cold_path!();
         return Err(ExceedSizeLimit);
@@ -205,7 +205,7 @@ pub fn encode_message_framed(message: &impl ::prost::Message) -> Result<Vec<u8>,
         let len_bytes = (final_len as u32).to_be_bytes();
         ::core::ptr::copy_nonoverlapping(len_bytes.as_ptr(), header_ptr.add(1), 4);
 
-        // 此时buffer所有数据已初始化，安全ConvertToVec<u8>
+        // 此时buffer所Have数据已初始化，安全ConvertToVec<u8>
         #[allow(clippy::missing_transmute_annotations)]
         Ok(::core::intrinsics::transmute(buffer))
     }

@@ -520,7 +520,7 @@ mod tests {
         builder.append_mut(" ");
         assert!(builder.is_borrowed_state());
 
-        // 添加拥有字符串，触发状态Convert
+        // 添加拥Have字符串，触发状态Convert
         builder.append_mut(String::from("World"));
         assert!(builder.is_mixed_state());
 

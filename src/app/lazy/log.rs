@@ -55,7 +55,7 @@ pub fn init() {
 
 // --- 日志Message结构 ---
 
-/// 带序列号的日志Message，Ensure有序Handle
+/// 带序列号的日志Message，EnsureHave序Handle
 pub struct LogMessage {
     /// 全局递增的序列号，保证日志顺序
     pub seq: u64,
@@ -124,7 +124,7 @@ pub fn ensure_logger_initialized() -> impl Future<Output = &'static LoggerState>
                         // 将Message加入待Handle队列
                         pending_messages.insert(message.seq, message.content);
 
-                        // 检查待Handle队列是否过大
+                        // Check待Handle队列是否过大
                         if pending_messages.len() > MAX_PENDING_MESSAGES {
                             let oldest_seq = *__unwrap!(pending_messages.keys().next());
                             eprintln!(
@@ -134,7 +134,7 @@ pub fn ensure_logger_initialized() -> impl Future<Output = &'static LoggerState>
                             next_seq = oldest_seq;
                         }
 
-                        // Handle所有连续的Message
+                        // Handle所Have连续的Message
                         while let Some(content) = pending_messages.remove(&next_seq) {
                             buffer.extend_from_slice(content.as_bytes());
                             buffer.push(b'\n');
@@ -150,13 +150,13 @@ pub fn ensure_logger_initialized() -> impl Future<Output = &'static LoggerState>
 
                     // 定时刷新触发
                     _ = interval.tick() => {
-                        // 定时刷新时，If有积压的Message且等待时间过长，强制写入
+                        // 定时刷新时，IfHave积压的Message且等待时间过长，强制写入
                         if !pending_messages.is_empty() {
                             let oldest_seq = *__unwrap!(pending_messages.keys().next());
-                            // If最旧的Message序号与期望序号相差太大，可能有Message丢失
+                            // If最旧的Message序号与期望序号相差太大，MayHaveMessage丢失
                             if oldest_seq > next_seq + OUT_OF_ORDER_THRESHOLD {
                                 eprintln!(
-                                    "日志系统警告：检测到可能的Message丢失，跳过序号 {next_seq} 到 {}",
+                                    "日志系统警告：检测到May的Message丢失，跳过序号 {next_seq} 到 {}",
                                     oldest_seq - 1
                                 );
                                 next_seq = oldest_seq;
@@ -168,12 +168,12 @@ pub fn ensure_logger_initialized() -> impl Future<Output = &'static LoggerState>
                     // 监听关闭信号
                     result = shutdown_rx.changed() => {
                         if result.is_err() || *shutdown_rx.borrow() {
-                            // 接收剩余所有Message
+                            // 接收剩余所HaveMessage
                             while let Ok(message) = receiver.try_recv() {
                                 pending_messages.insert(message.seq, message.content);
                             }
 
-                            // Handle所有待Handle的Message并记录缺失范围
+                            // Handle所Have待Handle的Message并记录缺失范围
                             let mut missing_ranges = Vec::new();
                             for (seq, content) in pending_messages {
                                 if seq != next_seq {
@@ -202,7 +202,7 @@ pub fn ensure_logger_initialized() -> impl Future<Output = &'static LoggerState>
                         }
                     }
 
-                    // 所有其他Case（如通道关闭）
+                    // 所Have其他Case（如通道关闭）
                     else => {
                         // Handle剩余的待HandleMessage
                         for (_, content) in pending_messages {
@@ -291,7 +291,7 @@ pub fn debug_log(args: core::fmt::Arguments<'_>) {
     submit_debug_log(seq, msg);
 }
 
-/// 程序结束前调用，Ensure所有缓冲日志写入文件
+/// 程序结束前调用，Ensure所Have缓冲日志写入文件
 ///
 /// 发送关闭信号，等待后台写入任务完成
 pub async fn flush_all_debug_logs() {
@@ -304,7 +304,7 @@ pub async fn flush_all_debug_logs() {
         if let Err(err) = state.shutdown_tx.send(true)
             && *DEBUG
         {
-            println!("日志系统Debug：发送关闭信号Failed（可能写入任务已提前结束）：{err}");
+            println!("日志系统Debug：发送关闭信号Failed（May写入任务已提前结束）：{err}");
         }
 
         // 提取后台任务句柄
@@ -323,17 +323,17 @@ pub async fn flush_all_debug_logs() {
                 }
                 Ok(Err(join_err)) => {
                     eprintln!(
-                        "日志系统Error：后台写入任务异常终止。部分日志可能丢失。Error详情：{join_err}"
+                        "日志系统Error：后台写入任务异常终止。部分日志May丢失。Error详情：{join_err}"
                     );
                 }
                 Err(_) => {
                     __eprintln!(
-                        "日志系统Error：等待后台写入任务超时（5秒）。部分日志可能未能写入。"
+                        "日志系统Error：等待后台写入任务超时（5秒）。部分日志May未能写入。"
                     );
                 }
             }
         } else if *DEBUG {
-            __println!("日志系统Debug：未找到活动写入任务句柄，可能已关闭。");
+            __println!("日志系统Debug：未找到活动写入任务句柄，May已关闭。");
         }
     } else if *DEBUG {
         __println!("日志系统Debug：日志系统未初始化，无需关闭。");

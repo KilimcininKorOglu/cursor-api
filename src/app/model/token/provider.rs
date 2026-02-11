@@ -96,7 +96,7 @@ impl<'de> ::serde::Deserialize<'de> for Provider {
 /// 从环境配置初始化Support的提供者列表
 ///
 /// If设置了环境变量 `ALLOWED_PROVIDERS`，则从中Read，否则保持Default提供者列表。
-/// 环境变量应包含以逗号分隔的提供者标识符列表。
+/// 环境变量应包含以逗号Separate的提供者标识符列表。
 ///
 /// # 环境变量示例
 /// ```text
@@ -141,7 +141,7 @@ pub fn parse_providers() {
             })
             .collect::<Vec<_>>();
 
-        // If恰好是3个Default提供者且没有自定义提供者，保持Default值
+        // If恰好是3个Default提供者且没Have自定义提供者，保持Default值
         if custom_count == 0 && default_flags == ALL_DEFAULT {
             return;
         }

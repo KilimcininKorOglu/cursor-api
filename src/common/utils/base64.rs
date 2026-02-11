@@ -53,7 +53,7 @@ pub const fn decoded_len(encoded_len: usize) -> Option<usize> {
 ///
 /// 调用者必须Ensure：
 /// - input.len() 字节可读
-/// - output 有 encoded_len(input.len()) 字节可写
+/// - output Have encoded_len(input.len()) 字节可写
 #[inline]
 pub unsafe fn encode_to_slice_unchecked(input: &[u8], output: &mut [u8]) {
     let chunks_exact = input.chunks_exact(3);
@@ -104,8 +104,8 @@ pub unsafe fn encode_to_slice_unchecked(input: &[u8], output: &mut [u8]) {
 /// # Safety
 ///
 /// 调用者必须Ensure：
-/// - input 是有效的 base64 数据（所有字符都在字符集中，长度 % 4 != 1）
-/// - output 有 decoded_len(input.len()) 字节可写
+/// - input 是Have效的 base64 数据（所Have字符都在字符集中，长度 % 4 != 1）
+/// - output Have decoded_len(input.len()) 字节可写
 #[inline]
 pub unsafe fn decode_to_slice_unchecked(input: &[u8], output: &mut [u8]) {
     let chunks = input.chunks_exact(4);
@@ -176,14 +176,14 @@ pub fn from_base64(input: &str) -> Option<Vec<u8>> {
     let input = input.as_bytes();
     let len = input.len();
 
-    // 长度检查
+    // 长度Check
     if len == 0 {
         return Some(Vec::new());
     }
 
     let output_len = decoded_len(len)?;
 
-    // 字符检查 - Use迭代器方法
+    // 字符Check - Use迭代器方法
     if input.iter().any(|&b| BASE64_DECODE_TABLE[b as usize] == 0xFF) {
         return None;
     }

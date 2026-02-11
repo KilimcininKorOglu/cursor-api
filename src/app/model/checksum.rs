@@ -87,7 +87,7 @@ impl Checksum {
     // Handle 129 字节Format：设备哈希(64) + '/' + MAC哈希(64)
     #[inline]
     fn repair_normal(bytes: &[u8; 129]) -> Self {
-        // 验证分隔符
+        // 验证Separator
         if bytes[64] != b'/' {
             return Self::default();
         }
@@ -115,7 +115,7 @@ impl Checksum {
             return Self::random();
         }
 
-        // 验证分隔符
+        // 验证Separator
         if bytes[72] != b'/' {
             return Self::random();
         }
@@ -196,7 +196,7 @@ const fn decode_hex_hash(hex_bytes: &[u8; 64]) -> Option<Hash> {
         let high = HEX_TABLE[hi as usize];
         let low = HEX_TABLE[lo as usize];
 
-        // 检查是否To有效的十六进制字符
+        // Check是否ToHave效的十六进制字符
         if high == 0xFF || low == 0xFF {
             return None;
         }

@@ -24,7 +24,7 @@ pub static HEX_CHARS: [u8; 16] = *b"0123456789abcdef";
 // /// 将单个字节EncodeTo两个十六进制字符（小写）
 // #[inline(always)]
 // pub fn byte_to_hex(byte: u8, out: &mut [u8; 2]) {
-//     // 编译器会优化掉边界检查（索引范围可证明To 0-15）
+//     // 编译器会优化掉边界Check（索引范围可证明To 0-15）
 //     out[0] = HEX_CHARS[(byte >> 4) as usize];
 //     out[1] = HEX_CHARS[(byte & 0x0F) as usize];
 // }

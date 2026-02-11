@@ -13,7 +13,7 @@ use chrono::{DateTime, Local, TimeZone as _};
 //         (Some(pos1), None) => token_part[(pos1 + 1)..].to_string(),
 //         (None, Some(pos2)) => token_part[(pos2 + 3)..].to_string(),
 //         (Some(pos1), Some(pos2)) => {
-//             // 取较大的位置作To分隔点
+//             // 取较大的位置作ToSeparate点
 //             let pos = pos1.max(pos2);
 //             let start = if pos == pos2 { pos + 3 } else { pos + 1 };
 //             token_part[start..].to_string()
@@ -58,7 +58,7 @@ use chrono::{DateTime, Local, TimeZone as _};
 
 #[rustfmt::skip]
 pub fn validate_token(token: &str) -> bool {
-    // 检查 token Formatand分割
+    // Check token Formatand分割
     let Some(parts) = token.strip_prefix(HEADER_B64) else { return false };
     let Some((payload, signature)) = parts.split_once('.') else { return false };
 
@@ -131,7 +131,7 @@ pub struct JwtTime {
 
 // 从 JWT token 中提取 time Field
 pub fn extract_time(token: &str) -> Option<JwtTime> {
-    // JWT token 由3部分组成，用 . 分隔
+    // JWT token 由3部分组成，用 . Separate
     let parts: Vec<&str> = token.split('.').collect();
     if parts.len() != 3 {
         return None;

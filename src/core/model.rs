@@ -227,7 +227,7 @@ impl ::core::fmt::Display for MessageId {
 //     #[inline(always)]
 //     pub fn to_str<'buf>(&self, buf: &'buf mut [u8; 30]) -> &'buf mut str {
 //         unsafe {
-//             // 复制前缀 "toolu_01"
+//             // 复制Prefix "toolu_01"
 //             ::core::ptr::copy_nonoverlapping(TOOLU01_PREFIX.as_ptr(), buf.as_mut_ptr(), 8);
 
 //             // Encode后续的Base62部分
@@ -249,7 +249,7 @@ impl ::core::fmt::Display for MessageId {
 //         unsafe { prost::ByteStr::from_utf8_unchecked(bytes::Bytes::from(v)) }
 //     }
 
-//     /// Format化ToUUID样式的字符串（不含前缀）
+//     /// Format化ToUUID样式的字符串（不含Prefix）
 //     #[inline]
 //     const fn format_hyphenated(src: [u8; 16]) -> [u8; 35] {
 //         const HEX_LUT: &[u8; 16] = b"0123456789abcdef";
@@ -259,7 +259,7 @@ impl ::core::fmt::Display for MessageId {
 
 //         let mut src_idx = 0;
 
-//         // Handle前4组，每组后面都有连字符
+//         // Handle前4组，每组后面都Have连字符
 //         let mut group_idx = 0;
 //         while group_idx < 4 {
 //             let (start, end) = groups[group_idx];

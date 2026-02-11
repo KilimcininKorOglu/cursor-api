@@ -96,16 +96,16 @@ impl QueueType {
 }
 
 /// 全局队列头指针数组，每个队列类型独立维护轮询位置
-/// Use静态全局变量而非存储在TokenQueue中，避免每次select时的借用检查
+/// Use静态全局变量而非存储在TokenQueue中，避免每次select时的借用Check
 static QUEUE_HEADS: [AtomicUsize; 4] =
     [AtomicUsize::new(0), AtomicUsize::new(0), AtomicUsize::new(0), AtomicUsize::new(0)];
 
 /// Round-robin token选择队列
 ///
 /// 设计要点：
-/// - 所有token共享同一个vec，不同队列类型通过head指针区分轮询位置
+/// - 所Havetoken共享同一个vec，不同队列类型通过head指针区分轮询位置
 /// - 每次select从当前head开始遍历，跳过不可用token，找到后更新head
-/// - remove时需要调整所有head，保证指针不会越界
+/// - remove时需要调整所Havehead，保证指针不会越界
 pub struct TokenQueue {
     #[cfg(not(feature = "horizon"))]
     vec: Vec<TokenManagerKey>,
@@ -137,7 +137,7 @@ impl TokenQueue {
         let Some(vec_index) = self.map.remove(old_key) else { return false };
 
         #[cfg(not(feature = "horizon"))]
-        // SAFETY: vec_index来自map，map中的索引由push/remove维护，保证有效
+        // SAFETY: vec_index来自map，map中的索引由push/remove维护，保证Have效
         unsafe {
             self.vec.get_unchecked_mut(vec_index).set_token_key(new_key);
         };
@@ -149,7 +149,7 @@ impl TokenQueue {
     pub fn remove(&mut self, token_key: &TokenKey) -> Option<TokenManagerKey> {
         let vec_index = self.map.remove(token_key)?;
 
-        // 调整所有队列的head指针：Ifhead在被删除元素之后，需要前移一位
+        // 调整所Have队列的head指针：Ifhead在被删除元素之后，需要前移一位
         // 这保证了remove后指针仍然指向正确的相对位置
         // SAFETY: QueueType是repr(usize)枚举，值域To0..4，QUEUE_HEADS长度To4
         unsafe {
@@ -187,7 +187,7 @@ impl TokenQueue {
     ) -> Option<usize> {
         let vec_index = self.map.remove(token_key)?;
 
-        // 调整所有队列的head指针：Ifhead在被删除元素之后，需要前移一位
+        // 调整所Have队列的head指针：Ifhead在被删除元素之后，需要前移一位
         // 这保证了remove后指针仍然指向正确的相对位置
         // SAFETY: QueueType是repr(usize)枚举，值域To0..4，QUEUE_HEADS长度To4
         unsafe {
@@ -227,7 +227,7 @@ impl TokenQueue {
     ///
     /// 算法：
     /// 1. 从当前队列的head开始轮询
-    /// 2. 检查token是否启用且健康
+    /// 2. Checktoken是否启用且健康
     /// 3. 找到后更新head到下一个位置
     /// 4. 最多尝试整个vec一轮，避免无限循环
     pub fn select(&self, queue_type: QueueType, manager: &TokenManager) -> Option<ExtToken> {
@@ -240,7 +240,7 @@ impl TokenQueue {
         let start = head.load(Ordering::Relaxed);
         let len = self.vec.len();
 
-        // SAFETY: vec非Empty，len>=1，base有效
+        // SAFETY: vec非Empty，len>=1，baseHave效
         let base = self.vec.as_ptr();
 
         for i in 0..len {

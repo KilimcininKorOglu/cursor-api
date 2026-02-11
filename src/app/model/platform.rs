@@ -110,7 +110,7 @@ impl Platform {
     pub const fn as_header_value(&self) -> http::header::HeaderValue {
         unsafe { HeaderValue::from_static(self.string).into() }
     }
-    /// User-Agent 前缀
+    /// User-Agent Prefix
     pub const fn ua_prefix(&self) -> &'static str { self.ua_prefix }
     // const fn ua_suffix(&self) -> &'static str {
     //     use core::slice::SliceIndex as _;

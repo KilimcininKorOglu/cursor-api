@@ -73,7 +73,7 @@ pub struct Servers {
 
 impl Servers {
     /// 从环境变量 NTP_SERVERS 初始化服务器列表
-    /// Format：逗号分隔的服务器地址，如 "pool.ntp.org,time.cloudflare.com"
+    /// Format：逗号Separate的服务器地址，如 "pool.ntp.org,time.cloudflare.com"
     pub fn init() {
         let env = crate::common::utils::parse_from_env("NTP_SERVERS", EMPTY_STRING);
         let servers: Vec<String> =
@@ -144,8 +144,8 @@ impl NtpTimestamps {
     }
 }
 
-/// 验证 NTP Response包的有效性
-/// 检查协议版本、模式、stratum 层级等Field
+/// 验证 NTP Response包的Have效性
+/// Check协议版本、模式、stratum 层级等Field
 #[inline]
 fn validate_ntp_response(packet: [u8; 48]) -> Result<(), NtpError> {
     let mode = packet[0] & 0x7;
@@ -215,7 +215,7 @@ async fn send_and_receive_ntp_packet(
     // 接收Response（带超时保护）
     tokio::time::timeout(Duration::from_secs(TIMEOUT_SECS), socket.recv(&mut packet)).await??;
 
-    // 记录 T4：客户端接收时刻（尽可能接近接收瞬间）
+    // 记录 T4：客户端接收时刻（尽May接近接收瞬间）
     let t4_system = SystemTime::now();
     let t4_ntp = system_time_to_ntp_timestamp(t4_system)?;
 
@@ -290,7 +290,7 @@ pub async fn sync_once() -> Result<i64, NtpError> {
         }
     }
 
-    // 2. 检查成功样本数
+    // 2. Check成功样本数
     let success_count = samples.len();
     if success_count < 3 {
         return Err(NtpError::Protocol("成功采样数不足 3 个，无法计算可靠结果"));
@@ -325,7 +325,7 @@ pub async fn sync_once() -> Result<i64, NtpError> {
     let first_valid_idx = valid_samples
         .iter()
         .position(|(_, rtt)| *rtt > 0)
-        .ok_or(NtpError::Protocol("所有样本的 RTT 异常(<=0)"))?;
+        .ok_or(NtpError::Protocol("所Have样本的 RTT 异常(<=0)"))?;
 
     if first_valid_idx > 0 {
         crate::debug!("跳过 {} 个 RTT<=0 的异常样本", first_valid_idx);
@@ -345,7 +345,7 @@ pub async fn sync_once() -> Result<i64, NtpError> {
 
     let final_delta = (weighted_sum / weight_sum) as i64;
 
-    // 7. 业务合理性检查：拒绝超过 ±1 天的偏移
+    // 7. 业务合理性Check：拒绝超过 ±1 天的偏移
     const MAX_REASONABLE_DELTA: i64 = 86400 * 1_000_000_000;
 
     if final_delta.abs() > MAX_REASONABLE_DELTA {
@@ -396,7 +396,7 @@ pub async fn init_sync(stdout_ready: alloc::sync::Arc<tokio::sync::Notify>) {
 
     if servers.inner.is_empty() {
         stdout_ready.notified().await;
-        __println!("\r\x1B[2K无NTP服务器配置, 若系统时间不准确可能导致UB");
+        __println!("\r\x1B[2K无NTP服务器配置, 若系统时间不准确May导致UB");
         return;
     }
 
@@ -422,7 +422,7 @@ pub async fn init_sync(stdout_ready: alloc::sync::Arc<tokio::sync::Notify>) {
 /// 启动周期性后台同步任务（由 `init_sync` 自动调用）
 ///
 /// 启动条件（需同时满足）：
-/// 1. 配置了 NTP 服务器（已由 init_sync 检查）
+/// 1. 配置了 NTP 服务器（已由 init_sync Check）
 /// 2. 同步间隔大于 0（NTP_SYNC_INTERVAL_SECS > 0）
 ///
 /// 任务行To：

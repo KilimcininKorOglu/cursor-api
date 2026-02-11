@@ -1,7 +1,7 @@
 /// Cursor订阅计划类型
 ///
 /// 各计划包含的usage额度：
-/// - Free: 有限的免费额度
+/// - Free: Have限的免费额度
 /// - FreeTrial: 试用期额度
 /// - Pro: $20 API usage + bonus (~225 Sonnet 4.5 requests)
 /// - ProPlus: $70 API usage + bonus (~675 Sonnet 4.5 requests)  

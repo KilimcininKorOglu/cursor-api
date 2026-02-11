@@ -25,7 +25,7 @@ pub enum SubscriptionStatus {
     PastDue,
 
     /// 已取消 - 订阅已取消，终态，无法更新
-    /// 取消期间所有未付发票的自动收款被Disabled
+    /// 取消期间所Have未付发票的自动收款被Disabled
     Canceled,
 
     /// 未支付 - 最新发票未付但订阅仍存在

@@ -392,7 +392,7 @@ impl Models {
                 available_models.models.iter().map(convert_model).collect()
             }
             FetchMode::AppendTruncate => {
-                // 先Collect所有在available_models中的模型ID
+                // 先Collect所Have在available_models中的模型ID
                 let new_model_ids: HashSet<_> = available_models
                     .models
                     .iter()
@@ -406,7 +406,7 @@ impl Models {
                     .cloned()
                     .collect();
 
-                // 添加所有新模型
+                // 添加所Have新模型
                 result.extend(available_models.models.iter().map(convert_model));
 
                 result
@@ -416,7 +416,7 @@ impl Models {
                 let existing_ids: HashSet<_> =
                     current_models.iter().map(|model| model.id).collect();
 
-                // 复制现有模型
+                // 复制现Have模型
                 let mut result = current_models.to_vec();
 
                 // 仅添加ID不存在的新模型
@@ -455,12 +455,12 @@ impl Models {
                         return true;
                     }
 
-                    // Handle带有"-online"后缀的Case
+                    // Handle带Have"-online"后缀的Case
                     if let Some(base) = id.strip_suffix("-online") {
                         if base == mid {
                             return true;
                         }
-                        // Handle同时有"-max"and"-online"后缀的Case（即"-max-online"）
+                        // Handle同时Have"-max"and"-online"后缀的Case（即"-max-online"）
                         if let Some(base_without_max) = base.strip_suffix("-max")
                             && base_without_max == mid
                         {
@@ -468,7 +468,7 @@ impl Models {
                         }
                         false
                     }
-                    // Handle仅带有"-max"后缀的Case
+                    // Handle仅带Have"-max"后缀的Case
                     else if let Some(base) = id.strip_suffix("-max") {
                         base == mid
                     } else {

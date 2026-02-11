@@ -29,17 +29,17 @@ struct Openai;
 
 crate::define_typed_constants! {
     &'static str => {
-        /// Support的ImageFormat
+        /// Supported ImageFormat
         FORMAT_PNG = "png",
         FORMAT_JPEG = "jpeg",
         FORMAT_JPG = "jpg",
         FORMAT_WEBP = "webp",
         FORMAT_GIF = "gif",
-        /// Data URL 前缀
+        /// Data URL prefix
         DATA_IMAGE_PREFIX = "data:image/",
-        /// Base64 分隔符
+        /// Base64 separator
         BASE64_SEPARATOR = ";base64,",
-        /// 双换行符用于分隔Instruction
+        /// Double newline to separate Instructions
         DOUBLE_NEWLINE = "\n\n",
     }
 }
@@ -67,7 +67,7 @@ impl ToolParam for ChatCompletionTool {
 
 impl ToolResult for ChatCompletionContentText {
     fn is_error(&self) -> bool {
-        // 可能有副作用
+        // May have side effects
         false
     }
     fn size_hint(&self) -> Option<usize> {
@@ -97,7 +97,7 @@ impl Adapter for Openai {
     fn _process_base64_image(url: &str) -> Result<(Vec<u8>, image::ImageFormat), AdapterError> {
         let (format, data) =
             url.split_once(BASE64_SEPARATOR).ok_or(AdapterError::Base64DecodeFailed)?;
-        // 检查ImageFormat
+        // Check ImageFormat
         let format = match format {
             FORMAT_PNG => image::ImageFormat::Png,
             FORMAT_JPG | FORMAT_JPEG => image::ImageFormat::Jpeg,
@@ -117,7 +117,7 @@ impl Adapter for Openai {
         image_support: bool,
         is_agentic: bool,
     ) -> Result<(String, Messages, Vec<ComposerExternalLink>), AdapterError> {
-        // 分别Collect system instructionsand user/assistant Conversation
+        // Collect system instructions and user/assistant Conversation separately
         let (system_messages, mut params): (Vec<_>, Vec<_>) = messages
             .into_iter()
             .partition(|param| matches!(param, ChatCompletionMessageParam::System { .. }));

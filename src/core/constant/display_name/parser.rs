@@ -22,14 +22,14 @@ pub enum Pattern {
 
 pub struct ParseResult {
     pub main_parts: Vec<Pattern>,
-    pub date_parts: Vec<Pattern>, // 只有日期Related的才进括号
+    pub date_parts: Vec<Pattern>, // 只Have日期Related的才进括号
 }
 
 #[inline(always)]
 pub fn parse_patterns(tokens: Vec<Token>) -> ParseResult {
     // 预分配：大部分 token 都会变成 pattern，日期部分通常较少
     let mut main_parts = Vec::with_capacity(tokens.len());
-    let mut date_parts = Vec::with_capacity(2); // 通常最多有1-2个日期Related项
+    let mut date_parts = Vec::with_capacity(2); // 通常最多Have1-2个日期Related项
     let mut i = 0;
 
     while i < tokens.len() {
@@ -38,7 +38,7 @@ pub fn parse_patterns(tokens: Vec<Token>) -> ParseResult {
         // 快速路径：基于首字符判断
         match token.meta.first_char {
             b'g' if token.meta.len == 3 => {
-                // 可能是 gpt
+                // May是 gpt
                 if token.content == "gpt" {
                     main_parts.push(Pattern::GPT);
                     i += 1;
@@ -46,7 +46,7 @@ pub fn parse_patterns(tokens: Vec<Token>) -> ParseResult {
                 }
             }
             b'o' if token.meta.len == 2 => {
-                // 可能是 o1, o3, o4
+                // May是 o1, o3, o4
                 if let Some(&digit) = token.content.as_bytes().get(1)
                     && matches!(digit, b'1' | b'3' | b'4')
                 {
@@ -114,7 +114,7 @@ pub fn parse_patterns(tokens: Vec<Token>) -> ParseResult {
             continue;
         }
 
-        // 其他所有词都作To主体部分
+        // 其他所Have词都作To主体部分
         main_parts.push(Pattern::Word(token.content));
         i += 1;
     }
@@ -138,7 +138,7 @@ fn is_version_pattern(s: &str) -> bool {
 fn try_parse_date(tokens: &[Token], start: usize) -> Option<Cow<'static, str>> {
     let token = &tokens[start];
 
-    // YYYY-MM-DD (必须先检查，因To YYYY 也是4位数字)
+    // YYYY-MM-DD (必须先Check，因To YYYY 也是4位数字)
     if token.meta.digit_count == 4 && start + 2 < tokens.len() {
         let next1 = &tokens[start + 1];
         let next2 = &tokens[start + 2];
@@ -159,10 +159,10 @@ fn try_parse_date(tokens: &[Token], start: usize) -> Option<Cow<'static, str>> {
     }
 
     // MMDD -> MM-DD (如 0528)
-    // 只有当4位数字看起来像 MMDD Format时才Handle（前两位 <= 12）
+    // 只Have当4位数字看起来像 MMDD Format时才Handle（前两位 <= 12）
     if token.meta.digit_count == 4 {
         let bytes = token.content.as_bytes();
-        // 检查是否可能是月份（01-12）
+        // Check是否May是月份（01-12）
         let month = (bytes[0] - b'0') * 10 + (bytes[1] - b'0');
         if (1..=12).contains(&month) {
             // 预分配精确长度：2 + '-' + 2 = 5
@@ -196,7 +196,7 @@ fn update_index_for_date(tokens: &[Token], start: usize) -> usize {
 
     // MMDD 或单独的日期组件
     if token.meta.digit_count == 4 || token.meta.digit_count == 2 {
-        // 检查是否是 YYYY-MM-DD
+        // Check是否是 YYYY-MM-DD
         if token.meta.digit_count == 4
             && start + 2 < tokens.len()
             && tokens[start + 1].meta.is_digit_only

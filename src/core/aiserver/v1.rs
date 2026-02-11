@@ -60,7 +60,7 @@ impl ErrorDetails {
                 // 410 - Gone: 资源不再可用
                 Error::Deprecated | Error::OutdatedClient => 410,
 
-                // 422 - Unprocessable Entity: Request有效但无法Handle
+                // 422 - Unprocessable Entity: RequestHave效但无法Handle
                 Error::ApiKeyNotSupported => 422,
 
                 // 429 - Too Many Requests: 限流RelatedError

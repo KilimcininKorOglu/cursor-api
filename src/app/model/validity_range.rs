@@ -1,8 +1,8 @@
-//! 提供时间有效期范围的数据结构andRelated操作
+//! 提供时间Have效期范围的数据结构andRelated操作
 
 use std::num::ParseIntError;
 
-/// 表示一个有效期范围，以两个u32值表示起始and结束时间。
+/// 表示一个Have效期范围，以两个u32值表示起始and结束时间。
 ///
 /// 该结构体Use透明内存布局，通过[u32; 2]实现8字节Size。
 /// Support从字符串解析，比如"60"表示60-60的范围，"3600-86400"表示3600到86400的闭区间。
@@ -15,7 +15,7 @@ pub struct ValidityRange {
 const _: [u8; 8] = [0; ::core::mem::size_of::<ValidityRange>()]; // EnsureSizeTo8字节
 
 impl ValidityRange {
-    /// 创建新的有效期范围实例
+    /// 创建新的Have效期范围实例
     ///
     /// # 参数
     ///
@@ -42,11 +42,11 @@ impl ValidityRange {
     #[inline(always)]
     pub const fn end(&self) -> u32 { self.range[1] }
 
-    /// 检查给定值是否在有效期范围内
+    /// Check给定值是否在Have效期范围内
     ///
     /// # 参数
     ///
-    /// * `value` - 待检查的值
+    /// * `value` - 待Check的值
     ///
     /// # 返回值
     ///
@@ -67,7 +67,7 @@ impl ValidityRange {
         value >= self.start() && value <= self.end()
     }
 
-    /// 从字符串解析有效期范围
+    /// 从字符串解析Have效期范围
     ///
     /// Support两种Format：
     /// - "N" 表示N-N的单点范围

@@ -246,7 +246,7 @@ impl From<crate::common::model::userinfo::TokenUsage> for ChainUsage {
 //         let mut remaining = input.as_str();
 
 //         while !remaining.is_empty() {
-//             // 检查是否以任一开始标记开头，并确定相应的结束标记
+//             // Check是否以任一开始标记开头，并确定相应的结束标记
 //             let (role, end_tag, content) =
 //                 if let Some(r) = remaining.strip_prefix("<|BEGIN_SYSTEM|>\n") {
 //                     (Role::System, "\n<|END_SYSTEM|>\n", r)
@@ -258,7 +258,7 @@ impl From<crate::common::model::userinfo::TokenUsage> for ChainUsage {
 //                     return Self::Origin(input);
 //                 };
 
-//             // 更新remainingTo去除前缀后的内容
+//             // 更新remainingTo去除Prefix后的内容
 //             remaining = content;
 
 //             // 查找结束标记

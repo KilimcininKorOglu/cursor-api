@@ -59,7 +59,7 @@ static GENERAL_CLIENT: ManuallyInit<ArcSwapAny<Client>> = ManuallyInit::new();
 
 /// 代理配置管理器
 ///
-/// 负责管理所有代理配置及其对应的客户端
+/// 负责管理所Have代理配置及其对应的客户端
 #[derive(Clone, Deserialize, Serialize, Archive, RkyvDeserialize, RkyvSerialize)]
 pub struct Proxies {
     /// 名称到代理配置的映射
@@ -75,10 +75,10 @@ impl Default for Proxies {
 impl Proxies {
     /// 初始化全局代理系统
     ///
-    /// 验证配置的完整性并创建所有必要的客户端
+    /// 验证配置的完整性并创建所Have必要的客户端
     #[inline]
     pub fn init(mut self) {
-        // Ensure至少有Default代理
+        // Ensure至少HaveDefault代理
         if self.proxies.is_empty() {
             self.proxies = default_proxies();
             if self.general.as_str() != SYS_PROXY {
@@ -89,7 +89,7 @@ impl Proxies {
             self.general = __unwrap!(self.proxies.keys().next()).clone();
         }
 
-        // Collect所有唯一的代理配置
+        // Collect所Have唯一的代理配置
         let proxies = self.proxies.values().collect::<HashSet<_>>();
         let mut clients =
             HashMap::with_capacity_and_hasher(proxies.len(), ::ahash::RandomState::new());
@@ -101,7 +101,7 @@ impl Proxies {
 
         // 初始化全局静态变量
         // Safety: 前面的逻辑已Ensure general 存在于 proxies 中，
-        // 且所有 proxies 中的代理都有对应的客户端
+        // 且所Have proxies 中的代理都Have对应的客户端
         GENERAL_CLIENT.init(ArcSwapAny::from(
             __unwrap!(clients.get(__unwrap!(self.proxies.get(&self.general)))).clone(),
         ));
@@ -128,7 +128,7 @@ impl Proxies {
         let mut general_name = general_name().load_full();
         let mut clients = (*clients().load_full()).clone();
 
-        // Ensure配置有效性
+        // Ensure配置Have效性
         if proxies.is_empty() {
             self::proxies().store(Arc::new(default_proxies()));
             if general_name.as_str() != SYS_PROXY {
@@ -139,7 +139,7 @@ impl Proxies {
             general_name = Arc::new(__unwrap!(proxies.keys().next()).clone());
         }
 
-        // Collect当前配置中的所有唯一代理
+        // Collect当前配置中的所Have唯一代理
         let current_proxies: HashSet<&SingleProxy> = proxies.values().collect();
 
         // 移除不再Use的客户端

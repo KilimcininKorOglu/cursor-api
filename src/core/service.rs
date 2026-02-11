@@ -268,7 +268,7 @@ pub async fn handle_chat_completions(
         //     }
         // }
 
-        // // Handle检查结果
+        // // HandleCheck结果
         // if need_profile_check {
         //     state.decrement_active();
         //     state.increment_error();
@@ -921,7 +921,7 @@ pub async fn handle_chat_completions(
 
         full_text = full_text.trim_leading_newlines();
 
-        // 检查Response是否ToEmpty
+        // CheckResponse是否ToEmpty
         if full_text.is_empty() {
             // 更新Request日志ToFailed
             log_manager::update_log(
@@ -1069,7 +1069,7 @@ pub async fn handle_messages(
         //     }
         // }
 
-        // // Handle检查结果
+        // // HandleCheck结果
         // if need_profile_check {
         //     state.decrement_active();
         //     state.increment_error();
@@ -1290,7 +1290,7 @@ pub async fn handle_messages(
             for message in messages {
                 match message {
                     StreamMessage::Thinking(thinking) => {
-                        // 检查是否需要开始Message
+                        // Check是否需要开始Message
                         let is_start =
                             ctx.stream_state.load(Ordering::Acquire) == StreamState::NotStarted;
                         if is_start {
@@ -1306,11 +1306,11 @@ pub async fn handle_messages(
                             extend_from_slice(&mut response_data, &event);
                         }
 
-                        // 检查是否需要切换或开始内容块
+                        // Check是否需要切换或开始内容块
                         let last_type = ctx.last_content_type.load(Ordering::Acquire);
 
                         if last_type != LastContentType::Thinking {
-                            // If上次不是Thinking类型，需要结束上个块(If有的话)
+                            // If上次不是Thinking类型，需要结束上个块(IfHave的话)
                             if last_type != LastContentType::None {
                                 let event = anthropic::RawMessageStreamEvent::ContentBlockStop {
                                     index: ctx.index.load(Ordering::Acquire),
@@ -1364,7 +1364,7 @@ pub async fn handle_messages(
                         }
                     }
                     StreamMessage::Content(text) => {
-                        // 检查是否需要开始Message
+                        // Check是否需要开始Message
                         let is_start =
                             ctx.stream_state.load(Ordering::Acquire) == StreamState::NotStarted;
                         if is_start {
@@ -1380,11 +1380,11 @@ pub async fn handle_messages(
                             extend_from_slice(&mut response_data, &event);
                         }
 
-                        // 检查是否需要切换或开始内容块
+                        // Check是否需要切换或开始内容块
                         let last_type = ctx.last_content_type.load(Ordering::Acquire);
 
                         if last_type != LastContentType::Text {
-                            // If上次不是文本类型，需要结束上个块(If有的话)
+                            // If上次不是文本类型，需要结束上个块(IfHave的话)
                             if last_type != LastContentType::None {
                                 let event = anthropic::RawMessageStreamEvent::ContentBlockStop {
                                     index: ctx.index.load(Ordering::Acquire),
@@ -1420,11 +1420,11 @@ pub async fn handle_messages(
                         extend_from_slice(&mut response_data, &event);
                     }
                     StreamMessage::ToolCall(tool_call) => {
-                        // 检查是否需要切换或开始内容块
+                        // Check是否需要切换或开始内容块
                         let last_type = ctx.last_content_type.load(Ordering::Acquire);
 
                         if last_type != LastContentType::InputJson {
-                            // If上次不是InputJson类型，需要结束上个块(If有的话)
+                            // If上次不是InputJson类型，需要结束上个块(IfHave的话)
                             if last_type != LastContentType::None {
                                 let event = anthropic::RawMessageStreamEvent::ContentBlockStop {
                                     index: ctx.index.load(Ordering::Acquire),
@@ -1475,7 +1475,7 @@ pub async fn handle_messages(
                         log_manager::update_log(ctx.current_id, LogUpdate::Timing(total_time))
                             .await;
 
-                        // 结束当前内容块(If有的话)
+                        // 结束当前内容块(IfHave的话)
                         let last_type = ctx.last_content_type.load(Ordering::Acquire);
                         if last_type != LastContentType::None {
                             let event = anthropic::RawMessageStreamEvent::ContentBlockStop {
@@ -1636,7 +1636,7 @@ pub async fn handle_messages(
                         current_response
                     };
 
-                    // 检查是否已完成
+                    // Check是否已完成
                     if ctx.stream_state.load(Ordering::Acquire) == StreamState::Completed {
                         drop_handle.drop_stream()
                     }

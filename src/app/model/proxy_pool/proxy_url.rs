@@ -18,7 +18,7 @@ impl ProxyUrl {
     /// # Safety
     /// 这里Use `unwrap_unchecked` 是安全的，因To：
     /// - ProxyUrl 只能通过 `FromStr::from_str` 构造
-    /// - `from_str` 中已经通过 `Proxy::all(s)?` 验证了URL的有效性
+    /// - `from_str` 中已经通过 `Proxy::all(s)?` 验证了URL的Have效性
     /// - 一旦构造成功，内部的URL字符串就是不可变的
     #[inline]
     pub fn to_proxy(&self) -> Proxy { unsafe { Proxy::all(self.0.as_str()).unwrap_unchecked() } }
@@ -44,11 +44,11 @@ impl FromStr for ProxyUrl {
 
     /// 从字符串解析 ProxyUrl
     ///
-    /// 会预先验证URL是否可以创建有效的 `Proxy`，
+    /// 会预先验证URL是否可以创建Have效的 `Proxy`，
     /// 这保证了后续 `to_proxy` 方法的安全性。
     #[inline]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        // 验证URL的有效性
+        // 验证URL的Have效性
         Proxy::all(s)?;
         Ok(Self(Str::new(s)))
     }

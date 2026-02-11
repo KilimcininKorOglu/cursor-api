@@ -2,10 +2,10 @@
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[repr(u8)]
 pub enum FetchMode {
-    /// 覆盖现有数据
+    /// 覆盖现Have数据
     Truncate,
 
-    /// 追加新数据并部分覆盖现有数据
+    /// 追加新数据并部分覆盖现Have数据
     AppendTruncate,
 
     /// 追加新数据

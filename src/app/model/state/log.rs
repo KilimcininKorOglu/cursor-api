@@ -18,7 +18,7 @@ pub enum RequestLogsLimit {
     Disabled,
     /// 无Limit日志记录
     Unlimited,
-    /// 有Limit的日志记录，参数To最大日志数量
+    /// HaveLimit的日志记录，参数To最大日志数量
     Limited(usize),
 }
 
@@ -34,7 +34,7 @@ impl RequestLogsLimit {
         }
     }
 
-    /// 检查是否需要保存日志
+    /// Check是否需要保存日志
     #[inline(always)]
     pub fn should_log(&self) -> bool { !matches!(self, Self::Disabled) }
 
@@ -135,7 +135,7 @@ impl LogManager {
             *self.token_ref_counts.entry(token_key).or_insert(0) += 1;
         }
 
-        // 移除没有被引用的tokens
+        // 移除没Have被引用的tokens
         self.tokens.retain(|key, _| self.token_ref_counts.contains_key(key));
     }
 
@@ -279,7 +279,7 @@ impl LogManager {
     //     false
     // }
 
-    /// 检查是否启用日志
+    /// Check是否启用日志
     #[inline]
     pub fn is_enabled(&self) -> bool { self.logs_limit.should_log() }
 
@@ -308,7 +308,7 @@ impl LogManager {
     //         .collect()
     // }
 
-    // /// 清Empty所有日志andtoken
+    // /// 清Empty所Have日志andtoken
     // #[inline]
     // pub fn clear(&mut self) {
     //     self.logs.clear();

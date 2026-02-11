@@ -152,7 +152,7 @@ macro_rules! def_cursor_api_url {
             $(
                 $(
                     paste::paste! {
-                        // 初始化私有URL
+                        // 初始化私HaveURL
                         {
                             let host = if unsafe { USE_PRI_REVERSE_PROXY } {
                                 &PRI_REVERSE_PROXY_HOST
@@ -186,7 +186,7 @@ macro_rules! def_cursor_api_url {
     };
 }
 
-// 一次性定义所有API
+// 一次性定义所HaveAPI
 def_cursor_api_url! {
     init_fn: init_all_cursor_urls,
 

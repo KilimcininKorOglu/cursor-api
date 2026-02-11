@@ -2,7 +2,7 @@
 //!
 //! 本模块Use ManuallyInit 来存储版本信息，这种设计考虑了以下因素：
 //! 1. 版本信息在程序生命周期内只需初始化一次
-//! 2. 零开销访问：没有原子操作或运行时检查
+//! 2. 零开销访问：没Have原子操作或运行时Check
 //! 3. 符合单线程初始化、多线程只读的模式
 //!
 //! # Safety
@@ -10,11 +10,11 @@
 //! 安全性保证：
 //! - 初始化函数 `initialize_cursor_version` 必须在程序启动时的单线程环境中调用
 //! - 必须且只能调用一次 `initialize_cursor_version`
-//! - 初始化后，所有访问都是只读的（通过 clone() 返回副本）
+//! - 初始化后，所Have访问都是只读的（通过 clone() 返回副本）
 
 use manually_init::ManuallyInit;
 
-// 定义所有常量
+// 定义所Have常量
 crate::define_typed_constants! {
     &'static str => {
         /// Default的客户端版本号
@@ -23,7 +23,7 @@ crate::define_typed_constants! {
         ENV_CURSOR_CLIENT_VERSION = "CURSOR_CLIENT_VERSION",
         /// Chrome 版本信息
         CHROME_VERSION_INFO = " Chrome/138.0.7204.251 Electron/37.7.0 Safari/537.36",
-        /// User-Agent 前缀
+        /// User-Agent Prefix
         UA_PREFIX = cfg_select! {
             target_os = "windows" => {"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Cursor/"}
             target_os = "macos" => {"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Cursor/"}
@@ -127,17 +127,17 @@ pub fn initialize_cursor_version() {
     HEADER_VALUE_UA_CURSOR_LATEST.init(ua_header);
 }
 
-/// 检查版本字符串是否符合 VSCode/Cursor 的版本Format
+/// Check版本字符串是否符合 VSCode/Cursor 的版本Format
 ///
 /// 期望的Format：`major.minor.patch`
 /// 例如：`1.0.0`、`1.95.3`
 ///
 /// # Returns
 ///
-/// If版本Format有效返回 `true`，否则返回 `false`
+/// If版本FormatHave效返回 `true`，否则返回 `false`
 #[inline]
 pub const fn is_valid_version_format(version: &str) -> bool {
-    // 快速路径：检查基本长度要求
+    // 快速路径：Check基本长度要求
     if version.len() < VERSION_MIN_LENGTH || version.len() > VERSION_MAX_LENGTH {
         return false;
     }
@@ -158,7 +158,7 @@ pub const fn is_valid_version_format(version: &str) -> bool {
                 }
             }
             b'.' => {
-                // 点号前必须有数字
+                // 点号前必须Have数字
                 if digit_count == 0 {
                     return false;
                 }
@@ -173,7 +173,7 @@ pub const fn is_valid_version_format(version: &str) -> bool {
         i += 1;
     }
 
-    // 必须正好有两个点号，且Last一部分有数字
+    // 必须正好Have两个点号，且Last一部分Have数字
     dot_count == VERSION_DOT_COUNT && digit_count > 0
 }
 

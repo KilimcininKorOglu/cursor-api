@@ -32,7 +32,7 @@ impl core::error::Error for TokenError {}
 /// 高性能Token管理器
 ///
 /// 设计特点：
-/// - **零拷贝查询**：所有查询方法返回引用，避免clone
+/// - **零拷贝查询**：所Have查询方法返回引用，避免clone
 /// - **紧凑存储**：Vec<Option<T>>密集布局，缓存友好
 /// - **O(1)操作**：通过HashMap+Vec实现常数时间增删改查
 /// - **ID重用**：FIFO队列管理Empty闲ID，减少内存碎片
@@ -47,7 +47,7 @@ impl core::error::Error for TokenError {}
 /// - `id_map`, `alias_map` 中的id指向的 `tokens[id]` 必To Some
 /// - `free_ids` 中的id必 < tokens.len() 且 `tokens[id]` To None
 ///
-/// 性能关键路径已Useunsafe消除边界检查
+/// 性能关键路径已Useunsafe消除边界Check
 pub struct TokenManager {
     /// 主存储：ID -> TokenInfo，UseOptionSupport删除后的Empty槽位
     tokens: Vec<Option<TokenInfo>>,
@@ -114,7 +114,7 @@ impl TokenManager {
         let alias = Alias::new(alias);
         self.alias_map.insert(alias.clone(), id);
 
-        // SAFETY: 同上，id有效且id_to_alias与tokens长度同步
+        // SAFETY: 同上，idHave效且id_to_alias与tokens长度同步
         unsafe { *self.id_to_alias.get_unchecked_mut(id) = Some(alias) };
 
         Ok(id)
@@ -139,7 +139,7 @@ impl TokenManager {
     pub fn remove(&mut self, id: usize) -> Option<TokenInfo> {
         let token_info = self.tokens.get_mut(id)?.take()?;
 
-        // 清理所有索引
+        // 清理所Have索引
         let key = token_info.bundle.primary_token.key();
         self.id_map.remove(&key);
         #[cfg(not(feature = "horizon"))]
@@ -147,7 +147,7 @@ impl TokenManager {
         #[cfg(feature = "horizon")]
         self.queue.remove(&key, &self.tokens);
 
-        // SAFETY: 能走到这里说明id<len且Some，id_to_alias同步长度，必有对应别名
+        // SAFETY: 能走到这里说明id<len且Some，id_to_alias同步长度，必Have对应别名
         unsafe {
             let alias = self.id_to_alias.get_unchecked_mut(id).take().unwrap_unchecked();
             self.alias_map.remove(&alias);
@@ -176,7 +176,7 @@ impl TokenManager {
             return Err(TokenError::AliasExists);
         }
 
-        // SAFETY: 前面已检查id有效且Some
+        // SAFETY: 前面已CheckidHave效且Some
         unsafe {
             let old_alias = self.id_to_alias.get_unchecked_mut(id).take().unwrap_unchecked();
             self.alias_map.remove(&old_alias);
@@ -185,7 +185,7 @@ impl TokenManager {
         let alias = Alias::new(alias);
         self.alias_map.insert(alias.clone(), id);
 
-        // SAFETY: id仍然有效
+        // SAFETY: id仍然Have效
         unsafe { *self.id_to_alias.get_unchecked_mut(id) = Some(alias) };
 
         Ok(())
@@ -224,7 +224,7 @@ impl TokenManager {
         }
     }
 
-    /// 更新所有token的客户端密钥，用于安全性刷新
+    /// 更新所Havetoken的客户端密钥，用于安全性刷新
     #[inline(always)]
     pub fn update_client_key(&mut self) {
         for token_info in self.tokens.iter_mut().flatten() {
@@ -360,7 +360,7 @@ impl Drop for TokenWriter<'_> {
         use core::hint::{assert_unchecked, unreachable_unchecked};
         let key = self.token.primary_token.key();
 
-        // 检测key是否变化，变化则更新所有索引
+        // 检测key是否变化，变化则更新所Have索引
         if key != self.key {
             // SAFETY: TokenWriter只能通过into_token_writer创建，那时token必存在
             // self.key是创建时的token key，必在id_map中
@@ -398,7 +398,7 @@ fn generate_unnamed_alias(id: usize) -> String {
             s.push((b'0' + (n % 10) as u8) as char);
             n /= 10;
         }
-        // SAFETY: 只push了ASCII数字，UTF-8有效
+        // SAFETY: 只push了ASCII数字，UTF-8Have效
         unsafe { s[start..].as_bytes_mut().reverse() };
     }
 

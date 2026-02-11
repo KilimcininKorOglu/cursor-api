@@ -81,8 +81,8 @@ impl ParseFromEnv for bool {
                 val.as_bytes_mut().get_unchecked_mut(start..start + len).make_ascii_lowercase();
             }
 
-            // SAFETY: trimmed 是从有效 UTF-8 字符串 trim 得到的，
-            // make_ascii_lowercase 保持 UTF-8 有效性
+            // SAFETY: trimmed 是从Have效 UTF-8 字符串 trim 得到的，
+            // make_ascii_lowercase 保持 UTF-8 Have效性
             let result = unsafe {
                 ::core::str::from_utf8_unchecked(val.as_bytes().get_unchecked(start..start + len))
             };
@@ -120,7 +120,7 @@ impl ParseFromEnv for &'static str {
 
                         // SAFETY:
                         // - trimmed 是 value.trim() 的结果，保证是 value 的子切片
-                        // - start_offset and trimmed_len 来自有效的切片边界
+                        // - start_offset and trimmed_len 来自Have效的切片边界
                         // - 目标位置（索引 0）and长度在 vec 容量内
                         // - ptr::copy Support重叠内存区域（memmove 语义）
                         if start_offset > 0 {
@@ -426,18 +426,18 @@ pub async fn get_token_usage(
 }
 
 // pub fn validate_token_and_checksum(auth_token: &str) -> Option<(String, Checksum)> {
-//     // 尝试Use自定义分隔符查找
+//     // 尝试Use自定义Separator查找
 //     let mut delimiter_pos = auth_token.rfind(*TOKEN_DELIMITER);
 
-//     // If自定义分隔符未找到，并且 USE_COMMA_DELIMITER To true，则尝试Use逗号
+//     // If自定义Separator未找到，并且 USE_COMMA_DELIMITER To true，则尝试Use逗号
 //     if delimiter_pos.is_none() && *USE_COMMA_DELIMITER {
 //         delimiter_pos = auth_token.rfind(COMMA);
 //     }
 
-//     // If最终都没有找到分隔符，则返回 None
+//     // If最终都没Have找到Separator，则返回 None
 //     let comma_pos = delimiter_pos?;
 
-//     // Use找到的分隔符位置分割字符串
+//     // Use找到的Separator位置分割字符串
 //     let (token_part, checksum) = auth_token.split_at(comma_pos);
 //     let checksum = &checksum[1..]; // 跳过逗号
 
@@ -456,7 +456,7 @@ pub async fn get_token_usage(
 //         }
 //     };
 
-//     // 验证 token and checksum 有效性
+//     // 验证 token and checksum Have效性
 //     if let Ok(chekcsum) = Checksum::from_str(checksum) {
 //         if validate_token(token) {
 //             Some((token.to_string(), chekcsum))
@@ -469,15 +469,15 @@ pub async fn get_token_usage(
 // }
 
 // pub fn extract_token(auth_token: &str) -> Option<&str> {
-//     // 尝试Use自定义分隔符查找
+//     // 尝试Use自定义Separator查找
 //     let mut delimiter_pos = auth_token.rfind(*TOKEN_DELIMITER);
 
-//     // If自定义分隔符未找到，并且 USE_COMMA_DELIMITER To true，则尝试Use逗号
+//     // If自定义Separator未找到，并且 USE_COMMA_DELIMITER To true，则尝试Use逗号
 //     if delimiter_pos.is_none() && *USE_COMMA_DELIMITER {
 //         delimiter_pos = auth_token.rfind(COMMA);
 //     }
 
-//     // 根据是否找到分隔符来确定 token_part
+//     // 根据是否找到Separator来确定 token_part
 //     let token_part = match delimiter_pos {
 //         Some(pos) => &auth_token[..pos],
 //         None => auth_token,
@@ -498,7 +498,7 @@ pub async fn get_token_usage(
 //         }
 //     };
 
-//     // 验证 token 有效性
+//     // 验证 token Have效性
 //     if validate_token(token) {
 //         Some(token)
 //     } else {

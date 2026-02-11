@@ -6,7 +6,7 @@
 //!
 //! # 特性
 //!
-//! - 固定长度输出：所有Encode结果恰好To 22 字节
+//! - 固定长度输出：所HaveEncode结果恰好To 22 字节
 //! - 高性能：Use魔术数除法避免昂贵的 u128 除法操作
 //! - 零分配：不需要堆内存分配
 //! - 前导零填充：数值较小时自动在前面补 '0'
@@ -57,7 +57,7 @@ const CHARSET: &[u8; 62] = b"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmno
 
 /// Decode查找表 - 将 ASCII 字符映射到其 base62 值
 ///
-/// - 有效字符映射到 0-61
+/// - Have效字符映射到 0-61
 /// - 无效字符映射到 0xFF
 const DECODE_LUT: &[u8; 256] = &{
     let mut lut = [0xFF; 256];
@@ -190,7 +190,7 @@ pub fn encode_fixed(num: u128, buf: &mut [u8; BASE62_LEN]) {
     let (high, mid) = fast_div_base_to_10(quotient);
 
     // Encode各个块
-    // SAFETY: 所有索引都在编译时已知的范围内
+    // SAFETY: 所Have索引都在编译时已知的范围内
     unsafe {
         // 低 10 位 -> buf[12..22]
         encode_u64_chunk(low, 10, buf.as_mut_ptr().add(12));
@@ -206,7 +206,7 @@ pub fn encode_fixed(num: u128, buf: &mut [u8; BASE62_LEN]) {
 /// # Safety
 ///
 /// 调用者必须Ensure：
-/// - `ptr` 指向至少 `len` 字节的有效内存
+/// - `ptr` 指向至少 `len` 字节的Have效内存
 /// - `num` Encode后不会超过 `len` 个字符
 #[inline(always)]
 unsafe fn encode_u64_chunk(mut num: u64, len: usize, ptr: *mut u8) {
@@ -247,7 +247,7 @@ pub fn decode_fixed(buf: &[u8; BASE62_LEN]) -> Result<u128, DecodeError> {
             return Err(DecodeError::InvalidCharacter { byte, position });
         }
 
-        // 安全地累加结果，检查溢出
+        // 安全地累加结果，Check溢出
         result = result
             .checked_mul(BASE as u128)
             .and_then(|r| r.checked_add(value as u128))

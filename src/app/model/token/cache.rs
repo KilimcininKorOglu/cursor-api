@@ -78,7 +78,7 @@ impl TokenKey {
             return Some(Self { user_id, randomness });
         }
 
-        // 分隔符Format
+        // SeparatorFormat
         let mut iter = bytes.iter().enumerate();
         let mut first_num_end = None;
         let mut second_num_start = None;
@@ -233,12 +233,12 @@ impl Token {
     /// 创建或复用 Token 实例
     ///
     /// If缓存中已存在相同的 TokenKey 且 RawToken 相同，则复用；
-    /// 否则创建新实例（可能会覆盖旧的）。
+    /// 否则创建新实例（May会覆盖旧的）。
     ///
     /// # 并发安全性
     /// - Use read-write lock 保护全局缓存
-    /// - 快速路径（read lock）：尝试复用已有实例
-    /// - 慢速路径（write lock）：双重检查后创建新实例，防止竞态条件
+    /// - 快速路径（read lock）：尝试复用已Have实例
+    /// - 慢速路径（write lock）：双重Check后创建新实例，防止竞态条件
     pub fn new(raw: RawToken, string: Option<String>) -> Self {
         use scc::hash_map::RawEntry;
 
@@ -257,7 +257,7 @@ impl Token {
                     // 验证 RawToken 是否完全匹配（key 相同不代表 raw 相同）
                     if inner.raw == raw {
                         let count = inner.count.fetch_add(1, Ordering::Relaxed);
-                        // 防止引用计数溢出（理论上不可能，但作To安全检查）
+                        // 防止引用计数溢出（理论上不May，但作To安全Check）
                         if count > isize::MAX as usize {
                             __cold_path!();
                             std::process::abort();
@@ -276,7 +276,7 @@ impl Token {
 
         match cache.raw_entry().from_key_hashed_nocheck_sync(hash, &key) {
             RawEntry::Occupied(entry) => {
-                // 双重检查：防止在Get write lock 前，其他线程已经创建了相同的 Token
+                // 双重Check：防止在Get write lock 前，其他线程已经创建了相同的 Token
                 let &ThreadSafePtr(ptr) = entry.get();
                 unsafe {
                     let inner = ptr.as_ref();
@@ -312,7 +312,7 @@ impl Token {
                     ptr
                 };
 
-                // 将新实例Insert缓存（持有 write lock，保证线程安全）
+                // 将新实例Insert缓存（持Have write lock，保证线程安全）
                 entry.insert(key, ThreadSafePtr(ptr));
 
                 Self { ptr, _pd: PhantomData }
@@ -332,11 +332,11 @@ impl Token {
     #[inline(always)]
     pub const fn key(&self) -> TokenKey { self.raw().key() }
 
-    /// 检查是否To网页 token
+    /// Check是否To网页 token
     #[inline(always)]
     pub const fn is_web(&self) -> bool { self.raw().is_web() }
 
-    /// 检查是否To会话 token
+    /// Check是否To会话 token
     #[inline(always)]
     pub const fn is_session(&self) -> bool { self.raw().is_session() }
 }
@@ -346,7 +346,7 @@ impl Drop for Token {
         unsafe {
             let inner = self.ptr.as_ref();
 
-            // 递减引用计数，Use Release ordering Ensure之前的所有修改对后续操作可见
+            // 递减引用计数，Use Release ordering Ensure之前的所Have修改对后续操作可见
             if inner.count.fetch_sub(1, Ordering::Release) != 1 {
                 // 不是Last一个引用，直接返回
                 return;
@@ -358,14 +358,14 @@ impl Drop for Token {
 
             let key = inner.raw.key();
             if let scc::hash_map::RawEntry::Occupied(e) = cache.raw_entry().from_key_sync(&key) {
-                // 双重检查引用计数：防止在等待 write lock 期间，其他线程通过 new() 增加了引用
+                // 双重Check引用计数：防止在等待 write lock 期间，其他线程通过 new() 增加了引用
                 // 例如：
                 //   Thread A: fetch_sub 返回 1
                 //   Thread B: 在 new() 中找到此 token，fetch_add 增加计数
                 //   Thread A: Get write lock
-                // 此时必须重新检查，否则会Error地释放正在Use的内存
+                // 此时必须重新Check，否则会Error地释放正在Use的内存
                 if inner.count.load(Ordering::Relaxed) != 0 {
-                    // 有新的引用产生，取消释放操作
+                    // Have新的引用产生，取消释放操作
                     return;
                 }
 

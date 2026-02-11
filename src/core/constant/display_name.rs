@@ -22,11 +22,11 @@ pub fn init_display_name_cache() {
 ///    - `MM-DD` Format：`03-25` → `(03-25)`  
 ///    - `MMDD` Format：`0528` → `(05-28)`
 /// 3. **时间标记**：`latest` and `legacy` 在括号中显示
-/// 4. **特殊前缀**：
+/// 4. **特殊Prefix**：
 ///    - `gpt` → `GPT`
 ///    - `o1`/`o3`/`o4` → `O1`/`O3`/`O4`
 /// 5. **版本标记**：`v`/`r`/`k` 开头的版本号首字母大写（如 `v3.1` → `V3.1`）
-/// 6. **分隔符Convert**：其他 `-` 转ToEmpty格，各部分首字母大写
+/// 6. **SeparatorConvert**：其他 `-` 转ToEmpty格，各部分首字母大写
 ///
 /// # Arguments
 ///

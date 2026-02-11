@@ -68,7 +68,7 @@ impl DelayedTask {
     ///
     /// If任务已经在运行或已完成，取消将Failed。
     pub fn cancel(&self) -> bool {
-        // 解决竞态条件：只有当前状态确认To Scheduled 时才切换To Cancelled。
+        // 解决竞态条件：只Have当前状态确认To Scheduled 时才切换To Cancelled。
         // 此处 AcqRel 保证了与任务线程中状态切换的互斥性。
         let res = self.inner.state.compare_exchange(
             TaskState::Scheduled,

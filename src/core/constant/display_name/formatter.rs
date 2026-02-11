@@ -50,7 +50,7 @@ fn capitalize_word(word: &str) -> Cow<'_, str> {
         return Cow::Borrowed(word);
     }
 
-    // 快速检查第一个字符是否已经是大写
+    // 快速Check第一个字符是否已经是大写
     let first_byte = bytes[0];
 
     // 对于 ASCII 字符的快速路径

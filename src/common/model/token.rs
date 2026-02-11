@@ -12,7 +12,7 @@ pub struct TokenPayload {
     pub is_session: bool,
 }
 
-// 定义所有常量
+// 定义所Have常量
 crate::define_typed_constants! {
     usize => {
         FIELD_COUNT = 8,
@@ -223,7 +223,7 @@ impl<'de> ::serde::Deserialize<'de> for TokenPayload {
                     }
                 }
 
-                // 检查必填Field
+                // Check必填Field
                 let sub = sub.ok_or_else(|| de::Error::missing_field(FIELD_SUB))?;
                 let time = time.ok_or_else(|| de::Error::missing_field(FIELD_TIME))?;
                 let randomness =
@@ -231,7 +231,7 @@ impl<'de> ::serde::Deserialize<'de> for TokenPayload {
                 let exp = exp.ok_or_else(|| de::Error::missing_field(FIELD_EXP))?;
                 let is_session = is_session.ok_or_else(|| de::Error::missing_field(FIELD_TYPE))?;
 
-                // 检查必须存在的常量Field
+                // Check必须存在的常量Field
                 if !iss_seen {
                     return Err(de::Error::missing_field(FIELD_ISS));
                 }

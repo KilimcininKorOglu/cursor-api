@@ -69,11 +69,11 @@ impl Randomness {
             buf[pos + 1] = HEX_CHARS[(byte & 0x0F) as usize];
         }
 
-        // Insert分隔符
+        // InsertSeparator
         buf[8] = b'-';
         buf[13] = b'-';
 
-        // SAFETY: buf 只包含有效的 ASCII 字符
+        // SAFETY: buf 只包含Have效的 ASCII 字符
         unsafe { core::str::from_utf8_unchecked_mut(buf) }
     }
 }
@@ -241,7 +241,7 @@ impl<'de> ::serde::Deserialize<'de> for Subject {
 
 /// 用户标识符，Support两种Format的高效ID系统
 ///
-/// 采用向前兼容设计，通过检查高32位区分Format：
+/// 采用向前兼容设计，通过Check高32位区分Format：
 /// - 旧Format：24字符十六进制，高32位To0
 /// - 新Format：`user_` + 26字符ULID，充分利用128位Empty间
 ///
@@ -276,7 +276,7 @@ impl UserId {
 
     // ==================== Format检测与字符串Convert ====================
 
-    /// 检查是否To旧FormatID（高32位To0）
+    /// Check是否To旧FormatID（高32位To0）
     #[inline]
     pub const fn is_legacy(&self) -> bool {
         // Memory layout (little-endian): [低32位][次低32位][次高32位][最高32位]
@@ -304,7 +304,7 @@ impl UserId {
                 buf[i * 2 + 1] = HEX_CHARS[(byte & 0x0f) as usize];
             }
 
-            // SAFETY: HEX_CHARS Ensure输出是有效 ASCII
+            // SAFETY: HEX_CHARS Ensure输出是Have效 ASCII
             unsafe { core::str::from_utf8_unchecked_mut(&mut buf[..24]) }
         } else {
             // 新Format：user_ + 26字符 ULID
