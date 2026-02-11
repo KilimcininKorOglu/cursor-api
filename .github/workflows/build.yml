@@ -52,7 +52,7 @@ jobs:
           libssl-dev:native \
           linux-libc-dev:native
 
-        # 设置 OpenSSL 环境变量
+        # Set OpenSSL environment variables
         echo "OPENSSL_DIR=/usr" >> $GITHUB_ENV
         echo "OPENSSL_LIB_DIR=/usr/lib/x86_64-linux-gnu" >> $GITHUB_ENV
         echo "OPENSSL_INCLUDE_DIR=/usr/include/openssl" >> $GITHUB_ENV
@@ -65,11 +65,11 @@ jobs:
     - name: Build Linux x86_64 (Static)
       if: runner.os == 'Linux'
       run: |
-        # 使用 musl 目标
+        # Use musl target
         rustup target remove x86_64-unknown-linux-gnu
         rustup target add x86_64-unknown-linux-musl
 
-        # 设置静态编译环境变量
+        # Set static compilation environment variables
         export CC=musl-gcc
 
         bash scripts/build.sh --static
@@ -91,10 +91,10 @@ jobs:
         choco install -y openssl
         choco install -y nodejs-lts
 
-        # 刷新环境变量
+        # Refresh environment variables
         $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
 
-        # 设置 OpenSSL 环境变量
+        # Set OpenSSL environment variables
         echo "OPENSSL_DIR=C:\Program Files\OpenSSL" >> $env:GITHUB_ENV
         echo "PKG_CONFIG_PATH=C:\Program Files\OpenSSL\lib\pkgconfig" >> $env:GITHUB_ENV
 
@@ -132,11 +132,11 @@ jobs:
       with:
         usesh: true
         prepare: |
-          # 设置持久化的环境变量
+          # Set persistent environment variables
           echo 'export SSL_CERT_FILE=/etc/ssl/cert.pem' >> /root/.profile
           echo 'export PATH="/usr/local/bin:$PATH"' >> /root/.profile
 
-          # 安装基础依赖
+          # Install base dependencies
           pkg update
           pkg install -y \
             git \
@@ -156,29 +156,29 @@ jobs:
 
           export SSL_CERT_FILE=/etc/ssl/cert.pem
 
-          # 克隆代码（确保在正确的目录）
+          # Clone code (ensure in correct directory)
           cd /root
           git clone $GITHUB_SERVER_URL/$GITHUB_REPOSITORY .
 
-          # 安装 rustup 和 Rust
+          # Install rustup and Rust
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain nightly
 
-          # 设置持久化的 Rust 环境变量
+          # Set persistent Rust environment variables
           echo '. "$HOME/.cargo/env"' >> /root/.profile
 
-          # 添加所需的目标支持
+          # Add required target support
           . /root/.profile
           rustup target add x86_64-unknown-freebsd
           rustup component add rust-src
 
         run: |
-          # 加载环境变量
+          # Load environment variables
           . /root/.profile
 
-          echo "构建动态链接版本..."
+          echo "Building dynamic linked version..."
           /usr/local/bin/bash scripts/build.sh
 
-          echo "构建静态链接版本..."
+          echo "Building static linked version..."
           /usr/local/bin/bash scripts/build.sh --static
 
     - name: Upload artifacts

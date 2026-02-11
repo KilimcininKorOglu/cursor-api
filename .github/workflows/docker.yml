@@ -4,12 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       update_latest:
-        description: '是否更新 latest 标签'
+        description: 'Whether to update latest tag'
         required: true
         type: boolean
         default: false
       upload_artifacts:
-        description: '是否上传构建产物'
+        description: 'Whether to upload build artifacts'
         required: true
         type: boolean
         default: true
