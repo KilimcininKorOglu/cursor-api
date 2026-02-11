@@ -5,12 +5,12 @@
   <meta charset="UTF-8" />
   <link rel="icon" type="image/x-icon" href="data:image/x-icon;," />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Token 信息Management</title>
+  <title>Token Management</title>
   <!-- Include shared styles -->
   <link rel="stylesheet" href="/static/shared-styles.css" />
   <script src="/static/shared.js"></script>
   <style>
-    /* 文件System布局样式 */
+    /* File system layout styles */
     .file-system {
       background: var(--card-background);
       border-radius: var(--border-radius);
@@ -131,7 +131,7 @@
       justify-content: space-between;
     }
 
-    /* 右键菜单 */
+    /* Context menu */
     .context-menu {
       position: fixed;
       background: var(--card-background);
@@ -169,7 +169,7 @@
       font-size: 12px;
     }
 
-    /* Select框 */
+    /* Selection box */
     .selection-box {
       position: absolute;
       border: 1px dashed var(--primary-color);
@@ -178,7 +178,7 @@
       pointer-events: none;
     }
 
-    /* Details面板 */
+    /* Details panel */
     .details-panel {
       position: fixed;
       right: 0;
@@ -250,7 +250,7 @@
       min-width: 120px;
     }
 
-    /* 弹出对话框样式 */
+    /* Modal dialog styles */
     .modal {
       display: none;
       position: fixed;
@@ -316,7 +316,7 @@
       gap: 10px;
     }
 
-    /* Filter面板 */
+    /* Filter panel */
     .filter-panel {
       padding: 16px;
       background: var(--card-background);
@@ -390,7 +390,7 @@
       min-height: 40px;
     }
 
-    /* Response式调整 */
+    /* Responsive adjustments */
     @media (max-width: 1200px) {
       .filter-actions {
         flex-direction: column;
@@ -421,7 +421,7 @@
       }
     }
 
-    /* 托盘消息 */
+    /* Toast messages */
     .toast-container {
       position: fixed;
       bottom: 20px;
@@ -480,7 +480,7 @@
       transform: translateY(0);
     }
 
-    /* 处理纵向滚动 */
+    /* Handle vertical scrolling */
     @media (max-height: 600px) {
       .file-system {
         height: 400px;
@@ -514,7 +514,7 @@
       -ms-overflow-style: none;
     }
 
-    /* 批量Actions区域 */
+    /* Batch actions area */
     .batch-operations {
       background: var(--card-background);
       border-radius: var(--border-radius);
@@ -549,7 +549,7 @@
       font-size: 12px;
     }
 
-    /* Proxy子菜单样式 */
+    /* Proxy submenu styles */
     .proxy-menu {
       position: relative;
     }
@@ -607,19 +607,19 @@
       margin-left: 8px;
     }
 
-    /* 向上Expand的子菜单样式 */
+    /* Upward expanding submenu styles */
     .proxy-menu.open-upward .proxy-submenu {
       top: auto;
       bottom: 0;
     }
 
-    /* 向左Expand的子菜单样式 */
+    /* Leftward expanding submenu styles */
     .proxy-menu.open-leftward .proxy-submenu {
       right: 100%;
       left: auto;
     }
 
-    /* TimezoneName和ProxyNameTotal享样式 */
+    /* Timezone name and proxy name shared styles */
     .timezone-name,
     .proxy-name {
       cursor: pointer;
@@ -654,7 +654,7 @@
       opacity: 1;
     }
 
-    /* Status指示标样式 */
+    /* Status indicator styles */
     .status-indicator {
       display: inline-block;
       width: 8px;
@@ -665,20 +665,20 @@
 
     .status-enabled {
       background-color: #4caf50;
-      /* 绿色 */
+      /* green */
     }
 
     .status-disabled {
       background-color: #f44336;
-      /* 红色 */
+      /* red */
     }
 
     .status-other {
       background-color: #ffc107;
-      /* 黄色 */
+      /* yellow */
     }
 
-    /* Status子菜单样式 */
+    /* Status submenu styles */
     .status-menu {
       position: relative;
     }
@@ -706,7 +706,7 @@
       visibility: visible;
     }
 
-    /* Add向上和向左打开的样式 */
+    /* Add upward and leftward opening styles */
     .status-menu.open-upward .status-submenu {
       top: auto;
       bottom: 0;
@@ -717,14 +717,14 @@
       right: 100%;
     }
 
-    /* AddStatus计数样式 */
+    /* Add status count styles */
     .status-count {
       color: var(--text-secondary);
       font-size: 12px;
       margin-left: 8px;
     }
 
-    /* CopySuccess时的视觉反馈 */
+    /* Copy success visual feedback */
     .copied {
       position: relative;
       animation: copySuccess 0.3s ease-in-out;
@@ -745,7 +745,7 @@
       }
     }
 
-    /* 内联Edit输入框样式 */
+    /* Inline edit input styles */
     .inline-edit {
       background: transparent;
       border: 1px solid var(--primary-color);
@@ -767,7 +767,7 @@
 </head>
 
 <body>
-  <h1>Token 信息Management</h1>
+  <h1>Token Management</h1>
 
   <div class="container">
     <div class="form-group">
@@ -776,13 +776,13 @@
     </div>
   </div>
 
-  <!-- Filter面板 -->
+  <!-- Filter panel -->
   <div class="filter-panel">
     <div class="filter-row">
       <div class="filter-group">
-        <label>账户Type:</label>
+        <label>Account Type:</label>
         <select id="membershipFilter">
-          <option value="all">AllType</option>
+          <option value="all">All Types</option>
           <option value="free">Free</option>
           <option value="free_trial">Trial</option>
           <option value="pro">Pro</option>
@@ -792,27 +792,27 @@
         </select>
       </div>
       <div class="filter-group">
-        <label>TimezoneFilter:</label>
+        <label>Timezone Filter:</label>
         <select id="timezoneFilter">
-          <option value="all">AllTimezone</option>
+          <option value="all">All Timezones</option>
           <option value="none">Unspecified Timezone</option>
-          <!-- Timezone列表将在JavaScript中动态填充 -->
+          <!-- Timezone list will be dynamically populated in JavaScript -->
         </select>
       </div>
       <div class="filter-group">
-        <label>UsageStatus:</label>
+        <label>Usage Status:</label>
         <div class="filter-input-group">
-          <input type="number" id="usageMin" placeholder="Min值" />
-          <span>至</span>
-          <input type="number" id="usageMax" placeholder="Max值" />
+          <input type="number" id="usageMin" placeholder="Min" />
+          <span>to</span>
+          <input type="number" id="usageMax" placeholder="Max" />
         </div>
       </div>
       <div class="filter-group">
         <label>Trial Remaining:</label>
         <div class="filter-input-group">
-          <input type="number" id="trialMin" placeholder="Mindays数" />
-          <span>至</span>
-          <input type="number" id="trialMax" placeholder="Maxdays数" />
+          <input type="number" id="trialMin" placeholder="Min days" />
+          <span>to</span>
+          <input type="number" id="trialMax" placeholder="Max days" />
         </div>
       </div>
     </div>
@@ -820,19 +820,19 @@
     <div class="filter-actions">
       <div class="filter-actions-left">
         <div class="filter-group">
-          <label>ProfileStatus:</label>
+          <label>Profile Status:</label>
           <select id="profileFilter">
-            <option value="all">AllStatus</option>
+            <option value="all">All Status</option>
             <option value="has_profile">Has Profile</option>
-            <option value="no_profile">NoneProfile</option>
+            <option value="no_profile">No Profile</option>
           </select>
         </div>
         <div class="filter-group">
-          <label>ProxyFilter:</label>
+          <label>Proxy Filter:</label>
           <select id="proxyFilter">
-            <option value="all">AllProxy</option>
+            <option value="all">All Proxies</option>
             <option value="none">Unspecified Proxy</option>
-            <!-- Proxy列表将在JavaScript中动态填充 -->
+            <!-- Proxy list will be dynamically populated in JavaScript -->
           </select>
         </div>
       </div>
@@ -842,23 +842,23 @@
           <span class="context-menu-shortcut">F5</span>
         </button>
         <button id="addTokenBtn" onclick="addTokens()" class="secondary">
-          AddToken
+          Add Token
         </button>
         <button id="exportBtn" onclick="exportTokens()" class="secondary">
-          Export列表
+          Export List
         </button>
         <button id="importBtn" onclick="importTokens()" class="secondary">
-          Import列表
+          Import List
         </button>
       </div>
     </div>
   </div>
 
-  <!-- 文件System区域 -->
+  <!-- File system area -->
   <div class="file-system">
     <div class="toolbar">
       <div class="search-box">
-        <input type="text" id="searchInput" placeholder="SearchToken或账户..." />
+        <input type="text" id="searchInput" placeholder="Search Token or account..." />
       </div>
     </div>
 
@@ -867,7 +867,7 @@
         <thead>
           <tr>
             <th>Token</th>
-            <th style="width: 15%">会员Type</th>
+            <th style="width: 15%">Membership Type</th>
             <th style="width: 15%">Usage</th>
             <th style="width: 10%">Trial Remaining</th>
             <th style="width: 10%">Timezone</th>
@@ -875,7 +875,7 @@
           </tr>
         </thead>
         <tbody id="fileListBody">
-          <!-- 动态生成的文件列表 -->
+          <!-- Dynamically generated file list -->
         </tbody>
       </table>
       <div id="emptyState" style="
@@ -886,23 +886,23 @@
         ">
         <div style="font-size: 48px; margin-bottom: 16px">📁</div>
         <h3>No Token Found</h3>
-        <p>请AddToken或更改Filterrecords件</p>
-        <button onclick="addTokens()" class="primary">AddToken</button>
+        <p>Please add Token or change filter conditions</p>
+        <button onclick="addTokens()" class="primary">Add Token</button>
       </div>
-      <!-- Select框 -->
+      <!-- Selection box -->
       <div id="selectionBox" class="selection-box"></div>
     </div>
 
     <div class="status-bar">
-      <div id="selectionStatus">已Select: 0 items目</div>
-      <div id="totalCount">Total 0 Token</div>
+      <div id="selectionStatus">Selected: 0 items</div>
+      <div id="totalCount">Total 0 Tokens</div>
     </div>
   </div>
 
-  <!-- 右键菜单 -->
+  <!-- Context menu -->
   <div id="contextMenu" class="context-menu">
     <div class="context-menu-item status-menu">
-      <span>切换Status</span>
+      <span>Toggle Status</span>
       <div class="status-submenu" id="statusSubmenu">
         <div class="context-menu-item" onclick="setTokenStatus('enabled')">
           <span>Enable</span>
@@ -917,7 +917,7 @@
       </div>
     </div>
     <div class="context-menu-item" onclick="viewDetails()">
-      <span>ViewDetails</span>
+      <span>View Details</span>
       <span class="context-menu-shortcut">Enter</span>
     </div>
     <div class="context-menu-item" onclick="renameToken()">
@@ -925,15 +925,15 @@
       <span class="context-menu-shortcut">F2</span>
     </div>
     <div class="context-menu-item" onclick="refreshSelectedProfiles()">
-      <span>RefreshProfile</span>
+      <span>Refresh Profile</span>
       <span class="context-menu-shortcut">F5</span>
     </div>
     <div class="context-menu-item" onclick="upgradeSelectedTokens()">
-      <span>RefreshToken</span>
+      <span>Refresh Token</span>
       <span class="context-menu-shortcut">Ctrl+U</span>
     </div>
     <div class="context-menu-item" onclick="refreshSelectedConfigVersions()">
-      <span>RefreshConfig Version</span>
+      <span>Refresh Config Version</span>
       <span class="context-menu-shortcut">F6</span>
     </div>
     <div class="context-menu-item" onclick="generateKey()">
@@ -941,11 +941,11 @@
       <span class="context-menu-shortcut">Ctrl+G</span>
     </div>
     <div class="context-menu-item" onclick="copyTokenToClipboard()">
-      <span>CopyToken</span>
+      <span>Copy Token</span>
       <span class="context-menu-shortcut">Ctrl+C</span>
     </div>
     <div class="context-menu-item" onclick="openTimezoneSelector()">
-      <span>SettingsTimezone</span>
+      <span>Set Timezone</span>
     </div>
     <div class="context-menu-item proxy-menu">
       <span>SettingsProxy</span>
