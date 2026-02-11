@@ -26,35 +26,35 @@ impl Id {
     const fn from_ref(s: &'static str) -> Self { Self::from_ptr(s as _) }
 }
 
-/// 手动分配内存并复制字符串
+/// Manually allocate memory and copy string
 ///
 /// # Safety
-/// 分配的内存会被ConvertTo 'static 生命周期，调用者必须Ensure不会手动释放
+/// The allocated memory will be converted to 'static lifetime, caller must ensure it won't be manually freed
 #[inline]
 #[allow(unsafe_op_in_unsafe_fn)]
 unsafe fn alloc_ids(s: &str) -> Id {
     let sptr = s.as_ptr();
     let len = s.len();
 
-    // 计算布局，字符串不Need特殊对齐
+    // Calculate layout, string doesn't need special alignment
     let layout = Layout::from_size_align_unchecked(len + SUFFIX.len(), 1);
 
-    // 分配内存
+    // Allocate memory
     let ptr = alloc(layout);
     if ptr.is_null() {
-        // 内存分配Failed
+        // Memory allocation failed
         handle_alloc_error(layout);
     }
 
-    // 复制字符串Content
+    // Copy string content
     copy_nonoverlapping(sptr, ptr, len);
     copy_nonoverlapping(SUFFIX.as_ptr(), ptr.add(len), SUFFIX.len());
 
-    // 从原始部分构造字符串切片
+    // Construct string slice from raw parts
     Id(ptr, len)
 }
 
-// 全局实例
+// Global instance
 static STATIC_POOL: ManuallyInit<HashSet<&'static str>> = ManuallyInit::new();
 
 pub(super) fn init() { STATIC_POOL.init(HashSet::default()) }
@@ -79,7 +79,7 @@ fn __intern(pool: &HashSet<&'static str>, s: &str) -> (Id, bool) {
     (id, is_suffix)
 }
 
-// 公共API
+// Public API
 pub fn add<S: Borrow<str>>(s: S) -> (&'static str, &'static str) {
     let id = __intern(&STATIC_POOL, s.borrow()).0;
     (id.suffix(), id.non_suffix())
