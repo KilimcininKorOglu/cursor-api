@@ -18,22 +18,22 @@ use scc::HashMap;
 
 /// Unique identification key for token
 ///
-/// 由用户IDand随机数组成，用于在全局Cache中查找对应的 Token
+/// Composed of user ID and randomness, used to find corresponding token in global cache
 #[derive(
     Debug, PartialEq, Eq, Hash, Clone, Copy, ::rkyv::Archive, ::rkyv::Serialize, ::rkyv::Deserialize,
 )]
 #[rkyv(derive(PartialEq, Eq, Hash))]
 pub struct TokenKey {
-    /// User唯一标识
+    /// User unique identifier
     pub user_id: UserId,
-    /// 随机数部分，用于保证 Token 的唯一性
+    /// Randomness part, used to ensure token uniqueness
     pub randomness: Randomness,
 }
 
 impl TokenKey {
-    /// 将 TokenKey 序列化To base64 字符串
+    /// Serialize TokenKey to base64 string
     ///
-    /// Format：24字节（16字节 user_id + 8字节 randomness）EncodeTo 32 字符的 base64
+    /// Format: 24 bytes (16 bytes user_id + 8 bytes randomness) encoded to 32 character base64
     #[allow(clippy::inherent_to_string)]
     #[inline]
     pub fn to_string(self) -> String {
@@ -45,9 +45,9 @@ impl TokenKey {
         to_base64(&bytes)
     }
 
-    /// 将 TokenKey 序列化To可读字符串
+    /// Serialize TokenKey to readable string
     ///
-    /// Format：`<user_id>-<randomness>`
+    /// Format: `<user_id>-<randomness>`
     #[inline]
     pub fn to_string2(self) -> String {
         let mut buffer = itoa::Buffer::new();
@@ -238,14 +238,14 @@ impl Token {
     /// # 并发安全性
     /// - Use read-write lock 保护全局Cache
     /// - 快速路径（read lock）：尝试复用AlreadyHave实例
-    /// - 慢速路径（write lock）：双重Check后创建新实例，防止竞态条件
+    /// - Slow path (write lock): create new instance after double check, prevent race condition
     pub fn new(raw: RawToken, string: Option<String>) -> Self {
         use scc::hash_map::RawEntry;
 
         let key = raw.key();
         let hash;
 
-        // 快速路径：尝试从Cache中查找并增加引用计数
+        // Fast path: try to find in cache and increment reference count
         {
             let cache = TOKEN_MAP.get();
             let builder = cache.raw_entry();
@@ -254,10 +254,10 @@ impl Token {
                 let &ThreadSafePtr(ptr) = entry.get();
                 unsafe {
                     let inner = ptr.as_ref();
-                    // Verification RawToken Whether完全匹配（key 相同不代表 raw 相同）
+                    // Verify RawToken whether completely matches (same key does not mean same raw)
                     if inner.raw == raw {
                         let count = inner.count.fetch_add(1, Ordering::Relaxed);
-                        // 防止引用计数溢出（理论上不May，但作To安全Check）
+                        // Prevent reference count overflow (theoretically impossible, but as safety check)
                         if count > isize::MAX as usize {
                             __cold_path!();
                             std::process::abort();
@@ -271,12 +271,12 @@ impl Token {
             }
         }
 
-        // 慢速路径：创建新实例（Need独占访问Cache）
+        // Slow path: create new instance (need exclusive access to cache)
         let cache = TOKEN_MAP.get();
 
         match cache.raw_entry().from_key_hashed_nocheck_sync(hash, &key) {
             RawEntry::Occupied(entry) => {
-                // 双重Check：防止在Get write lock 前，其他线程Already经创建了相同的 Token
+                // Double check: prevent other threads from creating same token before acquiring write lock
                 let &ThreadSafePtr(ptr) = entry.get();
                 unsafe {
                     let inner = ptr.as_ref();
@@ -346,34 +346,34 @@ impl Drop for Token {
         unsafe {
             let inner = self.ptr.as_ref();
 
-            // 递减引用计数，Use Release ordering Ensure之前的所Have修改对后续操作可见
+            // Decrement reference count, use Release ordering to ensure all previous modifications are visible to subsequent operations
             if inner.count.fetch_sub(1, Ordering::Release) != 1 {
-                // NotLast一个引用，直接返回
+                // Not the last reference, return directly
                 return;
             }
 
-            // Last一个引用：Need清理资源
-            // Get write lock 以保护Cache操作，同时防止并发的 new() 操作干扰
+            // Last reference: need to clean up resources
+            // Get write lock to protect cache operations, and prevent concurrent new() operations from interfering
             let cache = TOKEN_MAP.get();
 
             let key = inner.raw.key();
             if let scc::hash_map::RawEntry::Occupied(e) = cache.raw_entry().from_key_sync(&key) {
-                // 双重Check引用计数：防止在等待 write lock 期间，其他线程通过 new() 增加了引用
-                // 例如：
-                //   Thread A: fetch_sub 返回 1
-                //   Thread B: 在 new() 中找到此 token，fetch_add 增加计数
-                //   Thread A: Get write lock
-                // 此时必须重新Check，否则会Error地释放正在Use的内存
+                // Double check reference count: prevent other threads from incrementing count via new() while waiting for write lock
+                // Example:
+                //   Thread A: fetch_sub returns 1
+                //   Thread B: finds this token in new(), fetch_add increments count
+                //   Thread A: gets write lock
+                // At this point must recheck, otherwise will incorrectly release memory in use
                 if inner.count.load(Ordering::Relaxed) != 0 {
-                    // HaveNew引用产生，取消释放操作
+                    // New reference created, cancel release operation
                     return;
                 }
 
-                // 确认是Last一个引用，执行清理：
-                // 1. 从Cache中移除（防止后续 new() 找到Already释放的指针）
+                // Confirm this is the last reference, perform cleanup:
+                // 1. Remove from cache (prevent subsequent new() from finding already released pointer)
                 e.remove();
 
-                // 2. 释放堆内存（包括 TokenInner and内联的字符串数据）
+                // 2. Release heap memory (including TokenInner and inlined string data)
                 let layout = TokenInner::layout_for_string(inner.string_len);
                 dealloc(self.ptr.cast().as_ptr(), layout);
             }
@@ -381,7 +381,7 @@ impl Drop for Token {
     }
 }
 
-// ===== Trait 实现 =====
+// ===== Trait implementations =====
 
 impl PartialEq for Token {
     #[inline(always)]

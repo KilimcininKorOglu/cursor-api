@@ -5,21 +5,21 @@ use rkyv::{Archive, Deserialize, Serialize};
 
 /// A serializable proxy URL wrapper
 ///
-/// 用于在Need序列化/反序列化代理配置的场景中存储代理URL。
-/// 内部存储经过验证的URL字符串，Ensure可以安全地ConvertTo `reqwest::Proxy`。
+/// Used to store proxy URLs in scenarios where serialization/deserialization of proxy configuration is needed.
+/// Internally stores a validated URL string, ensuring it can be safely converted to `reqwest::Proxy`.
 #[derive(Clone, Archive, Deserialize, Serialize)]
 #[rkyv(compare(PartialEq))]
 #[repr(transparent)]
 pub struct ProxyUrl(Str);
 
 impl ProxyUrl {
-    /// 将 ProxyUrl ConvertTo reqwest::Proxy
+    /// Convert ProxyUrl to reqwest::Proxy
     ///
     /// # Safety
-    /// 这里Use `unwrap_unchecked` 是安全的，因To：
-    /// - ProxyUrl 只能通过 `FromStr::from_str` 构造
-    /// - `from_str` 中Already经通过 `Proxy::all(s)?` 验证了URL的Have效性
-    /// - 一旦构造成功，内部的URL字符串就是不可变的
+    /// Using `unwrap_unchecked` here is safe because:
+    /// - ProxyUrl can only be constructed via `FromStr::from_str`
+    /// - `from_str` already validates URL validity through `Proxy::all(s)?`
+    /// - Once constructed, the internal URL string is immutable
     #[inline]
     pub fn to_proxy(&self) -> Proxy { unsafe { Proxy::all(self.0.as_str()).unwrap_unchecked() } }
 }
@@ -42,13 +42,13 @@ impl core::ops::Deref for ProxyUrl {
 impl FromStr for ProxyUrl {
     type Err = reqwest::Error;
 
-    /// 从字符串解析 ProxyUrl
+    /// Parse ProxyUrl from string
     ///
-    /// 会预先验证URLWhether可以创建Have效的 `Proxy`，
-    /// 这保证了后续 `to_proxy` 方法的安全性。
+    /// Will pre-validate whether the URL can create a valid `Proxy`,
+    /// ensuring the safety of subsequent `to_proxy` method calls.
     #[inline]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        // VerificationURL的Have效性
+        // Verify URL validity
         Proxy::all(s)?;
         Ok(Self(Str::new(s)))
     }

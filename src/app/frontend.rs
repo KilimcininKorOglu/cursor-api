@@ -343,7 +343,7 @@ impl FrontendLoader {
     fn build_routes(
         mut self,
     ) -> Result<(HashMap<&'static str, RouteServiceFn>, ExchangeMap), FrontendError> {
-        // Collect唯一路径and反向映射
+        // Collect unique paths and reverse mapping
         let random_state = ahash::RandomState::new();
         let mut unique_paths = HashSet::with_hasher(random_state.clone());
         let mut path_to_routes: HashMap<String, Vec<String>> =
@@ -356,7 +356,7 @@ impl FrontendLoader {
             }
         }
 
-        // 批AmountRead文件（去重Cache）
+        // Batch read files (deduplication cache)
         let mut file_cache: HashMap<String, Bytes> =
             HashMap::with_capacity_and_hasher(unique_paths.len(), random_state.clone());
 
@@ -372,7 +372,7 @@ impl FrontendLoader {
             file_cache.insert(path.to_string(), Bytes::from(data));
         }
 
-        // 构建 RouteService
+        // Build RouteService
         let exchange_len = self
             .registry
             .routes
@@ -520,7 +520,7 @@ pub fn init_frontend() -> Result<(HashMap<&'static str, RouteServiceFn>, Exchang
 
     let result = loader.build_routes()?;
 
-    println!("前端路由加载Completed，共 {} 个路由", result.0.len());
+    println!("Frontend route loading completed, total {} routes", result.0.len());
 
     Ok(result)
 }

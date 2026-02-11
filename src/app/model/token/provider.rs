@@ -1,28 +1,28 @@
 //! Authentication provider module
 //!
-//! 本模Block管理可配置的认证提供者列表，
-//! 可以通过环境变Amount `ALLOWED_PROVIDERS` 自定义Support的提供者。
+//! This module manages a configurable list of authentication providers,
+//! which can be customized via the environment variable `ALLOWED_PROVIDERS` to support different providers.
 
 use core::fmt;
 use std::str::FromStr;
 
 crate::def_pub_const!(
-    /// Auth0认证提供者标识符
+    /// Auth0 authentication provider identifier
     AUTH0 = "auth0",
-    /// Google OAuth2认证提供者标识符
+    /// Google OAuth2 authentication provider identifier
     GOOGLE_OAUTH2 = "google-oauth2",
-    /// GitHub认证提供者标识符
+    /// GitHub authentication provider identifier
     GITHUB = "github",
 );
 
-/// DefaultSupport的认证提供者列表
+/// Default list of supported authentication providers
 const DEFAULT_PROVIDERS: &'static [&'static str] = &[AUTH0, GOOGLE_OAUTH2, GITHUB];
 static mut PROVIDERS: &'static [&'static str] = DEFAULT_PROVIDERS;
 
-/// 表示一个认证提供者
+/// Represents an authentication provider
 ///
-/// 这是一个对静态字符串标识符的包装，
-/// 该标识符会与Support的提供者列表进行验证
+/// This is a wrapper around a static string identifier,
+/// which is validated against the list of supported providers
 #[derive(Clone, Copy)]
 #[repr(transparent)]
 pub struct Provider(usize);

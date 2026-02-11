@@ -18,36 +18,36 @@ use tokio::{
 
 // --- Global configuration ---
 
-/// 控制Debug模式的开关，从环境变Amount "DEBUG" Read，DefaultTo true
+/// Control debug mode switch, read from environment variable "DEBUG", default to true
 pub static DEBUG: ManuallyInit<bool> = ManuallyInit::new();
 
-/// Debug日志文件的路径，从环境变Amount "DEBUG_LOG_FILE" Read，DefaultTo "debug.log"
+/// Path to debug log file, read from environment variable "DEBUG_LOG_FILE", default to "debug.log"
 static DEBUG_LOG_FILE: ManuallyInit<Cow<'static, str>> = ManuallyInit::new();
 
-/// 全局日志文件句柄
+/// Global log file handle
 static LOG_FILE: ManuallyInit<Mutex<File>> = ManuallyInit::new();
 
-/// Initialize日志系统配置
+/// Initialize log system configuration
 ///
-/// 必须在程序启动时调用一次（Use日志前）
+/// Must be called once at program startup (before using logs)
 #[forbid(unused)]
 pub fn init() {
     DEBUG.init(parse_from_env("DEBUG", true));
     crate::common::model::health::init_service_info();
 
-    // If不启用Debug，不初始化日志文件
+    // If debug not enabled, do not initialize log file
     if !*DEBUG {
         return;
     }
 
     DEBUG_LOG_FILE.init(parse_from_env("DEBUG_LOG_FILE", "debug.log"));
 
-    // Sync打开日志文件
+    // Synchronously open log file
     let file = std::fs::OpenOptions::new()
         .create(true)
         .append(true)
         .open(&**DEBUG_LOG_FILE)
-        .expect("致命Error：日志系统初始化Failed - 无法打开日志文件");
+        .expect("Fatal error: log system initialization failed - unable to open log file");
 
     // ConvertTo tokio 文件句柄
     LOG_FILE.init(Mutex::new(File::from_std(file)));
@@ -114,33 +114,33 @@ pub fn ensure_logger_initialized() -> impl Future<Output = &'static LoggerState>
             let mut pending_messages = alloc::collections::BTreeMap::new();
             let mut next_seq = 0u64;
 
-            // 主循环：Handle日志Message、定时刷新and关闭信号
+            // Main loop: handle log messages, periodic flush and shutdown signal
             loop {
                 tokio::select! {
-                    biased; // 优先Handle上面的分支
+                    biased; // Prioritize handling branches above
 
-                    // 接收New日志Message
+                    // Receive new log message
                     Some(message) = receiver.recv() => {
-                        // 将Message加入待Handle队列
+                        // Add message to pending queue
                         pending_messages.insert(message.seq, message.content);
 
-                        // Check待Handle队列Whether过大
+                        // Check if pending queue is too large
                         if pending_messages.len() > MAX_PENDING_MESSAGES {
                             let oldest_seq = *__unwrap!(pending_messages.keys().next());
                             eprintln!(
-                                "日志系统Warning：待HandleMessage过多（>{MAX_PENDING_MESSAGES}），强制跳过序号 {next_seq}-{}",
+                                "Log system warning: too many pending messages (>{MAX_PENDING_MESSAGES}), force skip sequence {next_seq}-{}",
                                 oldest_seq - 1
                             );
                             next_seq = oldest_seq;
                         }
 
-                        // Handle所Have连续的Message
+                        // Handle all consecutive messages
                         while let Some(content) = pending_messages.remove(&next_seq) {
                             buffer.extend_from_slice(content.as_bytes());
                             buffer.push(b'\n');
                             next_seq += 1;
 
-                            // Buffer区达到容Amount时刷新
+                            // Flush when buffer reaches capacity
                             if buffer.len() >= BUFFER_CAPACITY {
                                 flush_byte_buffer(&mut buffer).await;
                                 interval.reset();
@@ -148,15 +148,15 @@ pub fn ensure_logger_initialized() -> impl Future<Output = &'static LoggerState>
                         }
                     }
 
-                    // 定时刷新触发
+                    // Periodic flush triggered
                     _ = interval.tick() => {
-                        // 定时刷新时，IfHave积压的Message且等待时间过长，强制写入
+                        // During periodic flush, if there are pending messages and wait time is too long, force write
                         if !pending_messages.is_empty() {
                             let oldest_seq = *__unwrap!(pending_messages.keys().next());
-                            // If最旧的Message序号与期望序号相差太大，MayHaveMessage丢失
+                            // If oldest message sequence differs too much from expected, may have lost messages
                             if oldest_seq > next_seq + OUT_OF_ORDER_THRESHOLD {
                                 eprintln!(
-                                    "日志系统Warning：检测到May的Message丢失，跳过序号 {next_seq} 到 {}",
+                                    "Log system warning: detected possible message loss, skip sequence {next_seq} to {}",
                                     oldest_seq - 1
                                 );
                                 next_seq = oldest_seq;
