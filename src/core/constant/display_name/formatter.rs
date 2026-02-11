@@ -6,7 +6,7 @@ use super::parser::{ParseResult, Pattern};
 pub fn format_output(result: ParseResult) -> String {
     let mut output = String::with_capacity(64);
 
-    // Format化主体部分
+    // Format main parts
     for (i, pattern) in result.main_parts.iter().enumerate() {
         if i > 0 {
             output.push(' ');
@@ -20,17 +20,17 @@ pub fn format_output(result: ParseResult) -> String {
             }
             Pattern::Version(v) => output.push_str(v.as_ref()),
             Pattern::Word(w) => output.push_str(capitalize_word(w).as_ref()),
-            _ => {} // 日期Related不应该在主体部分
+            _ => {} // Date related should not be in main parts
         }
     }
 
-    // Format化日期Related部分（括号内）
+    // Format date related parts (in parentheses)
     for date_item in result.date_parts.iter() {
         output.push_str(" (");
         match date_item {
             Pattern::Date(d) => output.push_str(d.as_ref()),
             Pattern::DateMarker(m) => output.push_str(m), // latest, legacy
-            _ => unreachable!(),                          // 其他不应该在日期部分
+            _ => unreachable!(),                          // Other should not be in date parts
         }
         output.push(')');
     }
@@ -40,7 +40,7 @@ pub fn format_output(result: ParseResult) -> String {
 
 #[inline(always)]
 fn capitalize_word(word: &str) -> Cow<'_, str> {
-    // 特殊CaseHandle - Need完全替换
+    // Special case handling - need complete replacement
     if word == "default" {
         return Cow::Borrowed("Default");
     }
@@ -50,35 +50,35 @@ fn capitalize_word(word: &str) -> Cow<'_, str> {
         return Cow::Borrowed(word);
     }
 
-    // 快速Check第一个字符WhetherAlready经是大写
+    // Quick check if first character is already uppercase
     let first_byte = bytes[0];
 
-    // 对于 ASCII 字符的快速路径
+    // Fast path for ASCII characters
     if first_byte.is_ascii() {
         if first_byte.is_ascii_uppercase() {
-            // Already经是大写，直接返回
+            // Already uppercase, return directly
             return Cow::Borrowed(word);
         }
 
         if first_byte.is_ascii_lowercase() {
-            // ASCII 小写转大写，直接操作字节
+            // ASCII lowercase to uppercase, direct byte operation
             let mut result = String::with_capacity(word.len());
             result.push((first_byte - b'a' + b'A') as char);
             result.push_str(&word[1..]);
             return Cow::Owned(result);
         }
 
-        // ASCII 但Not字母（如数字），保持原样
+        // ASCII but not letter (e.g. digit), keep as is
         return Cow::Borrowed(word);
     }
 
-    // 非 ASCII 字符的Handle（虽然在 AI 模型名中很少见）
+    // Handle non-ASCII characters (though rare in AI model names)
     let mut chars = word.chars();
     match chars.next() {
         None => Cow::Borrowed(word),
         Some(first) if first.is_uppercase() => Cow::Borrowed(word),
         Some(first) => {
-            // 预分配足够的Empty间（假设最坏Case下大写后长度翻倍）
+            // Pre-allocate enough space (assume worst case uppercase doubles length)
             let mut result = String::with_capacity(word.len() + 4);
             for ch in first.to_uppercase() {
                 result.push(ch);
