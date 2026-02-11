@@ -1,19 +1,19 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 
 <head>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/x-icon" href="data:image/x-icon;," />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>配置管理</title>
+  <title>Configuration Management</title>
 
-  <!-- 外部依赖 -->
+  <!-- External dependencies -->
   <link rel="stylesheet" href="/static/shared-styles.css" />
   <script src="/static/shared.js"></script>
 
   <style>
     /* 
-     * 布局与容器 
+     * Layout and containers 
      */
     :root {
       --editor-height: 70vh;
@@ -38,7 +38,7 @@
     }
 
     /* 
-     * 编辑器组件 
+     * Editor component 
      */
     .editor-wrapper {
       display: flex;
@@ -68,7 +68,7 @@
       cursor: pointer;
       transition: all 0.2s ease;
       border-radius: 0;
-      /* 覆盖全局 button 样式 */
+      /* Override global button styles */
     }
 
     .editor-tab:hover {
@@ -88,7 +88,7 @@
     }
 
     /* 
-     * 代码输入区域 
+     * Code input area 
      */
     .code-textarea {
       width: 100%;
@@ -100,7 +100,7 @@
       background: var(--card-background);
       color: var(--text-primary);
 
-      /* 字体设置 */
+      /* Font settings */
       font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
       font-size: 13px;
       line-height: 1.6;
@@ -122,7 +122,7 @@
     }
 
     /* 
-     * 辅助组件 
+     * Helper components 
      */
     .hash-badge {
       font-family: monospace;
@@ -159,49 +159,49 @@
 </head>
 
 <body>
-  <h1>配置管理</h1>
+  <h1>Configuration Management</h1>
 
   <div class="container">
-    <!-- 认证区域 -->
+    <!-- Authentication area -->
     <div class="form-group">
-      <label for="authToken">认证令牌</label>
-      <input type="password" id="authToken" placeholder="输入 Token 以管理配置" autocomplete="current-password" />
+      <label for="authToken">Authentication Token</label>
+      <input type="password" id="authToken" placeholder="Enter Token to manage configuration" autocomplete="current-password" />
     </div>
 
-    <!-- 状态信息 -->
+    <!-- Status information -->
     <div class="status-bar">
       <div>
-        <span>配置 Hash: </span>
+        <span>Config Hash: </span>
         <span id="hashDisplay" class="hash-badge">Waiting...</span>
       </div>
-      <div id="statusDisplay" class="text-italic">就绪</div>
+      <div id="statusDisplay" class="text-italic">Ready</div>
     </div>
 
-    <!-- 编辑器主体 -->
+    <!-- Editor main body -->
     <div class="editor-wrapper">
       <div class="editor-tabs" id="tabContainer">
-        <button class="editor-tab active" data-tab="current">当前配置 (config.toml)</button>
-        <button class="editor-tab" data-tab="example">参考示例 (Example)</button>
+        <button class="editor-tab active" data-tab="current">Current Config (config.toml)</button>
+        <button class="editor-tab" data-tab="example">Reference Example</button>
       </div>
 
       <div class="editor-pane">
-        <textarea id="configEditor" class="code-textarea" placeholder="等待加载..." spellcheck="false"></textarea>
+        <textarea id="configEditor" class="code-textarea" placeholder="Waiting to load..." spellcheck="false"></textarea>
       </div>
     </div>
 
     <div class="help-text mt-sm">
-      提示: 支持 Tab 缩进。
+      Tip: Tab indentation supported.
     </div>
 
-    <!-- 操作按钮 -->
+    <!-- Action buttons -->
     <div class="button-group mt-md">
       <button id="btnRefresh" class="secondary">
-        <span class="icon-spin">↻</span>刷新
+        <span class="icon-spin">↻</span>Refresh
       </button>
-      <button id="btnReload" class="secondary" title="丢弃未保存更改，重载磁盘文件">
-        重载服务
+      <button id="btnReload" class="secondary" title="Discard unsaved changes, reload disk file">
+        Reload Service
       </button>
-      <button id="btnSave">保存并生效</button>
+      <button id="btnSave">Save and Apply</button>
     </div>
   </div>
 
@@ -209,11 +209,11 @@
     "use strict";
 
     /**
-     * 配置编辑器应用程序
-     * 封装所有状态、UI操作和API交互
+     * Configuration Editor Application
+     * Encapsulates all state, UI operations and API interactions
      */
     class ConfigEditor {
-      // --- 常量定义 ---
+      // --- Constant definitions ---
       static get ENDPOINTS() {
         return {
           GET: "/config/get",
@@ -238,7 +238,7 @@
       }
 
       constructor() {
-        // 内部状态
+        // Internal state
         this.state = {
           currentHash: null,
           content: {
@@ -249,7 +249,7 @@
           isDirty: false
         };
 
-        // DOM 元素缓存
+        // DOM element cache
         this.dom = {
           authInput: document.getElementById("authToken"),
           editor: document.getElementById("configEditor"),
@@ -266,61 +266,61 @@
       }
 
       /**
-       * 初始化入口
+       * Initialization entry
        */
       async init() {
         this.bindEvents();
 
-        // 调用 shared.js 的 token 处理
+        // Call shared.js token handling
         if (typeof initializeTokenHandling === "function") {
           initializeTokenHandling("authToken");
         }
 
-        // 并行加载初始数据
+        // Load initial data in parallel
         await this.loadExampleConfig();
 
         if (this.token) {
           await this.loadCurrentConfig();
         } else {
-          this.setStatus("请先输入 Token");
+          this.setStatus("Please enter Token first");
         }
       }
 
       /**
-       * 事件绑定
+       * Event binding
        */
       bindEvents() {
-        // Tab 切换代理
+        // Tab switch delegation
         this.dom.tabContainer.addEventListener("click", (e) => {
           if (e.target.classList.contains("editor-tab")) {
             this.switchTab(e.target.dataset.tab);
           }
         });
 
-        // 按钮事件
+        // Button events
         this.dom.btnRefresh.addEventListener("click", () => this.loadCurrentConfig());
         this.dom.btnSave.addEventListener("click", () => this.saveConfig());
         this.dom.btnReload.addEventListener("click", () => this.reloadServer());
 
-        // 令牌变化监听
+        // Token change listener
         this.dom.authInput.addEventListener("change", (e) => {
           if (e.target.value) this.loadCurrentConfig();
         });
 
-        // 编辑器 Tab 键支持
+        // Editor Tab key support
         this.dom.editor.addEventListener("keydown", this.handleEditorKeydown.bind(this));
 
-        // 内容变更监听（用于标记 dirty 状态，可选）
+        // Content change listener (for marking dirty state, optional)
         this.dom.editor.addEventListener("input", () => {
           if (this.state.activeTab === ConfigEditor.TABS.CURRENT) {
             this.state.isDirty = true;
-            this.setStatus("编辑中...", true);
+            this.setStatus("Editing...", true);
           }
         });
       }
 
       /**
-       * 核心 API 请求封装
+       * Core API request wrapper
        */
       async request(endpoint, options = {}) {
         const { method = "GET", body = null, requireAuth = true, headers = {} } = options;
@@ -329,7 +329,7 @@
 
         if (requireAuth) {
           if (!this.token) {
-            showGlobalMessage("请输入认证令牌", true);
+            showGlobalMessage("Please enter authentication token", true);
             throw new Error("Auth required");
           }
           reqHeaders["Authorization"] = `Bearer ${this.token}`;
@@ -357,27 +357,27 @@
       }
 
       /**
-       * 统一 HTTP 错误处理
+       * Unified HTTP error handling
        */
       async handleHttpError(response) {
         const text = await response.text();
         const msg = text || response.statusText;
 
         switch (response.status) {
-          case 412: throw new Error("配置冲突：服务端已被修改，请刷新。");
-          case 428: throw new Error("前置条件失败：缺少 Hash 头。");
-          case 401: throw new Error("认证失败：Token 无效。");
-          case 400: throw new Error(`请求错误：${msg}`);
+          case 412: throw new Error("Config conflict: Server has been modified, please refresh.");
+          case 428: throw new Error("Precondition failed: Missing Hash header.");
+          case 401: throw new Error("Authentication failed: Invalid Token.");
+          case 400: throw new Error(`Request error: ${msg}`);
           default: throw new Error(`HTTP ${response.status}: ${msg}`);
         }
       }
 
-      // --- 业务逻辑 ---
+      // --- Business logic ---
 
       async loadCurrentConfig() {
-        this.setStatus("正在加载...");
+        this.setStatus("Loading...");
         try {
-          // 注意：此处遵循后端定义 POST /config/get
+          // Note: Following backend definition POST /config/get
           const res = await this.request(ConfigEditor.ENDPOINTS.GET, { method: "POST" });
 
           this.state.content.current = res.text;
@@ -385,33 +385,33 @@
           this.state.isDirty = false;
 
           this.updateUI();
-          this.setStatus("已加载");
-          showGlobalMessage("配置已更新", false, 1000);
+          this.setStatus("Loaded");
+          showGlobalMessage("Configuration updated", false, 1000);
         } catch (e) {
-          this.setStatus("加载失败");
+          this.setStatus("Load failed");
         }
       }
 
       async loadExampleConfig() {
         try {
-          // 示例接口不需要 Token
+          // Example endpoint doesn't need Token
           const res = await this.request(ConfigEditor.ENDPOINTS.EXAMPLE, { requireAuth: false });
           this.state.content.example = res.text;
         } catch (e) {
-          this.state.content.example = "# 无法加载示例配置";
+          this.state.content.example = "# Unable to load example configuration";
         }
       }
 
       async saveConfig() {
         if (this.state.activeTab !== ConfigEditor.TABS.CURRENT) {
-          return showGlobalMessage("只能保存【当前配置】", true);
+          return showGlobalMessage("Can only save [Current Config]", true);
         }
         if (!this.state.currentHash) {
-          return showGlobalMessage("无法保存：缺失原始 Hash，请先刷新", true);
+          return showGlobalMessage("Cannot save: Missing original Hash, please refresh first", true);
         }
 
         const content = this.dom.editor.value;
-        this.setStatus("正在保存...");
+        this.setStatus("Saving...");
 
         try {
           const res = await this.request(ConfigEditor.ENDPOINTS.SET, {
@@ -424,36 +424,36 @@
           });
 
           if (res.status === 204) {
-            showGlobalMessage("保存成功 (配置已变更)");
-            await this.loadCurrentConfig(); // 重新获取以更新 Hash
+            showGlobalMessage("Save successful (configuration changed)");
+            await this.loadCurrentConfig(); // Reload to update Hash
           } else {
-            showGlobalMessage("保存成功 (配置未变更)");
-            this.setStatus("未变更");
+            showGlobalMessage("Save successful (configuration unchanged)");
+            this.setStatus("Unchanged");
           }
         } catch (e) {
-          this.setStatus("保存失败");
+          this.setStatus("Save failed");
         }
       }
 
       async reloadServer() {
-        if (!confirm("确定重载服务？未保存的更改将丢失。")) return;
+        if (!confirm("Confirm reload service? Unsaved changes will be lost.")) return;
 
         try {
           const res = await this.request(ConfigEditor.ENDPOINTS.RELOAD, {
             headers: { [ConfigEditor.HEADERS.HASH]: this.state.currentHash }
           });
 
-          showGlobalMessage("服务已重载");
+          showGlobalMessage("Service reloaded");
           if (res.status === 204) await this.loadCurrentConfig();
         } catch (e) {
-          // 错误已在 request 中处理
+          // Error already handled in request
         }
       }
 
-      // --- UI 操作 ---
+      // --- UI operations ---
 
       switchTab(tabName) {
-        // 如果离开当前编辑页，暂存内容
+        // If leaving current edit page, temporarily save content
         if (this.state.activeTab === ConfigEditor.TABS.CURRENT) {
           this.state.content.current = this.dom.editor.value;
         }
@@ -465,7 +465,7 @@
       updateUI() {
         const isCurrent = this.state.activeTab === ConfigEditor.TABS.CURRENT;
 
-        // 1. 更新 Tab 样式
+        // 1. Update Tab styles
         this.dom.tabs.forEach(tab => {
           if (tab.dataset.tab === this.state.activeTab) {
             tab.classList.add("active");
@@ -474,16 +474,16 @@
           }
         });
 
-        // 2. 更新编辑器内容和状态
+        // 2. Update editor content and state
         this.dom.editor.value = isCurrent ? this.state.content.current : this.state.content.example;
         this.dom.editor.readOnly = !isCurrent;
         this.dom.editor.style.opacity = isCurrent ? "1" : "0.7";
 
-        // 3. 更新 Hash 显示
+        // 3. Update Hash display
         this.dom.hashDisplay.textContent = this.state.currentHash || "Unknown";
 
-        // 4. 更新状态文本
-        this.setStatus(isCurrent ? "编辑模式" : "只读模式 (示例)");
+        // 4. Update status text
+        this.setStatus(isCurrent ? "Edit mode" : "Read-only mode (example)");
       }
 
       handleEditorKeydown(e) {
@@ -506,7 +506,7 @@
       }
     }
 
-    // 启动应用
+    // Start application
     document.addEventListener("DOMContentLoaded", () => {
       window.app = new ConfigEditor();
     });
