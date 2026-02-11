@@ -178,7 +178,7 @@ impl ::core::fmt::Display for MessageId {
 
 //                 let mut buf = [0u8; 16];
 
-//                 // Handle前7个完整的字节对（14字节）
+//                 // Handle first 7 complete byte pairs (14 bytes)
 //                 const POSITIONS: [u8; 7] = [0, 4, 9, 14, 19, 24, 28];
 //                 for (j, &pos) in POSITIONS.iter().enumerate() {
 //                     let i = pos as usize;
@@ -196,7 +196,7 @@ impl ::core::fmt::Display for MessageId {
 //                     buf[j * 2 + 1] = SHL4_TABLE[h3 as usize] | h4;
 //                 }
 
-//                 // HandleLast3个十六进制字符（1.5字节）
+//                 // Handle last 3 hexadecimal characters (1.5 bytes)
 //                 let h1 = HEX_TABLE[s[32] as usize];
 //                 let h2 = HEX_TABLE[s[33] as usize];
 //                 let h3 = HEX_TABLE[s[34] as usize];
@@ -206,12 +206,12 @@ impl ::core::fmt::Display for MessageId {
 //                 }
 
 //                 buf[14] = SHL4_TABLE[h1 as usize] | h2;
-//                 buf[15] = SHL4_TABLE[h3 as usize] | 0x01; // 低4位设To1
+//                 buf[15] = SHL4_TABLE[h3 as usize] | 0x01; // Set low 4 bits to 1
 
 //                 Some(Self(u128::from_ne_bytes(buf)))
 //             }
 
-//             // Base62Format：toolu_01xxxxxxxxxxxxxxxxxxxx
+//             // Base62 format: toolu_01xxxxxxxxxxxxxxxxxxxx
 //             (30, [b't', b'o', b'o', b'l', b'u', b'_', b'0', b'1', s @ ..]) => {
 //                 crate::common::utils::base62::decode_fixed(unsafe { &*s.as_ptr().cast() })
 //                     .ok()
@@ -222,7 +222,7 @@ impl ::core::fmt::Display for MessageId {
 //         }
 //     }
 
-//     /// ConvertToBase62Format字符串
+//     /// Convert to Base62 format string
 //     #[allow(clippy::wrong_self_convention)]
 //     #[inline(always)]
 //     pub fn to_str<'buf>(&self, buf: &'buf mut [u8; 30]) -> &'buf mut str {
@@ -278,7 +278,7 @@ impl ::core::fmt::Display for MessageId {
 //             group_idx += 1;
 //         }
 
-//         // Handle第5组的前6个字符（3个完整字节）
+//         // Handle group 5 first 6 characters (3 complete bytes)
 //         let mut dst_idx = 24;
 //         while src_idx < 15 {
 //             let byte = src[src_idx];
@@ -289,7 +289,7 @@ impl ::core::fmt::Display for MessageId {
 //             dst_idx += 2;
 //         }
 
-//         // HandleLast一个字节的高4位
+//         // Handle high 4 bits of last byte
 //         dst[34] = HEX_LUT[(src[15] >> 4) as usize];
 
 //         dst
