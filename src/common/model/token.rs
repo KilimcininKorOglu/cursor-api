@@ -223,7 +223,7 @@ impl<'de> ::serde::Deserialize<'de> for TokenPayload {
                     }
                 }
 
-                // Check必填Field
+                // Check required field
                 let sub = sub.ok_or_else(|| de::Error::missing_field(FIELD_SUB))?;
                 let time = time.ok_or_else(|| de::Error::missing_field(FIELD_TIME))?;
                 let randomness =

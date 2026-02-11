@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package key;
 
-// 动态配置的 API KEY
+// Dynamic API KEY configuration
 message KeyConfig {
   // Authentication令牌信息
   message TokenInfo {

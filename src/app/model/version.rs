@@ -171,7 +171,7 @@ impl Version {
     }
 }
 
-// 辅助函数：创建正式版本
+// Helper function: create official version
 #[allow(dead_code)]
 pub const fn release(major: u16, minor: u16, patch: u16) -> Version {
     Version { major, minor, patch, stage: ReleaseStage::Release }

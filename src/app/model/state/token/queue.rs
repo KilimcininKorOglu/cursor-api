@@ -51,7 +51,7 @@ impl TokenHealth {
 }
 
 #[cfg(not(feature = "horizon"))]
-/// Queue内部Use的复合键，将TokenKeyandmanager索引绑定
+/// Composite key used internally in queue, binding token key and manager index
 /// 作Tohint加速查找：Iftoken未被修改，index可以直接定位
 #[derive(PartialEq, Eq, Hash, Clone, Copy)]
 pub struct TokenManagerKey {

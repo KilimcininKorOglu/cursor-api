@@ -17,7 +17,7 @@ pub struct AppState {
 
 impl AppState {
     pub async fn load() -> Result<Self, Box<dyn core::error::Error + Send + Sync + 'static>> {
-        // Parallel加载日志、令牌and代理
+        // Load logs, tokens and proxies in parallel
         let (log_manager_result, token_manager_result, proxies_result) =
             tokio::join!(LogManager::load(), TokenManager::load(), Proxies::load());
 

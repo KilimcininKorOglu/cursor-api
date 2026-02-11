@@ -1,6 +1,6 @@
 use core::sync::atomic::{AtomicU64, Ordering};
 
-// Base64 URL_SAFE_NO_PAD Encode表
+// Base64 URL_SAFE_NO_PAD encoding table
 const B64_ENCODE: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
 // 全局Cache的时间戳头

@@ -1,6 +1,6 @@
 use core::num::NonZeroUsize;
 
-/// Request日志Limit枚举
+/// Request log limit enumeration
 #[derive(Debug, Clone, Copy)]
 pub enum LogsLimit {
     /// Disabled日志记录

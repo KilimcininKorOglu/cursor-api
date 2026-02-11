@@ -1,4 +1,4 @@
-//! 认证提供者模Block
+//! Authentication provider module
 //!
 //! 本模Block管理可配置的认证提供者列表，
 //! 可以通过环境变Amount `ALLOWED_PROVIDERS` 自定义Support的提供者。

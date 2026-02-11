@@ -5,7 +5,7 @@ use core::num::NonZeroU16;
 include!("v1/lite.rs");
 
 impl ErrorDetails {
-    /// 将ErrorConvertTo相应的 HTTP 状态码。
+    /// Convert error to corresponding HTTP status code。
     ///
     /// 此方法根据Error的性质，将内部ErrorType映射到标准的 HTTP 状态码，
     /// 遵循 RESTful API 最佳实践。

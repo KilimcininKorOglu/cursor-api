@@ -1,4 +1,4 @@
-//! Cursor 版本信息管理模Block
+//! Cursor version information management module
 //!
 //! 本模BlockUse ManuallyInit 来存储版本信息，这种设计考虑了以下因素：
 //! 1. 版本信息在程序生命周期内只需初始化一次
@@ -29,7 +29,7 @@ crate::define_typed_constants! {
             target_os = "macos" => {"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Cursor/"}
             target_os = "linux" => {"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Cursor/"}
         },
-        /// Default的 User-Agent
+        /// Default User-Agent
         DEFAULT_UA = cfg_select! {
             target_os = "windows" => {"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Cursor/2.0.0 Chrome/138.0.7204.251 Electron/37.7.0 Safari/537.36"}
             target_os = "macos" => {"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Cursor/2.0.0 Chrome/138.0.7204.251 Electron/37.7.0 Safari/537.36"}

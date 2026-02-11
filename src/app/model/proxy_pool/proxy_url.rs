@@ -3,7 +3,7 @@ use interned::Str;
 use reqwest::Proxy;
 use rkyv::{Archive, Deserialize, Serialize};
 
-/// 一个可序列化的代理URL包装器
+/// A serializable proxy URL wrapper
 ///
 /// 用于在Need序列化/反序列化代理配置的场景中存储代理URL。
 /// 内部存储经过验证的URL字符串，Ensure可以安全地ConvertTo `reqwest::Proxy`。

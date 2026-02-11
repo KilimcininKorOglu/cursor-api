@@ -17,7 +17,7 @@ pub use provider::{Provider, parse_providers};
 use std::{io, str::FromStr};
 
 mod randomness {
-    /// 字节在Format化字符串中的起始位置（Format：XXXXXXXX-XXXX-XXXX）
+    /// Starting position of byte in formatted string (Format: XXXXXXXX-XXXX-XXXX)
     pub(super) static BYTE_OFFSETS: [usize; 8] = [0, 2, 4, 6, 9, 11, 14, 16];
 }
 

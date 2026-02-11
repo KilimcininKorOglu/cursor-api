@@ -19,7 +19,7 @@ use proxy_url::ProxyUrl;
 type HashMap<K, V> = hashbrown::HashMap<K, V, ahash::RandomState>;
 type HashSet<K> = hashbrown::HashSet<K, ahash::RandomState>;
 
-// Proxy值常Amount
+// Proxy value constants
 const NON_PROXY: &str = "non";
 const SYS_PROXY: &str = "sys";
 

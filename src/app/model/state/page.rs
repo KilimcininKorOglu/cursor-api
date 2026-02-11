@@ -8,7 +8,7 @@ use crate::app::constant::{
     HEADER_VALUE_TEXT_PLAIN_UTF8,
 };
 
-// 页面ContentType枚举
+// Page content type enumeration
 #[derive(
     Clone, serde::Serialize, serde::Deserialize, rkyv::Archive, rkyv::Deserialize, rkyv::Serialize,
 )]

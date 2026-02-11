@@ -118,7 +118,7 @@ impl Platform {
     //         &*(self.default_ua.len().unchecked_sub(UA_SUFFIX_LEN)..).get_unchecked(self.default_ua)
     //     }
     // }
-    // /// Default的 User-Agent
+    // /// Default User-Agent
     // pub const fn default_ua(&self) -> &'static str { self.default_ua }
     pub fn client_ua(&self, version: &str) -> String {
         [self.ua_prefix(), version, UA_SUFFIX].concat()

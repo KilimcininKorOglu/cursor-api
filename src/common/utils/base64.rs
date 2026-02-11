@@ -1,6 +1,6 @@
 #![allow(unsafe_op_in_unsafe_fn)]
 
-//! 高性能 Base64 编Decode实现
+//! High-performance Base64 encoding/decoding implementation
 //!
 //! 本模Block提供了一个优化的 Base64 编Decode器，Use自定义字符集：
 //! - 字符集：`-AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1032547698_`

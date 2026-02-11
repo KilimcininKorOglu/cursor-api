@@ -15,7 +15,7 @@ const PACKET_SIZE: usize = 48;
 const VERSION: u8 = 4;
 const MODE_CLIENT: u8 = 3;
 const MODE_SERVER: u8 = 4;
-/// 1900年1月1日到1970年1月1日的秒数差
+/// Seconds difference between January 1, 1900 and January 1, 1970
 const EPOCH_DELTA: i64 = 0x83AA7E80;
 
 static SERVERS: ManuallyInit<Servers> = ManuallyInit::new();

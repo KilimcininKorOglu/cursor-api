@@ -476,7 +476,7 @@ mod tests {
 
     #[test]
     fn test_clone_functionality() {
-        // Test Clone 在 Borrowed 状态下的正确性
+        // Test clone correctness in borrowed state
         let builder1 = StringBuilder::with_capacity(2)
             .append("Hello")
             .append(" World");

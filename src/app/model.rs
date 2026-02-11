@@ -111,7 +111,7 @@ impl LogStatus {
     }
 }
 
-// Request日志
+// Request log
 #[derive(Serialize, Clone)]
 pub struct RequestLog {
     pub id: u64,

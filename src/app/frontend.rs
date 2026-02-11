@@ -98,7 +98,7 @@ where D: serde::Deserializer<'de> {
                 RouteDef::File { content_type: None, path: file_path }
             }
             RouteDefinition::Object(def) => {
-                // 完整Format：直接Use对象
+                // Complete format: use object directly
                 def
             }
         };

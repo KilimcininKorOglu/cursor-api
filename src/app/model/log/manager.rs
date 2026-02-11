@@ -57,7 +57,7 @@ impl LogManager {
         };
 
         if file.metadata().await?.len() > usize::MAX as u64 {
-            return Err("日志文件过大".into());
+            return Err("Log file too large".into());
         }
 
         let mmap = unsafe { memmap2::MmapOptions::new().map(&file)? };

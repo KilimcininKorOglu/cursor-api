@@ -182,7 +182,7 @@ const fn is_valid_timestamp(bytes: &[u8; 8]) -> bool {
     true
 }
 
-// Decode 64 字符的十六进制字符串To Hash
+// Decode 64-character hexadecimal string to hash
 #[inline]
 const fn decode_hex_hash(hex_bytes: &[u8; 64]) -> Option<Hash> {
     let mut result = [0u8; 32];

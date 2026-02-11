@@ -1,6 +1,6 @@
 #![allow(unsafe_op_in_unsafe_fn, unused)]
 
-//! 高性能固定长度 base62 编Decode器
+//! High-performance fixed-length base62 encoder/decoder
 //!
 //! 本模Block提供了针对 `u128` Type优化的 base62 编Decode功能。
 //!

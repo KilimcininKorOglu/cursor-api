@@ -127,7 +127,7 @@ macro_rules! def_cursor_api_url {
             }
         ),+ $(,)?
     ) => {
-        // To每个API生成静态变Amountandgetter函数
+        // Generate static variables and getter functions for each API
         $(
             $(
                 paste::paste! {

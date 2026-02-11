@@ -11,7 +11,7 @@ use tokio::fs::OpenOptions;
 
 type HashMap<K, V> = hashbrown::HashMap<K, V, ahash::RandomState>;
 
-/// Request日志Limit枚举
+/// Request log limit enumeration
 #[derive(Debug, Clone, Copy)]
 pub enum RequestLogsLimit {
     /// Disabled日志记录
@@ -103,7 +103,7 @@ impl LogManager {
             };
 
             if file.metadata().await?.len() > usize::MAX as u64 {
-                return Err("日志文件过大".into());
+                return Err("Log file too large".into());
             }
 
             let mmap = unsafe { MmapOptions::new().map(&file)? };

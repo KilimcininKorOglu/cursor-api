@@ -30,7 +30,7 @@ pub struct GenericError {
 impl Serialize for GenericError {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where S: Serializer {
-        let field_count = 1 // status 总是存在
+        let field_count = 1 // status always exists
             + self.code.is_some() as usize
             + self.error.is_some() as usize
             + self.message.is_some() as usize;

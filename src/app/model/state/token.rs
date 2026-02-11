@@ -21,7 +21,7 @@ pub enum TokenError {
 impl std::fmt::Display for TokenError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(match self {
-            TokenError::AliasExists => "别名Already存在",
+            TokenError::AliasExists => "Alias already exists",
             TokenError::InvalidId => "无效的Token ID",
         })
     }

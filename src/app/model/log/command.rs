@@ -32,7 +32,7 @@ pub struct GetLogsParams {
     pub limit: usize,
 }
 
-// 定义Send给日志Actor的命令
+// Define commands sent to log actor
 pub enum LogCommand {
     // Get日志
     GetLogs {

@@ -1,4 +1,4 @@
-//! 这是一个Handle来自Cursor APIError的模Block，无需Use的FieldAlready注释
+//! This is a module to handle errors from Cursor API, fields that don't need to be used are already commented
 
 use super::CanonicalError;
 use crate::core::aiserver;

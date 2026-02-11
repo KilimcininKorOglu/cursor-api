@@ -16,7 +16,7 @@ use tokio::{
     task::JoinHandle,
 };
 
-// --- 全局配置 ---
+// --- Global configuration ---
 
 /// 控制Debug模式的开关，从环境变Amount "DEBUG" Read，DefaultTo true
 pub static DEBUG: ManuallyInit<bool> = ManuallyInit::new();

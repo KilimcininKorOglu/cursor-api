@@ -319,7 +319,7 @@ pub async fn handle_stream_cpp(
         }
     };
 
-    // SSE EventFormat化
+    // SSE event formatting
     #[inline]
     fn format_sse_event(vector: &mut Vec<u8>, message: &StreamMessage) {
         vector.extend_from_slice(b"event: ");

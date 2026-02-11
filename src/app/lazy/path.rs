@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 #[inline]
 pub fn create_dir_all<P: AsRef<Path>>(path: P) {
-    std::fs::create_dir_all(path).expect("无法创建数据目录")
+    std::fs::create_dir_all(path).expect("Unable to create data directory")
 }
 
 pub fn init(current_dir: PathBuf) {

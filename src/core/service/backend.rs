@@ -16,7 +16,7 @@ use http::{Extensions, StatusCode};
 #[repr(u8)]
 #[derive(Clone, Copy, PartialEq)]
 enum StreamState {
-    /// 初始状态，什么都未Start
+    /// Initial state, nothing started yet
     NotStarted,
     // /// message_start AlreadyCompleted，等待 content_block_start
     // MessageStarted,

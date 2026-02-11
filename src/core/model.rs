@@ -31,7 +31,7 @@ pub enum Role {
     Assistant,
 }
 
-// 模型定义
+// Model definition
 #[derive(Debug, Clone, Copy)]
 pub struct Model {
     pub server_id: &'static str,

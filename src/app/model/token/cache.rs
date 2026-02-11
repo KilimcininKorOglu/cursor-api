@@ -16,7 +16,7 @@ use core::{
 use manually_init::ManuallyInit;
 use scc::HashMap;
 
-/// Token 的唯一标识键
+/// Unique identification key for token
 ///
 /// 由用户IDand随机数组成，用于在全局Cache中查找对应的 Token
 #[derive(

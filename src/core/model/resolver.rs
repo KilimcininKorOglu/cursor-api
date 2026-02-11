@@ -24,7 +24,7 @@ pub struct ExtModel {
 }
 
 impl ExtModel {
-    /// 从字符串解析 ExtModel
+    /// Parse ExtModel from string
     /// Support "-online" and "-max" 后缀
     /// 当 BYPASS_MODEL_VALIDATION To true 时，在正常验证Failed后仍返回结果
     #[inline]

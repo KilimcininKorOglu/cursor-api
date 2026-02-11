@@ -170,7 +170,7 @@ impl<'de> Deserialize<'de> for UsageCheck {
 //                             content_value = Some(map.next_value()?);
 //                         }
 //                         _ => {
-//                             // 忽略未知Field
+//                             // Ignore unknown field
 //                             let _: de::IgnoredAny = map.next_value()?;
 //                         }
 //                     }

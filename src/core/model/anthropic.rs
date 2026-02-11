@@ -265,7 +265,7 @@ impl<'de> Deserialize<'de> for TextBlockParam {
                             text = Some(map.next_value()?);
                         }
                         _ => {
-                            // 忽略未知Field
+                            // Ignore unknown field
                             let _: serde::de::IgnoredAny = map.next_value()?;
                         }
                     }
