@@ -8,30 +8,30 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-# HashMap 实现 - 启用 nightly 优化
+# HashMap implementation - enable nightly optimizations
 # hashbrown = { version = "0.16", default-features = false, features = [
-#     "nightly",     # 🚀 SIMD 优化、unstable APIs
-#     "raw-entry",   # 用于高级 HashMap 操作
-#     "inline-more", # 更激进的内联优化
+#     "nightly",     # SIMD optimization, unstable APIs
+#     "raw-entry",   # For advanced HashMap operations
+#     "inline-more", # More aggressive inlining optimization
 #     "equivalent",
-#     #"allocator-api2",    # 自定义分配器支持
+#     #"allocator-api2",    # Custom allocator support
 # ] }
 
-# RwLock 实现 - 启用性能优化
+# RwLock implementation - enable performance optimizations
 # parking_lot = { version = "0.12", features = [
-#     "nightly",               # 🚀 unstable 优化
-#     "hardware-lock-elision", # Intel TSX 硬件锁优化（如果可用）
-#     #"send_guard",            # 允许跨线程传递 MutexGuard
+#     "nightly",               # Unstable optimizations
+#     "hardware-lock-elision", # Intel TSX hardware lock optimization (if available)
+#     #"send_guard",            # Allow passing MutexGuard across threads
 # ] }
 
 # dashmap = { path = "../../patch/dashmap", features = ["inline-more"] }
 
 scc = { version = "3.4.8", features = ["equivalent"] }
 
-# 哈希算法 - 启用硬件加速
+# Hash algorithm - enable hardware acceleration
 ahash = { version = "0.8", default-features = false, features = [
-    "runtime-rng", # 运行时随机种子（安全）
-    #"nightly-arm-aes", # 🚀 ARM AES 指令优化
+    "runtime-rng", # Runtime random seed (secure)
+    #"nightly-arm-aes", # ARM AES instruction optimization
 ] }
 
 manually_init.workspace = true
@@ -48,15 +48,15 @@ rkyv = ["dep:rkyv"]
 
 #[profile.release]
 #opt-level = 3
-#lto = "fat"       # 全局 LTO
-#codegen-units = 1 # 单编译单元，最大优化
-#panic = "abort"   # 减小二进制体积
-#strip = true      # 移除符号信息
+#lto = "fat"       # Global LTO
+#codegen-units = 1 # Single codegen unit, maximum optimization
+#panic = "abort"   # Reduce binary size
+#strip = true      # Remove symbol information
 
 #[profile.bench]
 #inherits = "release"
 
-# Nightly 特性门控
+# Nightly feature gating
 [package.metadata.docs.rs]
 rustc-args = ["--cfg", "docsrs"]
 all-features = true

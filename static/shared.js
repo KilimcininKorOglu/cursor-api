@@ -305,13 +305,13 @@ async function copyToClipboard(text, options = {}) {
   }
 
   try {
-    // 优先使用现代 Clipboard API
+    // Prefer modern Clipboard API
     if (navigator.clipboard && window.isSecureContext) {
       await navigator.clipboard.writeText(text);
       handleCopySuccess();
       return true;
     } else {
-      // 降级到传统方法
+      // Fallback to traditional method
       const success = fallbackCopyToClipboard(text);
       if (success) {
         handleCopySuccess();
@@ -344,7 +344,7 @@ async function copyToClipboard(text, options = {}) {
       onSuccess();
     }
 
-    // 如果提供了源元素，可以添加临时的视觉反馈
+    // If source element provided, can add temporary visual feedback
     if (sourceElement) {
       addTemporaryClass(sourceElement, "copied", 2000);
     }

@@ -76,7 +76,7 @@ fn get_files_hash() -> Result<HashMap<PathBuf, String>> {
     //         let entry = entry?;
     //         let path = entry.path();
 
-    //         // 检查是否是支持的文件类型，且不是已经压缩的文件
+    //         // Check if it's a supported file type and not already compressed
     //         if let Some(ext) = path.extension().and_then(|e| e.to_str())
     //             && SUPPORTED_EXTENSIONS.contains(&ext)
     //             && !path.to_string_lossy().contains(".min.")
