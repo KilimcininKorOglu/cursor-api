@@ -1,12 +1,12 @@
-/// Cursor订阅计划Type
+/// Cursor subscription plan type
 ///
-/// 各计划包含的usage额度：
-/// - Free: Have限的免费额度
-/// - FreeTrial: 试用期额度
+/// Usage quota included with each plan:
+/// - Free: Limited free quota
+/// - FreeTrial: Trial period quota
 /// - Pro: $20 API usage + bonus (~225 Sonnet 4.5 requests)
 /// - ProPlus: $70 API usage + bonus (~675 Sonnet 4.5 requests)  
 /// - Ultra: $400 API usage + bonus (~4,500 Sonnet 4.5 requests)
-/// - Enterprise: 自定义配额
+/// - Enterprise: Custom quota
 #[derive(
     Debug, Default, Clone, Copy, PartialEq, Eq, rkyv::Archive, rkyv::Serialize, rkyv::Deserialize,
 )]
@@ -22,7 +22,7 @@ pub enum MembershipType {
 }
 
 impl MembershipType {
-    // 定义常Amount字符串
+    // Define constant strings
     const FREE: &'static str = "free";
     const PRO: &'static str = "pro";
     const PRO_PLUS: &'static str = "pro_plus";

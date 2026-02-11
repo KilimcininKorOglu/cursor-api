@@ -20,7 +20,7 @@ const BASE64_DECODE_TABLE: [u8; 256] = {
     table
 };
 
-/// 计算Encode后的精确长度
+/// Calculate exact length after encoding
 #[inline]
 pub const fn encoded_len(input_len: usize) -> usize {
     let d = input_len / 3;
@@ -28,39 +28,39 @@ pub const fn encoded_len(input_len: usize) -> usize {
 
     (if r > 0 { d + 1 } else { d }) * 4
         - match r {
-            1 => 2, // 1字节EncodeTo2个字符
-            2 => 1, // 2字节EncodeTo3个字符
-            0 => 0, // 3字节EncodeTo4个字符
+            1 => 2, // 1 byte encodes to 2 characters
+            2 => 1, // 2 bytes encode to 3 characters
+            0 => 0, // 3 bytes encode to 4 characters
             _ => unreachable!(),
         }
 }
 
-/// 计算Decode后的精确长度
+/// Calculate exact length after decoding
 #[inline]
 pub const fn decoded_len(encoded_len: usize) -> Option<usize> {
     match encoded_len % 4 {
         0 => Some((encoded_len / 4) * 3),
         2 => Some((encoded_len / 4) * 3 + 1),
         3 => Some((encoded_len / 4) * 3 + 2),
-        1 => None, // 无效长度（% 4 == 1）
+        1 => None, // Invalid length (% 4 == 1)
         _ => unreachable!(),
     }
 }
 
-/// 将字节数据Encode到提供的缓冲区
+/// Encode byte data to provided buffer
 ///
 /// # Safety
 ///
-/// 调用者必须Ensure：
-/// - input.len() 字节可读
-/// - output Have encoded_len(input.len()) 字节可写
+/// Caller must ensure:
+/// - input.len() bytes are readable
+/// - output has encoded_len(input.len()) bytes writable
 #[inline]
 pub unsafe fn encode_to_slice_unchecked(input: &[u8], output: &mut [u8]) {
     let chunks_exact = input.chunks_exact(3);
     let remainder = chunks_exact.remainder();
     let mut j = 0;
 
-    // 主循环：Use chunks_exact 让编译器更好地优化
+    // Main loop: use chunks_exact for better compiler optimization
     for chunk in chunks_exact {
         let b1 = *chunk.get_unchecked(0);
         let b2 = *chunk.get_unchecked(1);
@@ -76,7 +76,7 @@ pub unsafe fn encode_to_slice_unchecked(input: &[u8], output: &mut [u8]) {
         j += 4;
     }
 
-    // Handle剩余字节
+    // Handle remaining bytes
     match remainder.len() {
         1 => {
             let b1 = *remainder.get_unchecked(0);
@@ -99,20 +99,20 @@ pub unsafe fn encode_to_slice_unchecked(input: &[u8], output: &mut [u8]) {
     }
 }
 
-/// 将 Base64 数据Decode到提供的缓冲区
+/// Decode Base64 data to provided buffer
 ///
 /// # Safety
 ///
-/// 调用者必须Ensure：
-/// - input 是Have效的 base64 数据（所Have字符都在字符集中，长度 % 4 != 1）
-/// - output Have decoded_len(input.len()) 字节可写
+/// Caller must ensure:
+/// - input is valid base64 data (all characters in character set, length % 4 != 1)
+/// - output has decoded_len(input.len()) bytes writable
 #[inline]
 pub unsafe fn decode_to_slice_unchecked(input: &[u8], output: &mut [u8]) {
     let chunks = input.chunks_exact(4);
     let remainder = chunks.remainder();
     let mut j = 0;
 
-    // 主循环：Use chunks_exact 优化
+    // Main loop: use chunks_exact for optimization
     for chunk in chunks {
         let c1 = BASE64_DECODE_TABLE[*chunk.get_unchecked(0) as usize];
         let c2 = BASE64_DECODE_TABLE[*chunk.get_unchecked(1) as usize];
@@ -128,7 +128,7 @@ pub unsafe fn decode_to_slice_unchecked(input: &[u8], output: &mut [u8]) {
         j += 3;
     }
 
-    // Handle剩余的2Or3个字符
+    // Handle remaining 2 or 3 characters
     match remainder.len() {
         2 => {
             let c1 = BASE64_DECODE_TABLE[*remainder.get_unchecked(0) as usize];
@@ -150,7 +150,7 @@ pub unsafe fn decode_to_slice_unchecked(input: &[u8], output: &mut [u8]) {
     }
 }
 
-/// Encode到新分配的 String
+/// Encode to newly allocated String
 #[inline]
 pub fn to_base64(bytes: &[u8]) -> String {
     if bytes.is_empty() {
@@ -170,20 +170,20 @@ pub fn to_base64(bytes: &[u8]) -> String {
     }
 }
 
-/// Decode到新分配的 Vec
+/// Decode to newly allocated Vec
 #[inline]
 pub fn from_base64(input: &str) -> Option<Vec<u8>> {
     let input = input.as_bytes();
     let len = input.len();
 
-    // 长度Check
+    // Length check
     if len == 0 {
         return Some(Vec::new());
     }
 
     let output_len = decoded_len(len)?;
 
-    // 字符Check - Use迭代器方法
+    // Character check - use iterator method
     if input.iter().any(|&b| BASE64_DECODE_TABLE[b as usize] == 0xFF) {
         return None;
     }

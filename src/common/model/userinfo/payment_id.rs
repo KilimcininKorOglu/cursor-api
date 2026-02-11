@@ -14,7 +14,7 @@ impl PaymentId {
                 if bytes.iter().all(|&c| is_alphanumeric(c)) {
                     Some(Self(array))
                 } else {
-                    crate::debug!("{suffix:?} 包含非字母数字字符");
+                    crate::debug!("{suffix:?} contains non-alphanumeric characters");
                     None
                 }
             }
@@ -29,13 +29,13 @@ impl PaymentId {
     pub const fn as_str(&self) -> &str { unsafe { std::str::from_utf8_unchecked(&self.0) } }
 }
 
-/// 验证字符WhetherTo大写字母、小写字母Or数字
+/// Verify if character is uppercase letter, lowercase letter or digit
 ///
-/// # 参数
-/// * `c` - 要验证的 u8 字符
+/// # Parameters
+/// * `c` - u8 character to verify
 ///
-/// # 返回值
-/// * `bool` - If字符是 A-Z, a-z Or 0-9 之间的字符则返回 true，否则返回 false
+/// # Return value
+/// * `bool` - Returns true if character is between A-Z, a-z or 0-9, otherwise returns false
 #[inline]
 fn is_alphanumeric(c: u8) -> bool {
     c.is_ascii_uppercase() || c.is_ascii_lowercase() || c.is_ascii_digit()

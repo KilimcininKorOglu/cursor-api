@@ -296,7 +296,7 @@ impl From<crate::common::model::userinfo::TokenUsage> for ChainUsage {
 
 #[derive(Serialize, Clone, Copy, Archive, RkyvDeserialize, RkyvSerialize)]
 pub struct TimingInfo {
-    pub total: f64, // 总用时(秒)
+    pub total: f64, // Total time (seconds)
 }
 
 #[derive(Serialize, Clone)]
@@ -317,21 +317,6 @@ impl ErrorInfo {
         }
     }
 
-    // #[inline]
-    // pub fn set_detail(&mut self, detail: Str) {
-    //     match self {
-    //         ErrorInfo::Empty => {
-    //             *self = Self::Detailed { error: Str::from_static(EMPTY_STRING), details: detail }
-    //         }
-    //         ErrorInfo::Simple(error) => {
-    //             *self = Self::Detailed { error: core::mem::take(error), details: detail }
-    //         }
-    //         ErrorInfo::Detailed { details, .. } => {
-    //             *details = detail;
-    //         }
-    //     }
-    // }
-
     pub fn contains(&self, pat: &str) -> bool {
         match self {
             Self::Empty => false,
@@ -349,9 +334,9 @@ impl ErrorInfo {
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ExtToken {
-    /// 主token - 可以是clientOrweb token
+    /// Primary token - can be client or web token
     pub primary_token: Token,
-    /// 次要token - If存在，必定是web token
+    /// Secondary token - if present, must be web token
     #[serde(skip_serializing_if = "Option::is_none")]
     pub secondary_token: Option<Token>,
     pub checksum: Checksum,
@@ -456,9 +441,9 @@ impl ExtToken {
 }
 
 pub struct UnextToken {
-    /// 主token - 可以是clientOrweb token
+    /// Primary token - can be client or web token
     pub primary_token: Token,
-    /// 次要token - If存在，必定是web token
+    /// Secondary token - if present, must be web token
     pub secondary_token: Option<Token>,
 }
 
@@ -474,9 +459,9 @@ impl UnextToken {
 
 #[derive(Clone, Copy)]
 pub struct UnextTokenRef<'a> {
-    /// 主token - 可以是clientOrweb token
+    /// Primary token - can be client or web token
     pub primary_token: &'a Token,
-    /// 次要token - If存在，必定是web token
+    /// Secondary token - if present, must be web token
     pub secondary_token: Option<&'a Token>,
 }
 
@@ -508,7 +493,7 @@ impl<'a> UnextTokenRef<'a> {
         let token = self.web_token();
         let token_str = token.as_str();
 
-        // 预分配足够的Empty间: TOKEN_PREFIX + user_id + SEPARATOR + token_str
+        // Pre-allocate enough space: TOKEN_PREFIX + user_id + SEPARATOR + token_str
         let mut result = String::with_capacity(PREFIX_AND_USER_ID_AND_SEPARATOR + token_str.len());
 
         result.push_str(TOKEN_PREFIX);

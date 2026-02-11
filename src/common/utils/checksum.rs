@@ -26,7 +26,7 @@ fn extract_time_ks(timestamp_base64: &str) -> Option<u64> {
             return None;
         }
 
-        // Use后四位还原 timestamp
+        // Use last four bytes to restore timestamp
         Some(
             ((*timestamp_bytes.get_unchecked(2) as u64) << 24)
                 | ((*timestamp_bytes.get_unchecked(3) as u64) << 16)
@@ -40,25 +40,25 @@ pub fn validate_checksum(checksum: &str) -> bool {
     let bytes = checksum.as_bytes();
     let len = bytes.len();
 
-    // 长度门控
+    // Length gating
     if len != 72 && len != 137 {
         return false;
     }
 
-    // 单次遍历Completed所Have字符校验
+    // Single pass to complete all character validation
     for (i, &b) in bytes.iter().enumerate() {
         let valid = match (len, i) {
-            // 通用字符校验（排除非法字符）
+            // Generic character validation (exclude illegal characters)
             (_, _) if !b.is_ascii_alphanumeric() && b != b'/' && b != b'-' && b != b'_' => false,
 
-            // Format校验
-            (72, 0..=7) => true, // 时间戳部分（由extract_time_ks验证）
+            // Format validation
+            (72, 0..=7) => true, // Timestamp part (verified by extract_time_ks)
             (72, 8..=71) => b.is_ascii_hexdigit(),
 
-            (137, 0..=7) => true,                     // 时间戳
-            (137, 8..=71) => b.is_ascii_hexdigit(),   // 设备哈希
-            (137, 72) => b == b'/',                   // 分割符（索引72是第73个字符）
-            (137, 73..=136) => b.is_ascii_hexdigit(), // MAC哈希
+            (137, 0..=7) => true,                     // Timestamp
+            (137, 8..=71) => b.is_ascii_hexdigit(),   // Device hash
+            (137, 72) => b == b'/',                   // Separator (index 72 is the 73rd character)
+            (137, 73..=136) => b.is_ascii_hexdigit(), // MAC hash
 
             _ => unreachable!(),
         };
@@ -68,7 +68,7 @@ pub fn validate_checksum(checksum: &str) -> bool {
         }
     }
 
-    // 统一时间戳验证（无需分层）
+    // Unified timestamp validation (no need for layering)
     let time_valid = extract_time_ks(unsafe { checksum.get_unchecked(..8) }).is_some();
 
     time_valid

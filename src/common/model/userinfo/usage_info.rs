@@ -3,67 +3,67 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Archive, RkyvDeserialize, RkyvSerialize)]
 pub struct UsageSummary {
-    /// 订阅计划的UseCase（包含的额度）
+    /// Subscription plan usage (included quota)
     pub plan: Option<PlanUsage>,
-    /// 按需UseCase（超出包含额度后的付费Use）
+    /// On-demand usage (paid usage after exceeding included quota)
     #[serde(alias = "onDemand", skip_serializing_if = "Option::is_none")]
     pub on_demand: Option<OnDemandUsage>,
 }
 
-/// 个人用户的UseCase
+/// Individual user usage
 pub type IndividualUsage = UsageSummary;
 
-/// 团队级别的UseCase
+/// Team-level usage
 pub type TeamUsage = UsageSummary;
 
-/// 订阅计划的UseCase
+/// Subscription plan usage
 ///
-/// 包含计划自带的API usage额度，以API价格计费
+/// Contains API usage quota included with the plan, billed at API prices
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Archive, RkyvDeserialize, RkyvSerialize)]
 pub struct PlanUsage {
     pub enabled: bool,
-    /// AlreadyUseAmount（May是花费单位OrRequest计Amount单位）
+    /// Already used amount (may be spending units or request count units)
     pub used: i32,
-    /// 配额上限（Current计费周期内的总限额）
+    /// Quota limit (total limit for current billing period)
     pub limit: i32,
-    /// 剩余可用Amount (= limit - used)
+    /// Remaining available amount (= limit - used)
     pub remaining: i32,
-    /// 配额来源细分
+    /// Quota source breakdown
     #[serde(default)]
     pub breakdown: UsageBreakdown,
 }
 
-/// 配额来源细分
+/// Quota source breakdown
 ///
-/// - `included`: 计划包含的基础配额（如Pro的$20对应的Amount）
-/// - `bonus`: 额外赠送的bonus capacity（Animated发放）
-/// - `total`: included + bonus（总承诺配额）
+/// - `included`: Base quota included with plan (e.g., Pro's $20 corresponding amount)
+/// - `bonus`: Additional bonus capacity granted (distributed periodically)
+/// - `total`: included + bonus (total committed quota)
 ///
-/// 注意：`total`May小于Or等于`PlanUsage.limit`，其中：
-/// - `limit`是账户的总配额上限
-/// - `breakdown`记录Already发放/Statistics的配额细分
+/// Note: `total` may be less than or equal to `PlanUsage.limit`, where:
+/// - `limit` is the account's total quota ceiling
+/// - `breakdown` records already distributed/calculated quota breakdown
 #[derive(Debug, Default, Clone, Copy, Serialize, Deserialize, Archive, RkyvDeserialize, RkyvSerialize)]
 pub struct UsageBreakdown {
-    /// 基础包含配额
+    /// Base included quota
     pub included: i32,
-    /// 额外赠送配额（"work hard to grant additional bonus capacity"）
+    /// Additional bonus quota ("work hard to grant additional bonus capacity")
     pub bonus: i32,
-    /// 总计 = included + bonus
+    /// Total = included + bonus
     pub total: i32,
 }
 
-/// 按需UseCase
+/// On-demand usage
 ///
-/// 当用户超出计划包含的配额后，可启用on-demand付费Use
-/// 按相同的API价格计费，无质AmountOr速度降级
+/// When users exceed the quota included with their plan, they can enable on-demand paid usage
+/// Billed at the same API price, no quality or speed degradation
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Archive, RkyvDeserialize, RkyvSerialize)]
 pub struct OnDemandUsage {
-    /// Whether启用按需计费
+    /// Whether on-demand billing is enabled
     pub enabled: bool,
-    /// AlreadyUse的按需配额
+    /// Already used on-demand quota
     pub used: i32,
-    /// 按需配额上限（None表示无LimitOr未设置）
+    /// On-demand quota limit (None means no limit or not set)
     pub limit: Option<i32>,
-    /// 剩余按需配额
+    /// Remaining on-demand quota
     pub remaining: Option<i32>,
 }

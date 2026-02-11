@@ -67,15 +67,15 @@ impl Checksum {
         }
     }
 
-    // Handle 72 字节Format：时间戳(8) + 设备哈希(64)
+    // Handle 72-byte format: timestamp (8) + device hash (64)
     #[inline]
     fn repair_short(bytes: &[u8; 72]) -> Self {
-        // 验证时间戳部分
+        // Verify timestamp part
         if !is_valid_timestamp(unsafe { &*(bytes.as_ptr() as *const [u8; 8]) }) {
             return Self::random();
         }
 
-        // Decode设备哈希
+        // Decode device hash
         let first = match decode_hex_hash(unsafe { &*(bytes.as_ptr().add(8) as *const [u8; 64]) }) {
             Some(hash) => hash,
             None => return Self::random(),
@@ -84,15 +84,15 @@ impl Checksum {
         Self { first, second: Hash::random() }
     }
 
-    // Handle 129 字节Format：设备哈希(64) + '/' + MAC哈希(64)
+    // Handle 129-byte format: device hash (64) + '/' + MAC hash (64)
     #[inline]
     fn repair_normal(bytes: &[u8; 129]) -> Self {
-        // 验证Separator
+        // Verify separator
         if bytes[64] != b'/' {
             return Self::default();
         }
 
-        // Decode两个哈希
+        // Decode two hashes
         let first = match decode_hex_hash(unsafe { &*(bytes.as_ptr() as *const [u8; 64]) }) {
             Some(hash) => hash,
             None => return Self::random(),
@@ -107,20 +107,20 @@ impl Checksum {
         Self { first, second }
     }
 
-    // Handle 137 字节Format：时间戳(8) + 设备哈希(64) + '/' + MAC哈希(64)
+    // Handle 137-byte format: timestamp (8) + device hash (64) + '/' + MAC hash (64)
     #[inline]
     fn repair_full(bytes: &[u8; 137]) -> Self {
-        // 验证时间戳
+        // Verify timestamp
         if !is_valid_timestamp(unsafe { &*(bytes.as_ptr() as *const [u8; 8]) }) {
             return Self::random();
         }
 
-        // 验证Separator
+        // Verify separator
         if bytes[72] != b'/' {
             return Self::random();
         }
 
-        // Decode两个哈希
+        // Decode two hashes
         let first = match decode_hex_hash(unsafe { &*(bytes.as_ptr().add(8) as *const [u8; 64]) }) {
             Some(hash) => hash,
             None => return Self::random(),
@@ -168,7 +168,7 @@ impl Checksum {
     }
 }
 
-// 验证时间戳Format（允许字母数字、'-'、'_'）
+// Verify timestamp format (allow alphanumeric, '-', '_')
 #[inline]
 const fn is_valid_timestamp(bytes: &[u8; 8]) -> bool {
     let mut i = 0;

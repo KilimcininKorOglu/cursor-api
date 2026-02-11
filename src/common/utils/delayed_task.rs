@@ -3,11 +3,11 @@ use atomic_enum::{Atomic, Ordering, atomic_enum};
 use core::{future::Future, time::Duration};
 use tokio::{sync::Notify, time::sleep};
 
-/// 任务状态机
+/// Task state machine
 ///
-/// 状态流转路径:
-/// 1. 正常执行: Scheduled -> Running -> Finished
-/// 2. 任务取消: Scheduled -> Cancelled
+/// State transition paths:
+/// 1. Normal execution: Scheduled -> Running -> Finished
+/// 2. Task cancellation: Scheduled -> Cancelled
 #[repr(u8)]
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum TaskState {
@@ -42,8 +42,8 @@ impl DelayedTask {
         let _handle = tokio::spawn(async move {
             tokio::select! {
                 _ = sleep(delay) => {
-                    // 原子地尝试从 Scheduled Switch到 Running。
-                    // Use AcqRel 建立内存屏障：Ensure看到 cancel() 的修改，Or让 cancel() 看到我们的修改。
+                    // Atomically try to switch from Scheduled to Running.
+                    // Use AcqRel to establish memory barrier: ensure we see cancel()'s modifications, or let cancel() see ours.
                     let res = task_inner.state.compare_exchange(
                         TaskState::Scheduled,
                         TaskState::Running,
@@ -56,7 +56,7 @@ impl DelayedTask {
                         task_inner.state.store(TaskState::Finished, Ordering::Release);
                     }
                 }
-                // 等待取消信号，If state Already被 cancel() 修改，这里会被唤醒
+                // Wait for cancellation signal, if state has already been modified by cancel(), this will be woken up
                 _ = task_inner.signal.notified() => {}
             }
         });
@@ -64,12 +64,12 @@ impl DelayedTask {
         Self { inner }
     }
 
-    /// 尝试取消任务。
+    /// Try to cancel the task.
     ///
-    /// If任务Already经在运行OrAlreadyCompleted，取消将Failed。
+    /// If the task is already running or already completed, cancellation will fail.
     pub fn cancel(&self) -> bool {
-        // 解决竞态条件：只HaveCurrent状态确认To Scheduled 时才SwitchTo Cancelled。
-        // 此处 AcqRel 保证了与任务线程中状态Switch的互斥性。
+        // Resolve race condition: only switch to Cancelled if current state is confirmed to be Scheduled.
+        // AcqRel here ensures mutual exclusion with state switch in task thread.
         let res = self.inner.state.compare_exchange(
             TaskState::Scheduled,
             TaskState::Cancelled,

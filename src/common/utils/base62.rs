@@ -27,38 +27,38 @@
 use core::fmt;
 
 // ============================================================================
-// 常Amount定义
+// Constant definitions
 // ============================================================================
 
-/// Base62 的基数
+/// Base62 radix
 const BASE: u64 = 62;
 
-/// Encode输出的固定长度
+/// Fixed length of encode output
 pub const BASE62_LEN: usize = 22;
 
-/// 62^10 - 用于将 u128 分解To可管理的Block
+/// 62^10 - used to decompose u128 into manageable blocks
 ///
-/// 这个值是精心选择的，因To：
-/// - 它足够大，可以高效地分解 u128
-/// - 它足够小，可以放入 u64
+/// This value is carefully chosen because:
+/// - It is large enough to efficiently decompose u128
+/// - It is small enough to fit in u64
 const BASE_TO_10: u64 = 839_299_365_868_340_224;
 const BASE_TO_10_U128: u128 = BASE_TO_10 as u128;
 
-/// 快速除法的魔术数 - 用于计算 u128 / BASE_TO_10
+/// Magic number for fast division - used to calculate u128 / BASE_TO_10
 ///
-/// 这些常Amount通过以下方式计算得出：
+/// These constants are calculated as follows:
 /// - MULTIPLY = ceil(2^(128 + SHIFT) / BASE_TO_10)
-/// - SHIFT 选择To使结果精确的最小值
+/// - SHIFT is chosen to be the minimum value that makes the result exact
 const DIV_BASE_TO_10_MULTIPLY: u128 = 233_718_071_534_448_225_491_982_379_416_108_680_074;
 const DIV_BASE_TO_10_SHIFT: u8 = 59;
 
-/// Base62 字符集（标准顺序：0-9, A-Z, a-z）
+/// Base62 character set (standard order: 0-9, A-Z, a-z)
 const CHARSET: &[u8; 62] = b"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
-/// Decode查找表 - 将 ASCII 字符映射到其 base62 值
+/// Decode lookup table - maps ASCII characters to their base62 values
 ///
-/// - Have效字符映射到 0-61
-/// - 无效字符映射到 0xFF
+/// - Valid characters map to 0-61
+/// - Invalid characters map to 0xFF
 const DECODE_LUT: &[u8; 256] = &{
     let mut lut = [0xFF; 256];
     let mut i = 0;
@@ -70,19 +70,19 @@ const DECODE_LUT: &[u8; 256] = &{
 };
 
 // ============================================================================
-// ErrorType
+// Error type
 // ============================================================================
 
-/// Base62 DecodeError
+/// Base62 decode error
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum DecodeError {
-    /// Decode结果超出 u128 范围
+    /// Decode result exceeds u128 range
     ArithmeticOverflow,
-    /// 遇到无效的 base62 字符
+    /// Encountered invalid base62 character
     InvalidCharacter {
-        /// 无效的字节值
+        /// Invalid byte value
         byte: u8,
-        /// 字节在输入中的位置
+        /// Position of byte in input
         position: usize,
     },
 }
@@ -109,18 +109,18 @@ impl fmt::Display for DecodeError {
 impl std::error::Error for DecodeError {}
 
 // ============================================================================
-// 核心算法
+// Core algorithm
 // ============================================================================
 
-/// Use魔术数快速计算 u128 / BASE_TO_10
+/// Use magic number to quickly calculate u128 / BASE_TO_10
 ///
-/// # 返回值
+/// # Return value
 ///
-/// (商, 余数)
+/// (quotient, remainder)
 ///
-/// # 算法
+/// # Algorithm
 ///
-/// Use定点算术避免昂贵的 u128 除法：
+/// Use fixed-point arithmetic to avoid expensive u128 division:
 /// - quotient = (num * MULTIPLY) >> (128 + SHIFT)
 /// - remainder = num - quotient * BASE_TO_10
 #[inline(always)]
@@ -130,11 +130,11 @@ fn fast_div_base_to_10(num: u128) -> (u128, u64) {
     (quotient, remainder as u64)
 }
 
-/// 计算两个 u128 相乘的高 128 位
+/// Calculate high 128 bits of multiplying two u128 numbers
 ///
-/// # 算法
+/// # Algorithm
 ///
-/// 将输入分解To 64 位Block进行乘法：
+/// Decompose input into 64-bit blocks for multiplication:
 /// ```text
 /// x = x_hi * 2^64 + x_lo
 /// y = y_hi * 2^64 + y_lo
@@ -157,24 +157,24 @@ const fn mulh(x: u128, y: u128) -> u128 {
 }
 
 // ============================================================================
-// 公共 API
+// Public API
 // ============================================================================
 
-/// 将 u128 EncodeTo固定长度的 base62 字符串
+/// Encode u128 to fixed-length base62 string
 ///
-/// # 参数
+/// # Parameters
 ///
-/// - `num`: 要Encode的数值
-/// - `buf`: 输出缓冲区，必须恰好To [`BASE62_LEN`] 字节
+/// - `num`: Value to encode
+/// - `buf`: Output buffer, must be exactly [`BASE62_LEN`] bytes
 ///
-/// # 性能
+/// # Performance
 ///
-/// 此函数经过高度优化：
-/// - Use两次快速除法将 u128 分解To三个 u64 Block
-/// - 每个BlockUse原生 u64 运算进行Encode
-/// - 无分支预测Failed，无内存分配
+/// This function is highly optimized:
+/// - Use two fast divisions to decompose u128 into three u64 blocks
+/// - Each block uses native u64 operations for encoding
+/// - No branch prediction failures, no memory allocation
 ///
-/// # 示例
+/// # Example
 ///
 /// ```
 /// # use base62_u128::{encode_fixed, BASE62_LEN};
@@ -184,30 +184,30 @@ const fn mulh(x: u128, y: u128) -> u128 {
 /// ```
 #[inline]
 pub fn encode_fixed(num: u128, buf: &mut [u8; BASE62_LEN]) {
-    // 将 u128 分解To三个Block：
+    // Decompose u128 into three blocks:
     // num = high * (62^10)^2 + mid * 62^10 + low
     let (quotient, low) = fast_div_base_to_10(num);
     let (high, mid) = fast_div_base_to_10(quotient);
 
-    // Encode各个Block
-    // SAFETY: 所Have索引都在编译时Already知的范围内
+    // Encode each block
+    // SAFETY: All indices are known at compile time to be in range
     unsafe {
-        // 低 10 位 -> buf[12..22]
+        // Low 10 bits -> buf[12..22]
         encode_u64_chunk(low, 10, buf.as_mut_ptr().add(12));
-        // 中 10 位 -> buf[2..12]
+        // Mid 10 bits -> buf[2..12]
         encode_u64_chunk(mid, 10, buf.as_mut_ptr().add(2));
-        // 高 2 位 -> buf[0..2]
+        // High 2 bits -> buf[0..2]
         encode_u64_chunk(high as u64, 2, buf.as_mut_ptr());
     }
 }
 
-/// Encode u64 值到指定长度的 base62 字符串
+/// Encode u64 value to base62 string of specified length
 ///
 /// # Safety
 ///
-/// 调用者必须Ensure：
-/// - `ptr` 指向至少 `len` 字节的Have效内存
-/// - `num` Encode后不会超过 `len` 个字符
+/// Caller must ensure:
+/// - `ptr` points to at least `len` bytes of valid memory
+/// - `num` encoded will not exceed `len` characters
 #[inline(always)]
 unsafe fn encode_u64_chunk(mut num: u64, len: usize, ptr: *mut u8) {
     for i in (0..len).rev() {
@@ -217,18 +217,18 @@ unsafe fn encode_u64_chunk(mut num: u64, len: usize, ptr: *mut u8) {
     }
 }
 
-/// 将固定长度的 base62 字符串DecodeTo u128
+/// Decode fixed-length base62 string to u128
 ///
-/// # 参数
+/// # Parameters
 ///
-/// - `buf`: 输入缓冲区，必须恰好To [`BASE62_LEN`] 字节
+/// - `buf`: Input buffer, must be exactly [`BASE62_LEN`] bytes
 ///
 /// # Error
 ///
-/// - [`DecodeError::InvalidCharacter`]: 输入包含非 base62 字符
-/// - [`DecodeError::ArithmeticOverflow`]: Decode结果超出 u128 范围
+/// - [`DecodeError::InvalidCharacter`]: Input contains non-base62 characters
+/// - [`DecodeError::ArithmeticOverflow`]: Decode result exceeds u128 range
 ///
-/// # 示例
+/// # Example
 ///
 /// ```
 /// # use base62_u128::{decode_fixed, BASE62_LEN};
@@ -241,13 +241,13 @@ pub fn decode_fixed(buf: &[u8; BASE62_LEN]) -> Result<u128, DecodeError> {
     let mut result = 0u128;
 
     for (position, &byte) in buf.iter().enumerate() {
-        // Use查找表快速Get字符值
+        // Use lookup table to quickly get character value
         let value = DECODE_LUT[byte as usize];
         if value == 0xFF {
             return Err(DecodeError::InvalidCharacter { byte, position });
         }
 
-        // 安全地累加结果，Check溢出
+        // Safely accumulate result, check for overflow
         result = result
             .checked_mul(BASE as u128)
             .and_then(|r| r.checked_add(value as u128))

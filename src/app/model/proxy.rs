@@ -9,7 +9,7 @@ use std::{borrow::Cow, sync::Arc};
 type HashMap<K, V> = hashbrown::HashMap<K, V, ahash::RandomState>;
 type HashSet<K> = hashbrown::HashSet<K, ahash::RandomState>;
 
-// 代理信息Response
+// Proxy information response
 #[derive(Serialize)]
 pub struct ProxyInfoResponse {
     pub status: ApiStatus,
@@ -22,16 +22,16 @@ pub struct ProxyInfoResponse {
     pub message: Option<Cow<'static, str>>,
 }
 
-// 更新代理配置Request
+// Update proxy configuration request
 pub type ProxyUpdateRequest = Proxies;
 
-// 添加代理Request
+// Add proxy request
 #[derive(Deserialize)]
 pub struct ProxyAddRequest {
     pub proxies: HashMap<String, SingleProxy>,
 }
 
-// 删除代理Request
+// Delete proxy request
 #[derive(Deserialize)]
 pub struct ProxiesDeleteRequest {
     #[serde(default)]
@@ -40,7 +40,7 @@ pub struct ProxiesDeleteRequest {
     pub expectation: DeleteResponseExpectation,
 }
 
-// 删除代理Response
+// Delete proxy response
 #[derive(Serialize)]
 pub struct ProxiesDeleteResponse {
     pub status: ApiStatus,
@@ -50,13 +50,13 @@ pub struct ProxiesDeleteResponse {
     pub failed_names: Option<Vec<String>>,
 }
 
-// 设置通用代理Request
+// Set general proxy request
 #[derive(Deserialize)]
 pub struct SetGeneralProxyRequest {
     pub name: String,
 }
 
-// 设置Get图像代理Request
+// Set fetch image proxy request
 // #[derive(Deserialize)]
 // pub struct SetFetchImageProxyRequest {
 //     pub name: Option<String>,

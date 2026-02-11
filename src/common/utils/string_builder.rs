@@ -55,7 +55,7 @@ impl<'a> Clone for Storage<'a> {
     fn clone(&self) -> Self {
         match self {
             Storage::Borrowed(maybe_vec) => {
-                // 安全：外部访问时一定是Already初始化的
+                // Safety: when accessed externally, it must already be initialized
                 Storage::Borrowed(MaybeUninit::new(
                     unsafe { maybe_vec.assume_init_ref() }.clone(),
                 ))
@@ -103,13 +103,13 @@ impl<'a> StringBuilder<'a> {
             Storage::Mixed(vec) => vec.push(part),
             Storage::Borrowed(maybe_vec) => match part {
                 Cow::Borrowed(s) => {
-                    // 安全：进入方法时一定是Already初始化的
+                    // Safety: when entering method, it must already be initialized
                     unsafe { maybe_vec.assume_init_mut() }.push(s);
                 }
                 Cow::Owned(s) => {
-                    // 关键Convert：偷取值并立即替换整个 Storage
+                    // Key conversion: steal value and immediately replace entire Storage
                     let old_vec = unsafe { maybe_vec.assume_init_read() };
-                    // 此时 maybe_vec 未初始化，但会被立即替换
+                    // At this point maybe_vec is uninitialized, but will be immediately replaced
 
                     let mut new_vec: Vec<Cow<'a, str>> = Vec::with_capacity(old_vec.len() + 1);
                     new_vec.extend(old_vec.into_iter().map(Cow::Borrowed));
@@ -149,7 +149,7 @@ impl<'a> StringBuilder<'a> {
 
         match self.storage {
             Storage::Borrowed(maybe_parts) => {
-                // 安全：外部访问时一定是Already初始化的
+                // Safety: when accessed externally, it must already be initialized
                 let parts = unsafe { maybe_parts.assume_init() };
                 if parts.len() == 1 {
                     return parts[0].to_string();
@@ -502,29 +502,29 @@ mod tests {
         let builder2 = builder1.clone();
         assert!(builder2.is_mixed_state());
 
-        // 两个 builder 应该产生相同的结果
+        // Two builders should produce the same result
         assert_eq!(builder1.build(), "Hello World!");
         assert_eq!(builder2.build(), "Hello World!");
     }
 
     #[test]
     fn test_maybe_uninit_state_transition() {
-        // 测试 MaybeUninit 在状态Convert过程中的安全性
+        // Test MaybeUninit safety during state transition
         let mut builder = StringBuilder::with_capacity(3);
 
-        // 初始状态：Borrowed，MaybeUninit Already初始化
+        // Initial state: Borrowed, MaybeUninit already initialized
         assert!(builder.is_borrowed_state());
 
-        // 添加借用字符串，保持 Borrowed 状态
+        // Add borrowed strings, keep Borrowed state
         builder.append_mut("Hello");
         builder.append_mut(" ");
         assert!(builder.is_borrowed_state());
 
-        // 添加拥Have字符串，触发状态Convert
+        // Add owned string, trigger state transition
         builder.append_mut(String::from("World"));
         assert!(builder.is_mixed_state());
 
-        // 继续添加应该正常工作
+        // Continue adding should work normally
         builder.append_mut("!");
         assert!(builder.is_mixed_state());
 
@@ -533,17 +533,17 @@ mod tests {
 
     #[test]
     fn test_empty_builder_safety() {
-        // 测试Empty builder 的安全性
+        // Test empty builder safety
         let empty_builder = StringBuilder::with_capacity(0);
         assert!(empty_builder.is_borrowed_state());
         assert!(empty_builder.is_empty());
 
-        // Empty builder 的 clone 也应该安全
+        // Clone of empty builder should also be safe
         let cloned_empty = empty_builder.clone();
         assert!(cloned_empty.is_borrowed_state());
         assert!(cloned_empty.is_empty());
 
-        // 测试 build 功能
+        // Test build functionality
         assert_eq!(empty_builder.build(), "");
         assert_eq!(cloned_empty.build(), "");
     }

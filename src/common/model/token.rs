@@ -12,16 +12,16 @@ pub struct TokenPayload {
     pub is_session: bool,
 }
 
-// 定义所Have常Amount
+// Define all constants
 crate::define_typed_constants! {
     usize => {
         FIELD_COUNT = 8,
     }
     &'static str => {
-        // 结构体名称
+        // Struct name
         STRUCT_NAME = "TokenPayload",
 
-        // Field名称
+        // Field names
         FIELD_SUB = "sub",
         FIELD_TIME = "time",
         FIELD_RANDOMNESS = "randomness",
@@ -31,13 +31,13 @@ crate::define_typed_constants! {
         FIELD_AUD = "aud",
         FIELD_TYPE = "type",
 
-        // ErrorMessage
-        MSG_EXPECTING_FIELD = "Field名称",
-        MSG_EXPECTING_STRUCT = "结构体 TokenPayload",
-        MSG_TYPE_INVALID = "type Field值必须To ",
-        MSG_ISS_INVALID = "iss Field值必须To ",
-        MSG_SCOPE_INVALID = "scope Field值必须To ",
-        MSG_AUD_INVALID = "aud Field值必须To ",
+        // Error messages
+        MSG_EXPECTING_FIELD = "Field name",
+        MSG_EXPECTING_STRUCT = "struct TokenPayload",
+        MSG_TYPE_INVALID = "type field value must be ",
+        MSG_ISS_INVALID = "iss field value must be ",
+        MSG_SCOPE_INVALID = "scope field value must be ",
+        MSG_AUD_INVALID = "aud field value must be ",
     }
     &'static [&'static str] => {
         FIELD_NAMES = &[

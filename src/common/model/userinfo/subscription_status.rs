@@ -1,40 +1,40 @@
-/// Stripe订阅状态枚举
+/// Stripe subscription status enum
 ///
-/// 基于Stripe API定义的订阅生命周期状态
+/// Subscription lifecycle states defined based on Stripe API
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, Hash, ::rkyv::Archive, ::rkyv::Serialize, ::rkyv::Deserialize,
 )]
 #[repr(u8)]
 pub enum SubscriptionStatus {
-    /// 试用期 - 客户可安全Use产品，首次付款后自动转Toactive
+    /// Trial period - customer can safely use the product, automatically transitions to active after first payment
     Trialing,
 
-    /// 活跃状态 - 订阅状态良好，可正常提供服务
+    /// Active state - subscription is in good standing, can provide service normally
     Active,
 
-    /// 未Completed - 客户必须在23小时内成功付款以激活订阅
-    /// Or付款Need额外操作（如客户认证）
+    /// Incomplete - customer must successfully pay within 23 hours to activate subscription
+    /// Or payment requires additional action (such as customer authentication)
     Incomplete,
 
-    /// 未CompletedAlready过期 - 初始付款Failed且23小时内未成功付款
-    /// 这些订阅不会向客户计费，用于跟踪激活Failed的客户
+    /// Incomplete and expired - initial payment failed and no successful payment within 23 hours
+    /// These subscriptions will not be charged to the customer, used to track customers with failed activation
     IncompleteExpired,
 
-    /// 逾期未付 - 最新发票付款FailedOr未尝试付款
-    /// 订阅继续生成发票，根据设置可转Tocanceled/unpaidOr保持past_due
+    /// Past due - latest invoice payment failed or payment not attempted
+    /// Subscription continues to generate invoices, can transition to canceled/unpaid or remain past_due based on settings
     PastDue,
 
-    /// Already取消 - 订阅Already取消，终态，无法更新
-    /// 取消期间所Have未付发票的自动收款被Disabled
+    /// Already canceled - subscription is already canceled, terminal state, cannot be updated
+    /// Automatic collection of unpaid invoices during cancellation is disabled
     Canceled,
 
-    /// 未支付 - 最新发票未付但订阅仍存在
-    /// 发票保持开放状态并继续生成，但不尝试付款
-    /// 应撤销产品访问权限，因To在past_due期间Already尝试并重试过付款
+    /// Unpaid - latest invoice is unpaid but subscription still exists
+    /// Invoice remains open and continues to be generated, but no payment is attempted
+    /// Product access should be revoked because payment has been attempted and retried during past_due period
     Unpaid,
 
-    /// Already暂停 - 试用期End但无Default支付方式且设置To暂停
-    /// 不再To订阅创建发票，添加支付方式后可恢复
+    /// Already paused - trial period ended but no default payment method and set to pause
+    /// No longer creates invoices for subscription, can be resumed after adding payment method
     Paused,
 }
 

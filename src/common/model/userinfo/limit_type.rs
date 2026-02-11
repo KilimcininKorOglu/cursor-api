@@ -1,14 +1,14 @@
-/// 配额LimitType
+/// Quota limit type
 ///
-/// 决定配额是个人级别还是团队共享
+/// Determines whether quota is at individual level or team shared
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, Hash, rkyv::Archive, rkyv::Serialize, rkyv::Deserialize,
 )]
 #[repr(u8)]
 pub enum LimitType {
-    /// 用户级别Limit（个人配额）
+    /// User-level limit (individual quota)
     User,
-    /// 团队级别Limit（共享池）
+    /// Team-level limit (shared pool)
     Team,
 }
 

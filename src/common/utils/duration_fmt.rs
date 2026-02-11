@@ -186,7 +186,7 @@ impl UnitLocale {
     }
 }
 
-// 定义本地化字符串
+// Define localized strings
 crate::define_typed_constants! {
     &'static str => {
         // Fuzzy prefixes
@@ -683,7 +683,7 @@ impl HumanDuration {
             first = false;
         }
 
-        // 秒+毫秒部分：Use itoa + 手动Format化
+        // Seconds + milliseconds part: use itoa + manual formatting
         if !first {
             f.write_str(separator)?;
         }

@@ -1,7 +1,7 @@
 use core::{fmt, marker::PhantomData};
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de, ser::SerializeTuple as _};
 
-/// 将 Option<T> 序列化To JSON 数组：
+/// Serialize Option<T> to JSON array:
 /// Some(v) -> [v]
 /// None    -> []
 pub fn serialize<S, T>(option: &Option<T>, serializer: S) -> Result<S::Ok, S::Error>
@@ -9,22 +9,22 @@ where
     S: Serializer,
     T: Serialize,
 {
-    // 计算元组长度：Some To 1，None To 0
+    // Calculate tuple length: Some -> 1, None -> 0
     let len = option.is_some() as usize;
     let mut tup = serializer.serialize_tuple(len)?;
     match option {
         Some(value) => {
-            // 序列化To单元素数组 [value]
+            // Serialize to single-element array [value]
             tup.serialize_element(value)?;
         }
         None => {
-            // 序列化ToEmpty数组 []
+            // Serialize to empty array []
         }
     }
     tup.end()
 }
 
-/// 将 JSON 数组反序列化To Option<T>：
+/// Deserialize JSON array to Option<T>:
 /// [v] -> Some(v)
 /// []  -> None
 pub fn deserialize<'de, D, T>(deserializer: D) -> Result<Option<T>, D::Error>
@@ -42,14 +42,14 @@ where
         }
         fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
         where A: de::SeqAccess<'de> {
-            // 尝试Read数组的第一个元素
+            // Try to read first element of array
             match seq.next_element()? {
                 Some(value) => {
-                    // Read到值，对应 [v] -> Some(value)
+                    // Read value, corresponds to [v] -> Some(value)
                     Ok(Some(value))
                 }
                 None => {
-                    // 没Have元素，对应 [] -> None
+                    // No elements, corresponds to [] -> None
                     Ok(None)
                 }
             }

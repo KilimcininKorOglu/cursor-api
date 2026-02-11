@@ -76,13 +76,13 @@ impl ParseFromEnv for bool {
             let start = trimmed.as_ptr() as usize - val.as_ptr() as usize;
             let len = trimmed.len();
 
-            // 只对 trim 后的部分转小写
+            // Only convert the trimmed part to lowercase
             unsafe {
                 val.as_bytes_mut().get_unchecked_mut(start..start + len).make_ascii_lowercase();
             }
 
-            // SAFETY: trimmed 是从Have效 UTF-8 字符串 trim 得到的，
-            // make_ascii_lowercase 保持 UTF-8 Have效性
+            // SAFETY: trimmed is obtained from trimming a valid UTF-8 string,
+            // make_ascii_lowercase maintains UTF-8 validity
             let result = unsafe {
                 ::core::str::from_utf8_unchecked(val.as_bytes().get_unchecked(start..start + len))
             };
@@ -106,23 +106,23 @@ impl ParseFromEnv for &'static str {
                 let trimmed_len = trimmed.len();
 
                 if trimmed_len == 0 {
-                    // If trim 后ToEmpty，UseDefault值（不分配）
+                    // If after trimming is empty, use default value (no allocation)
                     None
                 } else if trimmed_len == value.len() {
-                    // 不Need trim，直接Use
+                    // No need to trim, use directly
                     Some(Cow::Owned(value))
                 } else {
-                    // Need trim - 就地修改
+                    // Need to trim - modify in place
                     let start_offset = trimmed.as_ptr() as usize - value.as_ptr() as usize;
 
                     unsafe {
                         let vec = value.as_mut_vec();
 
                         // SAFETY:
-                        // - trimmed 是 value.trim() 的结果，保证是 value 的子切片
-                        // - start_offset and trimmed_len 来自Have效的切片边界
-                        // - 目标位置（索引 0）and长度在 vec 容Amount内
-                        // - ptr::copy Support重叠内存区域（memmove 语义）
+                        // - trimmed is the result of value.trim(), guaranteed to be a substring of value
+                        // - start_offset and trimmed_len come from valid slice boundaries
+                        // - target position (index 0) and length are within vec capacity
+                        // - ptr::copy supports overlapping memory regions (memmove semantics)
                         if start_offset > 0 {
                             ::core::ptr::copy(
                                 vec.as_ptr().add(start_offset),
@@ -426,27 +426,27 @@ pub async fn get_token_usage(
 }
 
 // pub fn validate_token_and_checksum(auth_token: &str) -> Option<(String, Checksum)> {
-//     // 尝试Use自定义Separator查找
+//     // Try to find custom separator
 //     let mut delimiter_pos = auth_token.rfind(*TOKEN_DELIMITER);
 
-//     // If自定义Separator未找到，并且 USE_COMMA_DELIMITER To true，则尝试Use逗号
+//     // If custom separator is not found and USE_COMMA_DELIMITER is true, try comma
 //     if delimiter_pos.is_none() && *USE_COMMA_DELIMITER {
 //         delimiter_pos = auth_token.rfind(COMMA);
 //     }
 
-//     // If最终都没Have找到Separator，则返回 None
+//     // If no separator is found at all, return None
 //     let comma_pos = delimiter_pos?;
 
-//     // Use找到的Separator位置分割字符串
+//     // Split string using the found separator
 //     let (token_part, checksum) = auth_token.split_at(comma_pos);
-//     let checksum = &checksum[1..]; // 跳过逗号
+//     let checksum = &checksum[1..]; // Skip the comma
 
-//     // 解析 token - To了向前兼容,忽略Last一个:Or%3A前的Content
+//     // Parse token - for backward compatibility, ignore content before the last : or %3A
 //     let colon_pos = token_part.rfind(':');
 //     let encoded_colon_pos = token_part.rfind("%3A");
 
 //     let token = match (colon_pos, encoded_colon_pos) {
-//         (None, None) => token_part, // 最简单的构成: token,checksum
+//         (None, None) => token_part, // Simplest form: token,checksum
 //         (Some(pos1), None) => &token_part[(pos1 + 1)..],
 //         (None, Some(pos2)) => &token_part[(pos2 + 3)..],
 //         (Some(pos1), Some(pos2)) => {
@@ -456,7 +456,7 @@ pub async fn get_token_usage(
 //         }
 //     };
 
-//     // 验证 token and checksum Have效性
+//     // Verify token and checksum validity
 //     if let Ok(chekcsum) = Checksum::from_str(checksum) {
 //         if validate_token(token) {
 //             Some((token.to_string(), chekcsum))
@@ -469,21 +469,21 @@ pub async fn get_token_usage(
 // }
 
 // pub fn extract_token(auth_token: &str) -> Option<&str> {
-//     // 尝试Use自定义Separator查找
+//     // Try to find custom separator
 //     let mut delimiter_pos = auth_token.rfind(*TOKEN_DELIMITER);
 
-//     // If自定义Separator未找到，并且 USE_COMMA_DELIMITER To true，则尝试Use逗号
+//     // If custom separator is not found and USE_COMMA_DELIMITER is true, try comma
 //     if delimiter_pos.is_none() && *USE_COMMA_DELIMITER {
 //         delimiter_pos = auth_token.rfind(COMMA);
 //     }
 
-//     // 根据Whether找到Separator来确定 token_part
+//     // Determine token_part based on whether separator is found
 //     let token_part = match delimiter_pos {
 //         Some(pos) => &auth_token[..pos],
 //         None => auth_token,
 //     };
 
-//     // 向前兼容
+//     // Backward compatibility
 //     let colon_pos = token_part.rfind(':');
 //     let encoded_colon_pos = token_part.rfind("%3A");
 
@@ -498,7 +498,7 @@ pub async fn get_token_usage(
 //         }
 //     };
 
-//     // 验证 token Have效性
+//     // Verify token validity
 //     if validate_token(token) {
 //         Some(token)
 //     } else {
@@ -509,7 +509,7 @@ pub async fn get_token_usage(
 #[inline(always)]
 pub fn format_time_ms(seconds: f64) -> f64 { (seconds * 1000.0).round() / 1000.0 }
 
-/// 将 JWT token ConvertTo TokenInfo
+/// Convert JWT token to TokenInfo
 #[inline]
 pub fn token_to_tokeninfo(
     token: RawToken,
@@ -533,7 +533,7 @@ pub fn token_to_tokeninfo(
     }
 }
 
-/// 将 TokenInfo ConvertTo JWT token
+/// Convert TokenInfo to JWT token
 #[inline]
 pub fn tokeninfo_to_token(tuple: (configured_key::TokenInfo, [u8; 32])) -> Option<ExtToken> {
     let (info, hash) = tuple;
@@ -556,7 +556,7 @@ pub fn tokeninfo_to_token(tuple: (configured_key::TokenInfo, [u8; 32])) -> Optio
     })
 }
 
-/// 生成 PKCE code_verifier and对应的 code_challenge (S256 method)
+/// Generate PKCE code_verifier and corresponding code_challenge (S256 method)
 ///
 /// # Panics
 /// If系统随机数生成器不可用则 panic（极其Rare，通常表示系统级故障）
@@ -566,30 +566,30 @@ fn generate_pkce_pair() -> ([u8; 43], [u8; 43]) {
     use rand::TryRngCore as _;
     use sha2::Digest as _;
 
-    // 生成 32 字节随机数作To verifier
+    // Generate 32 bytes of random data as verifier
     let mut verifier_bytes = [0u8; 32];
     rand::rngs::OsRng
         .try_fill_bytes(&mut verifier_bytes)
         .expect("System RNG unavailable: cannot generate secure PKCE verifier");
 
     unsafe {
-        // Base64 EncodeTo code_verifier (32 bytes -> 43 chars)
+        // Base64 encode to code_verifier (32 bytes -> 43 chars)
         let mut code_verifier = MaybeUninit::<[u8; 43]>::uninit();
 
-        // SAFETY: 32 字节的 Base64URL Encode（无 padding）= ceil(32 * 8 / 6) = 43 字节
-        // 这是Encode算法的数学定义，buffer Size精确匹配，encode_slice 不会Failed
+        // SAFETY: Base64URL encoding of 32 bytes (without padding) = ceil(32 * 8 / 6) = 43 bytes
+        // This is the mathematical definition of the encoding algorithm, buffer size matches exactly, encode_slice will not fail
         let _ = URL_SAFE_NO_PAD
             .encode(&verifier_bytes, Out::from_uninit_slice(code_verifier.as_bytes_mut()));
 
         let code_verifier = code_verifier.assume_init();
 
-        // SHA-256 哈希 code_verifier (43 bytes -> 32 bytes)
+        // SHA-256 hash code_verifier (43 bytes -> 32 bytes)
         let hash_result = sha2::Sha256::digest(code_verifier);
 
-        // Base64 EncodeTo code_challenge (32 bytes -> 43 chars)
+        // Base64 encode to code_challenge (32 bytes -> 43 chars)
         let mut code_challenge = MaybeUninit::<[u8; 43]>::uninit();
 
-        // SAFETY: 同上，SHA-256 固定输出 32 字节，Encode后固定 43 字节
+        // SAFETY: Same as above, SHA-256 has fixed 32-byte output, encoding produces fixed 43 bytes
         let _ = URL_SAFE_NO_PAD
             .encode(&hash_result, Out::from_uninit_slice(code_challenge.as_bytes_mut()));
 
@@ -600,6 +600,7 @@ fn generate_pkce_pair() -> ([u8; 43], [u8; 43]) {
 }
 
 pub async fn get_new_token(mut writer: TokenWriter<'_>, use_pri: bool) -> bool {
+    // Initiate refresh request
     let ext_token = &mut **writer;
     let is_session = ext_token.primary_token.is_session();
 
@@ -672,7 +673,7 @@ async fn upgrade_token(ext_token: &ExtToken, use_pri: bool) -> Option<Token> {
     let mut url = token_poll_url(use_pri).clone();
     url.query_pairs_mut().append_pair("uuid", uuid).append_pair("verifier", verifier);
 
-    // 轮询Gettoken
+    // Poll to get token
     for request in RepMove::new(
         super::client::build_token_poll_request(&ext_token.get_client(), url, use_pri),
         RequestBuilderClone,
